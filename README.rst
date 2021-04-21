@@ -11,8 +11,8 @@ hardware implementations are the **KR01** and **KD01** robots.
    :align: center
    :height: 584px
    :alt: The KR01 Robot
-   :figclass: align-center
-   The KR01 Robot.
+
+   The KR01 Robot prowling rhe front deck.
 
 The *kros-core* module provides essential support for YAML-based configuration, 
 logging, messages and event handling, and the asynchronous message bus that forms 
