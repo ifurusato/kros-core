@@ -25,9 +25,9 @@ Features
 ********
 
 * YAML-based configuration
+* an asynchronous message bus that forms the basis of a *`Subsumption Architecture <https://en.wikipedia.org/wiki/Subsumption_architecture>`_* [#f1]_
+* message and event handling
 * timestamped, multi-level logging
-* messages and event handling
-* an asynchronous message bus that forms the basis of a *`Subsumption Architecture <https://en.wikipedia.org/wiki/Subsumption_architecture>`* [#f1]_
 * written in Python 3
 
 .. [#f1] Uses finite state machines, an asynchronous message queue, an arbitrator and controller for task prioritisation.
@@ -40,18 +40,20 @@ This library requires Python 3.8.5 or newer. Some portions (modules) of the KROS
 code will only run on a Raspberry Pi, though KROS Core should function independently
 of the various Pi libraries.
 
+KROS requires installation of a number of support libraries. In order to begin
+you'll need to install pip3 and pytest.
+
 
 Installation
 ************
-
-The KROS requires installation of a number of support libraries. In order to
-begin you'll need Python3 (at least 3.8) and pip3, as well as the pigpio library.
 
 While this is a work-in-progress the aim is that the pip3 installer will handle
 installation of all dependencies, so that you may be able to install via the
 command line::
 
     % pip3 install --user kros-core
+
+This ability will be available once kros-core has been published to PyPI.
 
 
 Status
@@ -79,11 +81,11 @@ Further Information
 
 More information can be found on the *New Zealand Personal Robotic Group (NZPRG) Blog* at:
 
-* `The KR01 Robot Project <https://robots.org.nz/2019/12/08/kr01/>`
+* `The KR01 Robot Project <https://robots.org.nz/2019/12/08/kr01/>`_
 
 and the *NZPRG Wiki* at:
 
-* `KR01 Robot <https://service.robots.org.nz/wiki/Wiki.jsp?page=KR01>`
+* `KR01 Robot <https://service.robots.org.nz/wiki/Wiki.jsp?page=KR01>`_
 
 Please note that the documentation in the code will likely be more current
 than this README file, so please consult it for the "canonical" information.
@@ -92,11 +94,10 @@ than this README file, so please consult it for the "canonical" information.
 Execution
 *********
 
-To force the Raspberry Pi to prioritise execution of the python operating
-system, use the 'chrt' command, e.g.::
+To force the Raspberry Pi to prioritise execution of a python script, use
+the 'chrt' command, e.g.::
 
-    % chrt -f 5 python3 ./fusion_test.py
-
+    % chrt -f 5 python3 ./my_script.py
 
 
 Copyright & License
