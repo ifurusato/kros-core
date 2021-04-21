@@ -85,9 +85,9 @@ setup(
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.8',
-        'Topic :: Robot Framework',
-        'Topic :: Robot Framework :: Library',
-        'Topic :: Robot Framework :: Tool',
+        'Framework :: Robot Framework',
+        'Framework :: Robot Framework :: Library',
+        'Framework :: Robot Framework :: Tool',
         'Topic :: Software Development :: Libraries :: Python Modules',
     ],
     keywords=[

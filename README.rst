@@ -7,9 +7,9 @@ System (KROS)*, a Raspberry Pi based robot written in Python 3, whose prototype
 hardware implementations are the **KR01** and **KD01** robots.
 
 .. figure:: https://service.robots.org.nz/wiki/attach/KR01/KR01-0533-1280x584.jpg
-   :width: 1280px
+   :width: 640px
    :align: center
-   :height: 584px
+   :height: 292px
    :alt: The KR01 Robot
 
    The KR01 Robot prowling the front deck.
@@ -25,13 +25,13 @@ Features
 ********
 
 * YAML-based configuration
-* an asynchronous message bus that forms the basis of a *`Subsumption Architecture <https://en.wikipedia.org/wiki/Subsumption_architecture>`_* [#f1]_
+* an asynchronous message bus that forms the basis of a `Subsumption Architecture <https://en.wikipedia.org/wiki/Subsumption_architecture>`_ [#f1]_
 * message and event handling
-* timestamped, multi-level, colorised[#f2]_ logging 
+* timestamped, multi-level, colorised [#f2]_ logging 
 * written in Python 3
 
 .. [#f1] Uses finite state machines, an asynchronous message queue, an arbitrator and controller for task prioritisation.
-.. [#f2] Tested only on Unix/Linux operating systems.
+.. [#f2] Colorised console output tested only on Unix/Linux operating systems.
 
 
 Requirements
