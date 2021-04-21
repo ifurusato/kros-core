@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright 2020-2021 by Murray Altheim. All rights reserved. This file is part
+# Copyright 2019-2021 by Murray Altheim. All rights reserved. This file is part
 # of the K-Series Robot Operating System (KROS) project, released under the MIT
 # License. Please see the LICENSE file included as part of this package.
 #
 # author:   Murray Altheim
 # created:  2020-01-14
-# modified: 2021-01-28
+# modified: 2021-04-21
 #
 
 import logging, math, traceback, threading

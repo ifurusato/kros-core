@@ -27,10 +27,11 @@ Features
 * YAML-based configuration
 * an asynchronous message bus that forms the basis of a *`Subsumption Architecture <https://en.wikipedia.org/wiki/Subsumption_architecture>`_* [#f1]_
 * message and event handling
-* timestamped, multi-level logging
+* timestamped, multi-level, colorised[#f2]_ logging 
 * written in Python 3
 
 .. [#f1] Uses finite state machines, an asynchronous message queue, an arbitrator and controller for task prioritisation.
+.. [#f2] Tested only on Unix/Linux operating systems.
 
 
 Requirements

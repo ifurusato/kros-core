@@ -1,24 +1,23 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright 2020-2021 by Murray Altheim. All rights reserved. This file is part
-# of the Robot Operating System project, released under the MIT License. Please
-# see the LICENSE file included as part of this package.
+# Copyright 2019-2021 by Murray Altheim. All rights reserved. This file is part
+# of the K-Series Robot Operating System (KROS) project, released under the MIT
+# License. Please see the LICENSE file included as part of this package.
 #
 # author:   Murray Altheim
 # created:  2019-12-23
-# modified: 2020-03-12
+# modified: 2021-04-21
 #
 # See: https://setuptools.readthedocs.io/en/latest/userguide/index.html
 #      https://setuptools.readthedocs.io/en/latest/userguide/quickstart.html
 #
-#       'numpy',
+#   future requires:
 #       'psutil',
 #       'gpiozero',
 #       'board',
 #       'readchar',
 #       'pyquaternion'
-#   future requires:
 #       'rpi.gpio', \
 #       'adafruit-extended-bus', \
 #       'pymessagebus==1.*', \
