@@ -1,22 +1,24 @@
-*******************************************
-A Python-based Robot Operating System (ROS)
-*******************************************
+********************************************
+K-Series Robot Operating System (KROS): Core
+********************************************
 
-KROS Core provides the core functionality of a *K-Series Robot Operating System* 
-(KROS), a Raspberry Pi based robot written in Python 3, whose prototype hardware
-implementations are the **KR01** and **KD01** robots.
+**KROS Core** provides the core functionality of a *K-Series Robot Operating 
+System (KROS)*, a Raspberry Pi based robot written in Python 3, whose prototype
+hardware implementations are the **KR01** and **KD01** robots.
 
-.. image:: https://service.robots.org.nz/wiki/attach/KR01/KR01-0533-1280x584.jpg
+.. figure:: https://service.robots.org.nz/wiki/attach/KR01/KR01-0533-1280x584.jpg
    :width: 1280px
    :align: center
    :height: 584px
    :alt: The KR01 Robot
+   :figclass: align-center
+   The KR01 Robot.
 
-The kros-core module provides essential support for YAML-based configuration, 
+The *kros-core* module provides essential support for YAML-based configuration, 
 logging, messages and event handling, and the asynchronous message bus that forms 
 the basis of a *Subsumption Architecture*.
 
-This module is relatively low-level and could be used for any Python 3 based robot.
+This module is relatively "low-level" and could be used for any Python 3 based robot.
 
 More information can be found on the New Zealand Personal Robotic Group (NZPRG) Blog at:
 
