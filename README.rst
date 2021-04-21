@@ -12,12 +12,12 @@ hardware implementations are the **KR01** and **KD01** robots.
    :height: 584px
    :alt: The KR01 Robot
 
-   The KR01 Robot prowling rhe front deck.
+   The KR01 Robot prowling the front deck.
 
 The *kros-core* library provides essential support designed as the basis of a
-`Behaviour-Based Systems (BBS) <https://en.wikipedia.org/wiki/Behavior-based_robotics>`.
+`Behaviour-Based Systems (BBS) <https://en.wikipedia.org/wiki/Behavior-based_robotics>`_.
 This library is relatively "low-level" and could be used for any Python 3 based robot.
-It will be distributed via `PyPy <https://pypi.org/>` so that its components can be
+It will be distributed via `PyPy <https://pypi.org/>`_ so that its components can be
 easily installed from the command line.
 
 
@@ -27,7 +27,7 @@ Features
 * YAML-based configuration
 * timestamped, multi-level logging
 * messages and event handling
-* an asynchronous message bus that forms the basis of a `Subsumption Architecture <https://en.wikipedia.org/wiki/Subsumption_architecture>` [#f1]_
+* an asynchronous message bus that forms the basis of a *`Subsumption Architecture <https://en.wikipedia.org/wiki/Subsumption_architecture>`* [#f1]_
 * written in Python 3
 
 .. [#f1] Uses finite state machines, an asynchronous message queue, an arbitrator and controller for task prioritisation.
