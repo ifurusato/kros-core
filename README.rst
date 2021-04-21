@@ -2,7 +2,7 @@
 K-Series Robot Operating System (KROS): Core
 ********************************************
 
-**KROS Core** provides the core functionality of a *K-Series Robot Operating 
+**KROS Core** provides the core functionality of a *K-Series Robot Operating
 System (KROS)*, a Raspberry Pi based robot written in Python 3, whose prototype
 hardware implementations are the **KR01** and **KD01** robots.
 
@@ -14,33 +14,44 @@ hardware implementations are the **KR01** and **KD01** robots.
 
    The KR01 Robot prowling rhe front deck.
 
-The *kros-core* module provides essential support for YAML-based configuration, 
-logging, messages and event handling, and the asynchronous message bus that forms 
-the basis of a *Subsumption Architecture*.
-
-This module is relatively "low-level" and could be used for any Python 3 based robot.
-
-More information can be found on the New Zealand Personal Robotic Group (NZPRG) Blog at:
-
-* `The KR01 Robot Project <https://robots.org.nz/2019/12/08/kr01/>`
-
-and the NZPRG wiki at:
-
-* `KR01 Robot <https://service.robots.org.nz/wiki/Wiki.jsp?page=KR01>`
-
-This module will be distributed via PyPy so that its components can be easily 
-installed from the command line. 
+The *kros-core* library provides essential support designed as the basis of a
+`Behaviour-Based Systems (BBS) <https://en.wikipedia.org/wiki/Behavior-based_robotics>`.
+This library is relatively "low-level" and could be used for any Python 3 based robot.
+It will be distributed via `PyPy <https://pypi.org/>` so that its components can be
+easily installed from the command line.
 
 
 Features
 ********
 
-* `Behaviour-Based System (BBS) <https://en.wikipedia.org/wiki/Behavior-based_robotics>`
-* `Subsumption Architecture <https://en.wikipedia.org/wiki/Subsumption_architecture>` [#f1]_
-* Configuration via YAML file
+* YAML-based configuration
+* timestamped, multi-level logging
+* messages and event handling
+* an asynchronous message bus that forms the basis of a `Subsumption Architecture <https://en.wikipedia.org/wiki/Subsumption_architecture>` [#f1]_
 * written in Python 3
 
 .. [#f1] Uses finite state machines, an asynchronous message queue, an arbitrator and controller for task prioritisation.
+
+
+Requirements
+************
+
+This library requires Python 3.8.5 or newer. Some portions (modules) of the KROS
+code will only run on a Raspberry Pi, though KROS Core should function independently
+of the various Pi libraries.
+
+
+Installation
+************
+
+The KROS requires installation of a number of support libraries. In order to
+begin you'll need Python3 (at least 3.8) and pip3, as well as the pigpio library.
+
+While this is a work-in-progress the aim is that the pip3 installer will handle
+installation of all dependencies, so that you may be able to install via the
+command line::
+
+    % pip3 install --user kros-core
 
 
 Status
@@ -49,27 +60,13 @@ Status
 This project should currently be considered a "**Technology Preview**".
 
 The files in the repository function largely as advertised but the overall state
-of the ROS is not yet complete — it's still very much a work-in-progress and
-there are still some pieces missing that are not quite "ready for prime time."
+of KROS is not yet complete — it's still very much a work-in-progress and there
+are still some pieces missing that are not quite "ready for prime time."
 Demonstrations and included tests (including the pytest suite) either pass
 entirely or are close to passing.
 
 The project is being exposed publicly so that those interested can follow its
-progress. 
-
-
-Installation
-************
-
-The ROS requires installation of a number of support libraries. In order to
-begin you'll need Python3 (at least 3.8) and pip3, as well as the pigpio library.
-
-While this is a work-in-progress the aim is that the pip3 installer will handle
-installation of all dependencies, so that you may be able to install via the 
-command line:
-
-    % pip3 install --user kros-core
-
+progress.
 
 Support & Liability
 *******************
@@ -80,8 +77,13 @@ This project comes with no promise of support or liability. Use at your own risk
 Further Information
 *******************
 
-For more information check out the `NZPRG Blog <https://robots.org.nz/>` and
-`NZPRG Wiki <https://service.robots.org.nz/wiki/>`.
+More information can be found on the *New Zealand Personal Robotic Group (NZPRG) Blog* at:
+
+* `The KR01 Robot Project <https://robots.org.nz/2019/12/08/kr01/>`
+
+and the *NZPRG Wiki* at:
+
+* `KR01 Robot <https://service.robots.org.nz/wiki/Wiki.jsp?page=KR01>`
 
 Please note that the documentation in the code will likely be more current
 than this README file, so please consult it for the "canonical" information.
