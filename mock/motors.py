@@ -16,10 +16,10 @@ from datetime import datetime as dt
 from colorama import init, Fore, Style
 init()
 
-from lib.logger import Logger, Level
-from lib.orient import Orientation
-from lib.event import Event
-from lib.subscriber import Subscriber
+from core.logger import Logger, Level
+from core.orient import Orientation
+from core.event import Event
+from core.subscriber import Subscriber
 from mock.motor import Motor
 
 # ..............................................................................

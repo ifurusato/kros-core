@@ -13,8 +13,8 @@
 import sys, traceback
 from fractions import Fraction
 
-from lib.logger import Logger, Level
-from lib.orient import Orientation
+from core.logger import Logger, Level
+from core.orient import Orientation
 from mock.motors import Motors
 
 # ..............................................................................

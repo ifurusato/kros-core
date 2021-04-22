@@ -15,7 +15,7 @@ import sys, traceback
 from colorama import init, Fore, Style
 init()
 
-from lib.logger import Logger, Level
+from core.logger import Logger, Level
 
 # ..............................................................................
 @pytest.mark.unit

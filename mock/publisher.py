@@ -27,10 +27,10 @@ try:
 except ImportError:
     sys.exit(Fore.RED + "This script requires the readchar module.\nInstall with: pip3 install --user readchar" + Style.RESET_ALL)
 
-from lib.event import Event
-from lib.message_factory import MessageFactory
-from lib.logger import Logger, Level
-from lib.publisher import Publisher
+from core.event import Event
+from core.message_factory import MessageFactory
+from core.logger import Logger, Level
+from core.publisher import Publisher
 
 # ...............................................................
 class IfsPublisher(Publisher):

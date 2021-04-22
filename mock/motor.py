@@ -13,8 +13,8 @@ import sys, itertools, time
 from colorama import init, Fore, Style
 init()
 
-from lib.logger import Level, Logger
-from lib.orient import Orientation
+from core.logger import Level, Logger
+from core.orient import Orientation
 
 # ..............................................................................
 class Motor(object):

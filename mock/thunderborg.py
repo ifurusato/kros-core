@@ -15,7 +15,7 @@ This module is designed to communicate with a nonexistent (mock) ThunderBorg.
 It only provides for setting and getting the power setting of motors 1 and 2.
 """
 
-from lib.logger import Level, Logger
+from core.logger import Level, Logger
 
 # Class used to control ThunderBorg
 class ThunderBorg:

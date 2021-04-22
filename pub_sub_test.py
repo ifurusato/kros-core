@@ -25,13 +25,13 @@ import sys, traceback
 from colorama import init, Fore, Style
 init()
 
-from lib.config_loader import ConfigLoader
-from lib.logger import Logger, Level
-from lib.async_message_bus import MessageBus
-from lib.message_factory import MessageFactory
-from lib.publisher import Publisher
-from lib.subscriber import Subscriber
-from lib.event import Event
+from core.config_loader import ConfigLoader
+from core.logger import Logger, Level
+from core.async_message_bus import MessageBus
+from core.message_factory import MessageFactory
+from core.publisher import Publisher
+from core.subscriber import Subscriber
+from core.event import Event
 
 from mock.publisher import IfsPublisher
 
