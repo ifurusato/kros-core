@@ -64,9 +64,9 @@ setup(
     url='https://github.com/ifurusato/kros-core',
     license='MIT',
     python_requires='>=3.8.0',
-    package_dir={'': 'src'},
-    packages=find_packages('src'),
-    py_modules=[splitext(basename(path))[0] for path in glob('src/*.py')],
+    package_dir={'': 'lib'},
+    packages=find_packages('lib'),
+    py_modules=[splitext(basename(path))[0] for path in glob('lib/*.py')],
     include_package_data=True,
     install_requires=[
         'colorama',

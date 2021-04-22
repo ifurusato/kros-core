@@ -1,0 +1,284 @@
+# Copyright 2020-2021 by Murray Altheim. All rights reserved. This file is part
+# of the Robot Operating System project, released under the MIT License. Please
+# see the LICENSE file included as part of this package.
+#
+# YAML configuration for K-Series Robot Operating System (KROS) ................
+
+kros:
+    use_external_clock: True                     # if True use external clock
+    motors:
+        motor_power_limit: 0.85                  # limit set on power sent to motors
+        # GPIO pins configured for A1, B1, A2 and B2
+#       motor_encoder_a1_port:  22               # port A
+#       motor_encoder_b1_port:  23               # port B
+#       motor_encoder_a2_stbd:  17               # stbd A
+#       motor_encoder_b2_stbd:  18               # stbd B
+#       reverse_motor_orientation:   False       # in case you wire something up backwards
+#       reverse_encoder_orientation: False       # ditto
+#       sample_rate: 10                          # how many pulses per encoder measurement?
+#       accel_loop_delay_sec: 0.10
+#       pid-controller:
+#           kp:                 0.09500          # proportional gain
+#           ki:                 0.00000          # integral gain
+#           kd:                 0.00000          # derivative gain
+#           min_output:           -10.0          # lower output limit
+#           max_output:            10.0          # upper output limit
+#           enable_slew:          False
+#           sample_freq_hz:          20
+#           hyst_queue_len:          20          # size of queue used for running average for hysteresis
+#           pot_ctrl:             False          # if True enable potentiometer for setting PID terms
+#   geometry:
+#       wheel_diameter: 68.0                     # wheel diameter (mm)
+#       wheelbase: 160.0                         # wheelbase (mm)
+#       steps_per_rotation: 494                  # encoder steps per wheel rotation
+
+#    current:
+#        port_address:  0x40                      # I2C address for port INA260
+#        stbd_address:  0x41                      # I2C address for starboard INA260
+#    external_clock:
+#        pin:           5                         # input pin from external source
+#        loop_freq_hz: 20                         # main loop frequency
+#    clock:
+#        loop_freq_hz: 20                         # main loop frequency
+#        tock_modulo:  20                         # modulo value for tock frequency
+#        enable_trim:  True                       # when true enable auto-trim clock accuracy
+#    wait_for_button_press: False                 # robot waits in standby mode until red button is pressed
+#    enable_self_shutdown: True                   # enables the robot to shut itself down (not good during demos)
+#    enable_player: False                         # enables sound player (disable if no hardware support)
+#    main_loop_freq_hz:  0.2                      # main ros loop frequency Hz (no effect on performance)
+#    arbitrator:
+#        loop_delay_sec: 0.01                     # arbitrator loop delay (sec)
+#        ballistic_loop_delay_sec: 0.2            # loop delay for ballistic tasks (sec)
+#    battery:
+#        enable_battery_messaging:    True        # if True we enable low battery messages to be sent
+#        enable_channel_a_messaging:  False       # if True we enable low regulator on channel A messages to be sent
+#        enable_channel_b_messaging:  True        # if True we enable low regulator on channel B messages to be sent
+#        five_volt_a_channel:   2                 # AD channel for power supply A
+#        five_volt_b_channel:   1                 # AD channel for power supply B
+#        battery_channel:       0                 # AD channel for raw battery voltage
+#        raw_battery_threshold: 17.74             # raw and 5v regulator thresholds set from known measurements:
+#        low_5v_threshold:      4.75              # really 4.82v
+#        loop_delay_sec:       15                 # loop delay (sec)
+#    behaviours:
+#        accel_range_cm:    250.0                 # the distance used for acceleration and deceleration (cm)
+#        targeting_velocity: 10.0                 # low velocity from which we're prepared to immediately halt upon reaching a step target
+#    cruise_behaviour:
+#        active_range_cm:    90.0                 # the maximum distance in which this behaviour is active
+#        cruising_velocity:  50.0                 # velocity used for long distance steady cruising
+#    temperature:
+#        warning_threshold: 63.0                  # temperature threshold, exceeding this generates a warning (nominal 63°C)
+#        max_threshold:     80.0                  # max allowable temperature threshold, exceeding this sends an event (nominal 80°C, Pi max is 85°C))
+#        sample_time_sec:     10                  # modulo value against tock frequency (default 15s)
+#    fan:
+#        i2c_address:       0x38                  # the I²C address for the HT0740 device controlling the fan
+#        fan_threshold:      48.0                 # setpoint temperatury (nominal 50°C) at which fan turns on
+#        hysteresis:         2.0                  # thermostat hysteresis
+#    blob:
+#        image_width:       320                   # camera resolution: width
+#        image_height:      240                   # camera resolution: height
+#    image_processor:
+#        blob_color:        [248, 136, 255]       # color of blob to sense
+#        flip_horizontal:   False                 # flip the image horizontally
+#        flip_vertical:     False                 # flip the image verticaly
+#        start_row:         0                     # the top row of the image to be processed (0 is top)
+#        end_row:           -1                    # the bottom row of the image to be processed (-1 to use full image height)
+#        filter_threshold:  0.25                  # the low pass filter threshold for color distance (e.g., ignore > color distance of 0.25)
+#        take_snapshot:     False                 # also create timestamped JPEG of image
+#        print_image:       True                  # if True print image array to console
+#        print_summary:     True                  # if True print image summary to console
+#        suppress_info:     False                 # if True don't print 'complete' message
+#    video:
+#        enable_streaming: True                   # if True, stream video to a localhost HTTP server
+#        ctrl_lights: True                        # if True, permit video to control Matrix11x7 lights
+#        convert_mp4: True                        # if True, convert h264 source to mp4
+#        annotate: True                           # if True, include annotation on video
+#        title: 'NZPRG - KR01'                            # the title portion of the video annotation
+#        quality: -1                              # video quality: -1 for default; values between 1 (high) - 40 (low), typical between 20-25.
+#        remove_h264: False                       # if True, remove h264 video source after converting to mp4
+#        port: 8001                               # server port for streaming video
+#        width: 1600                              # video width
+#        height: 512                              # video height
+##       width: 1280                              # video width
+##       height: 720                              # video height
+#        framerate: 30                            # video framerate
+#        lux_threshold: 14                        # lux threshold for night mode
+#        dirname: 'videos'                        # the name of the output directory
+#        basename: 'vid'                          # the base name for output files
+#    nxp9dof:
+#        quaternion_accept: True                  # if true, we accept Quaternion alone once calibrated
+#        loop_delay_sec: 0.1                      # sensor loop delay (seconds)
+#    icm20948:
+#        heading_trim:   180.00                   # trim adjustment on heading
+#    bno055:
+#        i2c_device:       1                      # I2C device bus number, equivalent to '/dev/i2c-1'
+#        mode:    'NDOF_MODE'                     # Acc/Mag/Gyr (see table in BNO055Mode class)
+##       mode:    'NDOF_FMC_OFF_MODE'             # Acc/Mag/Gyr (Fast Mag Calib off)
+##       mode:    'COMPASS_MODE'                  # Acc/Mag no gyro
+#        pitch_trim:    0.00                      # trim adjustment on pitch
+#        roll_trim:     0.00                      # trim adjustment on roll
+#        euler_heading_trim: -180.00              # trim adjustment on Euler heading
+#        quat_heading_trim:  -180.00              # trim adjustment on Quaternion heading
+#    bno085:
+#        loop_delay_sec: 0.1                      # sensor loop delay (seconds)
+#        pitch_trim:    0.00                      # trim adjustment on pitch
+#        roll_trim:     0.00                      # trim adjustment on roll
+#        heading_trim:  -90.00                      # trim adjustment on heading
+#    accelerometer:
+#        jitter_limit: 0.1                        # how much jitter is permitted whilst considered at rest
+#    lidar:
+#        min_angle: -40.0                         # minimum scan angle (clearance of bumper)
+#        max_angle:  40.0                         # maximum scan angle (clearance of bumper)
+#        play_sound: False                        # if True, play 'ping' sound during scanning
+#        degree_step: 5.0                         # resolution of scan
+#        step_delay_sec: 0.10                     # how long to linger at each degree step to permit a reading
+##       tof_range: 'medium'                      # ToF range: performance, long, medium or short
+#        tof_range: 'performance'                 # ToF range: performance, long, medium or short
+#        reverse_movement: True                   # reverses the servo movement in case hardware is backwards
+#        double_sweep: False                      # if True sweeps in both directions
+##       servo_number: 1                          # use this servo
+#        servo_number: -1                         # don't use a servo
+#    wall_follower:
+#        port_angle: -90.0                        # port-facing scan angle
+#        starboard_angle: 90.0                    # starboard-facing scan angle
+#        tof_range: 'performance'                 # ToF range: performance, long, medium or short
+#        servo_number: 2                          # use this servo
+#    ultrasonic_scanner:
+#        min_angle: -90.0                         # minimum scan angle
+#        max_angle:  90.0                         # maximum scan angle
+#        degree_step: 5.0                         # resolution of scan
+#        use_raw_distance: True                   # use raw distance, faster than when filtered
+#        read_delay_sec: 0.01                     # how long to wait at position for reading
+#        servo_number: 2                          # use this servo
+#    collision_detect:
+#        pin:            16                       # pin connected to 15cm infrared collection detection sensor
+#    motion_detect:
+#        pin:            19                       # pin connected to PIR sensor
+#    servo1:
+#        center_offset: 0.0                       # used by lidar: offset necessary to center the servo at 0.0
+#    servo2:
+#        center_offset: 2.0                       # used by uscanner and wall follower: offset necessary to center the servo at 0.0
+#    servo3:
+#        center_offset: 0.0                       # offset necessary to center the servo at 0.0
+#    servo4:
+#        center_offset: 0.0                       # offset necessary to center the servo at 0.0
+#    button:
+#        pin:           24                        # pin connected to hardware button
+#        toggle:      True                        # toggle or momentary button
+#    status:
+#        led_pin:       21                        # pin connected to status LED
+##   bumper:
+##       port_pin:      21                        # pin connected to port bumper
+##       center_pin:    19                        # pin connected to center bumper
+##       starboard_pin: 13                        # pin connected to starboard bumper
+##       upper_pin:      7                        # pin connected to upper bumper
+##   infrared:
+##       port_pin:           6                    # pin connected to port infrared
+##       center_pin:         0                    # pin connected to center infrared (use zero if using LR IR)
+##       stbd_pin:          16                    # pin connected to starboard infrared
+##       port_side_pin:      5                    # pin connected to port side infrared
+##       stbd_side_pin:     12                    # pin connected to starboard side infrared
+##       use_long_range:    True                  # use analog long range IR for center instead of short range digital IR
+#    gamepad:
+#        enabled: False
+#        device_path: '/dev/input/event0'         # the path to the bluetooth gamepad on the pi (see find_gamepad.py)
+#        loop_delay: 0.01                         # main loop delay
+#        loop_freq_hz: 20                         # main loop frequency
+#    gamepad_demo:
+#        enable_compass:        False             # if True, enable Compass
+#        enable_indicator:      False             # if True, enable RGB Indicator
+#        enable_ifs:            False             # if True, enable IntegratedFrontSensor
+#        controller:
+#            log_to_file:       False             # if True, log PID data to file
+#            log_to_console:    False             # if True, log PID data to console
+#            min_loop_time_ms:  5                 # gamepad loop time (ms)
+#    elastic:                                     # ElasticSearch connection
+##       host: '192.168.1.81'
+#        host: '192.168.1.74'
+#        port:              9200
+#        schema:            'robot'
+#        index:             'kr01'
+#        doc_type:          'pid'
+#    ioe_potentiometer:                           # IO Expander-based Potentiometer board
+#        i2c_address:   0x0E                      # the I²C address for the device
+#        brightness:     1.0                      # the brightness of the RGB LED (0.0-1.0)
+#        pin_red:          1                      # red pin
+#        pin_green:        7                      # green pin
+#        pin_blue:         2                      # blue pin
+#        in_min:         0.0                      # minimum analog value from IO Expander
+#        in_max:         3.3                      # maximum analog value from IO Expander
+##       out_min:       -100.0                    # minimum scaled output value
+##       out_max:        100.0                    # maximum scaled output value
+#        out_min:       -255.0                    # minimum scaled output value
+#        out_max:        255.0                    # maximum scaled output value
+#    potentiometer:                               # potentiometer connected as voltage divider
+#        pin:             14                      # pin connected to wiper
+#        in_min:           0                      # minimum analog value from IO Expander
+#        in_max:         255                      # maximum analog value from IO Expander
+##       out_min:       -100.0                    # minimum scaled output value
+##       out_max:        100.0                    # maximum scaled output value
+##       out_max:          1.0                    # maximum scaled output value
+#        out_min:          0.5                    # minimum scaled output value
+#        out_max:          1.5                    # maximum scaled output value
+#    slew:
+#        minimum_output: 0.00                     # lower limit of permitted output values
+#        maximum_output: 100.00                   # upper limit of permitted output values
+#    filewriter:
+#        extension: '.dat'                        # file extension (must include the dot)
+#        directory_name: 'data'                   # output directory name
+#        default_filename_prefix: 'motors'        # output directory name
+#        gnuplot_template_file: 'settings_slew_template.gp'  # template for gnuplot settings
+#        gnuplot_output_file: 'settings_slew.gp'  # output file for gnuplot settings
+#    io_expander:
+#        port_side_ir_pin:   8                    # pin connected to port side infrared
+#        port_ir_pin:       10                    # pin connected to port infrared
+#        center_ir_pin:     11                    # pin connected to center infrared
+#        stbd_ir_pin:        9                    # pin connected to starboard infrared
+#        stbd_side_ir_pin:   7                    # pin connected to starboard side infrared
+#        port_bmp_pin:       6                    # pin connected to port bumper
+#        center_bmp_pin:     4                    # pin connected to center bumper
+#        stbd_bmp_pin:       5                    # pin connected to starboard bumper
+#        port_moth_pin:     13                    # pin connected to port moth sensor
+#        stbd_moth_pin:     14                    # pin connected to starboard moth sensor
+#    integrated_front_sensor:
+#        use_potentiometer:  False                # use potentiometer to adjust distance setting
+#        ignore_duplicates:  False                # don't fire messages for duplicate events
+#        loop_freq_hz:      20                    # polling loop frequency (Hz)
+#        # the analog sensor distances (raw or cm) used as event trigger thresholds:
+#        cntr_raw_min_trigger:              35    # below this raw value we don't execute callback on center IR
+#        oblq_raw_min_trigger:              43    # below this raw value we don't execute callback on PORT & STBD IRs
+#        side_raw_min_trigger:              50    # below this raw value we don't execute callback on side IRs
+#        cntr_trigger_distance_cm:        90.0    # center analog IR sensor max distance before triggering
+#        oblq_trigger_distance_cm:        70.0    # port or starboard oblique analog IR sensor max distance before triggering
+#        side_trigger_distance_cm:        70.0    # port or starboard side analog IR sensor max distance before triggering
+#    moth:
+#        hysteresis:   10                         # permissable range for int values being considered equal
+#    i2c_master:
+#        device_id:  0x08                         # i2c hex address of slave device, must match Arduino's SLAVE_I2C_ADDRESS
+#        channel:       1                         # SMBus channel
+#        assignments:                             # pin assignments: a pin number followed by:
+##           0:  'AIN'                            # 'DIN' (digital input); 'DNP' (digital input, pullup); 'AIN' (analog input); or 'OUT' (output)
+#            1:  'AIN'
+#            2:  'AIN'
+#            3:  'AIN'
+#            4:  'AIN'
+#            5:  'AIN'
+##           7:  'OUT'
+#            9:  'DNP'
+#            10: 'DNP'
+#            11: 'DNP'
+##           12: 'DNP'
+#    rotary_ctrl:
+#        update_led:    True                      # update the RGB LED according to the value
+#    rotary_encoder:
+#        i2c_address:   0x0f                      # the I²C address for the device
+#        brightness:     1.0                      # the brightness of the RGB LED (0.0-1.0)
+#        increment:        1                      # the count change per rotary tick
+#    features:
+#        ht0740: False
+#        placeholder: ''
+#
+#rosd:
+#    toggle_pin:     6                            # the GPIO pin connected to the 'enable' toggle switch
+#    application: 'ros'                           # the application to start via daemon ('ros' or 'gamepad')
+
+#EOF
