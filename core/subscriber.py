@@ -108,15 +108,14 @@ class Subscriber(object):
         if _message.gcd:
             self._log.warning('{} cannot consume: message has been garbage collected. [1]'.format(self.name))
 #           raise Exception('{} cannot consume: message has been garbage collected. [1]'.format(self.name))
-            return
-        # if acceptable, consume/handle the message
-        if self.acceptable(_message):
-            # this subscriber is interested and hasn't seen it before so handle the message
-            if self._message_bus.verbose:
-                self._log.info(self._color + Style.NORMAL + 'consuming acceptable message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
-            # handle acceptable message
-            asyncio.create_task(self.handle_message(_message))
-        # If not gc'd, republish the message. If fully-ackd it will be ignored
+        elif self.acceptable(_message):
+            # if acceptable, consume/handle the message
+                # this subscriber is interested and hasn't seen it before so handle the message
+                if self._message_bus.verbose:
+                    self._log.info(self._color + Style.NORMAL + 'consuming acceptable message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
+                # handle acceptable message
+                asyncio.create_task(self.handle_message(_message))
+        # if not gc'd, republish the message. If fully-ackd it will be ignored
         if not _message.gcd:
             await self._message_bus.republish_message(_message)
 
@@ -159,10 +158,11 @@ class Subscriber(object):
 
         :param message:  the message to consume.
         '''
-        if message.gcd:
-            raise Exception('cannot _consume: message has been garbage collected. [2]')
         if self._message_bus.verbose:
             self._log.info(self._color + 'HANDLE_MESSAGE:' + Fore.WHITE + ' {}; event: {}'.format(message.name, message.event.description))
+
+        if message.gcd:
+            raise Exception('cannot _consume: message has been garbage collected. [2]')
 
         # acknowledge we've seen the message
         self._log.info(self._color + Style.NORMAL + 'ack accepted message:' + Fore.WHITE + ' {}; event: {}'.format(message.name, message.event.description))
@@ -386,23 +386,19 @@ class GarbageCollector(Subscriber):
         '''
         if self._message_bus.verbose: # TEMP
             self._log.info(self._color + Style.BRIGHT + 'HANDLE_MESSAGE_GC:' + Fore.WHITE + ' {}; event: {}'.format(message.name, message.event.description))
-        # TODO: only garbage collect if appropriate
         if message.gcd:
             raise Exception('cannot garbage collect: message has already been garbage collected.')
-        _info = None
-        _collectable = True
-        if self._message_bus.is_expired(message) and message.fully_acknowledged:
-            _info = 'garbage collecting expired, fully-acknowledged message:'
-        elif self._message_bus.is_expired(message):
-            _info = 'garbage collecting expired message:'
-        elif message.fully_acknowledged:
-            _info = 'garbage collecting fully-acknowledged message:'
-        else:
-            _info = 'unknown status: garbage collector returning unprocessed message:'
-            _collectable = False
-        if self._message_bus.verbose:
-            self.print_message_info(_info, message, None)
-        if _collectable:
+        elif self._message_bus.is_expired(message) and message.fully_acknowledged:
+            self.print_message_info('garbage collecting expired, fully-acknowledged message:', message, None)
             message.gc() # mark as garbage collected
+        elif self._message_bus.is_expired(message):
+            self.print_message_info('garbage collecting expired message:', message, None)
+            message.gc() # mark as garbage collected
+        elif message.fully_acknowledged:
+            self.print_message_info('garbage collecting fully-acknowledged message:', message, None)
+            message.gc() # mark as garbage collected
+        else:
+            self.print_message_info('unknown status: garbage collector returning unprocessed message:', message, None)
+            # don't mark as garbage collected
 
 #EOF
