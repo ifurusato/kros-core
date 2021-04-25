@@ -79,7 +79,6 @@ class Message(object):
         Set the list of expected subscribers to this message.
         '''
         for subscriber in subscribers:
-            print(Fore.GREEN + 'set subscribers: {} ADDED to message {}.'.format(subscriber.name, self.name) + Style.RESET_ALL)
             self._subscribers[subscriber] = False
 
     # timestamp     ............................................................
@@ -111,6 +110,7 @@ class Message(object):
         if processor in self._processors:
             raise Exception('message {} already processed by {}.'.format(self.name, processor.name))
         else:
+            print(Fore.CYAN + 'process: {}'.format(self.name) + Style.RESET_ALL)
             self._processors[processor] = True
 
     # expired       ............................................................
@@ -198,9 +198,9 @@ class Message(object):
             print(Style.BRIGHT + 'message {} already acknowledged by subscriber: {}'.format(self.name, subscriber.name) + Style.RESET_ALL)
 #           raise Exception('message {} already acknowledged by subscriber: {}'.format(self.name, subscriber.name))
         else:
+            self._subscribers[subscriber] = True
             print(Fore.GREEN + Style.BRIGHT + 'message {} acknowledged by subscriber {}; still unacknowledged by {:d}.'.format(\
                     self.name, subscriber.name, self.unacknowledged_count) + Style.RESET_ALL)
-            self._subscribers[subscriber] = True
 
     # instance_name ............................................................
 

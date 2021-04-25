@@ -11,7 +11,8 @@
 #
 # An asyncio-based publish/subscribe-style message bus guaranteeing exactly-once
 # delivery for each message. This is done by populating each message with the
-# list of subscribers.
+# list of subscribers. Each message is subsequently flagged as acknowledged by
+# subscribers as they peek and/or consume the message.
 #
 # Delivery guarantees:
 #
@@ -33,20 +34,6 @@ from core.logger import Logger, Level
 from core.event import Event
 from core.message import Message
 from core.subscriber import GarbageCollector
-
-
-# ..............................................................................
-class PeekableQueue(Queue):
-
-    def __init__(self, level=Level.INFO):
-        super().__init__(maxsize=0, loop=None)
-        self._log = Logger("q", level)
-        self._log.info('ready.')
-
-    async def peek(self):
-        _message = await self.get()
-        await self.put(_message)
-        return _message
 
 # ..............................................................................
 class MessageBus(object):
@@ -71,7 +58,7 @@ class MessageBus(object):
         self._loop.set_exception_handler(self.handle_exception)
         self._garbage_collector = GarbageCollector('gc', Fore.RED, self, Level.INFO)
         self.register_subscriber(self._garbage_collector)
-        self._max_age     = 5.0 # ms
+        self._max_age     = 20.0 # ms
         self._verbose     = True
         self._enabled     = True # by default
         self._closed      = False
@@ -327,5 +314,19 @@ class MessageBus(object):
             self._log.info('closed.')
         else:
             self._log.debug('already closed.')
+
+
+# ..............................................................................
+class PeekableQueue(Queue):
+
+    def __init__(self, level=Level.INFO):
+        super().__init__(maxsize=0, loop=None)
+        self._log = Logger("q", level)
+        self._log.info('ready.')
+
+    async def peek(self):
+        _message = await self.get()
+        await self.put(_message)
+        return _message
 
 #EOF

@@ -68,7 +68,7 @@ def test_pub_sub():
 #   _subscriber1.events = [ Event.ROAM, Event.SNIFF ] # reacts to ROAM and SNIFF
 #   _message_bus.register_subscriber(_subscriber1)
 
-    _subscriber2 = Subscriber('infrared', Fore.MAGENTA, _message_bus, Level.INFO)
+    _subscriber2 = Subscriber('infrared', Fore.GREEN, _message_bus, Level.INFO)
     _subscriber2.events = [ Event.INFRARED_PORT, Event.INFRARED_CNTR, Event.INFRARED_STBD ] # reacts to IR
     _subscriber2.add_event(Event.ROAM)
     _message_bus.register_subscriber(_subscriber2)

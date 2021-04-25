@@ -99,19 +99,17 @@ class Subscriber(object):
         processed and eventually garbage collected.
         '''
         _peeked_message = await self._message_bus.peek_message()
+        self._message_bus.task_done()
         if not _peeked_message:
             raise Exception('peek returned none.')
         elif _peeked_message.gcd:
             raise Exception('{} cannot consume: message has been garbage collected. [1]'.format(self.name))
-
-        # if acceptable, consume/handle the message
         if self.acceptable(_peeked_message):
-
             # acknowledge we've seen the message
             self._log.info(self._color + Style.NORMAL + 'acknowledging message:' + Fore.WHITE + ' {}; event: {} (queue: {:d} elements)'.format(
                     _peeked_message.name, _peeked_message.event.description, self._message_bus.queue_size))
             _peeked_message.acknowledge(self)
-    #       self._message_bus.task_done()
+#           self._message_bus.task_done()
 
             # this subscriber accepts this message and hasn't seen it before so consume and handle the message
             self._log.info(self._color + Style.NORMAL + 'waiting to consume acceptable message:' + Fore.WHITE + ' {}; event: {}'.format(_peeked_message.name, _peeked_message.event.description))
@@ -191,6 +189,10 @@ class Subscriber(object):
         self._log.info(self._color + 'handling result from message:' + Fore.WHITE + ' {}; for event: {}'.format(message.name, message.event.description))
         self._handle_results(results, message)
 
+        if self._message_bus.verbose:
+            _elapsed_ms = (dt.now() - message.timestamp).total_seconds() * 1000.0
+            self.print_message_info('handled message:', message, _elapsed_ms)
+
         print(Fore.RED + 'END event tracking for message:' + Fore.WHITE + ' {}; for event: {}'.format(message.name, message.event.description))
         _event.set()
 
@@ -206,10 +208,8 @@ class Subscriber(object):
             if message.gcd: # TEMP
                 self._log.warning('cannot process: message has been garbage collected. [3]')
                 return
+            self._log.info(self._color + Style.DIM + '🥧 processing message {}'.format(message.name))
             message.process(self)
-            if self._message_bus.verbose:
-                _elapsed_ms = (dt.now() - message.timestamp).total_seconds() * 1000.0
-                self.print_message_info('processing message:', message, _elapsed_ms)
             # want to sleep for less than the deadline amount
             await asyncio.sleep(2)
 
@@ -227,8 +227,8 @@ class Subscriber(object):
 #       await event.wait()
         # unhelpful simulation of i/o work
 #       await asyncio.sleep(random.random())
-        self._log.info(self._color + Style.DIM + '🧀 expiring message {}'.format(message.name))
-        message.expire()
+#       self._log.info(self._color + Style.DIM + '🧀 expiring message {}'.format(message.name))
+#       message.expire()
         if self._message_bus.verbose:
             self._log.info(self._color + Style.DIM + '🧀 END cleanup: acknowledged {}'.format(message.name))
 
@@ -399,18 +399,30 @@ class GarbageCollector(Subscriber):
         explicitly garbage collect the message.
         '''
         _peeked_message = await self._message_bus.peek_message()
+        self._message_bus.task_done()
         if not _peeked_message:
             raise Exception('peek returned none.')
         elif _peeked_message.gcd:
             self._log.warning('message has already been garbage collected. [1]'.format(self.name))
         if self._message_bus.verbose: # TEMP
             self._log.info(self._color + Style.BRIGHT + 'gc-consume() message:' + Fore.WHITE + ' {}; event: {}'.format(_peeked_message.name, _peeked_message.event.description))
+
         # TODO: only garbage collect (consume) if filter accepts the peeked message
         if self.acceptable(_peeked_message):
             _message = await self._message_bus.consume_message()
             self._message_bus.task_done()
             if self._message_bus.verbose:
                 self._log.info(self._color + Style.NORMAL + 'garbage collecting message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
+
+#           while not _message.expired and _message.saved == 0 and _message.restarted == 0:
+#               self._log.info(Fore.BLACK + Style.NORMAL + 'waiting for message:' + Fore.WHITE + ' {} to complete...'.format(_message.name))
+#               await asyncio.sleep(0.1)
+
             _message.gc() # mark as garbage collected and don't republish
+        else:
+            # acknowledge we've seen the message
+            self._log.info(self._color + Style.NORMAL + 'gc-acknowledging message:' + Fore.WHITE + ' {}; event: {} (queue: {:d} elements)'.format(
+                    _peeked_message.name, _peeked_message.event.description, self._message_bus.queue_size))
+            _peeked_message.acknowledge(self)
 
 #EOF
