@@ -24,6 +24,36 @@ from core.event import Event
 
 ID_CHARACTERS = string.ascii_uppercase + string.digits
 
+class Payload(object):
+    '''
+    The payload of a Message, containing the Event and an optional value.
+    '''
+    def __init__(self, event, value):
+        self._event     = event
+        self._value     = value
+        self._restarted = 0
+
+    # ..........................................................................
+    @property
+    def restarted(self):
+        return self._restarted
+
+    def restart(self):
+        print(Fore.CYAN + 'restart: {}'.format(self._event.description) + Style.RESET_ALL)
+        self._restarted += 1
+
+    # event         ............................................................
+
+    @property
+    def event(self):
+        return self._event
+
+    # value         ............................................................
+
+    @property
+    def value(self):
+        return self._value
+
 # ..............................................................................
 class Message(object):
     '''
@@ -36,11 +66,9 @@ class Message(object):
         _host_id = "".join(random.choices(ID_CHARACTERS, k=4))
         _instance_name = 'id-{}'.format(_host_id)
         self._instance_name = _instance_name
-        self._hostname      = '{}.acme.com'.format(self._instance_name)
-        self._event         = event
-        self._value         = value
+#       self._hostname      = '{}.acme.com'.format(_instance_name)
+        self._payload       = Payload(event, value)
         self._saved         = 0
-        self._restarted     = 0
         self._expired       = False
         self._gc            = False
         self._processors    = {} # list of processor names who've processed message
@@ -65,7 +93,6 @@ class Message(object):
     @property
     def age(self):
         _age_ms = (dt.now() - self._timestamp).total_seconds() * 1000.0
-#       print(Fore.GREEN + Style.BRIGHT + 'message age: {:5.2f}ms ({})'.format(_age_ms, self._event.description) + Style.RESET_ALL)
         return int(_age_ms)
 
     # message_id    ............................................................
@@ -86,15 +113,6 @@ class Message(object):
         else:
             self._processors[processor] = True
 
-    # saved         ............................................................
-
-    @property
-    def saved(self):
-        return self._saved
-
-    def save(self):
-        self._saved += 1
-
     # expired       ............................................................
 
     @property
@@ -102,16 +120,8 @@ class Message(object):
         return self._expired
 
     def expire(self):
+        print(Fore.CYAN + 'expire: {}'.format(self.name) + Style.RESET_ALL)
         self._expired = True
-
-    # restarted       ..........................................................
-
-    @property
-    def restarted(self):
-        return self._restarted
-
-    def restart(self):
-        self._restarted += 1
 
     # garbage collection   .....................................................
 
@@ -127,8 +137,6 @@ class Message(object):
         print(Fore.CYAN + 'gc: {}'.format(self.name) + Style.RESET_ALL)
         if self._gc:
             raise Exception('already garbage collected.')
-#       self._event = None
-        self._value = None
         self._gc = True
 
     # acknowledged  ............................................................
@@ -190,7 +198,7 @@ class Message(object):
             print(Style.BRIGHT + 'message {} already acknowledged by subscriber: {}'.format(self.name, subscriber.name) + Style.RESET_ALL)
 #           raise Exception('message {} already acknowledged by subscriber: {}'.format(self.name, subscriber.name))
         else:
-            print(Style.BRIGHT + 'message {} ACKnowledged by subscriber {}; {:d} still unacknowledged.'.format(\
+            print(Fore.GREEN + Style.BRIGHT + 'message {} acknowledged by subscriber {}; still unacknowledged by {:d}.'.format(\
                     self.name, subscriber.name, self.unacknowledged_count) + Style.RESET_ALL)
             self._subscribers[subscriber] = True
 
@@ -203,25 +211,35 @@ class Message(object):
         '''
         return self._instance_name
 
-    # hostname      ............................................................
-
-    @property
-    def hostname(self):
-        '''
-        Return the hostname of the message.
-        '''
-        return self._hostname
-
     # event         ............................................................
 
     @property
     def event(self):
-        return self._event
+        return self._payload.event
 
-    # value         ............................................................
+    # payload       ............................................................
 
     @property
-    def value(self):
-        return self._value
+    def payload(self):
+        return self._payload
+
+    # hostname      ............................................................
+
+#   @property
+#   def hostname(self):
+#       '''
+#       Return the hostname of the message.
+#       '''
+#       return self._hostname
+
+    # saved        .............................................................
+
+    @property
+    def saved(self):
+        return self._saved
+
+    def save(self):
+        print(Fore.CYAN + 'save: {}'.format(self._payload.event.description) + Style.RESET_ALL)
+        self._saved += 1
 
 #EOF

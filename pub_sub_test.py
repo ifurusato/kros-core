@@ -27,7 +27,7 @@ init()
 
 from core.config_loader import ConfigLoader
 from core.logger import Logger, Level
-from core.async_message_bus import MessageBus
+from core.message_bus import MessageBus
 from core.message_factory import MessageFactory
 from core.publisher import Publisher
 from core.subscriber import Subscriber

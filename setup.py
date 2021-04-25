@@ -16,7 +16,6 @@
 #       'psutil',
 #       'gpiozero',
 #       'board',
-#       'readchar',
 #       'pyquaternion'
 #       'rpi.gpio', \
 #       'adafruit-extended-bus', \
@@ -72,6 +71,8 @@ setup(
         'colorama',
         'numpy',
         'pytest',
+        'psutil',
+        'readchar',
         'pyyaml'
     ],
     test_suite='tests',

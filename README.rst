@@ -42,7 +42,11 @@ code will only run on a Raspberry Pi, though KROS Core should function independe
 of the various Pi libraries.
 
 KROS requires installation of a number of support libraries. In order to begin
-you'll need to install pip3 and pytest.
+you'll need to install pip3 and pytest. On the Raspberry Pi OS pip3 is generally
+already installed so you can install pytest via pip3::
+
+    sudo pip3 install pytest
+
 
 
 Installation

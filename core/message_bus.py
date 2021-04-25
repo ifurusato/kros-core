@@ -27,11 +27,26 @@ import asyncio, signal, traceback
 import sys, logging
 from colorama import init, Fore, Style
 init()
+from asyncio.queues import Queue
 
 from core.logger import Logger, Level
 from core.event import Event
 from core.message import Message
 from core.subscriber import GarbageCollector
+
+
+# ..............................................................................
+class PeekableQueue(Queue):
+
+    def __init__(self, level=Level.INFO):
+        super().__init__(maxsize=0, loop=None)
+        self._log = Logger("q", level)
+        self._log.info('ready.')
+
+    async def peek(self):
+        _message = await self.get()
+        await self.put(_message)
+        return _message
 
 # ..............................................................................
 class MessageBus(object):
@@ -44,7 +59,8 @@ class MessageBus(object):
             self._log.debug(Fore.YELLOW + 'logging message bus set to debug level.')
             logging.basicConfig(level=logging.DEBUG)
         self._loop        = asyncio.get_event_loop()
-        self._queue       = asyncio.Queue()
+#       self._queue       = asyncio.Queue()
+        self._queue       = PeekableQueue()
         self._publishers  = []
         self._subscribers = []
         # may want to catch other signals too
@@ -55,7 +71,6 @@ class MessageBus(object):
         self._loop.set_exception_handler(self.handle_exception)
         self._garbage_collector = GarbageCollector('gc', Fore.RED, self, Level.INFO)
         self.register_subscriber(self._garbage_collector)
-
         self._max_age     = 5.0 # ms
         self._verbose     = True
         self._enabled     = True # by default
@@ -65,9 +80,9 @@ class MessageBus(object):
         self._log.info('ready.')
 
     # ..........................................................................
-    @property
-    def queue(self):
-        return self._queue
+#   @property
+#   def queue(self):
+#       return self._queue
 
     @property
     def queue_size(self):
@@ -175,6 +190,14 @@ class MessageBus(object):
         pass # TODO
 
     # ..........................................................................
+    def peek_message(self):
+        '''
+        Asynchronously waits until it peeks a message from the queue. This
+        does not remove the message.
+        '''
+        return self._queue.peek()
+
+    # ..........................................................................
     def consume_message(self):
         '''
         Asynchronously waits until it pops a message from the queue.
@@ -200,24 +223,22 @@ class MessageBus(object):
         if ( message.event is not Event.CLOCK_TICK and message.event is not Event.CLOCK_TOCK ):
             self._log.info(Style.BRIGHT + 'publishing message: {}'.format(message.name) + Style.NORMAL + ' (event: {}; age: {:d}ms);'.format(message.event, message.age))
         _result = asyncio.create_task(self._queue.put(message))
-        self._log.debug('result from published message: {}'.format(type(_result)))
+        self._log.info(Fore.YELLOW + 'RESULT from published message: {}'.format(type(_result)))
 
     # ..........................................................................
     async def republish_message(self, message):
         '''
-        Asynchronously re-publishes the Message to the MessageBus, and therefore to any Subscribers.
-        This isn't any different than publishing but we might start treating it differently, e.g.,
-        altering the message state.
+        Asynchronously re-publishes a Message to the MessageBus, and therefore to 
+        any Subscribers, unless the message has been acknowledged by all subscribers 
+        ('fully-acknowledged'), in which case it is ignored.
 
-        NOTE: calls to this function should be await'd. Fully-acknowledged messages are ignored.
+        NOTE: calls to this function should be await'd.
         '''
-        if message.fully_acknowledged:
-            self._log.warning(Fore.BLACK + 'ignoring republication of fully-acknowledged message: {} (event: {});'.format(message.name, message.event))
-        elif ( message.event is not Event.CLOCK_TICK and message.event is not Event.CLOCK_TOCK ):
-            self._log.info(Fore.YELLOW + Style.BRIGHT + 'REPUBLISHING message: {} (event: {}; age: {:d}ms);'.format(message.name, message.event, message.age))
-            asyncio.create_task(self._queue.put(message))
-        else:
-            self._log.warning(Fore.BLACK + 'ignoring republication of message: {} (event: {});'.format(message.name, message.event))
+#       if message.fully_acknowledged:
+#           self._log.warning(Fore.BLACK + 'ignoring republication of fully-acknowledged message: {} (event: {});'.format(message.name, message.event))
+#       else:
+        self._log.info(Fore.YELLOW + Style.BRIGHT + 'republishing message: {} (event: {}; age: {:d}ms);'.format(message.name, message.event, message.age))
+        asyncio.create_task(self._queue.put(message))
 
     # ..........................................................................
     def garbage_collect(self, message):

@@ -70,7 +70,6 @@ class Publisher(object):
         while self._enabled:
             _event = self._get_random_event()
             _message = self._message_factory.get_message(_event, _event.description)
-#           _message.set_subscribers(self._message_bus.subscribers)
             # publish the message
             self._message_bus.publish_message(_message)
             self._log.info(Fore.WHITE + Style.BRIGHT + '{} PUBLISHED message: {} (event: {})'.format(self.name, _message, _event.description))
