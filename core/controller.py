@@ -30,6 +30,11 @@ class Controller():
         self._log.info('ready.')
 
     # ................................................................
+    @property
+    def name(self):
+        return 'controller'
+
+    # ................................................................
     def enable(self):
         self._enabled = True
         self._log.info('enabled.')

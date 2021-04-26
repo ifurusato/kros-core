@@ -38,6 +38,7 @@ class Arbitrator(object):
         from the MessageBus its callback(Payload) method is called.
         '''
         self._controllers.append(controller)
+        self._log.info(Fore.MAGENTA + 'registering controller: {}'.format(controller.name))
 
     # ..........................................................................
     def suppress(self, suppressed):
