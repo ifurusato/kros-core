@@ -23,6 +23,8 @@
 #  * Exactly-once delivery. The holy grail of messaging. All messages will be
 #    delivered exactly one time.
 #
+# see; /usr/local/lib/python3.8/asyncio/queues.py
+#
 
 import asyncio, signal, traceback
 import sys, logging
@@ -74,6 +76,22 @@ class MessageBus(object):
     @property
     def queue_size(self):
         return self._queue.qsize()
+
+    def clear(self):
+        '''
+        Clear the message bus of any messages.
+        '''
+        self._queue.mutex.acquire()
+        self._queue.queue.clear()
+        self._queue.all_tasks_done.notify_all()
+        self._queue.unfinished_tasks = 0
+        self._queue.mutex.release()
+#       while not self._queue.empty():
+#           try:
+#               self._queue.get(False)
+#           except Empty:
+#               continue
+#           self._queue.task_done()
 
     # ..........................................................................
     @property
