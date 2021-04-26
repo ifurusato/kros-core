@@ -143,6 +143,13 @@ class MessageBus(object):
         return len(self._publishers)
 
     # ..........................................................................
+    def register_controller(self, controller):
+        '''
+        Register a controller with the Arbitrator.
+        '''
+        self._arbitrator.register_controller(controller) 
+
+    # ..........................................................................
     def register_subscriber(self, subscriber):
         '''
         Register a message subscriber with the message bus.

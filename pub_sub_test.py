@@ -27,6 +27,7 @@ init()
 
 from core.config_loader import ConfigLoader
 from core.logger import Logger, Level
+from core.controller import Controller
 from core.message_bus import MessageBus
 from core.message_factory import MessageFactory
 from core.publisher import Publisher
@@ -55,6 +56,9 @@ def test_pub_sub():
 
     _message_bus = MessageBus(Level.INFO)
     _message_factory = MessageFactory(_message_bus, Level.INFO)
+
+    _controller = Controller(Level.INFO)
+    _message_bus.register_controller(_controller)
 
     _publisher1  = IfsPublisher('A', _message_bus, _message_factory)
 #   _publisher1  = Publisher('A', _message_bus, _message_factory)

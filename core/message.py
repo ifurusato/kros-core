@@ -15,6 +15,8 @@
 #
 
 import string, uuid, random
+from dataclasses import dataclass, field
+from typing import Any
 from datetime import datetime as dt
 from colorama import init, Fore, Style
 init()
@@ -24,6 +26,7 @@ from core.event import Event
 
 ID_CHARACTERS = string.ascii_uppercase + string.digits
 
+@dataclass(order=True)
 class Payload(object):
     '''
     A Message's payload, containing the Event (with priority) and an optional value.
