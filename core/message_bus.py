@@ -35,6 +35,7 @@ from asyncio.queues import Queue
 from core.logger import Logger, Level
 from core.event import Event
 from core.message import Message
+from core.arbitrator import Arbitrator
 from core.subscriber import GarbageCollector
 
 # ..............................................................................
@@ -60,6 +61,7 @@ class MessageBus(object):
         self._loop.set_exception_handler(self.handle_exception)
         self._garbage_collector = GarbageCollector('gc', Fore.RED, self, Level.INFO)
         self.register_subscriber(self._garbage_collector)
+        self._arbitrator  = Arbitrator(level)
         self._max_age     = 20.0 # ms
         self._verbose     = True
         self._enabled     = True # by default
@@ -67,6 +69,11 @@ class MessageBus(object):
         self._log.info('creating subscriber task...')
         self._loop.create_task(self.start_consuming())
         self._log.info('ready.')
+
+    # ..........................................................................
+    async def arbitrate(self, payload):
+        self._log.info('arbitrating payload {}...')
+        await self._arbitrator.arbitrate(payload)
 
     # ..........................................................................
 #   @property

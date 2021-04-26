@@ -26,7 +26,7 @@ ID_CHARACTERS = string.ascii_uppercase + string.digits
 
 class Payload(object):
     '''
-    The payload of a Message, containing the Event and an optional value.
+    A Message's payload, containing the Event (with priority) and an optional value.
     '''
     def __init__(self, event, value):
         self._event     = event
@@ -41,6 +41,12 @@ class Payload(object):
     def restart(self):
         print(Fore.CYAN + 'restart: {}'.format(self._event.description) + Style.RESET_ALL)
         self._restarted += 1
+
+    # priority      ............................................................
+
+    @property
+    def priority(self):
+        return self._event.priority
 
     # event         ............................................................
 

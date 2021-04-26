@@ -9,13 +9,14 @@
 # modified: 2021-04-26
 #
 
+import asyncio, heapq
 import time
 import datetime as dt
 
 from asyncio.queues import Queue
 
-from lib.logger import Logger 
-from lib.event import Event
+from core.logger import Logger 
+from core.event import Event
 
 # ..............................................................................
 class Arbitrator(object):
@@ -26,48 +27,44 @@ class Arbitrator(object):
     def __init__(self, level):
         super().__init__()
         self._log = Logger('arbitrator', level)
-        self._idle_loop_count = 0
-        self._loop_delay_sec = self._config.get('loop_delay_sec')
-        self._ballistic_loop_delay_sec = self._config.get('ballistic_loop_delay_sec')
-        self._queue       = asyncio.PriorityQueue()
-        self._enabled = True
-        self._closed = False
+        self._queue      = asyncio.PriorityQueue()
+        self._enabled    = True
+        self._closed     = False
         self._suppressed = False
-        self._log.info('ready.')
+        self._log.info(Fore.BLUE + 'ready.')
 
     # ..........................................................................
-    def set_suppressed(self, suppressed):
+    def suppress(self, suppressed):
         self._suppressed = suppressed
-        self._log.info('suppressed: {}'.format(suppressed))
+        self._log.info(Fore.BLUE + 'suppressed: {}'.format(suppressed))
 
     # ..........................................................................
     def enable(self):
-        self._log.info('enabled.')
+        self._log.info(Fore.BLUE + 'enabled.')
         self._enabled = True
 
     # ..........................................................................
     def disable(self):
-        self._log.info('disabled.')
+        self._log.info(Fore.BLUE + 'disabled.')
         self._enabled = False
 
     # ..........................................................................
-    def run(self):
-        self._log.info('arbitrating tasks...')
-        while self._enabled:
-            _start_time = dt.datetime.now()
-            if self._suppressed:
-                # if suppressed just clear the queue so events don't build up
-                self._queue.clear()
-            else:
-                _message = await self._queue.get()
-                self._log.info('received message: {}.'.format(_message.name))
+    async def arbitrate(self, payload):
+        self._log.info(Fore.BLUE + 'arbitrating payload: {}.'.format(payload.event.name))
+        _start_time = dt.datetime.now()
+        if self._suppressed:
+            # if suppressed just clear the queue so events don't build up
+            self._queue.clear()
+        else:
+            self._log.info(Fore.BLUE + 'putting payload: {} onto queue...'.format(payload.event.name))
+            await self._queue.put(payload)
+            _smallest = heapq.nsmallest(1, self._queue)
+            _largest  = heapq.nlargest(1, self._queue)
+            self._log.info(Fore.BLUE + 'complete: put payload: {} onto queue; smallest: {}; largest: {}'.format(payload.event.name, _smallest, _largest))
 
-            _delta = dt.datetime.now() - _start_time
-            _elapsed_ms = int(_delta.total_seconds() * 1000)
-            self._log.info('{}ms elapsed.'.format(_elapsed_ms))
-            time.sleep(self._loop_delay_sec)
-
-        self._log.info('loop end.')
+        _delta = dt.datetime.now() - _start_time
+        _elapsed_ms = int(_delta.total_seconds() * 1000)
+        self._log.info(Fore.BLUE + '{}ms elapsed.'.format(_elapsed_ms))
 
     # ..........................................................................
     def close(self):
@@ -76,6 +73,6 @@ class Arbitrator(object):
             return
         self.disable()
         self._closed = False
-        self._log.info('closed.')
+        self._log.info(Fore.BLUE + 'closed.')
 
 # EOF

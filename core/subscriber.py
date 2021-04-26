@@ -214,6 +214,9 @@ class Subscriber(object):
                 return
             self._log.info(self._color + Style.DIM + '🥧 processing message {}'.format(message.name))
             message.process(self)
+            if self._message_bus.verbose:
+                self._log.info(self._color + Style.DIM + '🍏 arbitrating payload for event {}; value: {}'.format(message.payload.event.name, message.payload.value))
+            await self._message_bus.arbitrate(message.payload)
             # want to sleep for less than the deadline amount
             await asyncio.sleep(2)
 
