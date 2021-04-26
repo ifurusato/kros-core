@@ -117,7 +117,7 @@ class IfsPublisher(Publisher):
             self._log.info('[{:03d}]'.format(_count))
             ch  = readchar.readchar()
             och = ord(ch)
-            if och == 13: # CR to print NLs
+            if och == 10 or och == 13: # LF or CR to print NLs
                 self._log.info('[:03d]'.format(_count))
                 print(Logger._repeat('\n',48))
                 continue

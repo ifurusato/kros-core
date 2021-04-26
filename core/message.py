@@ -66,7 +66,6 @@ class Message(object):
         _host_id = "".join(random.choices(ID_CHARACTERS, k=4))
         _instance_name = 'id-{}'.format(_host_id)
         self._instance_name = _instance_name
-#       self._hostname      = '{}.acme.com'.format(_instance_name)
         self._payload       = Payload(event, value)
         self._saved         = 0
         self._expired       = False
@@ -222,15 +221,6 @@ class Message(object):
     @property
     def payload(self):
         return self._payload
-
-    # hostname      ............................................................
-
-#   @property
-#   def hostname(self):
-#       '''
-#       Return the hostname of the message.
-#       '''
-#       return self._hostname
 
     # saved        .............................................................
 
