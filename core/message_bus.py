@@ -46,7 +46,7 @@ class MessageBus(object):
     def __init__(self, level):
         self._log = Logger("bus", level)
         if level is Level.DEBUG:
-            self._log.debug(Fore.YELLOW + 'logging message bus set to debug level.')
+            self._log.debug('logging message bus set to debug level.')
             logging.basicConfig(level=logging.DEBUG)
         self._loop        = asyncio.get_event_loop()
 #       self._queue       = asyncio.Queue()
@@ -57,7 +57,7 @@ class MessageBus(object):
         signals = (signal.SIGHUP, signal.SIGTERM, signal.SIGINT)
         for s in signals:
             self._loop.add_signal_handler(
-                s, lambda s = s: asyncio.create_task(self.shutdown(s)))
+                s, lambda s = s: asyncio.create_task(self.shutdown(s), name='shutdown'),)
         self._loop.set_exception_handler(self.handle_exception)
         self._garbage_collector = GarbageCollector('gc', Fore.RED, self, Level.INFO)
         self.register_subscriber(self._garbage_collector)
@@ -67,12 +67,12 @@ class MessageBus(object):
         self._enabled     = True # by default
         self._closed      = False
         self._log.info('creating subscriber task...')
-        self._loop.create_task(self.start_consuming())
+        self._loop.create_task(self.start_consuming(), name='consume-loop')
         self._log.info('ready.')
 
     # ..........................................................................
     async def arbitrate(self, payload):
-        self._log.info('arbitrating payload {}...')
+        self._log.info('arbitrating payload {}...'.format(payload.event.name))
         await self._arbitrator.arbitrate(payload)
 
     # ..........................................................................
@@ -115,7 +115,7 @@ class MessageBus(object):
         Register a message publisher with the message bus.
         '''
         self._publishers.append(publisher)
-        self._loop.create_task(publisher.publish())
+        self._loop.create_task(publisher.publish(), name='publisher-{}'.format(publisher.name))
         self._log.info('registered publisher \'{}\'; {:d} publisher{} in list.'.format( \
                 publisher.name, 
                 len(self._publishers),
@@ -155,7 +155,7 @@ class MessageBus(object):
         Register a message subscriber with the message bus.
         '''
         self._subscribers.insert(0, subscriber)
-        self._loop.create_task(subscriber.consume())
+        self._loop.create_task(subscriber.consume(), name='subscriber-{}'.format(subscriber.name))
         self._log.info('registered subscriber \'{}\'; {:d} subscriber{} in list.'.format( \
                 subscriber.name, 
                 len(self._subscribers),
@@ -184,7 +184,11 @@ class MessageBus(object):
 
     # ..........................................................................
     def is_expired(self, message):
-        return message.age > self._max_age
+        '''
+        Returns True if the message has been manually expired or its age has
+        passed the maximum age limit.
+        '''
+        return message.expired or message.age > self._max_age
 
     # ..........................................................................
     async def start_consuming(self):
@@ -241,8 +245,9 @@ class MessageBus(object):
         '''
         if ( message.event is not Event.CLOCK_TICK and message.event is not Event.CLOCK_TOCK ):
             self._log.info(Style.BRIGHT + 'publishing message: {}'.format(message.name) + Style.NORMAL + ' (event: {}; age: {:d}ms);'.format(message.event, message.age))
-        _result = asyncio.create_task(self._queue.put(message))
-        self._log.info(Fore.YELLOW + 'RESULT from published message: {}'.format(type(_result)))
+        _result = asyncio.create_task(self._queue.put(message), name='publish-message-{}'.format(message.name))
+#       self._log.info(Fore.YELLOW + 'result from published message: {}'.format(_result))
+        self._log.info(Fore.YELLOW + 'result from published message: {}'.format(type(_result)))
 
     # ..........................................................................
     async def republish_message(self, message):
@@ -253,11 +258,8 @@ class MessageBus(object):
 
         NOTE: calls to this function should be await'd.
         '''
-#       if message.fully_acknowledged:
-#           self._log.warning(Fore.BLACK + 'ignoring republication of fully-acknowledged message: {} (event: {});'.format(message.name, message.event))
-#       else:
-        self._log.info(Fore.YELLOW + Style.BRIGHT + 'republishing message: {} (event: {}; age: {:d}ms);'.format(message.name, message.event, message.age))
-        asyncio.create_task(self._queue.put(message))
+        self._log.info(Fore.YELLOW + 'republishing message: {} (event: {}; age: {:d}ms);'.format(message.name, message.event, message.age))
+        asyncio.create_task(self._queue.put(message), name='republish-message-{}'.format(message.name))
 
     # ..........................................................................
     def garbage_collect(self, message):
@@ -276,7 +278,7 @@ class MessageBus(object):
         else:
             self._log.error('caught exception: {}'.format(context.get('message')))
         if loop.is_running() and not loop.is_closed():
-            asyncio.create_task(self.shutdown(loop))
+            asyncio.create_task(self.shutdown(loop), name='shutdown-on-exception')
         else:
             self._log.info("loop already shut down.")
 

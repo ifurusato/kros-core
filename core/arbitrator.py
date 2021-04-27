@@ -29,7 +29,7 @@ class Arbitrator(object):
         self._queue       = PriorityQueue()
         self._suppressed  = False
         self._controllers = []
-        self._log.info(Fore.MAGENTA + 'ready.')
+        self._log.info(Fore.MAGENTA + Style.DIM + 'ready.')
 
     # ..........................................................................
     def register_controller(self, controller: Controller):
@@ -38,7 +38,7 @@ class Arbitrator(object):
         from the MessageBus its callback(Payload) method is called.
         '''
         self._controllers.append(controller)
-        self._log.info(Fore.MAGENTA + 'registering controller: {}'.format(controller.name))
+        self._log.info(Fore.MAGENTA + Style.DIM + 'registering controller: {}'.format(controller.name))
 
     # ..........................................................................
     def suppress(self, suppressed):
@@ -46,34 +46,36 @@ class Arbitrator(object):
         When set True incoming events are suppressed.
         '''
         self._suppressed = suppressed
-        self._log.info(Fore.MAGENTA + 'suppressed: {}'.format(suppressed))
+        self._log.info(Fore.MAGENTA + Style.DIM + 'suppressed: {}'.format(suppressed))
 
     # ..........................................................................
     async def arbitrate(self, payload):
-        self._log.info(Fore.MAGENTA + 'arbitrating payload: {}.'.format(payload.event.name))
-        _start_time = dt.datetime.now()
+        '''
+        Arbitrates the addition of the payload into the priority queue.
+        If suppressed the queue is cleared so that events don't accumulate.
+        '''
+        self._log.info(Fore.MAGENTA + Style.DIM + 'arbitrating payload: {}'.format(payload.event.name))
         if self._suppressed:
-            # if suppressed just clear the queue so events don't build up
             self._queue.clear()
         else:
-            self._log.info(Fore.MAGENTA + 'putting payload: {} onto queue...'.format(payload.event.name))
-            if len(self._controllers > 0):
+            _start_time = dt.datetime.now()
+            self._log.info(Fore.MAGENTA + Style.DIM + 'putting payload: {} onto queue...'.format(payload.event.name))
+            if len(self._controllers) > 0:
                 await self._queue.put(( payload.priority, payload ))
-                self._log.info(Fore.MAGENTA + 'complete: put payload: {} onto queue: {} elements.'.format(payload.event.name, self._queue.qsize()))
-                trigger_callback()
+                self._log.info(Fore.MAGENTA + Style.DIM + 'complete: put payload: {} onto queue: {} elements.'.format(payload.event.name, self._queue.qsize()))
+                await self.trigger_callback()
+                _delta = dt.datetime.now() - _start_time
+                _elapsed_ms = int(_delta.total_seconds() * 1000)
+                self._log.info(Fore.MAGENTA + Style.DIM + '{:5.2f}ms elapsed.'.format(_elapsed_ms))
             else:
-                self._log.info(Fore.MAGENTA + 'no registered controllers: payload ignored.')
-
-
-        _delta = dt.datetime.now() - _start_time
-        _elapsed_ms = int(_delta.total_seconds() * 1000)
-        self._log.info(Fore.MAGENTA + '{}ms elapsed.'.format(_elapsed_ms))
+                self._log.info(Fore.MAGENTA + Style.DIM + 'no registered controllers: payload ignored.')
 
     # ..........................................................................
-    def trigger_callback(self):
-        self._log.info(Fore.MAGENTA + 'trigger callback.')
-        _payload = self._queue.get()
+    async def trigger_callback(self):
+        self._log.info(Fore.MAGENTA + Style.DIM + 'trigger callback.')
+        _tuple = await self._queue.get()
+        _payload = _tuple[1]
         for controller in self._controllers:
-            controller.callback(payload)
+            controller.callback(_payload)
 
 # EOF

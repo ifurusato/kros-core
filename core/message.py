@@ -15,8 +15,6 @@
 #
 
 import string, uuid, random
-from dataclasses import dataclass, field
-from typing import Any
 from datetime import datetime as dt
 from colorama import init, Fore, Style
 init()
@@ -24,59 +22,24 @@ init()
 from core.logger import Logger, Level
 from core.event import Event
 
-ID_CHARACTERS = string.ascii_uppercase + string.digits
-
-@dataclass(order=True)
-class Payload(object):
-    '''
-    A Message's payload, containing the Event (with priority) and an optional value.
-    '''
-    def __init__(self, event, value):
-        self._event     = event
-        self._value     = value
-        self._restarted = 0
-
-    # ..........................................................................
-    @property
-    def restarted(self):
-        return self._restarted
-
-    def restart(self):
-        print(Fore.CYAN + 'restart: {}'.format(self._event.description) + Style.RESET_ALL)
-        self._restarted += 1
-
-    # priority      ............................................................
-
-    @property
-    def priority(self):
-        return self._event.priority
-
-    # event         ............................................................
-
-    @property
-    def event(self):
-        return self._event
-
-    # value         ............................................................
-
-    @property
-    def value(self):
-        return self._value
 
 # ..............................................................................
 class Message(object):
     '''
     Don't create one of these directly: use the MessageFactory class.
     '''
+
+    ID_CHARACTERS = string.ascii_uppercase + string.digits
+
     def __init__(self, event, value):
         self._timestamp     = dt.now()
         self._message_id    = uuid.uuid4()
         # generate instance name
-        _host_id = "".join(random.choices(ID_CHARACTERS, k=4))
+        _host_id = "".join(random.choices(Message.ID_CHARACTERS, k=4))
         _instance_name = 'id-{}'.format(_host_id)
         self._instance_name = _instance_name
         self._payload       = Payload(event, value)
-        self._saved         = 0
+        self._sent          = 0
         self._expired       = False
         self._gc            = False
         self._processors    = {} # list of processor names who've processed message
@@ -110,6 +73,17 @@ class Message(object):
 
     # processed     ............................................................
 
+    def print_procd(self):
+        '''
+        Returns a pretty-printed list of processors that have processed
+        this message, or '[none]' if none.
+        '''
+        _list = []
+        for processor in self._processors:
+            if self._processors[processor]:
+                _list.append('{} '.format(processor.name))
+        return ''.join(_list) if len(_list) > 0 else '[none]'
+
     @property
     def processed(self):
         return len(self._processors)
@@ -118,7 +92,7 @@ class Message(object):
         if processor in self._processors:
             raise Exception('message {} already processed by {}.'.format(self.name, processor.name))
         else:
-            print(Fore.CYAN + 'process: {}'.format(self.name) + Style.RESET_ALL)
+#           print(Fore.CYAN + 'process: {}'.format(self.name) + Style.RESET_ALL)
             self._processors[processor] = True
 
     # expired       ............................................................
@@ -128,7 +102,7 @@ class Message(object):
         return self._expired
 
     def expire(self):
-        print(Fore.CYAN + 'expire: {}'.format(self.name) + Style.RESET_ALL)
+#       print(Fore.CYAN + 'expire: {}'.format(self.name) + Style.RESET_ALL)
         self._expired = True
 
     # garbage collection   .....................................................
@@ -142,7 +116,7 @@ class Message(object):
         Garbage collect this message. This sets the 'gc' flag and nullifies
         the event and value properties so no further processing is possible.
         '''
-        print(Fore.CYAN + 'gc: {}'.format(self.name) + Style.RESET_ALL)
+#       print(Fore.CYAN + 'gc: {}'.format(self.name) + Style.RESET_ALL)
         if self._gc:
             raise Exception('already garbage collected.')
         self._gc = True
@@ -189,9 +163,9 @@ class Message(object):
         '''
         for subscr in self._subscribers:
             if subscr == subscriber and self._subscribers[subscriber] == True:
-                print(Fore.GREEN + 'message {} acknowledged_by subscriber {}; return True.'.format(self.name, subscriber.name) + Style.RESET_ALL)
+#               print(Fore.GREEN + 'message {} acknowledged_by subscriber {}; return True.'.format(self.name, subscriber.name) + Style.RESET_ALL)
                 return True
-        print(Fore.RED + 'message {} has not been acknowledged by subscriber {}; return False.'.format(self.name, subscriber.name) + Style.RESET_ALL)
+#       print(Fore.RED + 'message {} has not been acknowledged by subscriber {}; return False.'.format(self.name, subscriber.name) + Style.RESET_ALL)
         return False
 
     def acknowledge(self, subscriber):
@@ -203,12 +177,12 @@ class Message(object):
         if len(self._subscribers) == 0:
             raise Exception('no subscribers set ({}).'.format(self._instance_name))
         if self._subscribers[subscriber] is True:
-            print(Style.BRIGHT + 'message {} already acknowledged by subscriber: {}'.format(self.name, subscriber.name) + Style.RESET_ALL)
-#           raise Exception('message {} already acknowledged by subscriber: {}'.format(self.name, subscriber.name))
+#           print(Fore.RED + Style.NORMAL + 'message {} already acknowledged by subscriber: {}'.format(self.name, subscriber.name) + Style.RESET_ALL)
+            raise Exception('message {} already acknowledged by subscriber: {}'.format(self.name, subscriber.name))
         else:
             self._subscribers[subscriber] = True
-            print(Fore.GREEN + Style.BRIGHT + 'message {} acknowledged by subscriber {}; still unacknowledged by {:d}.'.format(\
-                    self.name, subscriber.name, self.unacknowledged_count) + Style.RESET_ALL)
+#           print(Fore.GREEN + Style.BRIGHT + 'message {} acknowledged by subscriber {}; still unacknowledged by {:d}.'.format(\
+#                   self.name, subscriber.name, self.unacknowledged_count) + Style.RESET_ALL)
 
     # instance_name ............................................................
 
@@ -231,14 +205,48 @@ class Message(object):
     def payload(self):
         return self._payload
 
-    # saved        .............................................................
+    # sent         .............................................................
 
     @property
-    def saved(self):
-        return self._saved
+    def sent(self):
+        '''
+        Returns the number of times this message's payload has been sent to
+        the Arbitrator.
+        '''
+        return self._sent
 
-    def save(self):
-        print(Fore.CYAN + 'save: {}'.format(self._payload.event.description) + Style.RESET_ALL)
-        self._saved += 1
+    def acknowledge_sent(self):
+        '''
+        To be called when the message's payload has been sent the Arbitrator.
+        '''
+        self._sent += 1
+#       print(Fore.CYAN + 'payload {} sent {:d} times.'.format(self._payload.event.description, self._sent) + Style.RESET_ALL)
+
+# ..............................................................................
+class Payload(object):
+    '''
+    A Message's payload, containing the Event (with priority) and an optional value.
+    '''
+    def __init__(self, event, value):
+        self._event = event
+        self._value = value
+
+    # priority      ............................................................
+
+    @property
+    def priority(self):
+        return self._event.priority
+
+    # event         ............................................................
+
+    @property
+    def event(self):
+        return self._event
+
+    # value         ............................................................
+
+    @property
+    def value(self):
+        return self._value
 
 #EOF

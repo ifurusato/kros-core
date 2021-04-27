@@ -67,14 +67,148 @@ class Controller():
         _start_time = dt.datetime.now()
 
         _event = payload.event
-        self._log.info(Fore.CYAN + 'act()' + Style.BRIGHT + ' event: {}.'.format(_event) + Fore.YELLOW)
+        self._log.info(Fore.CYAN + 'act upon event:' + Style.BRIGHT + ' {}'.format(_event.description) + Fore.YELLOW)
 
-        # no action ............................................................
-        if _event is Event.NO_ACTION:
-            self._log.info('event: no action.')
-            pass
+        # name                                          n   description             priority  ballistic?
+        # system events ....................
+        if _event is Event.NOOP:                    # ( 0, "no operation",             0,     False)
+           self._log.info('event: noop.')
+        elif _event is Event.BATTERY_LOW:           # ( 1, "battery low",              0,     True)
+           self._log.warning('event: battery low.')
+        elif _event is Event.SHUTDOWN:              # ( 2, "shutdown",                 1,     True)
+           self._log.info('event: shutdown.')
+        elif _event is Event.HIGH_TEMPERATURE:      # ( 3, "high temperature",         1,     False)
+           self._log.warning('event: high temperature.')
 
-        # EVENT UNKNOWN: FAILURE ...............................................
+        # stopping and halting .............
+        elif _event is Event.STOP:                  # ( 4, "stop",                     2,     True)
+           self._log.info('event: stop.')
+        elif _event is Event.HALT:                  # ( 5, "halt",                     3,     False)
+           self._log.info('event: halt.')
+        elif _event is Event.BRAKE:                 # ( 6, "brake",                    4,     False)
+           self._log.info('event: brake.')
+        elif _event is Event.BUTTON:                # ( 7, "button",                   5,     False)
+           self._log.info('event: button press.')
+        elif _event is Event.STANDBY:               # ( 8, "standby",                  6,     False)
+           self._log.info('event: standby.')
+        
+        # bumper ...........................
+        elif _event is Event.COLLISION_DETECT:      # ( 10, "collision detect",         9,   False)
+           self._log.warning('event: collision detect.')
+        elif _event is Event.BUMPER_PORT:           # ( 11, "bumper port",             10,    True)
+           self._log.info('event: bumper-port.')
+        elif _event is Event.BUMPER_CNTR:           # ( 12, "bumper center",           10,    True)
+           self._log.info('event: bumper-center.')
+        elif _event is Event.BUMPER_STBD:           # ( 13, "bumper starboard",        10,    True)
+           self._log.info('event: bumper-starboard.')
+
+        # infrared .........................
+        elif _event is Event.INFRARED_PORT_SIDE:    # ( 20, "infrared port side",      20,    True)
+           self._log.info('event: infrared-port-side.')
+        elif _event is Event.INFRARED_PORT:         # ( 21, "infrared port",           20,    True)
+           self._log.info('event: infrared-port.')
+        elif _event is Event.INFRARED_CNTR:         # ( 22, "infrared cntr",           20,    True)
+           self._log.info('event: infrared-center.')
+        elif _event is Event.INFRARED_STBD:         # ( 23, "infrared stbd",           20,    True)
+           self._log.info('event: infrared-starboard.')
+        elif _event is Event.INFRARED_STBD_SIDE:    # ( 24, "infrared stbd side",      20,    True)
+           self._log.info('event: infrared-starboard-side.')
+        
+        # emergency movements ..............
+        elif _event is Event.EMERGENCY_ASTERN:      # ( 30, "emergency astern",        15,    True)
+           self._log.info('event: emergency-astern.')
+
+        # movement ahead ...................
+        elif _event is Event.FULL_AHEAD:            # ( 45, "full ahead",              100,   False)
+           self._log.info('event: full-ahead.')
+        elif _event is Event.HALF_AHEAD:            # ( 46, "half ahead",              100,   False)
+           self._log.info('event: half-ahead.')
+        elif _event is Event.SLOW_AHEAD:            # ( 47, "slow ahead",              100,   False)
+           self._log.info('event: slow-ahead')
+        elif _event is Event.DEAD_SLOW_AHEAD:       # ( 48, "dead slow ahead",         100,   False)
+           self._log.info('event: dead-slow-ahead.')
+        elif _event is Event.AHEAD:                 # ( 49, "ahead",                   100,   False)
+           self._log.info('event: ahead.')
+
+        # movement astern ..................
+        elif _event is Event.ASTERN:                # ( 50, "astern",                  100,   False)
+           self._log.info('event: astern.')
+        elif _event is Event.DEAD_SLOW_ASTERN:      # ( 51, "dead slow astern",        100,   False)
+           self._log.info('event: dead-slow-astern.')
+        elif _event is Event.SLOW_ASTERN:           # ( 52, "slow astern",             100,   False)
+           self._log.info('event: slow-astern.')
+        elif _event is Event.HALF_ASTERN:           # ( 53, "half astern",             100,   False)
+           self._log.info('event: half-astern.')
+        elif _event is Event.FULL_ASTERN:           # ( 54, "full astern",             100,   False)
+           self._log.info('event: full-astern.')
+
+        # relative change ..................
+        elif _event is Event.INCREASE_SPEED:        # ( 60, "increase speed",          100,   False)
+           self._log.info('event: increase-speed.')
+        elif _event is Event.EVEN:                  # ( 61, "even",                    100,   False)
+           self._log.info('event: even.')
+        elif _event is Event.DECREASE_SPEED:        # ( 62, "decrease speed",          100,   False)
+           self._log.info('event: decrease-speed.')
+
+        # port turns .......................
+        elif _event is Event.TURN_AHEAD_PORT:       # ( 70, "turn ahead port",         100,   False)
+           self._log.info('event: turn-ahead-port.')
+        elif _event is Event.TURN_TO_PORT:          # ( 71, "turn to port",            100,   False)
+           self._log.info('event: turn-to-port.')
+        elif _event is Event.TURN_ASTERN_PORT:      # ( 72, "turn astern port",        100,   False)
+           self._log.info('event: astern-port.')
+        elif _event is Event.SPIN_PORT:             # ( 73, "spin port",               100,   False)
+           self._log.info('event: spin-port.')
+
+        # starboard turns ..................
+        elif _event is Event.SPIN_STBD:             # ( 80, "spin starboard",          100,   False)
+           self._log.info('event: spin-starboard.')
+        elif _event is Event.TURN_ASTERN_STBD:      # ( 81, "turn astern starboard",   100,   False)
+           self._log.info('event: turn-astern-starboard.')
+        elif _event is Event.TURN_TO_STBD:          # ( 82, "turn to starboard",       100,   False)
+           self._log.info('event: turn-to-starboard.')
+        elif _event is Event.TURN_AHEAD_STBD:       # ( 83, "turn ahead starboard",    100,   False)
+           self._log.info('event: turn-ahead-starboard.')
+
+        # high level behaviours ............
+        elif _event is Event.ROAM:                  # ( 90, "roam",                    100,   False)
+           self._log.info('event: roam.')
+        elif _event is Event.SNIFF:                 # ( 91, "A: sniff",                100,    True) # A Button
+           self._log.info('event: sniff.')
+        elif _event is Event.VIDEO:                 # ( 92, "L1: video",               150,   False) # L1 Button
+           self._log.info('event: video.')
+        elif _event is Event.EVENT_L2:              # ( 93, "L2",                      150,   False) # L2 Button
+           self._log.info('event: L2.')
+        elif _event is Event.EVENT_R1:              # ( 94, "R1: cruise",              150,   False) # R1 Button
+           self._log.info('event: R1.')
+        elif _event is Event.LIGHTS:                # ( 95, "R2: lights",              150,   False) # R2 Button
+           self._log.info('event: lights.')
+        elif _event is Event.MOTION_DETECT:         # ( 96, "motion detect",           150,   False)
+           self._log.info('event: motion-detect.')
+        
+        # movement directives ..............
+        elif _event is Event.FORWARD_VELOCITY:      # ( 101, "forward velocity",       200,   False)
+           self._log.info('event: forward-velocity.')
+        elif _event is Event.THETA:                 # ( 102, "theta",                  200,   False)
+           self._log.info('event: theta.')
+        elif _event is Event.PORT_VELOCITY:         # ( 103, "port velocity",          200,   False)
+           self._log.info('event: port-velocity.')
+        elif _event is Event.PORT_THETA:            # ( 104, "port theta",             200,   False)
+           self._log.info('event: port-theta.')
+        elif _event is Event.STBD_VELOCITY:         # ( 105, "starboard velocity",     200,   False)
+           self._log.info('event: starboard-velocity.')
+        elif _event is Event.STBD_THETA:            # ( 106, "starboard theta",        200,   False)
+           self._log.info('event: starboard-theta.')
+        
+        # other behaviours (> 500) .........
+        elif _event is Event.NO_ACTION:             # ( 500, "no action",              500,   False)
+           self._log.info('event: no action.')
+        elif _event is Event.CLOCK_TICK:            # ( 501, "tick",                   500,   False)
+           self._log.info('event: tick.')
+        elif _event is Event.CLOCK_TOCK:            # ( 502, "tock",                   500,   False)
+           self._log.info('event: tock.')
+
+        # unrecognised event  ..................................................
         else:
             self._log.error('unrecognised event: {}'.format(_event))
             pass
