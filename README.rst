@@ -20,6 +20,27 @@ This library is relatively "low-level" and could be used for any Python 3 based 
 It will be distributed via `PyPy <https://pypi.org/>`_ so that its components can be
 easily installed from the command line.
 
+The basic function is for sensors to act as "Publishers" in a "Publish-Subscribe" model,
+firing event-laden messages onto an asynchronous message bus. Subscribers to the bus can
+filter which event types they are interested in. The flow of messages are thus filtered
+through the Subscribers, who pass on to an Arbitrator messages they have consumed. Once all 
+Subscribers have acknowledged a message it is passed to a Garbage Collector (a specialised
+Subscriber).
+
+Each event type has a fixed priority. The Arbitrator receives this flow of events and 
+passes along to a Controller the highest priority event for a given clock cycle (typically
+50ms/20Hz). The Controller takes the highest priority event and for that clock cycle 
+initiates any Behaviours registered for that event type. 
+
+For example, a Subscriber that filters on bumper events receives a message whose event
+type is Event.BUMPER_PORT (the left/port side bumper has been triggered). This Subscriber
+passes the Payload of its Message to the Arbitrator. Since a bumper press is a relatively 
+high priority event it's likely that it will be the highest priority and is therefore
+passed on to the Controller.  If an avoidance Behaviour &mdash; let's call it AVOID_PORT
+&mdash; has been registered with the Controller, it is called and the robot will begin
+whatever the AvoidPort behaviour entails, perhaps stopping, backing up while turning 
+clockwise, then proceeding forward again on a new trajectory.
+
 
 Features
 ********
@@ -30,7 +51,7 @@ Features
 * timestamped, multi-level, colorised [#f2]_ logging 
 * written in Python 3
 
-.. [#f1] Uses finite state machines, an asynchronous message queue, an arbitrator and controller for task prioritisation.
+.. [#f1] Uses finite state machines, an asynchronous message bus, an arbitrator and controller for task prioritisation.
 .. [#f2] Colorised console output tested only on Unix/Linux operating systems.
 
 
@@ -48,7 +69,6 @@ already installed so you can install pytest via pip3::
     sudo pip3 install pytest
 
 
-
 Installation
 ************
 
@@ -59,6 +79,21 @@ command line::
     % pip3 install --user kros-core
 
 This ability will be available once kros-core has been published to PyPI.
+
+
+Usage
+*****
+
+The current functionality is entirely as a robot simulator, i.e., once installed
+it's possible to run the a test script without requiring an actual robot. Execute
+the script via::
+
+    % pub_sub_test.py
+
+to start the message bus event loop. The robot sensors are simulated via key
+presses. You can type '?' to see a display mapping which key fires which event.
+Type 'i' for system information, 'q' to quit. For example, typing 'd' simulates
+the center infrared sensor being triggered.
 
 
 Status

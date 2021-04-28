@@ -105,8 +105,8 @@ class Subscriber(object):
         elif _peeked_message.gcd:
             raise Exception('{} cannot consume: message has been garbage collected. [1]'.format(self.name))
 
-
-        if self.acceptable(_peeked_message):
+        _ackd = _peeked_message.acknowledged_by(self)
+        if not _ackd and self.acceptable(_peeked_message):
             # acknowledge we've seen the message
             self._log.info(self._color + Style.DIM + 'acknowledging accepted message:' \
                     + Fore.WHITE + ' {}; event: {} (queue: {:d} elements)'.format(
@@ -125,7 +125,7 @@ class Subscriber(object):
             # If not gc'd, republish the message. If fully-ackd it will be ignored
 #           if not _message.gcd and not _message.fully_acknowledged:
             await self._message_bus.republish_message(_message)
-        elif not _peeked_message.acknowledged_by(self):
+        elif not _ackd:
             # if not already ack'd, acknowledge we've seen the message
             self._log.info(self._color + Style.DIM + 'acknowledging otherwise-ignored message:' \
                     + Fore.WHITE + ' {}; event: {} (queue: {:d} elements)'.format(
@@ -411,7 +411,7 @@ class GarbageCollector(Subscriber):
             _message.gc() # mark as garbage collected and don't republish
             if self._message_bus.verbose:
                 self._log.info(self._color + 'garbage collected message:' + Fore.WHITE + ' {}; gcd: {}'.format(_message.name, _message.gcd))
-        else:
+        elif not _peeked_message.acknowledged_by(self):
             # acknowledge we've seen the message
             self._log.info(self._color + Style.DIM + 'gc-acknowledging message:' + Fore.WHITE + ' {}; event: {} (queue: {:d} elements)'.format(
                     _peeked_message.name, _peeked_message.event.description, self._message_bus.queue_size))
