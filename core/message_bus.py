@@ -49,10 +49,10 @@ class MessageBus(object):
             self._log.debug('logging message bus set to debug level.')
             logging.basicConfig(level=logging.DEBUG)
         self._loop        = asyncio.get_event_loop()
-#       self._queue       = asyncio.Queue()
-        self._queue       = PeekableQueue()
+        self._queue       = PeekableQueue(level)
         self._publishers  = []
         self._subscribers = []
+        self._tasks       = []
         # may want to catch other signals too
         signals = (signal.SIGHUP, signal.SIGTERM, signal.SIGINT)
         for s in signals:
@@ -70,6 +70,18 @@ class MessageBus(object):
         self._loop.create_task(self.start_consuming(), name='consume-loop')
         self._log.info('ready.')
 
+    # ..........................................................................
+    def add_task(self, task):
+        self._tasks.append(task)
+        self._log.info(Fore.YELLOW + 'PRE:\t{:d} tasks.'.format(len(self._tasks)))
+
+    # ..........................................................................
+    def clean_tasks(self):
+        for _task in self._tasks:
+            if _task.done():
+                self._tasks.remove(_task)
+        self._log.info(Fore.YELLOW + 'POST:\t{:d} tasks.'.format(len(self._tasks)))
+       
     # ..........................................................................
     async def arbitrate(self, payload):
         self._log.info('arbitrating payload {}...'.format(payload.event.name))
@@ -225,14 +237,16 @@ class MessageBus(object):
         '''
         Asynchronously waits until it pops a message from the queue.
 
-        NOTE: calls to this function should be await'd, and every call should correspond with a call to task_done().
+        NOTE: calls to this function should be await'd, and every call should
+        correspond with a subsequent call to consumed().
         '''
         return self._queue.get()
 
     # ..........................................................................
-    def task_done(self):
+    def consumed(self):
         '''
-        Every call to consume_message() should correspond with a call to task_done().
+        Every call to consume_message() should correspond with a call to consumed().
+        This calls the asyncio.queue.task_done() method.
         '''
         self._queue.task_done()
 
@@ -333,6 +347,12 @@ class MessageBus(object):
                 subscriber.disable()
             if self._loop.is_running():
                 self._loop.stop()
+
+            self.clean_tasks()
+            for _task in self._tasks:
+                if _task.done():
+                    self._tasks.remove(_task)
+
             self._log.info('disabled.')
         else:
             self._log.warning('already disabled.')
@@ -360,6 +380,7 @@ class PeekableQueue(Queue):
 
     async def peek(self):
         _message = await self.get()
+        self.task_done()
         await self.put(_message)
         return _message
 

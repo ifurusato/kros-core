@@ -99,7 +99,6 @@ class Subscriber(object):
         processed and eventually garbage collected.
         '''
         _peeked_message = await self._message_bus.peek_message()
-        self._message_bus.task_done()
         if not _peeked_message:
             raise Exception('peek returned none.')
         elif _peeked_message.gcd:
@@ -116,12 +115,13 @@ class Subscriber(object):
             self._log.info(self._color + Style.DIM + 'waiting to consume acceptable message:' \
                     + Fore.WHITE + ' {}; event: {}'.format(_peeked_message.name, _peeked_message.event.description))
             _message = await self._message_bus.consume_message()
-            self._message_bus.task_done()
+            self._message_bus.consumed()
             if self._message_bus.verbose:
                 self._log.info(self._color + Style.DIM + 'consuming acceptable message:' \
                     + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
             # handle acceptable message
-            asyncio.create_task(self.handle_message(_message), name='handle-message-{}'.format(_message.name))
+            self._message_bus.add_task(asyncio.create_task(self.handle_message(_message), name='handle-message-{}'.format(_message.name)))
+ 
             # If not gc'd, republish the message. If fully-ackd it will be ignored
 #           if not _message.gcd and not _message.fully_acknowledged:
             await self._message_bus.republish_message(_message)
@@ -169,11 +169,11 @@ class Subscriber(object):
 
         self._log.info(self._color + Style.DIM + 'creating task for processing message:' \
                 + Fore.WHITE + ' {}; for event: {}'.format(message.name, message.event.description))
-        asyncio.create_task(self.process_message(message, _event), name='process-message-{}'.format(message.name))
+        self._message_bus.add_task(asyncio.create_task(self.process_message(message, _event), name='process-message-{}'.format(message.name)))
 
         self._log.info(self._color + Style.DIM + 'creating task for cleanup after message:' \
                 + Fore.WHITE + ' {}; for event: {}'.format(message.name, message.event.description))
-        asyncio.create_task(self.cleanup_message(message, _event), name='cleanup-message-{}'.format(message.name))
+        self._message_bus.add_task(asyncio.create_task(self.cleanup_message(message, _event), name='cleanup-message-{}'.format(message.name)))
 
 #       print(Fore.RED + '🍎 END event tracking for message:' + Fore.WHITE + ' {}; for event: {}'.format(message.name, message.event.description))
 #       _event.set()
@@ -217,7 +217,9 @@ class Subscriber(object):
     # ................................................................
     async def cleanup_message(self, message, event):
         '''
-        Cleanup tasks related to completing work on a message.
+        Cleanup tasks related to completing work on a message. This also
+        sets the asyncio event to indicate that we've finished that event
+        cycle.
 
         :param message:  consumed message that is done being processed.
         :param event:    the asyncio.Event to watch for message extention or cleaning up.
@@ -235,46 +237,6 @@ class Subscriber(object):
         event.set()
         if self._message_bus.verbose:
             self._log.info(self._color + Style.DIM + '🧀 END cleanup: acknowledged {}'.format(message.name))
-
-    # ................................................................
-#   async def _save(self, message):
-#       '''
-#       Save the message to a database.
-#       '''
-        # unhelpful simulation of i/o work
-#       await asyncio.sleep(random.random())
-#       if random.randrange(1, 5) == 3:
-#           raise SaveFailed('Could not save event {} from payload'.format(payload.event))
-#       message.save()
-#       self._log.info(self._color + Style.DIM + 'saving payload {} into database; saved? {}'.format(message.event.name, message.saved))
-
-    # ................................................................
-#   async def _restart_host(self, payload):
-#       '''
-#       Restart a given host.
-#       '''
-#       self._log.info(self._color + Style.DIM + 'restarting host for event {}...'.format(payload.event.name, payload.restarted))
-#       # unhelpful simulation of i/o work
-#       await asyncio.sleep(random.random())
-#       if random.randrange(1, 5) == 3:
-#           raise RestartFailed('Could not restart {}'.format(payload))
-#       payload.restart()
-#       if self._message_bus.verbose:
-#           self._log.info(self._color + Style.DIM + 'restarted host for event {}; restarted? {}'.format(payload.event.name, payload.restarted))
-
-    # ................................................................
-#   def _handle_results(self, results, message):
-#       if self._message_bus.verbose:
-#           self._log.info(self._color + 'BEGIN. handling results for message: {}'.format(message.name))
-#       for result in results:
-#           if isinstance(result, RestartFailed):
-#               self._log.error('retrying for failure to restart: {}'.format(message.hostname))
-#           elif isinstance(result, SaveFailed):
-#               self._log.error('failed to save: {}'.format(message.hostname))
-#           elif isinstance(result, Exception):
-#               self._log.error('handling general error: {}'.format(result))
-#       if self._message_bus.verbose:
-#           self._log.info(self._color + 'END. handling results for message: {}'.format(message.name))
 
     # ................................................................
     def get_formatted_time(self, label, value):
@@ -394,7 +356,6 @@ class GarbageCollector(Subscriber):
         explicitly garbage collect the message.
         '''
         _peeked_message = await self._message_bus.peek_message()
-        self._message_bus.task_done()
         if not _peeked_message:
             raise Exception('peek returned none.')
         elif _peeked_message.gcd:
@@ -402,12 +363,10 @@ class GarbageCollector(Subscriber):
         if self._message_bus.verbose: # TEMP
             self._log.debug(self._color + 'gc-consume() message:' + Fore.WHITE + ' {}; event: {}'.format(_peeked_message.name, _peeked_message.event.description))
 
-        # TODO: only garbage collect (consume) if filter accepts the peeked message
+        # garbage collect (consume) if filter accepts the peeked message
         if self.acceptable(_peeked_message):
             _message = await self._message_bus.consume_message()
-            self._message_bus.task_done()
-#           if self._message_bus.verbose:
-#               self._log.info(self._color + Style.NORMAL + 'garbage collecting message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
+            self._message_bus.consumed()
             _message.gc() # mark as garbage collected and don't republish
             if self._message_bus.verbose:
                 self._log.info(self._color + 'garbage collected message:' + Fore.WHITE + ' {}; gcd: {}'.format(_message.name, _message.gcd))
