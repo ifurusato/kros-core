@@ -7,7 +7,7 @@
 #
 # author:   Murray Altheim
 # created:  2021-03-10
-# modified: 2021-03-13
+# modified: 2021-04-28
 #
 # An asyncio-based publish/subscribe-style message bus guaranteeing exactly-once
 # delivery for each message. This is done by populating each message with the
@@ -73,15 +73,24 @@ class MessageBus(object):
     # ..........................................................................
     def add_task(self, task):
         self._tasks.append(task)
-        self._log.info(Fore.YELLOW + 'PRE:\t{:d} tasks.'.format(len(self._tasks)))
+        self._log.info(Fore.YELLOW + '{:d} active tasks.'.format(len(self._tasks)))
 
     # ..........................................................................
-    def clean_tasks(self):
+    def clear_tasks(self):
+        '''
+        Clears the task list of any completed tasks.
+        '''
+        self._log.info('clearing {:d} tasks...'.format(len(self._tasks)))
         for _task in self._tasks:
             if _task.done():
+                self._log.info('removing task:\t' + Fore.YELLOW + '{}...'.format(_task.get_name()))
                 self._tasks.remove(_task)
-        self._log.info(Fore.YELLOW + 'POST:\t{:d} tasks.'.format(len(self._tasks)))
-       
+            else:
+                self._log.info(Fore.RED + 'task not done:\t' + Fore.YELLOW + '{}'.format(_task.get_name()))
+        self._log.info('{:d} tasks remain.'.format(len(self._tasks)))
+        for _task in self._tasks:
+            self._log.info('remaining task:\t' + Fore.YELLOW + '{}...'.format(_task.get_name()))
+
     # ..........................................................................
     async def arbitrate(self, payload):
         self._log.info('arbitrating payload {}...'.format(payload.event.name))
@@ -129,7 +138,7 @@ class MessageBus(object):
         self._publishers.append(publisher)
         self._loop.create_task(publisher.publish(), name='publisher-{}'.format(publisher.name))
         self._log.info('registered publisher \'{}\'; {:d} publisher{} in list.'.format( \
-                publisher.name, 
+                publisher.name,
                 len(self._publishers),
                 's' if len(self._publishers) > 1 else ''))
 
@@ -159,7 +168,7 @@ class MessageBus(object):
         '''
         Register a controller with the Arbitrator.
         '''
-        self._arbitrator.register_controller(controller) 
+        self._arbitrator.register_controller(controller)
 
     # ..........................................................................
     def register_subscriber(self, subscriber):
@@ -169,7 +178,7 @@ class MessageBus(object):
         self._subscribers.insert(0, subscriber)
         self._loop.create_task(subscriber.consume(), name='subscriber-{}'.format(subscriber.name))
         self._log.info('registered subscriber \'{}\'; {:d} subscriber{} in list.'.format( \
-                subscriber.name, 
+                subscriber.name,
                 len(self._subscribers),
                 's' if len(self._subscribers) > 1 else ''))
 
@@ -216,13 +225,21 @@ class MessageBus(object):
 
     # ..........................................................................
     def print_bus_info(self):
-        self._log.info('message bus info:' + Fore.YELLOW + ' {:d} messages in queue; {:d} publisher{}, {:d} subscriber{}.'.format( \
-                self._queue.qsize(),
+        self._log.info('message bus info:' + Fore.YELLOW + ' {:d} publisher{}, {:d} subscriber{}; {:d} messages in queue.'.format( \
                 len(self._publishers),
                 's' if len(self._publishers) > 1 else '',
                 len(self._subscribers),
-                's' if len(self._subscribers) > 1 else ''))
-        pass # TODO
+                's' if len(self._subscribers) > 1 else '',
+                self._queue.qsize()))
+        if len(self._tasks) == 0:
+            self._log.info('active tasks:\t' + Fore.YELLOW + 'none.')
+        else:
+            if len(self._tasks) == 1:
+                self._log.info('active tasks:\t' + Fore.YELLOW + '1 remains:')
+            else:
+                self._log.info('active tasks:\t' + Fore.YELLOW + '{:d} remain:'.format(len(self._tasks)))
+            for _task in self._tasks:
+                self._log.info(Fore.YELLOW + '    \t\t{}'.format(_task.get_name()))
 
     # ..........................................................................
     def peek_message(self):
@@ -266,8 +283,8 @@ class MessageBus(object):
     # ..........................................................................
     async def republish_message(self, message):
         '''
-        Asynchronously re-publishes a Message to the MessageBus, and therefore to 
-        any Subscribers, unless the message has been acknowledged by all subscribers 
+        Asynchronously re-publishes a Message to the MessageBus, and therefore to
+        any Subscribers, unless the message has been acknowledged by all subscribers
         ('fully-acknowledged'), in which case it is ignored.
 
         NOTE: calls to this function should be await'd.
@@ -347,12 +364,11 @@ class MessageBus(object):
                 subscriber.disable()
             if self._loop.is_running():
                 self._loop.stop()
-
-            self.clean_tasks()
+            self._log.info('disabled.')
+            self.clear_tasks()
             for _task in self._tasks:
-                if _task.done():
-                    self._tasks.remove(_task)
-
+                if not _task.cancelled():
+                    _task.cancel()
             self._log.info('disabled.')
         else:
             self._log.warning('already disabled.')
@@ -368,7 +384,6 @@ class MessageBus(object):
             self._log.info('closed.')
         else:
             self._log.debug('already closed.')
-
 
 # ..............................................................................
 class PeekableQueue(Queue):

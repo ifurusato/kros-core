@@ -45,7 +45,6 @@ class Motors(Subscriber):
         _tb = tb
         self._port_motor = Motor(self._config, _tb, Orientation.PORT, level)
         self._stbd_motor = Motor(self._config, _tb, Orientation.STBD, level)
-
         self._closed  = False
         self._enabled = False # used to be enabled by default
         # a dictionary of motor # to last set value

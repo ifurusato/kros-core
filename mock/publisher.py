@@ -109,7 +109,7 @@ class IfsPublisher(Publisher):
             self._log.warning('publish cycle already started.')
             return
         self._enabled = True
-        self._log.info('start loop:\t' + Fore.YELLOW + 'type the \"q\" key to exit sensor loop, the \"?\" key for help.')
+        self._log.info('start loop:\t' + Fore.YELLOW + 'type Ctrl-C or the \"q\" key to exit sensor loop, the \"?\" key for help.')
         print('\n')
         while self._enabled:
             # see if any sensor (key) has been activated
@@ -122,10 +122,14 @@ class IfsPublisher(Publisher):
                 print(Logger._repeat('\n',48))
                 continue
             elif och == 105: # 'i' print info
-                self._message_bus.print_bus_info()
+                self._log.heading('System Information','Memory, CPU and Message Bus Information.')
                 self.print_sys_info()
+                self._message_bus.print_bus_info()
                 continue
-            elif och == 113: # 'q'
+            elif och == 111: # '0'
+                self._message_bus.clear_tasks()
+                continue
+            elif och == 3 or och == 113: # 'q'
                 self.disable()
                 self._message_bus.disable()
                 self._log.info(Fore.YELLOW + 'type Ctrl-C to exit.')
@@ -297,7 +301,7 @@ class IfsPublisher(Publisher):
                                                                                                           -------------o
    o---------------------------------------------------------------------------------------------------o     |   DEL   |
    |    Q    |    W    |    E    |    R    |    T    |    Y    |    U    |    I    |    O    |    P    |     | SHUTDWN |
-   |  QUIT   |         |  SNIFF  |  ROAM   |  NOOP   |         |         |  INFO   |         |         |  -------------o
+   |  QUIT   |         |  SNIFF  |  ROAM   |  NOOP   |         |         |  INFO   | CLR_TSK |         |  -------------o
    o--------------------------------------------------------------------------o------------------------o  -------------o
         |    A    |    S    |    D    |    F    |    G    |    H    |    J    |    K    |    L    |          |   RET   |
         | IR_PSID | IR_PORT | IR_CNTR | IR_STBD | IR_SSID |  HALT   |         |         |         |          |  CLEAR  |
@@ -336,7 +340,7 @@ class IfsPublisher(Publisher):
            154   108   6C    l
            155   109   6D    m
            156   110   6E    n *    stop
-           157   111   6F    o
+           157   111   6F    o      clear task list
            160   112   70    p
            161   113   71    q
            162   114   72    r *    roam

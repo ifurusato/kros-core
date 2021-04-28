@@ -68,9 +68,10 @@ def test_pub_sub():
 
     # ROAM is commonly accepted by all subscribers
 
-#   _subscriber1 = Subscriber('behaviour', Fore.YELLOW, _message_bus, Level.INFO)
-#   _subscriber1.events = [ Event.ROAM, Event.SNIFF ] # reacts to ROAM and SNIFF
-#   _message_bus.register_subscriber(_subscriber1)
+    _subscriber1 = Subscriber('action', Fore.BLUE, _message_bus, Level.INFO)
+    _subscriber1.events = [ Event.SNIFF, Event.VIDEO ] # reacts to SNIFF and VIDEO
+    _subscriber1.add_event(Event.ROAM)
+    _message_bus.register_subscriber(_subscriber1)
 
     _subscriber2 = Subscriber('infrared', Fore.GREEN, _message_bus, Level.INFO)
     _subscriber2.events = [ Event.INFRARED_PORT, Event.INFRARED_CNTR, Event.INFRARED_STBD ] # reacts to IR
@@ -84,7 +85,7 @@ def test_pub_sub():
 
     _motors = None
     # add motor controller, reacts to STOP, HALT, BRAKE, INCREASE_SPEED and DECREASE_SPEED
-    _motor_configurer = MotorConfigurer(_config, _message_bus, enable_mock=True, level=Level.INFO)
+#   _motor_configurer = MotorConfigurer(_config, _message_bus, enable_mock=True, level=Level.INFO)
 #   _motors = _motor_configurer.get_motors()
 #   _motors.add_event(Event.ROAM)
 #   _message_bus.register_subscriber(_motors)
