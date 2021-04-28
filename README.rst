@@ -45,9 +45,9 @@ clockwise, then proceeding forward again on a new trajectory.
 Features
 ********
 
-* YAML-based configuration
-* an asynchronous message bus that forms the basis of a `Subsumption Architecture <https://en.wikipedia.org/wiki/Subsumption_architecture>`_ [#f1]_
 * message and event handling
+* an asynchronous message bus that forms the basis of a `Subsumption Architecture <https://en.wikipedia.org/wiki/Subsumption_architecture>`_ [#f1]_, with an "exactly-once' message delivery guarantee
+* YAML-based configuration
 * timestamped, multi-level, colorised [#f2]_ logging 
 * written in Python 3
 
