@@ -23,22 +23,22 @@ easily installed from the command line.
 The basic function is for sensors to act as "Publishers" in a "Publish-Subscribe" model,
 firing event-laden messages onto an asynchronous message bus. Subscribers to the bus can
 filter which event types they are interested in. The flow of messages are thus filtered
-through the Subscribers, who pass on to an Arbitrator messages they have consumed. Once all 
+through the Subscribers, who pass on to an Arbitrator messages they have consumed. Once all
 Subscribers have acknowledged a message it is passed to a Garbage Collector (a specialised
 Subscriber).
 
-Each event type has a fixed priority. The Arbitrator receives this flow of events and 
+Each event type has a fixed priority. The Arbitrator receives this flow of events and
 passes along to a Controller the highest priority event for a given clock cycle (typically
-50ms/20Hz). The Controller takes the highest priority event and for that clock cycle 
-initiates any Behaviours registered for that event type. 
+50ms/20Hz). The Controller takes the highest priority event and for that clock cycle
+initiates any Behaviours registered for that event type.
 
 For example, a Subscriber that filters on bumper events receives a message whose event
 type is Event.BUMPER_PORT (the left/port side bumper has been triggered). This Subscriber
-passes the Payload of its Message to the Arbitrator. Since a bumper press is a relatively 
+passes the Payload of its Message to the Arbitrator. Since a bumper press is a relatively
 high priority event it's likely that it will be the highest priority and is therefore
 passed on to the Controller.  If an avoidance Behaviour &mdash; let's call it AVOID_PORT
 &mdash; has been registered with the Controller, it is called and the robot will begin
-whatever the AvoidPort behaviour entails, perhaps stopping, backing up while turning 
+whatever the AvoidPort behaviour entails, perhaps stopping, backing up while turning
 clockwise, then proceeding forward again on a new trajectory.
 
 
@@ -48,7 +48,7 @@ Features
 * message and event handling
 * an asynchronous message bus that forms the basis of a `Subsumption Architecture <https://en.wikipedia.org/wiki/Subsumption_architecture>`_ [#f1]_, with an "exactly-once' message delivery guarantee
 * YAML-based configuration
-* timestamped, multi-level, colorised [#f2]_ logging 
+* timestamped, multi-level, colorised [#f2]_ logging
 * written in Python 3
 
 .. [#f1] Uses finite state machines, an asynchronous message bus, an arbitrator and controller for task prioritisation.
@@ -59,14 +59,17 @@ Requirements
 ************
 
 This library requires Python 3.8.5 or newer. Some portions (modules) of the KROS
-code will only run on a Raspberry Pi, though KROS Core should function independently
-of the various Pi libraries.
+code will only run on a Raspberry Pi, though KROS Core should function
+independently of the various Pi libraries.
 
-KROS requires installation of a number of support libraries. In order to begin
-you'll need to install pip3 and pytest. On the Raspberry Pi OS pip3 is generally
-already installed so you can install pytest via pip3::
+KROS requires installation of a number of dependencies (support libraries),
+which should be automatically installed via pip3 when you installed kros-core.
 
-    sudo pip3 install pytest
+If you install kros-core by cloning the repository, you can install its
+dependencies either by running the setup.py script (as described below) or
+manually via pip3::
+
+    sudo pip3 install numpy colorama pytest pyyaml psutil board readchar
 
 
 Installation
@@ -92,8 +95,8 @@ the script via::
 
 to start the message bus event loop. The robot sensors are simulated via key
 presses. You can type '?' to see a display mapping which key fires which event.
-Type 'i' for system information, 'q' to quit. For example, typing 'd' simulates
-the center infrared sensor being triggered.
+Type 'i' for system information, Ctrl-C or 'q' to quit. For example, typing 'd'
+simulates the center infrared sensor being triggered.
 
 
 Status
