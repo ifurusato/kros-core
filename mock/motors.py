@@ -187,7 +187,7 @@ class Motors(Subscriber):
                 self._log.info(self._color + Style.BRIGHT + 'ignored message: {} (event: {})'.format(message.name, message.event.description))
 
             # want to sleep for less than the deadline amount
-            await asyncio.sleep(2)
+#           await asyncio.sleep(2)
 
             if self._message_bus.verbose:
                 _elapsed_ms = (dt.now() - message.timestamp).total_seconds() * 1000.0

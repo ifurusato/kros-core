@@ -83,13 +83,13 @@ class MessageBus(object):
         self._log.info('clearing {:d} tasks...'.format(len(self._tasks)))
         for _task in self._tasks:
             if _task.done():
-                self._log.info('removing task:\t' + Fore.YELLOW + '{}...'.format(_task.get_name()))
+                self._log.debug('removing task:\t' + Fore.YELLOW + '{}...'.format(_task.get_name()))
                 self._tasks.remove(_task)
             else:
-                self._log.info(Fore.RED + 'task not done:\t' + Fore.YELLOW + '{}'.format(_task.get_name()))
+                self._log.debug(Fore.RED + 'task not done:\t' + Fore.YELLOW + '{}'.format(_task.get_name()))
         self._log.info('{:d} tasks remain.'.format(len(self._tasks)))
         for _task in self._tasks:
-            self._log.info('remaining task:\t' + Fore.YELLOW + '{}...'.format(_task.get_name()))
+            self._log.debug('unfinished task:\t' + Fore.YELLOW + '{}...'.format(_task.get_name()))
 
     # ..........................................................................
     async def arbitrate(self, payload):
@@ -245,7 +245,7 @@ class MessageBus(object):
     def peek_message(self):
         '''
         Asynchronously waits until it peeks a message from the queue. This
-        does not remove the message.
+        does not remove the message from the queue.
         '''
         return self._queue.peek()
 
@@ -268,7 +268,7 @@ class MessageBus(object):
         self._queue.task_done()
 
     # ..........................................................................
-    def publish_message(self, message):
+    async def publish_message(self, message):
         '''
         Asynchronously publishes the Message to the MessageBus, and therefore to any Subscribers.
 
@@ -277,19 +277,18 @@ class MessageBus(object):
         if ( message.event is not Event.CLOCK_TICK and message.event is not Event.CLOCK_TOCK ):
             self._log.info(Style.BRIGHT + 'publishing message: {}'.format(message.name) + Style.NORMAL + ' (event: {}; age: {:d}ms);'.format(message.event, message.age))
         _result = asyncio.create_task(self._queue.put(message), name='publish-message-{}'.format(message.name))
-#       self._log.info(Fore.YELLOW + 'result from published message: {}'.format(_result))
-        self._log.info(Fore.YELLOW + 'result from published message: {}'.format(type(_result)))
+        self._log.info(Fore.YELLOW + 'result from published message: {}'.format(_result.get_name()))
+        await asyncio.sleep(0.005)
 
     # ..........................................................................
     async def republish_message(self, message):
         '''
-        Asynchronously re-publishes a Message to the MessageBus, and therefore to
-        any Subscribers, unless the message has been acknowledged by all subscribers
-        ('fully-acknowledged'), in which case it is ignored.
+        Asynchronously re-publishes a Message to the MessageBus, making it
+        available again to any Subscribers.
 
         NOTE: calls to this function should be await'd.
         '''
-        self._log.info(Fore.YELLOW + 'republishing message: {} (event: {}; age: {:d}ms);'.format(message.name, message.event, message.age))
+        self._log.info(Fore.YELLOW + '👀 republishing message: {} (event: {}; age: {:d}ms);'.format(message.name, message.event, message.age))
         asyncio.create_task(self._queue.put(message), name='republish-message-{}'.format(message.name))
 
     # ..........................................................................
@@ -393,6 +392,7 @@ class PeekableQueue(Queue):
         self._log = Logger("q", level)
         self._log.info('ready.')
 
+    # ..........................................................................
     async def peek(self):
         _message = await self.get()
         self.task_done()

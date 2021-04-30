@@ -74,8 +74,8 @@ class Publisher(object):
             self._message_bus.publish_message(_message)
             self._log.info(Fore.WHITE + Style.BRIGHT + '{} PUBLISHED message: {} (event: {})'.format(self.name, _message, _event.description))
             # simulate randomness of publishing messages
-            await asyncio.sleep(random.random())
-            self._log.debug(Fore.BLACK + Style.BRIGHT + 'after await sleep.')
+#           await asyncio.sleep(random.random())
+#           self._log.debug(Fore.BLACK + Style.BRIGHT + 'after await sleep.')
 
     # ..........................................................................
     def _get_random_event(self):

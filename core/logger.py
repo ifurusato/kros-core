@@ -17,28 +17,6 @@ from enum import Enum
 from colorama import init, Fore, Style
 init()
 
-class Level(Enum):
-    DEBUG    = logging.DEBUG     # 10
-    INFO     = logging.INFO      # 20
-    WARN     = logging.WARN      # 30
-    ERROR    = logging.ERROR     # 40
-    CRITICAL = logging.CRITICAL  # 50
-
-    @staticmethod
-    def from_str(label):
-        if label.upper()   == 'DEBUG':
-            return Level.DEBUG
-        elif label.upper() == 'INFO':
-            return Level.INFO
-        elif label.upper() == 'WARN':
-            return Level.WARN
-        elif label.upper() == 'ERROR':
-            return Level.ERROR
-        elif label.upper() == 'CRITICAL':
-            return Level.CRITICAL
-        else:
-            raise NotImplementedError
-
 # ..............................................................................
 class Logger:
 
@@ -105,19 +83,25 @@ class Logger:
     # ..........................................................................
     def set_suppress(self, suppress):
         '''
-           If set True, suppresses all log messages except critical errors
-           and log-to-file messages. This is global across all Loggers.
+        If set True, suppresses all log messages except critical errors
+        and log-to-file messages. This is global across all Loggers.
         '''
         type(self)._suppress = suppress
 
     # ..........................................................................
     @property
     def level(self):
+        '''
+        Return the level of this logger.
+        '''
         return self._level
 
     # ..........................................................................
     @level.setter
     def level(self, level):
+        '''
+        Set the level of this logger to the argument.
+        '''
         self._level = level
         self.__log.setLevel(self._level.value)
         if self._fh:
@@ -128,6 +112,9 @@ class Logger:
     # ..........................................................................
     @property
     def suppressed(self):
+        '''
+        Return True if this logger has been suppressed.
+        '''
         return type(self)._suppress
 
     # ..........................................................................
@@ -206,7 +193,7 @@ class Logger:
     # ..........................................................................
     def file(self, message):
         '''
-           This is just info() but without any formatting.
+        This is just info() but without any formatting.
         '''
         with self._mutex:
             self.__log.info(message)
@@ -215,11 +202,11 @@ class Logger:
 
     def heading(self, title, message=None, info=None):
         '''
-           Print a formatted, titled message to info(), inspired by maven console messaging.
+        Print a formatted, titled message to info(), inspired by maven console messaging.
 
-           :param title:    the required title of the heading.
-           :param message:  the optional message to display; if None only the title will be displayed.
-           :param info:     an optional second message to display right-justified; ignored if None.
+        :param title:    the required title of the heading.
+        :param message:  the optional message to display; if None only the title will be displayed.
+        :param info:     an optional second message to display right-justified; ignored if None.
         '''
         MAX_WIDTH = 100
         MARGIN = 27
@@ -257,5 +244,28 @@ class Logger:
     @staticmethod
     def _repeat(s, wanted):
         return (s * (wanted//len(s) + 1))[:wanted]
+
+# ..............................................................................
+class Level(Enum):
+    DEBUG    = logging.DEBUG     # 10
+    INFO     = logging.INFO      # 20
+    WARN     = logging.WARN      # 30
+    ERROR    = logging.ERROR     # 40
+    CRITICAL = logging.CRITICAL  # 50
+
+    @staticmethod
+    def from_str(label):
+        if label.upper()   == 'DEBUG':
+            return Level.DEBUG
+        elif label.upper() == 'INFO':
+            return Level.INFO
+        elif label.upper() == 'WARN':
+            return Level.WARN
+        elif label.upper() == 'ERROR':
+            return Level.ERROR
+        elif label.upper() == 'CRITICAL':
+            return Level.CRITICAL
+        else:
+            raise NotImplementedError
 
 #EOF

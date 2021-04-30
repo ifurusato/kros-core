@@ -22,7 +22,6 @@ init()
 from core.logger import Logger, Level
 from core.event import Event
 
-
 # ..............................................................................
 class Message(object):
     '''

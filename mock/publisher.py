@@ -81,11 +81,10 @@ class IfsPublisher(Publisher):
                 temperature = data / 1000
                 return temperature
         else:
-            return 'n/a'
+            return None
 
     # ................................................................
     def print_sys_info(self):
-
         _M = 1000000
         _vm = psutil.virtual_memory()
         self._log.info('virtual memory: \t' + Fore.YELLOW + 'total: {:4.1f}MB; available: {:4.1f}MB ({:5.2f}%); used: {:4.1f}MB; free: {:4.1f}MB'.format(\
@@ -96,7 +95,11 @@ class IfsPublisher(Publisher):
         self._log.info('swap memory:    \t' + Fore.YELLOW + 'total: {:4.1f}MB; used: {:4.1f}MB; free: {:4.1f}MB ({:5.2f}%)'.format(\
                 _sw[0]/_M, _sw[1]/_M, _sw[2]/_M, _sw[3]))
         temperature = self.read_cpu_temperature()
-        self._log.info('cpu temperature:\t' + Fore.YELLOW + '{:5.2f}°C'.format(temperature))
+        if temperature:
+            self._log.info('cpu temperature:\t' + Fore.YELLOW + '{:5.2f}°C'.format(temperature))
+        else:
+#           self._log.info('cpu temperature:\t' + Fore.YELLOW + 'n/a')
+            pass
 
     # ................................................................
     async def publish(self):
@@ -146,7 +149,7 @@ class IfsPublisher(Publisher):
             if _event is not None:
                 self._log.info('[{:03d}] "{}" ({}) pressed; publishing message for event: {}'.format(_count, ch, och, _event))
                 _message = self._message_factory.get_message(_event, True)
-                self._message_bus.publish_message(_message)
+                await self._message_bus.publish_message(_message)
                 if self.exit_on_complete and self.all_triggered:
                     self._log.info('[{:03d}] COMPLETE.'.format(_count))
                     self.disable()
@@ -155,8 +158,7 @@ class IfsPublisher(Publisher):
             else:
                 self._log.info('[{:03d}] unmapped key "{}" ({}) pressed.'.format(_count, ch, och))
 #           await asyncio.sleep(0.1)
-
-            await asyncio.sleep(random.random())
+#           await asyncio.sleep(random.random())
 
 
     # ..........................................................................
