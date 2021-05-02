@@ -149,11 +149,11 @@ class MessageBus(object):
         if not self._publishers:
             self._log.info('no registered publishers.')
             return
-        self._log.info('{:d} publisher{} in list:'.format( \
+        self._log.info('{:d} publisher{}:'.format( \
                 len(self._publishers),
                 's' if len(self._publishers) > 1 else ''))
         for publisher in self._publishers:
-            self._log.info('  publisher: {}'.format(publisher.name))
+            self._log.info(Fore.YELLOW + '\t{}'.format(publisher.name))
 
     @property
     def publishers(self):
@@ -189,12 +189,13 @@ class MessageBus(object):
         if not self._subscribers:
             self._log.info('no registered subscribers.')
             return
-        self._log.info('{:d} subscriber{} in list:'.format( \
+        self._log.info('{:d} subscriber{}:'.format( \
                 len(self._subscribers),
                 's' if len(self._subscribers) > 1 else ''))
         for subscriber in self._subscribers:
-            self._log.info('  subscriber: \'{}\' listening for: {}'.format(subscriber.name, subscriber.print_events()))
-
+            self._log.info(Fore.YELLOW + '\t{}'.format(subscriber.name)
+                    + Fore.CYAN + ' {}listening for:'.format((' ' * max(0, (10 - len(subscriber.name)))))
+                    + Fore.YELLOW + ' {}'.format(subscriber.print_events()))
     @property
     def subscribers(self):
         return self._subscribers
@@ -225,12 +226,7 @@ class MessageBus(object):
 
     # ..........................................................................
     def print_bus_info(self):
-        self._log.info('message bus info:' + Fore.YELLOW + ' {:d} publisher{}, {:d} subscriber{}; {:d} messages in queue.'.format( \
-                len(self._publishers),
-                's' if len(self._publishers) > 1 else '',
-                len(self._subscribers),
-                's' if len(self._subscribers) > 1 else '',
-                self._queue.qsize()))
+        self._log.info('in queue:    \t' + Fore.YELLOW + '{:d} message{}.'.format(self._queue.qsize(), '' if self._queue.qsize() == 1 else 's'))
         if len(self._tasks) == 0:
             self._log.info('active tasks:\t' + Fore.YELLOW + 'none.')
         else:
@@ -240,6 +236,8 @@ class MessageBus(object):
                 self._log.info('active tasks:\t' + Fore.YELLOW + '{:d} remain:'.format(len(self._tasks)))
             for _task in self._tasks:
                 self._log.info(Fore.YELLOW + '    \t\t{}'.format(_task.get_name()))
+        self.print_publishers()
+        self.print_subscribers()
 
     # ..........................................................................
     def peek_message(self):

@@ -342,22 +342,23 @@ class GarbageCollector(Subscriber):
         A filter that returns True if the message is either expired and/or
         fully acknowledged.
         '''
+#   
         _elapsed_ms = (dt.now() - message.timestamp).total_seconds() * 1000.0
         if self._message_bus.is_expired(message) and message.fully_acknowledged:
             if self._message_bus.verbose:
-                self._print_message_info('garbage collecting expired, fully-acknowledged message:', message, _elapsed_ms)
+                self._print_message_info('🙈 garbage collecting expired, fully-acknowledged message:', message, _elapsed_ms)
             return True
         elif self._message_bus.is_expired(message):
             if self._message_bus.verbose:
-                self._print_message_info('garbage collecting expired message:', message, _elapsed_ms)
+                self._print_message_info('🙉 garbage collecting expired message:', message, _elapsed_ms)
             return True
         elif message.fully_acknowledged:
             if self._message_bus.verbose:
-                self._print_message_info('garbage collecting fully-acknowledged message:', message, _elapsed_ms)
+                self._print_message_info('🙊 garbage collecting fully-acknowledged message:', message, _elapsed_ms)
             return True
         else:
             if self._message_bus.verbose:
-                self._print_message_info('garbage collector ignoring unprocessed message:', message, _elapsed_ms)
+                self._print_message_info('🐸 garbage collector ignoring unprocessed message:', message, _elapsed_ms)
             return False
 
     # ..........................................................................
@@ -373,7 +374,7 @@ class GarbageCollector(Subscriber):
         elif _peeked_message.gcd:
             self._log.warning('message has already been garbage collected. [1]'.format(self.name))
         if self._message_bus.verbose: # TEMP
-            self._log.debug(self._color + '💀 gc-consume() message:' + Fore.WHITE + ' {}; event: {}'.format(_peeked_message.name, _peeked_message.event.description))
+            self._log.info(self._color + '💀 gc-consume() message:' + Fore.WHITE + ' {}; event: {}'.format(_peeked_message.name, _peeked_message.event.description))
 
         # garbage collect (consume) if filter accepts the peeked message
         if self.acceptable(_peeked_message):
@@ -384,7 +385,7 @@ class GarbageCollector(Subscriber):
                 self._log.info(self._color + '💀 garbage collected message:' + Fore.WHITE + ' {}; gcd: {}'.format(_message.name, _message.gcd))
         elif not _peeked_message.acknowledged_by(self):
             # acknowledge we've seen the message
-            self._log.info(self._color + Style.DIM + '💀 gc-acknowledging message:' + Fore.WHITE + ' {}; event: {} (queue: {:d} elements)'.format(
+            self._log.info(self._color + Style.DIM + '💀 gc: not actually acknowledging message:' + Fore.WHITE + ' {}; event: {} (queue: {:d} elements)'.format(
                     _peeked_message.name, _peeked_message.event.description, self._message_bus.queue_size))
             _peeked_message.acknowledge(self)
 
