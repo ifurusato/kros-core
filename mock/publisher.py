@@ -129,8 +129,11 @@ class IfsPublisher(Publisher):
                 self.print_sys_info()
                 self._message_bus.print_bus_info()
                 continue
-            elif och == 111: # '0'
+            elif och == 111: # 'o'
                 self._message_bus.clear_tasks()
+                continue
+            elif och == 112: # 'p'
+                await self._message_bus.pop_queue()
                 continue
             elif och == 3 or och == 113: # 'q'
                 self.disable()
@@ -303,7 +306,7 @@ class IfsPublisher(Publisher):
                                                                                                           -------------o
    o---------------------------------------------------------------------------------------------------o     |   DEL   |
    |    Q    |    W    |    E    |    R    |    T    |    Y    |    U    |    I    |    O    |    P    |     | SHUTDWN |
-   |  QUIT   |         |  SNIFF  |  ROAM   |  NOOP   |         |         |  INFO   | CLR_TSK |         |  -------------o
+   |  QUIT   |         |  SNIFF  |  ROAM   |  NOOP   |         |         |  INFO   | CLR_TSK |   POP   |  -------------o
    o--------------------------------------------------------------------------o------------------------o  -------------o
         |    A    |    S    |    D    |    F    |    G    |    H    |    J    |    K    |    L    |          |   RET   |
         | IR_PSID | IR_PORT | IR_CNTR | IR_STBD | IR_SSID |  HALT   |         |         |         |          |  CLEAR  |
@@ -325,8 +328,8 @@ class IfsPublisher(Publisher):
 
            oct   dec   hex   char   usage
 
-            54   44    2C    ,      increase motors speed (both)
-            56   46    2E    .      decrease motors speed (both)
+            54   44    2C    , *    increase motors speed (both)
+            56   46    2E    . *    decrease motors speed (both)
 
            141   97    61    a *    port side IR
            142   98    62    b *    brake
@@ -336,26 +339,27 @@ class IfsPublisher(Publisher):
            146   102   66    f *    stbd IR
            147   103   67    g *    stbd side IR
            150   104   68    h *    halt
-           151   105   69    i *    info
+           151   105   69    i      info
            152   106   6A    j
            153   107   6B    k
            154   108   6C    l
            155   109   6D    m
            156   110   6E    n *    stop
            157   111   6F    o      clear task list
-           160   112   70    p
+           160   112   70    p      pop message
            161   113   71    q
            162   114   72    r *    roam
            163   115   73    s *    port IR
-           164   116   74    t *    noop (test message)
+           164   116   74    t      noop (test message)
            165   117   75    u
            166   118   76    v      verbose
            167   119   77    w
            170   120   78    x *    cntr BMP
            171   121   79    y
-           172   122   7A    z *    port BMP
-           177   127   7f   del *   shut down
+           172   122   7A    z  *   port BMP
+           177   127   7f   del     shut down
 
+        * represents robot sensor or control input.
         '''
         if och   == 44:  # ,
             return Event.DECREASE_SPEED

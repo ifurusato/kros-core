@@ -133,9 +133,12 @@ class Subscriber(object):
             # handle acceptable message
             self._message_bus.add_task(asyncio.create_task(self.handle_message(_message, _event), name='{}:handle-message-{}'.format(self.name, _message.name)))
 
-            self._log.info('🥝 awaiting event tracking completion flag to be set...')
-            await _event.wait()
-            self._log.info('🥝 end waiting for event tracking completion flag to be set.')
+            self._log.info(Fore.RED + '🍎 end event tracking for message:' + Fore.WHITE + ' {}; for event: {}'.format(_message.name, _message.event.description))
+            _event.set()
+
+#           self._log.info('🥝 awaiting event tracking completion flag to be set...')
+#           await _event.wait()
+#           self._log.info('🥝 end waiting for event tracking completion flag to be set.')
 
             # we've handled message, so pass along to arbitrator
             await self._arbitrate_message(_message)
@@ -146,7 +149,11 @@ class Subscriber(object):
                     + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
 
             # republish the message
+            self._log.info(self._color + '😈 awaiting republication of message:' \
+                + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
             await self._message_bus.republish_message(_message)
+            self._log.info(self._color + '😈 message:' \
+                + Fore.WHITE + ' {} with event: {}'.format(_message.name, _message.event.description) + self._color + ' has been republished.')
 
         elif not _ackd:
             # if not already ack'd, acknowledge we've seen the message
@@ -193,8 +200,8 @@ class Subscriber(object):
         self._message_bus.add_task(asyncio.create_task(self._cleanup_message(message), name='{}:cleanup-message-{}'.format(self.name, message.name)))
 
 #       while not event.is_set():
-        self._log.info(Fore.RED + '🍎 end event tracking for message:' + Fore.WHITE + ' {}; for event: {}'.format(message.name, message.event.description))
-        event.set()
+#       self._log.info(Fore.RED + '🍎 end event tracking for message:' + Fore.WHITE + ' {}; for event: {}'.format(message.name, message.event.description))
+#       event.set()
 
         if self._message_bus.verbose:
             _elapsed_ms = (dt.now() - message.timestamp).total_seconds() * 1000.0
@@ -238,7 +245,7 @@ class Subscriber(object):
         :param message:  consumed message that is done being processed.
         '''
         if self._message_bus.verbose:
-            self._log.info(self._color + Style.DIM + 'begin cleanup of message: {}'.format(message.name))
+            self._log.info(self._color + Style.DIM + '🚽 begin cleanup of message: {}'.format(message.name))
         if message.gcd:
             self._log.warning('cannot cleanup message: message has been garbage collected. [4]')
             return
@@ -247,8 +254,19 @@ class Subscriber(object):
 #       # tasks related to this message
 #       self._message_bus.clear tasks()
 
-        if self._message_bus.verbose:
-            self._log.info(self._color + Style.DIM + 'end cleanup of message: {}'.format(message.name))
+#       self._log.info(self._color + Style.DIM + '🚽 A. processing cleanup of message: {}...'.format(message.name))
+#       if self._message_bus.is_expired(message) or message.fully_acknowledged:
+#           self._log.info(self._color + Style.DIM + '🚽 A1. processing cleanup of message: {}...'.format(message.name))
+#           await self._message_bus.garbage_collect(message)
+#           self._log.info(self._color + Style.DIM + '🚽 A2. processing cleanup of message: {}...'.format(message.name))
+#           if self._message_bus.verbose:
+#               self._log.info(self._color + Style.DIM + '🚽 end cleanup of message: {} (garbage collected)'.format(message.name))
+#       else:
+#           self._log.info(self._color + Style.DIM + '🚽 B1. processing cleanup of message: {}...'.format(message.name))
+#           if self._message_bus.verbose:
+#               self._log.info(self._color + Style.DIM + '🚽 end cleanup of message: {}'.format(message.name))
+
+        self._log.info(self._color + Style.DIM + '🚽 end cleanup of message: {}'.format(message.name))
 
     # ..........................................................................
     def _get_formatted_time(self, label, value):
@@ -362,6 +380,22 @@ class GarbageCollector(Subscriber):
             return False
 
     # ..........................................................................
+    async def x_collect(self, message):
+        '''
+        Explicitly collect the message by popping it from the queue for
+        garbage collection.
+        '''
+        _peeked_message = await self._message_bus.peek_message()
+        if _peeked_message == None:
+            self._log.info('💩 cannot collect: queue is empty.')
+        elif _peeked_message == message:
+            self._log.info('💩 collecting message from queue.')
+            _message = await self._message_bus.consume_message()
+            self._message_bus.consumed()
+        else:
+            self._log.info('💩 cannot collect: message is not in queue.')
+
+    # ..........................................................................
     async def consume(self):
         '''
         Overrides the method on Subscriber to first peek, and then if acceptable
@@ -386,6 +420,10 @@ class GarbageCollector(Subscriber):
         elif not _peeked_message.acknowledged_by(self):
             # acknowledge we've seen the message
             self._log.info(self._color + Style.DIM + '💀 gc: not actually acknowledging message:' + Fore.WHITE + ' {}; event: {} (queue: {:d} elements)'.format(
+                    _peeked_message.name, _peeked_message.event.description, self._message_bus.queue_size))
+#           _peeked_message.acknowledge(self)
+        else:
+            self._log.info(self._color + Style.DIM + '💀 gc: ELSE message:' + Fore.WHITE + ' {}; event: {} (queue: {:d} elements)'.format(
                     _peeked_message.name, _peeked_message.event.description, self._message_bus.queue_size))
             _peeked_message.acknowledge(self)
 

@@ -92,6 +92,32 @@ class MessageBus(object):
             self._log.debug('unfinished task:\t' + Fore.YELLOW + '{}...'.format(_task.get_name()))
 
     # ..........................................................................
+    @property
+    def queue_empty(self):
+        '''
+        Returns True if the queue is empty.
+
+        IMPORTANT: This is an admin function and should not be considered part of the API.
+        '''
+        return self._queue.empty()
+
+    # ..........................................................................
+    async def pop_queue(self):
+        '''
+        Pops the queue but does nothing with the message, if there is one.
+
+        IMPORTANT: This is an admin function and should not be considered part of the API.
+        '''
+        if self._queue.empty():
+            self._log.info('message bus queue is empty.')
+        else:
+            _message = await self._queue.get()
+            self._queue.task_done()
+            self._log.info('popped message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
+            if self._queue.empty():
+                self._log.info('message bus queue is now empty.')
+
+    # ..........................................................................
     async def arbitrate(self, payload):
         self._log.info('arbitrating payload {}...'.format(payload.event.name))
         await self._arbitrator.arbitrate(payload)
@@ -235,7 +261,7 @@ class MessageBus(object):
             else:
                 self._log.info('active tasks:\t' + Fore.YELLOW + '{:d} remain:'.format(len(self._tasks)))
             for _task in self._tasks:
-                self._log.info(Fore.YELLOW + '    \t\t{}'.format(_task.get_name()))
+                self._log.info(Fore.YELLOW + '    \t\t{};\t'.format(_task.get_name()) + Fore.BLACK + ' done? {}'.format(_task.done()))
         self.print_publishers()
         self.print_subscribers()
 
@@ -288,13 +314,14 @@ class MessageBus(object):
         '''
         self._log.info(Fore.YELLOW + '👀 republishing message: {} (event: {}; age: {:d}ms);'.format(message.name, message.event, message.age))
         asyncio.create_task(self._queue.put(message), name='republish-message-{}'.format(message.name))
+        self._log.info(Fore.YELLOW + '👀 republished message: {} (event: {}; age: {:d}ms);'.format(message.name, message.event, message.age))
 
     # ..........................................................................
-    def garbage_collect(self, message):
+    async def x_garbage_collect(self, message):
         '''
-        Explicitly garbage collect the message, returning True if gc'd.
+        Explicitly garbage collect the message.
         '''
-        return self._garbage_collector.collect(message)
+        await self._garbage_collector.collect(message)
 
     # exception handling .......................................................
     def handle_exception(self, loop, context):

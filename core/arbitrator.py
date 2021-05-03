@@ -59,20 +59,20 @@ class Arbitrator(object):
             self._queue.clear()
         else:
             _start_time = dt.datetime.now()
-            self._log.info(Fore.MAGENTA + Style.DIM + 'putting payload: {} onto queue...'.format(payload.event.name))
+            self._log.debug(Fore.MAGENTA + Style.DIM + 'putting payload: {} onto queue...'.format(payload.event.name))
             if len(self._controllers) > 0:
                 await self._queue.put(( payload.priority, payload ))
-                self._log.info(Fore.MAGENTA + Style.DIM + 'complete: put payload: {} onto queue: {} elements.'.format(payload.event.name, self._queue.qsize()))
+                self._log.debug(Fore.MAGENTA + Style.DIM + 'complete: put payload: {} onto queue: {} elements.'.format(payload.event.name, self._queue.qsize()))
                 await self.trigger_callback()
                 _delta = dt.datetime.now() - _start_time
                 _elapsed_ms = int(_delta.total_seconds() * 1000)
-                self._log.info(Fore.MAGENTA + Style.DIM + '{:5.2f}ms elapsed.'.format(_elapsed_ms))
+                self._log.debug(Fore.MAGENTA + Style.DIM + '{:4.2f}ms elapsed.'.format(_elapsed_ms))
             else:
                 self._log.info(Fore.MAGENTA + Style.DIM + 'no registered controllers: payload ignored.')
 
     # ..........................................................................
     async def trigger_callback(self):
-        self._log.info(Fore.MAGENTA + Style.DIM + 'trigger callback.')
+        self._log.debug(Fore.MAGENTA + Style.DIM + 'trigger callback.')
         _tuple = await self._queue.get()
         _payload = _tuple[1]
         for controller in self._controllers:
