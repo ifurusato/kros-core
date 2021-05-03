@@ -44,6 +44,7 @@ class Message(object):
         self._processors    = {} # list of processor names who've processed message
         self._subscribers   = {} # list of subscriber names who've acknowledged message
 
+    # ..........................................................................
     def set_subscribers(self, subscribers):
         '''
         Set the list of expected subscribers to this message.
@@ -88,6 +89,10 @@ class Message(object):
         return len(self._processors)
 
     def process(self, processor):
+        '''
+        Sets the flag that the given processor has finished processing this
+        message.
+        '''
         if processor in self._processors:
             raise Exception('message {} already processed by {}.'.format(self.name, processor.name))
         else:
@@ -145,14 +150,18 @@ class Message(object):
                 _count += 1
         return _count
 
+    # ..........................................................................
     @property
     def fully_acknowledged(self):
         '''
         Returns True if the message has been acknowledged by all subscribers,
-        i.e., no subscriber flags remain set as False.
+        i.e., no subscriber flags remain set as False, ignoring the garbage
+        collector.
         '''
         for subscriber in self._subscribers:
-            if not self._subscribers[subscriber]:
+            if subscriber.is_gc:
+                continue
+            elif not self._subscribers[subscriber]:
                 return False
         return True
 

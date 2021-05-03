@@ -73,21 +73,21 @@ class MessageBus(object):
     # ..........................................................................
     def add_task(self, task):
         self._tasks.append(task)
-        self._log.info(Fore.YELLOW + '{:d} active tasks.'.format(len(self._tasks)))
+        self._log.debug('{:d} active tasks.'.format(len(self._tasks)))
 
     # ..........................................................................
     def clear_tasks(self):
         '''
         Clears the task list of any completed tasks.
         '''
-        self._log.info('clearing {:d} tasks...'.format(len(self._tasks)))
+        self._log.info('clearing {:d} task{}...'.format(len(self._tasks), ('' if len(self._tasks) == 1 else 's')))
         for _task in self._tasks:
             if _task.done():
-                self._log.debug('removing task:\t' + Fore.YELLOW + '{}...'.format(_task.get_name()))
+                self._log.info('removing completed task:\t' + Fore.YELLOW + '{}...'.format(_task.get_name()))
                 self._tasks.remove(_task)
             else:
-                self._log.debug(Fore.RED + 'task not done:\t' + Fore.YELLOW + '{}'.format(_task.get_name()))
-        self._log.info('{:d} tasks remain.'.format(len(self._tasks)))
+                self._log.warning(Fore.RED + 'task not complete:      \t' + Fore.YELLOW + '{}'.format(_task.get_name()))
+        self._log.info('{:d} task{} remain.'.format(len(self._tasks), ('' if len(self._tasks) == 1 else 's')))
         for _task in self._tasks:
             self._log.debug('unfinished task:\t' + Fore.YELLOW + '{}...'.format(_task.get_name()))
 
@@ -119,7 +119,7 @@ class MessageBus(object):
 
     # ..........................................................................
     async def arbitrate(self, payload):
-        self._log.info('arbitrating payload {}...'.format(payload.event.name))
+        self._log.debug('arbitrating payload {}...'.format(payload.event.name))
         await self._arbitrator.arbitrate(payload)
 
     # ..........................................................................
@@ -312,9 +312,9 @@ class MessageBus(object):
 
         NOTE: calls to this function should be await'd.
         '''
-        self._log.info(Fore.YELLOW + '👀 republishing message: {} (event: {}; age: {:d}ms);'.format(message.name, message.event, message.age))
+        self._log.debug('republishing message: {} (event: {}; age: {:d}ms);'.format(message.name, message.event, message.age))
         asyncio.create_task(self._queue.put(message), name='republish-message-{}'.format(message.name))
-        self._log.info(Fore.YELLOW + '👀 republished message: {} (event: {}; age: {:d}ms);'.format(message.name, message.event, message.age))
+        self._log.info('republished message: {} (event: {}; age: {:d}ms);'.format(message.name, message.event, message.age))
 
     # ..........................................................................
     async def x_garbage_collect(self, message):
