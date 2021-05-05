@@ -16,11 +16,10 @@
 # events unrelated to the original IFS.
 #
 
-import sys, time, itertools, psutil
-import random # TEMP
+import sys, time, itertools, psutil, random
+from threading import Thread
 import asyncio
 from pathlib import Path
-#from threading import Thread
 from colorama import init, Fore, Style
 init()
 try:
@@ -40,7 +39,6 @@ class IfsPublisher(Publisher):
     '''
     def __init__(self, name, message_bus, message_factory, exit_on_complete=True, level=Level.INFO):
         super().__init__(name, message_bus, message_factory, level)
-#       super().__init__()
         self._log = Logger("ifs-pub", level)
         self._message_bus = message_bus
         self._message_factory = message_factory
@@ -48,8 +46,9 @@ class IfsPublisher(Publisher):
         self._enabled  = False
         self._suppress = False
         self._closed   = False
+        self._flood_enabled = False
+        self._flood_thread = None
         self._counter  = itertools.count()
-        # .....
         self._triggered_ir_port_side = self._triggered_ir_port  = self._triggered_ir_cntr  = self._triggered_ir_stbd  = \
         self._triggered_ir_stbd_side = self._triggered_bmp_port = self._triggered_bmp_cntr = self._triggered_bmp_stbd = 0
         self._limit = 3
@@ -147,6 +146,9 @@ class IfsPublisher(Publisher):
                 self._message_bus.verbose = not self._message_bus.verbose
                 self._log.info('setting verbosity to: ' + Fore.YELLOW + '{}'.format(self._message_bus.verbose))
                 continue
+            elif och == 119: # 'w'
+                self.flood_zone()
+                continue
             # otherwise handle as event
             _event = self.get_event_for_char(och)
             if _event is not None:
@@ -163,14 +165,89 @@ class IfsPublisher(Publisher):
 #           await asyncio.sleep(0.1)
 #           await asyncio.sleep(random.random())
 
+    # ..........................................................................
+
+'''
+    You can do it by adding function between to execute async:
+
+    async def some_callback(args):
+        await some_function()
+
+    def between_callback(args):
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
+        loop.run_until_complete(some_callback(args))
+        loop.close()
+
+    _thread = threading.Thread(target=between_callback, args=("some text"))
+    _thread.start()
+
+'''
+    def flood_zone(self):
+        if self._flood_thread == None:
+            self._log.info(Fore.YELLOW + 'enabling flood...')
+            self._flood_enabled = True
+            self._flood_thread = Thread(name='flood-loop', target=asyncio.run, args=(self._flood_loop(lambda: self._flood_enabled),), daemon=True)
+            self._flood_thread.start()
+        else:
+            self._log.info(Fore.YELLOW + 'disabling flood.')
+            self._flood_enabled = False
+            self._log.info(Fore.YELLOW + 'disabled flood exited.')
+
+    async def _flood_loop(self, f_is_enabled):
+        self._log.info('flood the zone with scheisse.')
+        while f_is_enabled():
+            _value = random.randint(1,10) / 20
+            _event = self._get_random_event()
+#           print(Fore.BLUE + '\nflood for {:5.2f} with {}...\n'.format(_value, _event.name) + Style.RESET_ALL, end="")
+            await self._publish_message(_event)
+            time.sleep(0.5)
+
+    RANDOM_EVENTS = [
+            Event.DECREASE_SPEED, Event.INCREASE_SPEED, Event.INFRARED_PORT_SIDE, Event.BRAKE,
+            Event.BUMPER_STBD, Event.INFRARED_CNTR, Event.SNIFF, Event.INFRARED_STBD,
+            Event.INFRARED_STBD_SIDE, Event.HALT, Event.STOP, Event.ROAM,
+            Event.INFRARED_PORT, Event.NOOP, Event.BUMPER_CNTR, Event.BUMPER_PORT,
+            Event.SHUTDOWN
+        ]
+
+    def _get_random_event(self):
+        _n = random.randint(1,len(IfsPublisher.RANDOM_EVENTS))
+        return IfsPublisher.RANDOM_EVENTS[_n-1]
+
+    async def _publish_message(self, event):
+        # 🍈 🍅 🍋 🍐 🍓 🍥 🥝 🥚 🥧 🧀 
+#       self._log.info('🍎 publishing message for event: {}'.format(event))
+        print('🍎 publishing message for event: {}'.format(event))
+        _message = self._message_factory.get_message(event, True)
+#       await self._message_bus.publish_message(_message)
+#       self._log.info(Style.BRIGHT + 'publishing message: {}'.format(message.name) + Style.NORMAL + ' (event: {}; age: {:d}ms);'.format(message.event, message.age))
+        asyncio.create_task(self._message_bus.queue.put(_message), name='publish-message-{}'.format(_message.name))
+        await asyncio.sleep(0.005)
+#       self._log.info('🍏 published message for event: {}'.format(event))
+        print('🍏 published message for event: {}'.format(event))
 
     # ..........................................................................
-#   async def fire_message(self, event):
-#   def fire_message(self, event):
-#       self._log.info('firing message for event {}'.format(event))
-#       _message = self._message_factory.get_message(event, True)
-#       self._message_bus.publish_message(_message)
-#       await asyncio.sleep(0.1)
+    def waiting_for_message(self):
+        _div = Fore.CYAN + Style.NORMAL + ' | '
+        self._log.info('waiting for: | ' \
+                + self._get_output(Fore.RED, 'PSID', self._triggered_ir_port_side) \
+                + _div \
+                + self._get_output(Fore.RED, 'PORT', self._triggered_ir_port) \
+                + _div \
+                + self._get_output(Fore.BLUE, 'CNTR', self._triggered_ir_cntr) \
+                + _div \
+                + self._get_output(Fore.GREEN, 'STBD', self._triggered_ir_stbd) \
+                + _div \
+                + self._get_output(Fore.GREEN, 'SSID', self._triggered_ir_stbd_side) \
+                + _div \
+                + self._get_output(Fore.RED, 'BPRT', self._triggered_bmp_port) \
+                + _div \
+                + self._get_output(Fore.BLUE, 'BCNT', self._triggered_bmp_cntr) \
+                + _div \
+                + self._get_output(Fore.GREEN, 'BSTB', self._triggered_bmp_stbd) \
+                + _div )
 
     # message handling .........................................................
 
@@ -218,27 +295,6 @@ class IfsPublisher(Publisher):
     # ......................................................
     def _print_event(self, color, event, value):
         self._log.info('event:\t' + color + Style.BRIGHT + '{}; value: {}'.format(event.description, value))
-
-    # ..........................................................................
-    def waiting_for_message(self):
-        _div = Fore.CYAN + Style.NORMAL + ' | '
-        self._log.info('waiting for: | ' \
-                + self._get_output(Fore.RED, 'PSID', self._triggered_ir_port_side) \
-                + _div \
-                + self._get_output(Fore.RED, 'PORT', self._triggered_ir_port) \
-                + _div \
-                + self._get_output(Fore.BLUE, 'CNTR', self._triggered_ir_cntr) \
-                + _div \
-                + self._get_output(Fore.GREEN, 'STBD', self._triggered_ir_stbd) \
-                + _div \
-                + self._get_output(Fore.GREEN, 'SSID', self._triggered_ir_stbd_side) \
-                + _div \
-                + self._get_output(Fore.RED, 'BPRT', self._triggered_bmp_port) \
-                + _div \
-                + self._get_output(Fore.BLUE, 'BCNT', self._triggered_bmp_cntr) \
-                + _div \
-                + self._get_output(Fore.GREEN, 'BSTB', self._triggered_bmp_stbd) \
-                + _div )
 
     # ......................................................
     def _get_output(self, color, label, value):
@@ -306,7 +362,7 @@ class IfsPublisher(Publisher):
                                                                                                           -------------o
    o---------------------------------------------------------------------------------------------------o     |   DEL   |
    |    Q    |    W    |    E    |    R    |    T    |    Y    |    U    |    I    |    O    |    P    |     | SHUTDWN |
-   |  QUIT   |         |  SNIFF  |  ROAM   |  NOOP   |         |         |  INFO   | CLR_TSK |   POP   |  -------------o
+   |  QUIT   |  FLOOD  |  SNIFF  |  ROAM   |  NOOP   |         |         |  INFO   | CLR_TSK |   POP   |  -------------o
    o--------------------------------------------------------------------------o------------------------o  -------------o
         |    A    |    S    |    D    |    F    |    G    |    H    |    J    |    K    |    L    |          |   RET   |
         | IR_PSID | IR_PORT | IR_CNTR | IR_STBD | IR_SSID |  HALT   |         |         |         |          |  CLEAR  |
@@ -353,7 +409,7 @@ class IfsPublisher(Publisher):
            164   116   74    t      noop (test message)
            165   117   75    u
            166   118   76    v      verbose
-           167   119   77    w
+           167   119   77    w      flood with random messages
            170   120   78    x *    cntr BMP
            171   121   79    y
            172   122   7A    z  *   port BMP

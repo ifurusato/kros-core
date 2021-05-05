@@ -48,8 +48,8 @@ class MessageBus(object):
         if level is Level.DEBUG:
             self._log.debug('logging message bus set to debug level.')
             logging.basicConfig(level=logging.DEBUG)
+            self._loop.set_debug(True) # also set asyncio debug
         self._loop        = asyncio.get_event_loop()
-        self._loop.set_debug(True)
         self._queue       = PeekableQueue(level)
         self._publishers  = []
         self._subscribers = []
@@ -91,6 +91,16 @@ class MessageBus(object):
         self._log.info('{:d} task{} remain.'.format(len(self._tasks), ('' if len(self._tasks) == 1 else 's')))
         for _task in self._tasks:
             self._log.debug('unfinished task:\t' + Fore.YELLOW + '{}...'.format(_task.get_name()))
+
+    # ..........................................................................
+    @property
+    def queue(self):
+        '''
+        Returns the backing message queue.
+
+        IMPORTANT: This is an admin function and should not be considered part of the API.
+        '''
+        return self._queue
 
     # ..........................................................................
     @property
