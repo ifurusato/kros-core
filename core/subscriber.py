@@ -93,7 +93,7 @@ class Subscriber(object):
                 _events.append('{} '.format(event.name))
             return ''.join(_events)
         else:
-            return '(no filter)'
+            return '[ANY]'
 
     # ..........................................................................
     @final
@@ -102,15 +102,15 @@ class Subscriber(object):
         Awaits a message on the message bus, first peeking at it from the queue,
         filtering on event type.
 
-        If the message is acceptable it is consumed, calling message_handle()
-        before returning it to the message bus for republication, for further
-        processing by other subscribers and eventually garbage collected.
-
-        This creates an asyncio event used to indicate when progressing has
-        completed.
+        Kick off various tasks to consume (process) the message by first creating
+        an asyncio event. Tasks are then created to process the message followed
+        by a cleanup task. If the latter is overridden it should also called
+        by the subclass method as it flags the message as expired. Once these
+        tasks have been created the asyncio event flag is set, indicating that
+        the message has been consumed, and can subsequently garbage collected.
 
         This method is not meant to be overridden, except by the garbage
-        collector.
+        collector. The process_message() method can be overridden.
         '''
         _peeked_message = await self._message_bus.peek_message()
         if not _peeked_message:
@@ -136,21 +136,30 @@ class Subscriber(object):
                     + Fore.WHITE + ' {}; event: {}'.format(_peeked_message.name, _peeked_message.event.description))
 
             _message = await self._message_bus.consume_message()
+            self._message_bus.consumed()
+            if self._message_bus.verbose:
+                self._log.info(self._color + Style.DIM + 'consumed acceptable message:' \
+                    + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
 
             # handle acceptable message
 #           self._message_bus.add_task(asyncio.create_task(self.handle_message(_message, _event), name='{}:handle-message-{}'.format(self.name, _message.name)))
 
+            if self._message_bus.verbose:
+                _elapsed_ms = (dt.now() - _message.timestamp).total_seconds() * 1000.0
+                self._print_message_info('process message:', _message, _elapsed_ms)
             # create async tasks
             self._log.info(self._color + Style.DIM + 'creating task for processing message:' \
                     + Fore.WHITE + ' {}; for event: {}'.format(_message.name, _message.event.description))
-            self._message_bus.add_task(asyncio.create_task(self.process_message(_message, _event), name='{}:process-message-{}'.format(self.name, _message.name)))
-    
-            self._log.info(self._color + Style.DIM + 'creating task for cleanup after message:' \
-                    + Fore.WHITE + ' {}; for event: {}'.format(_message.name, _message.event.description))
-            self._message_bus.add_task(asyncio.create_task(self._cleanup_message(_message, _event), name='{}:cleanup-message-{}'.format(self.name, _message.name)))
+            _process_task = asyncio.create_task(self.process_message(_message), name='{}:process-message-{}'.format(self.name, _message.name))
 
-#           self._log.info(Fore.RED + '🍎 end event tracking for message:' + Fore.WHITE + ' {}; for event: {}'.format(_message.name, _message.event.description))
-#           _event.set()
+            # add a callback to be run when the Task is done
+            _cleanup_task = asyncio.create_task(self._cleanup_message(_message), name='{}:cleanup-message-{}'.format(self.name, _message.name))
+#           _process_task.add_done_callback(self._cleanup_message(_message))
+#           add_done_callback(callback, *, context=None)
+            self._message_bus.add_task(_process_task)
+    
+            self._log.info(Fore.RED + '🍎 end event tracking for message:' + Fore.WHITE + ' {}; for event: {}'.format(_message.name, _message.event.description))
+            _event.set()
 
             # .......................
 
@@ -160,21 +169,22 @@ class Subscriber(object):
 
             # we've handled message, so pass along to arbitrator, then mark as consumed
             if not _message.sent:
-                self._log.info(self._color + '🥝 sending message:' + Fore.WHITE + ' {}; for event: {}'.format(_message.name, _message.event.description) + self._color + ' to arbitrator...')
+                self._log.info(self._color + '🥝 sending message:' + Fore.WHITE + ' {}; for event: {}'.format(_message.name, _message.event.description) \
+                        + self._color + ' to arbitrator...')
                 await self._arbitrate_message(_message)
+                self._log.info(self._color + '🥝 sent message:' + Fore.WHITE + ' {}; for event: {}'.format(_message.name, _message.event.description) \
+                        + self._color + ' to arbitrator...')
             else:
                 self._log.info(self._color + '🥝 message:' + Fore.WHITE + ' {} already sent; for event: {}'.format(_message.name, _message.event.description))
 
-            self._message_bus.consumed()
-            if self._message_bus.verbose:
-                self._log.info(self._color + Style.DIM + 'consumed acceptable message:' \
-                    + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
+#           self._log.info(Fore.RED + '🍎 end event tracking for message:' + Fore.WHITE + ' {}; for event: {}'.format(_message.name, _message.event.description))
+#           _event.set()
 
             # republish the message
-            self._log.debug(self._color + 'awaiting republication of message:' \
+            self._log.info(self._color + '🔫 awaiting republication of message:' \
                 + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
             await self._message_bus.republish_message(_message)
-            self._log.debug(self._color + 'message:' \
+            self._log.info(self._color + '🔫 message:' \
                 + Fore.WHITE + ' {} with event: {}'.format(_message.name, _message.event.description) + self._color + ' has been republished.')
 
         elif not _ackd:
@@ -184,72 +194,28 @@ class Subscriber(object):
                     _peeked_message.name, _peeked_message.event.description, self._message_bus.queue_size))
             _peeked_message.acknowledge(self)
 
+#   # ..........................................................................
+#   def _get_timestamp(self):
+#       return dt.utcfromtimestamp(dt.utcnow().timestamp()).isoformat() #.replace(':','_').replace('-','_').replace('.','_')
 
     # ..........................................................................
-    def _get_timestamp(self):
-        return dt.utcfromtimestamp(dt.utcnow().timestamp()).isoformat() #.replace(':','_').replace('-','_').replace('.','_')
-
-    # ..........................................................................
-#    async def xhandle_message(self, message, event):
-#        '''
-#        Kick off various tasks to consume (process) the message by first creating
-#        an asyncio event. Tasks are then created for process _message() followed
-#        by _cleanup _message(). If the latter is overridden it should also called
-#        by the subclass method as it flags the message as expired. Once these
-#        tasks have been created the asyncio event flag is set, indicating that
-#        the message has been consumed.
-#
-#        The message is acknowledged if this subscriber has subscribed to the
-#        message's event type and has not acknowledged this message before, or if
-#        it is not subscribed to the event type (i.e., the message is ignored).
-#        We don't acknowledge more than once.
-#
-#        :param message:  the message to consume.
-#        :param event:    the asyncio event tracker, created by consume()
-#        '''
-#        # 🍏 🍈 🍋 🍐 🍑 🍓 🥧 🧀
-#        if message.gcd:
-#            raise GarbageCollectedError('cannot handle_message: message has been garbage collected. [2]')
-#        if self._message_bus.verbose:
-#            self._log.info(self._color + Style.DIM + 'handle message:' + Fore.WHITE + ' {}; event: {}'.format(message.name, message.event.description))
-#
-#        self._log.info(self._color + Style.DIM + 'creating task for processing message:' \
-#                + Fore.WHITE + ' {}; for event: {}'.format(message.name, message.event.description))
-#        self._message_bus.add_task(asyncio.create_task(self.process _message(message), name='{}:process-message-{}'.format(self.name, message.name)))
-#
-#        self._log.info(self._color + Style.DIM + 'creating task for cleanup after message:' \
-#                + Fore.WHITE + ' {}; for event: {}'.format(message.name, message.event.description))
-#        self._message_bus.add_task(asyncio.create_task(self._cleanup _message(message), name='{}:cleanup-message-{}'.format(self.name, message.name)))
-#
-##       self._log.info(Fore.RED + '🍎 end event tracking for message:' + Fore.WHITE + ' {}; for event: {}'.format(message.name, message.event.description))
-##       event.set()
-#
-##       while not event.is_set():
-#
-#        if self._message_bus.verbose:
-#            _elapsed_ms = (dt.now() - message.timestamp).total_seconds() * 1000.0
-#            self._print_message_info('handled message:', message, _elapsed_ms)
-
-    # ..........................................................................
-    async def process_message(self, message, event):
+    async def process_message(self, message):
         '''
         Process the message, i.e., pass its Payload along to the Arbitrator,
         which passes the highest priority Payload to the Controller to change
         the state of the robot.
 
+        This method is meant to be overridden by subclasses. Its only
+        responsibility is to set the message's processed flag.
+
         :param message:  the message to process.
-        :param event:    the asyncio event used for tracking progress.
         '''
-        self._log.debug(self._color + Style.DIM + 'processing message {}'.format(message.name))
+        self._log.debug(self._color + Style.DIM + '🍏 processing message {}'.format(message.name))
         if message.gcd:
             raise GarbageCollectedError('cannot process message: message has been garbage collected. [3]')
+
+        # indicate that this subscriber has processed the message
         message.process(self)
-
-        # we've handled message, so pass along to arbitrator
-#       await self._arbitrate_message(_message)
-
-        self._log.info(Fore.RED + '🍎 end event tracking for message:' + Fore.WHITE + ' {}; for event: {}'.format(message.name, message.event.description))
-        event.set()
 
         self._log.info(self._color + Style.DIM + '🍏 processed message {}'.format(message.name))
 
@@ -268,38 +234,25 @@ class Subscriber(object):
             self._log.info(self._color + Style.DIM + 'arbitrated payload for event {}; value: {}'.format(message.payload.event.name, message.payload.value))
 
     # ..........................................................................
-    async def _cleanup_message(self, message, event):
+    async def _cleanup_message(self, message):
         '''
         Cleanup tasks related to completing work on a message (by this subscriber). 
 
-        This currently just sets the message's 'expire' flag as True.
+        This currently sets the message's 'expire' flag as True and tells the
+        message bus to clear any completed tasks.
 
         :param message:  consumed message that is done being processed.
-        :param event:    the asyncio event used for tracking progress.
         '''
         if self._message_bus.verbose:
-            self._log.info(self._color + Style.DIM + '🚽 begin cleanup of message: {}'.format(message.name))
+            self._log.info(self._color + Style.DIM + '💮 begin cleanup of message: {}'.format(message.name))
         if message.gcd:
             self._log.warning('cannot cleanup message: message has been garbage collected. [4]')
             return
         message.expire()
-
-        # tasks related to this message
+        # clear tasks related to this message
         self._message_bus.clear_tasks()
 
-#       self._log.info(self._color + Style.DIM + '🚽 A. processing cleanup of message: {}...'.format(message.name))
-#       if self._message_bus.is_expired(message) or message.fully_acknowledged:
-#           self._log.info(self._color + Style.DIM + '🚽 A1. processing cleanup of message: {}...'.format(message.name))
-#           await self._message_bus.garbage_collect(message)
-#           self._log.info(self._color + Style.DIM + '🚽 A2. processing cleanup of message: {}...'.format(message.name))
-#           if self._message_bus.verbose:
-#               self._log.info(self._color + Style.DIM + '🚽 end cleanup of message: {} (garbage collected)'.format(message.name))
-#       else:
-#           self._log.info(self._color + Style.DIM + '🚽 B1. processing cleanup of message: {}...'.format(message.name))
-#           if self._message_bus.verbose:
-#               self._log.info(self._color + Style.DIM + '🚽 end cleanup of message: {}'.format(message.name))
-
-        self._log.info(self._color + Style.DIM + '🚽 end cleanup of message: {}'.format(message.name))
+        self._log.info(self._color + Style.DIM + '💮 end cleanup of message: {}'.format(message.name))
 
     # ..........................................................................
     def _get_formatted_time(self, label, value):
@@ -393,7 +346,6 @@ class GarbageCollector(Subscriber):
         A filter that returns True if the message is either expired and/or
         fully acknowledged.
         '''
-#   
         _elapsed_ms = (dt.now() - message.timestamp).total_seconds() * 1000.0
         if self._message_bus.is_expired(message) and message.fully_acknowledged:
             if self._message_bus.verbose:
@@ -412,21 +364,21 @@ class GarbageCollector(Subscriber):
                 self._print_message_info('🐸 garbage collector ignoring unprocessed message:', message, _elapsed_ms)
             return False
 
-    # ..........................................................................
-    async def x_collect(self, message):
-        '''
-        Explicitly collect the message by popping it from the queue for
-        garbage collection.
-        '''
-        _peeked_message = await self._message_bus.peek_message()
-        if _peeked_message == None:
-            self._log.info('💩 cannot collect: queue is empty.')
-        elif _peeked_message == message:
-            self._log.info('💩 collecting message from queue.')
-            _message = await self._message_bus.consume_message()
-            self._message_bus.consumed()
-        else:
-            self._log.info('💩 cannot collect: message is not in queue.')
+#   # ..........................................................................
+#   async def x_collect(self, message):
+#       '''
+#       Explicitly collect the message by popping it from the queue for
+#       garbage collection.
+#       '''
+#       _peeked_message = await self._message_bus.peek_message()
+#       if _peeked_message == None:
+#           self._log.info('💩 cannot collect: queue is empty.')
+#       elif _peeked_message == message:
+#           self._log.info('💩 collecting message from queue.')
+#           _message = await self._message_bus.consume_message()
+#           self._message_bus.consumed()
+#       else:
+#           self._log.info('💩 cannot collect: message is not in queue.')
 
     # ..........................................................................
     async def consume(self):

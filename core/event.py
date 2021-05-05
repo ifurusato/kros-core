@@ -83,7 +83,7 @@ class Event(Enum):
     TURN_AHEAD_STBD        = ( 83, "turn ahead starboard",    100,   False)
     # high level behaviours ............
     ROAM                   = ( 90, "roam",                    100,   False)
-    SNIFF                  = ( 91, "sniff",                    100,    True) # A Button
+    SNIFF                  = ( 91, "sniff",                   100,    True) # A Button
     VIDEO                  = ( 92, "video",                   150,   False) # L1 Button
     EVENT_L2               = ( 93, "L2",                      150,   False) # L2 Button
     EVENT_R1               = ( 94, "cruise",                  150,   False) # R1 Button

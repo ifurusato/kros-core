@@ -69,7 +69,6 @@ setup(
     include_package_data=True,
     install_requires=[
         'colorama',
-        'numpy',
         'pytest',
         'psutil',
         'readchar',

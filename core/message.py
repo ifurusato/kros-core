@@ -31,13 +31,15 @@ class Message(object):
     ID_CHARACTERS = string.ascii_uppercase + string.digits
 
     def __init__(self, event, value):
+        if event is None:
+            raise ValueError('null event argument.')
+        self._payload       = Payload(event, value)
         self._timestamp     = dt.now()
         self._message_id    = uuid.uuid4()
         # generate instance name
         _host_id = "".join(random.choices(Message.ID_CHARACTERS, k=4))
         _instance_name = 'id-{}'.format(_host_id)
         self._instance_name = _instance_name
-        self._payload       = Payload(event, value)
         self._sent          = 0
         self._expired       = False
         self._gc            = False
@@ -96,7 +98,6 @@ class Message(object):
         if processor in self._processors:
             raise Exception('message {} already processed by {}.'.format(self.name, processor.name))
         else:
-#           print(Fore.CYAN + 'process: {}'.format(self.name) + Style.RESET_ALL)
             self._processors[processor] = True
 
     # expired       ............................................................

@@ -49,6 +49,7 @@ class MessageBus(object):
             self._log.debug('logging message bus set to debug level.')
             logging.basicConfig(level=logging.DEBUG)
         self._loop        = asyncio.get_event_loop()
+        self._loop.set_debug(True)
         self._queue       = PeekableQueue(level)
         self._publishers  = []
         self._subscribers = []
@@ -261,7 +262,7 @@ class MessageBus(object):
             else:
                 self._log.info('active tasks:\t' + Fore.YELLOW + '{:d} remain:'.format(len(self._tasks)))
             for _task in self._tasks:
-                self._log.info(Fore.YELLOW + '    \t\t{};\t'.format(_task.get_name()) + Fore.BLACK + ' done? {}'.format(_task.done()))
+                self._log.info(Fore.YELLOW + '    \t\t{};  \t'.format(_task.get_name()) + Fore.BLACK + ' done? {}'.format(_task.done()))
         self.print_publishers()
         self.print_subscribers()
 
