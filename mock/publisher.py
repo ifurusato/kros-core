@@ -40,14 +40,11 @@ class IfsPublisher(Publisher):
     def __init__(self, name, message_bus, message_factory, exit_on_complete=True, level=Level.INFO):
         super().__init__(name, message_bus, message_factory, level)
         self._log = Logger("ifs-pub", level)
-        self._message_bus = message_bus
-        self._message_factory = message_factory
+#       self._message_bus = message_bus
+#       self._message_factory = message_factory
         self.exit_on_complete = exit_on_complete
-        self._enabled  = False
-        self._suppress = False
-        self._closed   = False
-        self._flood_enabled = False
-        self._flood_thread = None
+#       self._enabled  = False
+#       self._closed   = False
         self._counter  = itertools.count()
         self._triggered_ir_port_side = self._triggered_ir_port  = self._triggered_ir_cntr  = self._triggered_ir_stbd  = \
         self._triggered_ir_stbd_side = self._triggered_bmp_port = self._triggered_bmp_cntr = self._triggered_bmp_stbd = 0
@@ -59,17 +56,6 @@ class IfsPublisher(Publisher):
     @property
     def name(self):
         return 'ifs'
-
-    # ..........................................................................
-    def suppress(self, mode):
-        '''
-        Enable or disable capturing characters. Upon starting the loop the
-        suppress flag is set False, but can be enabled or disabled as
-        necessary without halting the thread.
-
-        Future feature: not currently functional.
-        '''
-        self._suppress = mode
 
     # ................................................................
     def read_cpu_temperature(self):
@@ -116,7 +102,7 @@ class IfsPublisher(Publisher):
         while self._enabled:
             # see if any sensor (key) has been activated
             _count = next(self._counter)
-            self._log.info('[{:03d}]'.format(_count))
+            self._log.info('[{:03d}] loop.'.format(_count))
             ch  = readchar.readchar()
             och = ord(ch)
             if och == 10 or och == 13: # LF or CR to print NLs
@@ -166,67 +152,10 @@ class IfsPublisher(Publisher):
 #           await asyncio.sleep(random.random())
 
     # ..........................................................................
-
-'''
-    You can do it by adding function between to execute async:
-
-    async def some_callback(args):
-        await some_function()
-
-    def between_callback(args):
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-
-        loop.run_until_complete(some_callback(args))
-        loop.close()
-
-    _thread = threading.Thread(target=between_callback, args=("some text"))
-    _thread.start()
-
-'''
     def flood_zone(self):
-        if self._flood_thread == None:
-            self._log.info(Fore.YELLOW + 'enabling flood...')
-            self._flood_enabled = True
-            self._flood_thread = Thread(name='flood-loop', target=asyncio.run, args=(self._flood_loop(lambda: self._flood_enabled),), daemon=True)
-            self._flood_thread.start()
-        else:
-            self._log.info(Fore.YELLOW + 'disabling flood.')
-            self._flood_enabled = False
-            self._log.info(Fore.YELLOW + 'disabled flood exited.')
-
-    async def _flood_loop(self, f_is_enabled):
-        self._log.info('flood the zone with scheisse.')
-        while f_is_enabled():
-            _value = random.randint(1,10) / 20
-            _event = self._get_random_event()
-#           print(Fore.BLUE + '\nflood for {:5.2f} with {}...\n'.format(_value, _event.name) + Style.RESET_ALL, end="")
-            await self._publish_message(_event)
-            time.sleep(0.5)
-
-    RANDOM_EVENTS = [
-            Event.DECREASE_SPEED, Event.INCREASE_SPEED, Event.INFRARED_PORT_SIDE, Event.BRAKE,
-            Event.BUMPER_STBD, Event.INFRARED_CNTR, Event.SNIFF, Event.INFRARED_STBD,
-            Event.INFRARED_STBD_SIDE, Event.HALT, Event.STOP, Event.ROAM,
-            Event.INFRARED_PORT, Event.NOOP, Event.BUMPER_CNTR, Event.BUMPER_PORT,
-            Event.SHUTDOWN
-        ]
-
-    def _get_random_event(self):
-        _n = random.randint(1,len(IfsPublisher.RANDOM_EVENTS))
-        return IfsPublisher.RANDOM_EVENTS[_n-1]
-
-    async def _publish_message(self, event):
-        # 🍈 🍅 🍋 🍐 🍓 🍥 🥝 🥚 🥧 🧀 
-#       self._log.info('🍎 publishing message for event: {}'.format(event))
-        print('🍎 publishing message for event: {}'.format(event))
-        _message = self._message_factory.get_message(event, True)
-#       await self._message_bus.publish_message(_message)
-#       self._log.info(Style.BRIGHT + 'publishing message: {}'.format(message.name) + Style.NORMAL + ' (event: {}; age: {:d}ms);'.format(message.event, message.age))
-        asyncio.create_task(self._message_bus.queue.put(_message), name='publish-message-{}'.format(_message.name))
-        await asyncio.sleep(0.005)
-#       self._log.info('🍏 published message for event: {}'.format(event))
-        print('🍏 published message for event: {}'.format(event))
+        _flood = self._message_bus.get_publisher('flood')
+        _flood.suppress(not _flood.suppressed)
+        self._log.info('publisher: \'{}\' suppression set to: {}.'.format(_flood.name, _flood.suppressed))
 
     # ..........................................................................
     def waiting_for_message(self):
@@ -251,7 +180,6 @@ class IfsPublisher(Publisher):
 
     # message handling .........................................................
 
-    # ......................................................
     def process_message(self, message):
         '''
         Processes the message, keeping count and providing a display of status.

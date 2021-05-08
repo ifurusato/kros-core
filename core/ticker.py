@@ -17,8 +17,8 @@ from threading import Thread
 from colorama import init, Fore, Style
 init()
 
-from lib.logger import Logger, Level
-from lib.rate import Rate
+from core.logger import Logger, Level
+from core.rate import Rate
 
 # ...............................................................
 class Ticker(object):
@@ -76,6 +76,7 @@ class Ticker(object):
 
     # ..........................................................................
     def enable(self):
+        self._log.info('enabling clock...')
         if not self._closed:
             if self._enabled:
                 self._log.warning('clock already enabled.')

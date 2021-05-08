@@ -35,6 +35,7 @@ from core.subscriber import Subscriber
 from core.event import Event
 
 from mock.publisher import IfsPublisher
+from mock.flood_publisher import FloodPublisher
 
 from mock.motor_configurer import MotorConfigurer
 from mock.motors import Motors
@@ -65,6 +66,10 @@ def test_pub_sub():
     _message_bus.register_publisher(_publisher1)
 #   _publisher2  = Publisher('B', _message_bus, _message_factory, Level.INFO)
 #   _message_bus.register_publisher(_publisher2)
+
+    _publisher2  = FloodPublisher('flood', _message_bus, _message_factory)
+#   _publisher2.suppress(True)
+    _message_bus.register_publisher(_publisher2)
 
     # ROAM is commonly accepted by all subscribers
 

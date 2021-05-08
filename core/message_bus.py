@@ -179,6 +179,16 @@ class MessageBus(object):
                 len(self._publishers),
                 's' if len(self._publishers) > 1 else ''))
 
+    # ..........................................................................
+    def get_publisher(self, name):
+        '''
+        Return a registered publisher by name.
+        '''
+        for publisher in self._publishers:
+            if publisher.name == name:
+                return publisher
+        raise NameError('no publisher found with name \'{}\'.'.format(name))
+
     def print_publishers(self):
         '''
         Print the message publishers that have been registered with the message bus.

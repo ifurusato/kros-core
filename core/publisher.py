@@ -19,14 +19,17 @@ from core.logger import Logger, Level
 from core.message import Message
 from core.event import Event
 
-EVENT_TYPES = [ Event.STOP, \
-          Event.INFRARED_PORT, Event.INFRARED_CNTR, Event.INFRARED_STBD, \
-          Event.BUMPER_PORT, Event.BUMPER_CNTR, Event.BUMPER_STBD, \
-          Event.FULL_AHEAD, Event.ROAM, Event.ASTERN, # not handled
-          Event.SNIFF ]
-
 # Publisher ....................................................................
 class Publisher(object):
+
+    RANDOM_EVENTS = [
+            Event.DECREASE_SPEED, Event.INCREASE_SPEED, Event.INFRARED_PORT_SIDE, Event.BRAKE,
+            Event.BUMPER_STBD, Event.INFRARED_CNTR, Event.SNIFF, Event.INFRARED_STBD,
+            Event.INFRARED_STBD_SIDE, Event.HALT, Event.STOP, Event.ROAM,
+            Event.INFRARED_PORT, Event.NOOP, Event.BUMPER_CNTR, Event.BUMPER_PORT,
+            Event.SHUTDOWN, Event.AHEAD, Event.ASTERN, Event.ROAM, Event.SNIFF
+        ]
+
     '''
     Eventually this will be an abstract class.
     '''
@@ -48,6 +51,7 @@ class Publisher(object):
             raise ValueError('null message factory argument.')
         self._message_factory = message_factory
         self._enabled    = False # by default
+        self._suppressed = False # by default
         self._closed     = False
         self._log.info(Fore.BLACK + 'ready.')
 
@@ -82,14 +86,13 @@ class Publisher(object):
         '''
         Returns one of the randomly-assigned event types.
         '''
-        return EVENT_TYPES[random.randint(0, len(EVENT_TYPES)-1)]
+        return Publisher.RANDOM_EVENTS[random.randint(0, len(Publisher.RANDOM_EVENTS)-1)]
 
     # ..........................................................................
     @property
     def enabled(self):
         return self._enabled
 
-    # ..........................................................................
     def enable(self):
         if not self._closed:
             if self._enabled:
@@ -99,6 +102,28 @@ class Publisher(object):
                 self._log.info('enabled.')
         else:
             self._log.warning('cannot enable: already closed.')
+
+    # ..........................................................................
+    @property
+    def suppressed(self):
+        '''
+        Return True if the publisher is suppressed.
+        '''
+        return self._suppressed
+
+    def suppress(self, mode):
+        '''
+        Enable or disable capturing characters. Upon starting the loop the
+        suppress flag is set False, but can be enabled or disabled as
+        necessary without halting the thread.
+
+        Future feature: not currently functional.
+        '''
+        self._suppressed = mode
+        if self.suppressed:
+            self._log.info('publishing suppressed.')
+        else:
+            self._log.info('publishing unsuppressed.')
 
     # ..........................................................................
     def disable(self):
