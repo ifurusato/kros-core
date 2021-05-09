@@ -52,9 +52,12 @@ class Subscriber(object):
         self._log = Logger('sub-{}'.format(name), level)
         self._name        = name
         self._color       = color
+        if message_bus is None:
+            raise ValueError('null message bus argument.')
         self._message_bus = message_bus
         self._events      = None # list of acceptable event types
         self._enabled     = True # by default
+        self._message_bus.register_subscriber(self)
         self._log.info(self._color + 'ready.')
 
     # ..........................................................................

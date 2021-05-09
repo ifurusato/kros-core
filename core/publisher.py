@@ -53,6 +53,7 @@ class Publisher(object):
         self._enabled    = False # by default
         self._suppressed = False # by default
         self._closed     = False
+        self._message_bus.register_publisher(self)
         self._log.info(Fore.BLACK + 'ready.')
 
     # ..........................................................................
