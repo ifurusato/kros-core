@@ -146,4 +146,8 @@ class Publisher(object):
         else:
             self._log.debug('already closed.')
 
+    # ..........................................................................
+    def __eq__(self, obj):
+        return isinstance(obj, Publisher) and obj.name == self.name
+
 #EOF

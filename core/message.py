@@ -21,6 +21,7 @@ init()
 
 from core.logger import Logger, Level
 from core.event import Event
+from core.subscriber import Subscriber
 
 # ..............................................................................
 class Message(object):
@@ -181,13 +182,15 @@ class Message(object):
         '''
         To be called by each subscriber, acknowledging receipt of the message.
         '''
-#       if not isinstance(subscriber, Subscriber):
-#           raise Exception('expected subscriber, not {}.'.format(type(subscriber)))
+        if not isinstance(subscriber, Subscriber):
+            raise Exception('expected subscriber, not {}.'.format(type(subscriber)))
         if len(self._subscribers) == 0:
             raise Exception('no subscribers set ({}).'.format(self._instance_name))
         if self._subscribers[subscriber] is True:
-#           print(Fore.RED + Style.NORMAL + 'message {} already acknowledged by subscriber: {}'.format(self.name, subscriber.name) + Style.RESET_ALL)
-            raise Exception('message {} already acknowledged by subscriber: {}'.format(self.name, subscriber.name))
+            if subscriber.is_gc:
+                print(Fore.YELLOW + 'WARNING: ' + Fore.CYAN + 'message {} already acknowledged by subscriber: {}'.format(self.name, subscriber.name) + Style.RESET_ALL)
+            else:
+                raise Exception('message {} already acknowledged by subscriber: {}'.format(self.name, subscriber.name))
         else:
             self._subscribers[subscriber] = True
 #           print(Fore.GREEN + Style.BRIGHT + 'message {} acknowledged by subscriber {}; still unacknowledged by {:d}.'.format(\

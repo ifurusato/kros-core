@@ -37,25 +37,15 @@ class IfsPublisher(Publisher):
     '''
     A mock IFS.
     '''
-    def __init__(self, name, message_bus, message_factory, exit_on_complete=True, level=Level.INFO):
-        super().__init__(name, message_bus, message_factory, level)
-        self._log = Logger("ifs-pub", level)
-#       self._message_bus = message_bus
-#       self._message_factory = message_factory
-        self.exit_on_complete = exit_on_complete
-#       self._enabled  = False
-#       self._closed   = False
+    def __init__(self, message_bus, message_factory, exit_on_complete=True, level=Level.INFO):
+        super().__init__('ifs', message_bus, message_factory, level)
+        self._exit_on_complete = exit_on_complete
         self._counter  = itertools.count()
         self._triggered_ir_port_side = self._triggered_ir_port  = self._triggered_ir_cntr  = self._triggered_ir_stbd  = \
         self._triggered_ir_stbd_side = self._triggered_bmp_port = self._triggered_bmp_cntr = self._triggered_bmp_stbd = 0
         self._limit = 3
         self._fmt = '{0:>9}'
         self._log.info('ready.')
-
-    # ..........................................................................
-    @property
-    def name(self):
-        return 'ifs'
 
     # ................................................................
     def read_cpu_temperature(self):
@@ -141,7 +131,7 @@ class IfsPublisher(Publisher):
                 self._log.info('[{:03d}] "{}" ({}) pressed; publishing message for event: {}'.format(_count, ch, och, _event))
                 _message = self._message_factory.get_message(_event, True)
                 await self._message_bus.publish_message(_message)
-                if self.exit_on_complete and self.all_triggered:
+                if self._exit_on_complete and self.all_triggered:
                     self._log.info('[{:03d}] COMPLETE.'.format(_count))
                     self.disable()
 #               elif self._message_bus.verbose:
@@ -282,22 +272,41 @@ class IfsPublisher(Publisher):
 #       else:
 #           self._log.warning('already closed.')
 
+# ▂ ▁ ▀ ▁ ▂ ▃ ▄ ▅ ▆ ▇ █ ▉ ▊ ▋ ▌ ▍ ▎ ▏ ░ ▒ ▓ ▖ ▗
+# ▚ ■ ▢ ▰ ▱ ▲ ▴ ▶ ▸ ► ◆ ◇ ◈ ◊ ○ ◍ ◎ ◐ ◑ ◒ ◓
+# ⁜ ─ ━ │ ┃ ┄ ┅ ┆ ┇ ┈ ┉ ┊ ┋ ┌ ┍ ┎ ┏ ┐ ┑ ┒ ┓ └ ┕ ┖ ┗ ┘ ┙ ┚ ┛ ├ ┝ ┞ ┟ ┠
+# ┡ ┢ ┣ ┤ ┥ ┦ ┧ ┨ ┩ ┼ ╆ ╇ ╈ ╉ ╊ ╋ ╌ ╍ ╎ ╏ ═ ║ ╒ ╓ ╔ ╕ ╖ ╗ ╘ ╙ ╚ ╛ ╜ ╝ ╞
+#  ╠ ╡ ╢ ╣ ╤ ╥ ╦ ╧ ╨ ╩ ╪ ╫ ╬ ╭ ╮ ╯ ╰ ╱ ╲ ╳ ╴ ╵ ╶ ╷ ╸ ╹ ╺ ╻ ╼ ╽ ╾ ╿ ▀
+# ▁ ▂ ▃ ▄ ▅ ▆ ▇ █ ▉ ▊ ▋ ▌ ▍ ▎ ▏ ▐ ░ ▒ ▓ ▔ ▕ ▖ ▗ ▘ ▙ ▚ ▛ ▜ ▝ ▞ ▟ ■ □ ▢ ▣
+# ▤ ▥ ▦ ▧ ▨ ▩ ▪ ▫ ▬ ▭ ▮ ▯ ▰ ▱ ▲ △ ▴ ▵ ▶ ▷ ▸ ▹ ► ▻ ▼ ▽ ▾ ▿ ◀ ◁ ◂ ◃ ◄ ◅ ◆ ◇
+#                                                                                                         -------------o
+#  o---------------------------------------------------------------------------------------------------o     |   DEL   |
+#  |    Q    |    W    |    E    |    R    |    T    |    Y    |    U    |    I    |    O    |    P    |     | SHUTDWN |
+#  |  QUIT   |  FLOOD  |  SNIFF  |  ROAM   |  NOOP   |         |         |  INFO   | CLR_TSK |   POP   |  -------------o
+#  o--------------------------------------------------------------------------o------------------------o  -------------o
+#       |    A    |    S    |    D    |    F    |    G    |    H    |    J    |    K    |    L    |          |   RET   |
+#       | IR_PSID | IR_PORT | IR_CNTR | IR_STBD | IR_SSID |  HALT   |         |         |         |          |  CLEAR  |
+#       o-------------------------------------------------------------------------------o------------------------------o
+#            |    Z    |    X    |    C    |    V    |    B    |    N    |    M    |    <    |    >    |    ?    |
+#            | BM_PORT | BM_CNTR | BM_STBD | VERBOSE |  BRAKE  |  STOP   |         | DN_VELO | UP_VELO |  HELP   |
+#            o---------------------------------------------------------------------------------------------------o
+
     # ..........................................................................
     def print_keymap(self):
 #        1         2         3         4         5         6         7         8         9         C         1         2
 #23456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
         self._log.info('''key map:
-                                                                                                          -------------o
-   o---------------------------------------------------------------------------------------------------o     |   DEL   |
-   |    Q    |    W    |    E    |    R    |    T    |    Y    |    U    |    I    |    O    |    P    |     | SHUTDWN |
-   |  QUIT   |  FLOOD  |  SNIFF  |  ROAM   |  NOOP   |         |         |  INFO   | CLR_TSK |   POP   |  -------------o
-   o--------------------------------------------------------------------------o------------------------o  -------------o
-        |    A    |    S    |    D    |    F    |    G    |    H    |    J    |    K    |    L    |          |   RET   |
-        | IR_PSID | IR_PORT | IR_CNTR | IR_STBD | IR_SSID |  HALT   |         |         |         |          |  CLEAR  |
-        o-------------------------------------------------------------------------------o------------------------------o
-             |    Z    |    X    |    C    |    V    |    B    |    N    |    M    |    <    |    >    |    ?    |
-             | BM_PORT | BM_CNTR | BM_STBD | VERBOSE |  BRAKE  |  STOP   |         | DN_VELO | UP_VELO |  HELP   |
-             o---------------------------------------------------------------------------------------------------o
+                                                                                                          ━━━━━━━━━━━━━┓
+   ┍━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓     ┃   DEL   ┃
+   ┃    Q    ┃    W    ┃    E    ┃    R    ┃    T    ┃    Y    ┃    U    ┃    I    ┃    O    ┃    P    ┃     ┃ SHUTDWN ┃
+   ┃  QUIT   ┃  FLOOD  ┃  SNIFF  ┃  ROAM   ┃  NOOP   ┃         ┃         ┃  INFO   ┃ CLR_TSK ┃   POP   ┃  ━━━━━━━━━━━━━┛
+   ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━o━━━━━━━━━━━━━━━━━━━━━━━━┛  ━━━━━━━━━━━━━┓
+        ┃    A    ┃    S    ┃    D    ┃    F    ┃    G    ┃    H    ┃    J    ┃    K    ┃    L    ┃          ┃   RET   ┃
+        ┃ IR_PSID ┃ IR_PORT ┃ IR_CNTR ┃ IR_STBD ┃ IR_SSID ┃  HALT   ┃         ┃         ┃         ┃          ┃  CLEAR  ┃
+        ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━o━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+             ┃    Z    ┃    X    ┃    C    ┃    V    ┃    B    ┃    N    ┃    M    ┃    <    ┃    >    ┃    ?    ┃
+             ┃ BM_PORT ┃ BM_CNTR ┃ BM_STBD ┃ VERBOSE ┃  BRAKE  ┃  STOP   ┃         ┃ DN_VELO ┃ UP_VELO ┃  HELP   ┃
+             ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
         ''')
 #           elif _event == Event.AHEAD:

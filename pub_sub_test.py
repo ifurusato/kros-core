@@ -61,38 +61,31 @@ def test_pub_sub():
     _controller = Controller(Level.INFO)
     _message_bus.register_controller(_controller)
 
-    _publisher1  = IfsPublisher('A', _message_bus, _message_factory)
-#   _publisher1  = Publisher('A', _message_bus, _message_factory)
-#   _message_bus.register_publisher(_publisher1)
-#   _publisher2  = Publisher('B', _message_bus, _message_factory, Level.INFO)
-#   _message_bus.register_publisher(_publisher2)
-
-    _publisher2  = FloodPublisher('flood', _message_bus, _message_factory)
-#   _publisher2.suppress(True)
-#   _message_bus.register_publisher(_publisher2)
-
-    # ROAM is commonly accepted by all subscribers
+    _publisher1  = IfsPublisher(_message_bus, _message_factory)
+#   _publisher2  = FloodPublisher(_message_bus, _message_factory)
 
     _subscriber1 = Subscriber('action', Fore.BLUE, _message_bus, Level.INFO)
     _subscriber1.events = [ Event.SNIFF, Event.VIDEO ] # reacts to SNIFF and VIDEO
-    _subscriber1.add_event(Event.ROAM)
 
     _subscriber2 = Subscriber('infrared', Fore.GREEN, _message_bus, Level.INFO)
     _subscriber2.events = [ Event.INFRARED_PORT, Event.INFRARED_CNTR, Event.INFRARED_STBD ] # reacts to IR sensors
-    _subscriber2.add_event(Event.ROAM)
 
-    _subscriber3 = Subscriber('bumper', Fore.YELLOW, _message_bus, Level.INFO)
-    _subscriber3.events = [ Event.BUMPER_PORT, Event.BUMPER_CNTR, Event.BUMPER_STBD ] # reacts to bumpers
-    _subscriber3.add_event(Event.ROAM)
+#   _subscriber3 = Subscriber('bumper', Fore.YELLOW, _message_bus, Level.INFO)
+#   _subscriber3.events = [ Event.BUMPER_PORT, Event.BUMPER_CNTR, Event.BUMPER_STBD ] # reacts to bumpers
 
     _motors = None
     # add motor controller, reacts to STOP, HALT, BRAKE, INCREASE_SPEED and DECREASE_SPEED
 #   _motor_configurer = MotorConfigurer(_config, _message_bus, enable_mock=True, level=Level.INFO)
 #   _motors = _motor_configurer.get_motors()
+
+    # ROAM is commonly accepted by all subscribers
+    _subscriber1.add_event(Event.ROAM)
+    _subscriber2.add_event(Event.ROAM)
+#   _subscriber3.add_event(Event.ROAM)
 #   _motors.add_event(Event.ROAM)
 
-    _message_bus.print_publishers()
-    _message_bus.print_subscribers()
+#   _message_bus.print_publishers()
+#   _message_bus.print_subscribers()
 
 #   sys.exit(0)
 #   if _motors:

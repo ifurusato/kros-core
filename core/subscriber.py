@@ -320,6 +320,15 @@ class Subscriber(object):
         else:
             self._log.debug('already closed.')
 
+    # ..........................................................................
+    def __key(self):
+        return (self.name, self._color)
+
+    def __hash__(self):
+        return hash(self.__key())
+
+    def __eq__(self, obj):
+        return isinstance(obj, Subscriber) and obj.name == self.name
 
 # GarbageCollector .............................................................
 class GarbageCollector(Subscriber):
@@ -333,9 +342,9 @@ class GarbageCollector(Subscriber):
     :param level:        the logging level
     '''
     def __init__(self, name, color, message_bus, level=Level.INFO):
-        super().__init__(name, color, message_bus, level=Level.INFO)
+        super().__init__(name, color, message_bus, level)
         self._max_age = 3.0 # ms
-        self._log.info(self._color + 'ready.')
+        self._log.info(self._color + 'garbage collector ready.')
 
     # ..........................................................................
     @property
@@ -391,7 +400,14 @@ class GarbageCollector(Subscriber):
             if self._message_bus.verbose:
                 self._log.info(self._color + 'garbage collected message:' + Fore.WHITE + ' {}; gcd: {}'.format(_message.name, _message.gcd))
         else:
+            # acknowledge we've seen the message
+            self._log.debug(self._color + Style.DIM + 'acknowledging accepted message:' \
+                    + Fore.WHITE + ' {}; event: {} (queue: {:d} elements)'.format(
+                    _peeked_message.name, _peeked_message.event.description, self._message_bus.queue_size))
+            _peeked_message.acknowledge(self)
+
             self._log.info(self._color + Style.DIM + 'gc: ignoring message:' + Fore.WHITE + ' {}; event: {} (queue: {:d} elements)'.format(
                     _peeked_message.name, _peeked_message.event.description, self._message_bus.queue_size))
+
 
 #EOF
