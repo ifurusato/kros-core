@@ -17,7 +17,7 @@
 #
 
 import sys, time, itertools, psutil, random
-from threading import Thread
+#from threading import Thread
 import asyncio
 from pathlib import Path
 from colorama import init, Fore, Style
@@ -145,7 +145,10 @@ class IfsPublisher(Publisher):
     def flood_zone(self):
         _flood = self._message_bus.get_publisher('flood')
         _flood.suppress(not _flood.suppressed)
-        self._log.info('publisher: \'{}\' suppression set to: {}.'.format(_flood.name, _flood.suppressed))
+        if _flood.suppressed:
+            self._log.info('publisher \'{}\' suppressed.'.format(_flood.name))
+        else:
+            self._log.info('publisher \'{}\' not suppressed.'.format(_flood.name))
 
     # ..........................................................................
     def waiting_for_message(self):

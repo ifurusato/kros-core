@@ -61,6 +61,11 @@ class Publisher(object):
     def name(self):
         return self._name
 
+    # ..........................................................................
+    @property
+    def message_bus(self):
+        return self._message_bus
+
     # ................................................................
     async def publish(self):
         '''
@@ -122,9 +127,9 @@ class Publisher(object):
         '''
         self._suppressed = mode
         if self.suppressed:
-            self._log.info('publishing suppressed.')
+            self._log.info('😡 publishing suppressed.')
         else:
-            self._log.info('publishing unsuppressed.')
+            self._log.info('😋 publishing unsuppressed.')
 
     # ..........................................................................
     def disable(self):

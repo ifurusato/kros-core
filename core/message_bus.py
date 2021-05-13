@@ -72,6 +72,14 @@ class MessageBus(object):
         self._log.info('ready.')
 
     # ..........................................................................
+    @property
+    def loop(self):
+        '''
+        Low level API, do not use.
+        '''
+        return self._loop
+
+    # ..........................................................................
     def add_task(self, task):
         self._tasks.append(task)
         self._log.debug('{:d} active tasks.'.format(len(self._tasks)))
@@ -281,10 +289,17 @@ class MessageBus(object):
         message bus is disabled.
         '''
         self._log.info('begin {:d} subscribers\' consume cycle...'.format(len(self._subscribers)))
-        while self._enabled:
-            for subscriber in self._subscribers:
-                self._log.debug('publishing to subscriber {}...'.format(subscriber.name))
-                await subscriber.consume()
+        _sub_list = []
+        for subscriber in self._subscribers:
+            _sub_list.append(subscriber.consume())
+
+        self._log.info('begin {:d} gathering subscribers\' consume cycle...'.format(len(self._subscribers)))
+        await asyncio.gather(*_sub_list, loop=self._loop)
+        self._log.info('begin {:d} gathered subscribers\' consume cycle...'.format(len(self._subscribers)))
+#       while self._enabled:
+#           for subscriber in self._subscribers:
+#               self._log.debug('publishing to subscriber {}...'.format(subscriber.name))
+#               await subscriber.consume()
 
     # ..........................................................................
     def print_bus_info(self):
@@ -390,7 +405,7 @@ class MessageBus(object):
         self._log.info(Fore.RED + "stopping loop..." + Style.RESET_ALL)
         self._loop.stop()
         self._log.info(Fore.RED + "shutting down..." + Style.RESET_ALL)
-        sys.exit(1) # really?
+#       sys.exit(1) # not really
 
     # ..........................................................................
     @property

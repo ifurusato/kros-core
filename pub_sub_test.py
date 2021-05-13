@@ -62,7 +62,7 @@ def test_pub_sub():
     _message_bus.register_controller(_controller)
 
     _publisher1  = IfsPublisher(_message_bus, _message_factory)
-#   _publisher2  = FloodPublisher(_message_bus, _message_factory)
+    _publisher2  = FloodPublisher(_message_bus, _message_factory)
 
     _subscriber1 = Subscriber('action', Fore.BLUE, _message_bus, Level.INFO)
     _subscriber1.events = [ Event.SNIFF, Event.VIDEO ] # reacts to SNIFF and VIDEO
