@@ -12,7 +12,7 @@
 
 import asyncio
 import random
-from typing import final
+#from typing import final
 from datetime import datetime as dt
 from colorama import init, Fore, Style
 init()
@@ -20,22 +20,6 @@ init()
 from core.logger import Logger, Level
 from core.event import Event
 
-LOG_INDENT = ( ' ' * 60 ) + Fore.CYAN + ': ' + Fore.CYAN
-
-# GarbageCollectedError ........................................................
-class GarbageCollectedError(Exception):
-    '''
-    The garbage collector refused to process the message that has already been
-    garbage collected.
-    '''
-    pass
-
-# QueueEmptyOnPeekError ........................................................
-class QueueEmptyOnPeekError(Exception):
-    '''
-    An awaited peek at the queue failed to return a message.
-    '''
-    pass
 
 # ..............................................................................
 class Subscriber(object):
@@ -48,6 +32,8 @@ class Subscriber(object):
     :param events:       the list of events used as a filter, None to set as cleanup task
     :param level:        the logging level
     '''
+    LOG_INDENT = ( ' ' * 60 ) + Fore.CYAN + ': ' + Fore.CYAN
+
     def __init__(self, name, color, message_bus, level=Level.INFO):
         self._log = Logger('sub-{}'.format(name), level)
         self._name        = name
@@ -110,7 +96,7 @@ class Subscriber(object):
             return '[ANY]'
 
     # ..........................................................................
-    @final
+#   @final
     async def consume(self):
         '''
         Awaits a message on the message bus, first peeking at it from the queue,
@@ -276,13 +262,13 @@ class Subscriber(object):
         :param elapsed:  the optional elapsed time (in milliseconds) for an operation
         '''
         self._log.info(self._color + info + '\n' \
-                + LOG_INDENT + 'id: ' + Style.BRIGHT + '{};'.format(message.name) + Style.NORMAL \
+                + Subscriber.LOG_INDENT + 'id: ' + Style.BRIGHT + '{};'.format(message.name) + Style.NORMAL \
                 + ' event: ' + Style.BRIGHT + ( '{}\n'.format(message.event.description) if message.event else 'n/a: [gc\'d]\n' ) + Style.NORMAL \
-                + LOG_INDENT + '{:d} procd;'.format(message.processed) + ' sent {:d}x;'.format(message.sent) \
+                + Subscriber.LOG_INDENT + '{:d} procd;'.format(message.processed) + ' sent {:d}x;'.format(message.sent) \
                         + ' expired? {}\n'.format(self._message_bus.is_expired(message)) \
-                + LOG_INDENT + 'procd by:\t{}\n'.format(message.print_procd()) \
-                + LOG_INDENT + 'acked by:\t{}\n'.format(message.print_acks()) \
-                + LOG_INDENT + self._get_formatted_time('msg age: ', message.age) + '; ' + self._get_formatted_time('elapsed: ', elapsed))
+                + Subscriber.LOG_INDENT + 'procd by:\t{}\n'.format(message.print_procd()) \
+                + Subscriber.LOG_INDENT + 'acked by:\t{}\n'.format(message.print_acks()) \
+                + Subscriber.LOG_INDENT + self._get_formatted_time('msg age: ', message.age) + '; ' + self._get_formatted_time('elapsed: ', elapsed))
 
     # ..........................................................................
     @property
@@ -409,5 +395,19 @@ class GarbageCollector(Subscriber):
             self._log.info(self._color + Style.DIM + 'gc: ignoring message:' + Fore.WHITE + ' {}; event: {} (queue: {:d} elements)'.format(
                     _peeked_message.name, _peeked_message.event.description, self._message_bus.queue_size))
 
+# GarbageCollectedError ........................................................
+class GarbageCollectedError(Exception):
+    '''
+    The garbage collector refused to process the message that has already been
+    garbage collected.
+    '''
+    pass
+
+# QueueEmptyOnPeekError ........................................................
+class QueueEmptyOnPeekError(Exception):
+    '''
+    An awaited peek at the queue failed to return a message.
+    '''
+    pass
 
 #EOF

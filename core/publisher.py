@@ -18,6 +18,8 @@ init()
 from core.logger import Logger, Level
 from core.message import Message
 from core.event import Event
+from core.message_bus import MessageBus
+from core.message_factory import MessageFactory
 
 # Publisher ....................................................................
 class Publisher(object):
@@ -46,10 +48,16 @@ class Publisher(object):
         self._name = name
         if message_bus is None:
             raise ValueError('null message bus argument.')
-        self._message_bus = message_bus
+        elif isinstance(message_bus, MessageBus):
+            self._message_bus = message_bus
+        else:
+            raise ValueError('unrecognised message bus argument: {}'.format(type(message_bus)))
         if message_factory is None:
             raise ValueError('null message factory argument.')
-        self._message_factory = message_factory
+        elif isinstance(message_factory, MessageFactory):
+            self._message_factory = message_factory
+        else:
+            raise ValueError('unrecognised message factory argument: {}'.format(type(message_bus)))
         self._enabled    = False # by default
         self._suppressed = False # by default
         self._closed     = False
