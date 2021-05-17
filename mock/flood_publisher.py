@@ -42,11 +42,15 @@ class FloodPublisher(Publisher):
 
     def enable(self):
         super().enable()
-        print('🍎 sent enable message...')
-        if not self.enabled:
-            print('🍎 enabled.')
+        if self.enabled:
+            print('😈 enabled.')
+            print('🚺 creating task...')
+#           asyncio.create_task(self._publish_loop(self._message_bus, lambda: self.enabled), name='publish-loop')
+            self._message_bus.loop.create_task(self._publish_loop(self._message_bus, lambda: self.enabled), name='publish-loop')
+            print('🚺 created task.')
         else:
-            print('🍎 disabled.')
+            print('😈 disabled.')
+
     # ................................................................
     async def publish(self):
         '''
@@ -57,17 +61,19 @@ class FloodPublisher(Publisher):
 #       if self._enabled:
 #           self._log.warning('publish cycle already started.')
 #           return
-        if not self._enabled:
-            print('🍎🍎 was not enabled.')
+        if not self.enabled:
+            print('🚺 was not enabled, so we\'re enabling now...')
             self.enable()
-        self._log.info('start loop:\t' + Fore.YELLOW + 'type Ctrl-C or the \"q\" key to exit sensor loop, the \"?\" key for help.')
+        else:
+            print('😈 was already enabled.')
+#       self._log.info('start loop:\t' + Fore.YELLOW + 'type Ctrl-C or the \"q\" key to exit sensor loop, the \"?\" key for help.')
         print('\n')
         self._log.info(Fore.YELLOW + 'publish enabled? {}'.format(self._enabled))
 
-        print('🍎🍎 creating task...')
+#       print('🚺 creating task...')
 #       asyncio.create_task(self._publish_loop(self._message_bus, lambda: self.enabled), name='publish-loop')
 #       self._message_bus.loop.create_task(self._publish_loop(self._message_bus, lambda: self.enabled), name='publish-loop')
-        print('🍎🍎 created task.')
+#       print('🚺 created task.')
 #       self._thread = Thread(name='loop', target=FloodPublisher._publish_loop, args=[self, self._message_bus, lambda: self.enabled], daemon=True)
 #       self._thread.start()
 
@@ -94,11 +100,11 @@ class FloodPublisher(Publisher):
 
         while self.enabled:
             _count = next(self._counter)
-            self._log.info(Fore.BLUE + '[{:03d}] A1. loop.'.format(_count))
+            self._log.info(Fore.BLUE + '[{:03d}] 🚺 A1. flood loop.'.format(_count))
             # otherwise handle as event
             _event = self._get_random_event()
          
-            self._log.info('[{:03d}] publishing message for event: {}'.format(_count, _event))
+            self._log.info('[{:03d}] 🚺 publishing message for event: {}'.format(_count, _event))
             _message = self._message_factory.get_message(_event, True)
             await self._message_bus.publish_message(_message)
             await asyncio.sleep(0.1)
@@ -114,10 +120,13 @@ class FloodPublisher(Publisher):
 #       self._ticker.enable()
         while f_is_enabled():
             _count = next(self._counter)
-            self._log.info(Fore.BLUE + '[{:03d}] A1. loop...'.format(_count))
+            self._log.info(Fore.BLUE + '[{:03d}] A2. loop...'.format(_count))
+            _event = self._get_random_event()
+            _message = self._message_factory.get_message(_event, True)
+            await self._message_bus.publish_message(_message)
 #           await self._publish_message(message_bus)
 #           self._log.info(Fore.BLUE + '[{:03d}] A2. loop...'.format(_count))
-#           await asyncio.sleep(0.1)
+            await asyncio.sleep(0.5)
             time.sleep(1.0)
         self._log.info('_start_publish_loop() END.')
 

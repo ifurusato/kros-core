@@ -131,7 +131,7 @@ class Gamepad():
                 self._enabled = True
                 if self._gamepad == None:
                     self.connect()
-                self._start_gamepad_loop()
+#               self.start_gamepad_loop(callback)
             else:
                 self._log.warning('already started gamepad.')
         else:
@@ -151,7 +151,7 @@ class Gamepad():
         return ( (value - 127.0) / 255.0 ) * -2.0
 
     # ..........................................................................
-    def _gamepad_loop(self, f_is_enabled):
+    def _gamepad_loop(self, callback, f_is_enabled):
         self._log.info('starting event loop...')
         __enabled = True
         while __enabled and f_is_enabled():
@@ -161,6 +161,8 @@ class Gamepad():
                     raise Exception(Gamepad._NOT_AVAILABLE_ERROR + ' [gamepad no longer available]')
                 # loop and filter by event code and print the mapped label
                 for event in self._gamepad.read_loop():
+                    if callback:
+                        callback(event)
                     self._handleEvent(event)
                     if not f_is_enabled():
                         self._log.info(Fore.BLACK + 'breaking from event loop.')
@@ -199,9 +201,11 @@ class Gamepad():
         return self._enabled
 
     # ..........................................................................
-    def _start_gamepad_loop(self):
+    def start_gamepad_loop(self, callback):
         '''
         This is the method to call to actually start the loop.
+
+        The arguments to the callback method include the event.
         '''
         self._log.info(Fore.YELLOW + 'start gamepad loop...')
         if not self._enabled:
@@ -212,7 +216,7 @@ class Gamepad():
         elif not self._closed:
             if self._thread is None:
                 self._enabled = True
-                self._thread = Thread(name='gamepad', target=Gamepad._gamepad_loop, args=[self, lambda: self._enabled], daemon=True)
+                self._thread = Thread(name='gamepad', target=Gamepad._gamepad_loop, args=[self, callback, lambda: self._enabled], daemon=True)
 #               self._thread.setDaemon(False)
                 self._thread.start()
                 self._log.info('started.')

@@ -295,7 +295,7 @@ class MessageBus(object):
 
         self._log.info('begin {:d} gathering subscribers\' consume cycle...'.format(len(self._subscribers)))
         await asyncio.gather(*_sub_list, loop=self._loop)
-        self._log.info('begin {:d} gathered subscribers\' consume cycle...'.format(len(self._subscribers)))
+        self._log.info('completed {:d} gathering subscribers\' consume cycle.'.format(len(self._subscribers)))
 #       while self._enabled:
 #           for subscriber in self._subscribers:
 #               self._log.debug('publishing to subscriber {}...'.format(subscriber.name))

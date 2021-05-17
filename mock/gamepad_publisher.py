@@ -108,21 +108,17 @@ class GamepadPublisher(Publisher):
                 # see if any sensor (key) has been activated
                 _count = next(self._counter)
                 self._log.info('[{:03d}] loop.'.format(_count))
-                ch  = readchar.readchar()
-                och = ord(ch)
-                if och == 3 or och == 113: # 'q'
-                    self.disable()
-                    self._message_bus.disable()
-                    self._log.info(Fore.YELLOW + 'type Ctrl-C to exit.')
-                    continue
+
+                await self.gamepad_callback()
+
                 # otherwise handle as event
-                _event = self.get_event_for_char(och)
-                if _event is not None:
+#               _event = self.get_event_for_char(och)
+                if _event is not none:
                     self._log.info('[{:03d}] "{}" ({}) pressed; publishing message for event: {}'.format(_count, ch, och, _event))
-                    _message = self._message_factory.get_message(_event, True)
+                    _message = self._message_factory.get_message(_event, true)
                     await self._message_bus.publish_message(_message)
                     if self._exit_on_complete and self.all_triggered:
-                        self._log.info('[{:03d}] COMPLETE.'.format(_count))
+                        self._log.info('[{:03d}] complete.'.format(_count))
                         self.disable()
     #               elif self._message_bus.verbose:
     #                   self.waiting_for_message()
@@ -130,9 +126,9 @@ class GamepadPublisher(Publisher):
                     self._log.info('[{:03d}] unmapped key "{}" ({}) pressed.'.format(_count, ch, och))
     #           await asyncio.sleep(0.1)
     #           await asyncio.sleep(random.random())
-            except KeyboardInterrupt:
-                self._log.info('caught Ctrl-C, exiting...')
-                self._enabled = False
+            except keyboardinterrupt:
+                self._log.info('caught ctrl-c, exiting...')
+                self._enabled = false
 
         pass
 
@@ -148,8 +144,13 @@ class GamepadPublisher(Publisher):
             return
         self._log.info('enabling...')
         self._gamepad.enable()
-        self._enabled = True
+        self._gamepad.start_gamepad_loop(self.gamepad_callback)
+        self._enabled = true
         self._log.info('enabled.')
+
+    # ..........................................................................
+    def gamepad_callback(self, event):
+        self._log.info(Fore.YELLOW + 'gamepad callback for event: {}'.format(event))
 
     # ..........................................................................
     def get_thread_position(self, thread):
