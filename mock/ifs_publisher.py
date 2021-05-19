@@ -19,6 +19,7 @@
 import sys, time, itertools, psutil, random
 #from threading import Thread
 import asyncio
+from asyncio.queues import Queue
 from pathlib import Path
 from colorama import init, Fore, Style
 init()
@@ -44,52 +45,37 @@ class IfsPublisher(Publisher):
         self._triggered_ir_port_side = self._triggered_ir_port  = self._triggered_ir_cntr  = self._triggered_ir_stbd  = \
         self._triggered_ir_stbd_side = self._triggered_bmp_port = self._triggered_bmp_cntr = self._triggered_bmp_stbd = 0
         self._limit = 3
+        self._ploop = None
+        self._publish_queue = Queue(maxsize=1)
         self._fmt = '{0:>9}'
         self._log.info('ready.')
 
     # ................................................................
-    def read_cpu_temperature(self):
-        temp_file = Path('/sys/class/thermal/thermal_zone0/temp')
-        if temp_file.is_file():
-            with open(temp_file, 'r') as f:
-                data = int(f.read())
-                temperature = data / 1000
-                return temperature
+    def enable(self):
+        super().enable()
+        if self.enabled:
+            self._log.info(Fore.RED + '>>> enabled: {}'.format(self.enabled))
+            if self._ploop:
+                self._log.warning('loop thread already exists.')
+            else:
+                # start loop as new task
+                self._log.info(Fore.YELLOW + 'starting publish loop...')
+                self._ploop = self._message_bus.loop
+#               self._ploop.run_until_complete(self._publish_loop(lambda: self.enabled))
+                self._ploop.create_task(self._publish_loop(lambda: self.enabled), name='publish-loop')
+                self._log.info(Fore.YELLOW + 'publish loop started.')
         else:
-            return None
+            self._log.info(Fore.BLACK + '<<< enabled: {}'.format(self.enabled))
 
-    # ................................................................
-    def print_sys_info(self):
-        _M = 1000000
-        _vm = psutil.virtual_memory()
-        self._log.info('virtual memory: \t' + Fore.YELLOW + 'total: {:4.1f}MB; available: {:4.1f}MB ({:5.2f}%); used: {:4.1f}MB; free: {:4.1f}MB'.format(\
-                _vm[0]/_M, _vm[1]/_M, _vm[2], _vm[3]/_M, _vm[4]/_M))
-        # svmem(total=10367352832, available=6472179712, percent=37.6, used=8186245120, free=2181107712, active=4748992512, inactive=2758115328, buffers=790724608, cached=3500347392, shared=787554304)
-        _sw = psutil.swap_memory()
-        # sswap(total=2097147904, used=296128512, free=1801019392, percent=14.1, sin=304193536, sout=677842944)
-        self._log.info('swap memory:    \t' + Fore.YELLOW + 'total: {:4.1f}MB; used: {:4.1f}MB; free: {:4.1f}MB ({:5.2f}%)'.format(\
-                _sw[0]/_M, _sw[1]/_M, _sw[2]/_M, _sw[3]))
-        temperature = self.read_cpu_temperature()
-        if temperature:
-            self._log.info('cpu temperature:\t' + Fore.YELLOW + '{:5.2f}°C'.format(temperature))
-        else:
-#           self._log.info('cpu temperature:\t' + Fore.YELLOW + 'n/a')
-            pass
+    async def _publish_loop(self, f_is_enabled):
+        print('🍏 _start_publish_loop() BEGIN.')
+        self._log.info('_start_publish_loop() BEGIN.')
+        _loop_freq_hz  = 20
+        while f_is_enabled():
+            _count = next(self._counter)
+            self._log.info(Fore.BLUE + '[{:03d}] A2. BEGIN publish loop...'.format(_count))
+            # get key press ..........................................
 
-    # ................................................................
-    async def publish(self):
-        '''
-        Begins publication of messages. The MessageBus itself calls this function
-        as part of its asynchronous loop; it shouldn't be called by anyone except
-        the MessageBus.
-        '''
-        if self._enabled:
-            self._log.warning('publish cycle already started.')
-            return
-        self._enabled = True
-        self._log.info('start loop:\t' + Fore.YELLOW + 'type Ctrl-C or the \"q\" key to exit sensor loop, the \"?\" key for help.')
-        print('\n')
-        while self._enabled:
             # see if any sensor (key) has been activated
             _count = next(self._counter)
             self._log.info('[{:03d}] loop.'.format(_count))
@@ -130,16 +116,46 @@ class IfsPublisher(Publisher):
             if _event is not None:
                 self._log.info('[{:03d}] "{}" ({}) pressed; publishing message for event: {}'.format(_count, ch, och, _event))
                 _message = self._message_factory.get_message(_event, True)
-                await self._message_bus.publish_message(_message)
-                if self._exit_on_complete and self.all_triggered:
-                    self._log.info('[{:03d}] COMPLETE.'.format(_count))
-                    self.disable()
+                await self._publish_queue.put(message)
+                await asyncio.sleep(0.2)
 #               elif self._message_bus.verbose:
 #                   self.waiting_for_message()
+                self._log.info('publish_loop() loop end...')
             else:
                 self._log.info('[{:03d}] unmapped key "{}" ({}) pressed.'.format(_count, ch, och))
 #           await asyncio.sleep(0.1)
 #           await asyncio.sleep(random.random())
+
+            # finished processing key press ..........................
+            _event = self._get_random_event()
+            _message = self._message_factory.get_message(_event, True)
+            self._log.info(Fore.BLUE + '[{:03d}] A2. END publish loop...'.format(_count))
+#           time.sleep(1.0)
+        self._log.info('_start_publish_loop() END.')
+
+
+    # ................................................................
+    async def publish(self):
+        '''
+        Begins publication of messages. The MessageBus itself calls this function
+        as part of its asynchronous loop; it shouldn't be called by anyone except
+        the MessageBus.
+        '''
+        if self.enabled:
+            self._log.warning('publish cycle already started.')
+            return
+        self.enable()
+        self._log.info('start loop:\t' + Fore.YELLOW + 'type Ctrl-C or the \"q\" key to exit sensor loop, the \"?\" key for help.')
+        print('\n')
+        while self.enabled:
+            _message = await self._publish_queue.get()
+            await self._message_bus.publish_message(_message)
+            if self._exit_on_complete and self.all_triggered:
+                self._log.info('[{:03d}] COMPLETE.'.format(_count))
+                self.disable()
+            await asyncio.sleep(0.2)
+            self._log.info('publish() loop end...')
+
 
     # ..........................................................................
     def flood_zone(self):
@@ -149,6 +165,35 @@ class IfsPublisher(Publisher):
             self._log.info('publisher \'{}\' suppressed.'.format(_flood.name))
         else:
             self._log.info('publisher \'{}\' not suppressed.'.format(_flood.name))
+
+    # ................................................................
+    def print_sys_info(self):
+        _M = 1000000
+        _vm = psutil.virtual_memory()
+        self._log.info('virtual memory: \t' + Fore.YELLOW + 'total: {:4.1f}MB; available: {:4.1f}MB ({:5.2f}%); used: {:4.1f}MB; free: {:4.1f}MB'.format(\
+                _vm[0]/_M, _vm[1]/_M, _vm[2], _vm[3]/_M, _vm[4]/_M))
+        # svmem(total=10367352832, available=6472179712, percent=37.6, used=8186245120, free=2181107712, active=4748992512, inactive=2758115328, buffers=790724608, cached=3500347392, shared=787554304)
+        _sw = psutil.swap_memory()
+        # sswap(total=2097147904, used=296128512, free=1801019392, percent=14.1, sin=304193536, sout=677842944)
+        self._log.info('swap memory:    \t' + Fore.YELLOW + 'total: {:4.1f}MB; used: {:4.1f}MB; free: {:4.1f}MB ({:5.2f}%)'.format(\
+                _sw[0]/_M, _sw[1]/_M, _sw[2]/_M, _sw[3]))
+        temperature = self.read_cpu_temperature()
+        if temperature:
+            self._log.info('cpu temperature:\t' + Fore.YELLOW + '{:5.2f}°C'.format(temperature))
+        else:
+#           self._log.info('cpu temperature:\t' + Fore.YELLOW + 'n/a')
+            pass
+
+    # ................................................................
+    def read_cpu_temperature(self):
+        temp_file = Path('/sys/class/thermal/thermal_zone0/temp')
+        if temp_file.is_file():
+            with open(temp_file, 'r') as f:
+                data = int(f.read())
+                temperature = data / 1000
+                return temperature
+        else:
+            return None
 
     # ..........................................................................
     def waiting_for_message(self):
@@ -241,49 +286,6 @@ class IfsPublisher(Publisher):
             and self._triggered_bmp_cntr     >= self._limit \
             and self._triggered_bmp_stbd     >= self._limit
 
-#   # ..........................................................................
-#   @property
-#   def enabled(self):
-#       return self._enabled
-
-#   # ..........................................................................
-#   def enable(self):
-#       if not self._closed:
-#           if self._enabled:
-#               self._log.warning('already enabled.')
-#           else:
-#               self._enabled = True
-#               self._log.info('enabled.')
-#       else:
-#           self._log.warning('cannot enable: already closed.')
-
-#   # ..........................................................................
-#   def disable(self):
-#       if self._enabled:
-#           self._enabled = False
-#           self._log.info('disabled.')
-#       else:
-#           self._log.warning('already disabled.')
-
-#   # ..........................................................................
-#   def close(self):
-#       if not self._closed:
-#           if self._enabled:
-#               self.disable()
-#           self._closed = True
-#           self._log.info('closed.')
-#       else:
-#           self._log.warning('already closed.')
-
-# ▂ ▁ ▀ ▁ ▂ ▃ ▄ ▅ ▆ ▇ █ ▉ ▊ ▋ ▌ ▍ ▎ ▏ ░ ▒ ▓ ▖ ▗
-# ▚ ■ ▢ ▰ ▱ ▲ ▴ ▶ ▸ ► ◆ ◇ ◈ ◊ ○ ◍ ◎ ◐ ◑ ◒ ◓
-# ⁜ ─ ━ │ ┃ ┄ ┅ ┆ ┇ ┈ ┉ ┊ ┋ ┌ ┍ ┎ ┏ ┐ ┑ ┒ ┓ └ ┕ ┖ ┗ ┘ ┙ ┚ ┛ ├ ┝ ┞ ┟ ┠
-# ┡ ┢ ┣ ┤ ┥ ┦ ┧ ┨ ┩ ┼ ╆ ╇ ╈ ╉ ╊ ╋ ╌ ╍ ╎ ╏ ═ ║ ╒ ╓ ╔ ╕ ╖ ╗ ╘ ╙ ╚ ╛ ╜ ╝ ╞
-#  ╠ ╡ ╢ ╣ ╤ ╥ ╦ ╧ ╨ ╩ ╪ ╫ ╬ ╭ ╮ ╯ ╰ ╱ ╲ ╳ ╴ ╵ ╶ ╷ ╸ ╹ ╺ ╻ ╼ ╽ ╾ ╿ ▀
-# ┗━━┻━━┳━━┛  ┅━━┳━━━┓
-# ▁ ▂ ▃ ▄ ▅ ▆ ▇ █ ▉ ▊ ▋ ▌ ▍ ▎ ▏ ▐ ░ ▒ ▓ ▔ ▕ ▖ ▗ ▘ ▙ ▚ ▛ ▜ ▝ ▞ ▟ ■ □ ▢ ▣
-# ▤ ▥ ▦ ▧ ▨ ▩ ▪ ▫ ▬ ▭ ▮ ▯ ▰ ▱ ▲ △ ▴ ▵ ▶ ▷ ▸ ▹ ► ▻ ▼ ▽ ▾ ▿ ◀ ◁ ◂ ◃ ◄ ◅ ◆ ◇
-
     # ..........................................................................
     def print_keymap(self):
 #        1         2         3         4         5         6         7         8         9         C         1         2
@@ -300,6 +302,16 @@ class IfsPublisher(Publisher):
              ┃    Z    ┃    X    ┃    C    ┃    V    ┃    B    ┃    N    ┃    M    ┃    <    ┃    >    ┃    ?    ┃
              ┃ BM_PORT ┃ BM_CNTR ┃ BM_STBD ┃ VERBOSE ┃  BRAKE  ┃  STOP   ┃         ┃ DN_VELO ┃ UP_VELO ┃  HELP   ┃
              ┗━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┛
+
+   QUIT:      quit application                IR_PSID:   port side infrared event           BM_PORT:   port bumper
+   FLOOD:     toggle flood publisher          IR_PORT:   port infrared event                BM_CNTR:   center bumper
+   SNIFF:     tirgger SNIFF behaviour         IR_CNTR:   center infrared event              BM_STBD:   starboard bumper
+   ROAM:      trigger ROAM behaviour          IR_STBD:   starboard infrared event           VERBOSE:   toggle verbosity
+   NOOP:      no operation event              IR_SSID:   starboard side infrared event      BRAKE:     brake motors
+   INFO:      print system information        HALT:      halt motors                        STOP:      stop motors
+   CLR_TSK:   clear completed tasks                                                         DN_VELO:   slow down motors
+   POP:       pop messages from queue                                                       UP_VELO:   speed up motors
+   SHUTDOWN:  shut down robot                 CLEAR:     clear screen                       HELP:      print help
 
         ''')
 #           elif _event == Event.AHEAD:
@@ -384,4 +396,12 @@ class IfsPublisher(Publisher):
         else:
             return None
 
+# ▂ ▁ ▀ ▁ ▂ ▃ ▄ ▅ ▆ ▇ █ ▉ ▊ ▋ ▌ ▍ ▎ ▏ ░ ▒ ▓ ▖ ▗
+# ▚ ■ ▢ ▰ ▱ ▲ ▴ ▶ ▸ ► ◆ ◇ ◈ ◊ ○ ◍ ◎ ◐ ◑ ◒ ◓
+# ⁜ ─ ━ │ ┃ ┄ ┅ ┆ ┇ ┈ ┉ ┊ ┋ ┌ ┍ ┎ ┏ ┐ ┑ ┒ ┓ └ ┕ ┖ ┗ ┘ ┙ ┚ ┛ ├ ┝ ┞ ┟ ┠
+# ┡ ┢ ┣ ┤ ┥ ┦ ┧ ┨ ┩ ┼ ╆ ╇ ╈ ╉ ╊ ╋ ╌ ╍ ╎ ╏ ═ ║ ╒ ╓ ╔ ╕ ╖ ╗ ╘ ╙ ╚ ╛ ╜ ╝ ╞
+#  ╠ ╡ ╢ ╣ ╤ ╥ ╦ ╧ ╨ ╩ ╪ ╫ ╬ ╭ ╮ ╯ ╰ ╱ ╲ ╳ ╴ ╵ ╶ ╷ ╸ ╹ ╺ ╻ ╼ ╽ ╾ ╿ ▀
+# ┗━━┻━━┳━━┛  ┅━━┳━━━┓
+# ▁ ▂ ▃ ▄ ▅ ▆ ▇ █ ▉ ▊ ▋ ▌ ▍ ▎ ▏ ▐ ░ ▒ ▓ ▔ ▕ ▖ ▗ ▘ ▙ ▚ ▛ ▜ ▝ ▞ ▟ ■ □ ▢ ▣
+# ▤ ▥ ▦ ▧ ▨ ▩ ▪ ▫ ▬ ▭ ▮ ▯ ▰ ▱ ▲ △ ▴ ▵ ▶ ▷ ▸ ▹ ► ▻ ▼ ▽ ▾ ▿ ◀ ◁ ◂ ◃ ◄ ◅ ◆ ◇
 #EOF

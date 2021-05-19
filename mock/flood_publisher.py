@@ -35,8 +35,8 @@ class FloodPublisher(Publisher):
     def __init__(self, message_bus, message_factory, level=Level.INFO):
         super().__init__('flood', message_bus, message_factory, level)
         self._counter  = itertools.count()
-#       _loop_freq_hz  = 20
-#       self._ticker = Ticker(_loop_freq_hz, self._publish_message, Level.INFO)
+        _loop_freq_hz  = 20
+        self._ticker = Ticker(_loop_freq_hz, self._publish_message, Level.INFO)
         self.enable()
         self._log.info('ready.')
 
@@ -69,6 +69,22 @@ class FloodPublisher(Publisher):
 #       self._log.info('start loop:\t' + Fore.YELLOW + 'type Ctrl-C or the \"q\" key to exit sensor loop, the \"?\" key for help.')
         print('\n')
         self._log.info(Fore.YELLOW + 'publish enabled? {}'.format(self._enabled))
+        if not self.enabled:
+            print('🚺🚺 was STILL not enabled, so we\'re enabling now...')
+            self._enabled = True # by default
+
+        while self.enabled:
+            _count = next(self._counter)
+            self._log.info(Fore.BLUE + '[{:03d}] 🚺 A1. flood loop.'.format(_count))
+            # otherwise handle as event
+            _event = self._get_random_event()
+            self._log.info('[{:03d}] 🚺 publishing message for event: {}'.format(_count, _event))
+            _message = self._message_factory.get_message(_event, True)
+            await self._message_bus.publish_message(_message)
+            await asyncio.sleep(0.5)
+#           await asyncio.sleep(random.random())
+
+        self._log.info('publish() END.')
 
 #       print('🚺 creating task...')
 #       asyncio.create_task(self._publish_loop(self._message_bus, lambda: self.enabled), name='publish-loop')
@@ -98,19 +114,6 @@ class FloodPublisher(Publisher):
 #           await asyncio.sleep(random.random())
 #           time.sleep(0.1)
 
-        while self.enabled:
-            _count = next(self._counter)
-            self._log.info(Fore.BLUE + '[{:03d}] 🚺 A1. flood loop.'.format(_count))
-            # otherwise handle as event
-            _event = self._get_random_event()
-         
-            self._log.info('[{:03d}] 🚺 publishing message for event: {}'.format(_count, _event))
-            _message = self._message_factory.get_message(_event, True)
-            await self._message_bus.publish_message(_message)
-            await asyncio.sleep(0.1)
-#           await asyncio.sleep(random.random())
-        self._log.info('publish() END.')
-
     async def _publish_loop(self, message_bus, f_is_enabled):
         print('🍏 _start_publish_loop() BEGIN.')
         self._log.info('_start_publish_loop() BEGIN.')
@@ -131,7 +134,7 @@ class FloodPublisher(Publisher):
         self._log.info('_start_publish_loop() END.')
 
     async def _publish_message(self):
-        # 🍈 🍅 🍋 🍐 🍓 🍥 🥝 🥚 🥧 🧀 
+        # 🍈 🍅 🍋 🍐 🍓 🍥 🥝 🥚 🥧 🧀
         self._log.info('tick: publish message...')
         _event = self._get_random_event()
 #       _event = FloodPublisher.RANDOM_EVENTS[random.randint(1,len(FloodPublisher.RANDOM_EVENTS)) - 1]
