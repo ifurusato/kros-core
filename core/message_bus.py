@@ -30,7 +30,7 @@ import asyncio, signal, traceback
 import sys, logging
 from colorama import init, Fore, Style
 init()
-from asyncio.queues import Queue
+from asyncio.queues import Queue, QueueEmpty
 
 from core.logger import Logger, Level
 from core.event import Event
@@ -68,7 +68,7 @@ class MessageBus(object):
         self._enabled     = True # by default
         self._closed      = False
         self._log.info('creating subscriber task...')
-        self._loop.create_task(self.start_consuming(), name='consume-loop')
+        self._loop.create_task(self.start_consuming(), name='coro-loop')
         self._log.info('ready.')
 
     # ..........................................................................
@@ -236,7 +236,7 @@ class MessageBus(object):
         if subscriber in self._subscribers:
             raise ValueError('subscriber list already contains \'{}\''.format(subscriber.name))
         self._subscribers.insert(0, subscriber)
-        self._loop.create_task(subscriber.consume(), name='subscriber-{}'.format(subscriber.name))
+#       self._loop.create_task(subscriber.consume(), name='subscriber-{}'.format(subscriber.name))
         self._log.info('registered subscriber \'{}\'; {:d} subscriber{} in list.'.format( \
                 subscriber.name,
                 len(self._subscribers),
@@ -281,13 +281,17 @@ class MessageBus(object):
         message bus is disabled.
         '''
         self._log.info('begin {:d} subscribers\' consume cycle...'.format(len(self._subscribers)))
-        _sub_list = []
+        _coro_list = []
+        self._log.info('😰 begin {:d} gathering subscribers\' consume cycle...'.format(len(self._subscribers)))
         for subscriber in self._subscribers:
-            _sub_list.append(subscriber.consume())
+            _coro_list.append(subscriber.consume())
+#       self._log.info('😦 begin {:d} gathering publishers\' publish cycle...'.format(len(self._publishers)))
+#       for publisher in self._publishers:
+#           _coro_list.append(publisher.publish())
 
-        self._log.info('begin {:d} gathering subscribers\' consume cycle...'.format(len(self._subscribers)))
-        await asyncio.gather(*_sub_list, loop=self._loop)
-        self._log.info('completed {:d} gathering subscribers\' consume cycle.'.format(len(self._subscribers)))
+        self._log.info('😠 starting {:d} consume loop...'.format(len(self._subscribers)))
+        _result = await asyncio.gather(*_coro_list) # loop=self._loop)
+        self._log.info('😡 completed {:d} consume loop; result: {}'.format(len(self._subscribers), _result))
 #       while self._enabled:
 #           for subscriber in self._subscribers:
 #               self._log.debug('publishing to subscriber {}...'.format(subscriber.name))
@@ -345,7 +349,7 @@ class MessageBus(object):
             self._log.info(Style.BRIGHT + 'publishing message: {}'.format(message.name) + Style.NORMAL + ' (event: {}; age: {:d}ms);'.format(message.event, message.age))
         _result = asyncio.create_task(self._queue.put(message), name='publish-message-{}'.format(message.name))
         self._log.info(Style.DIM + 'result from published message: {}'.format(_result.get_name()))
-        await asyncio.sleep(0.005)
+        await asyncio.sleep(0.05)
 
     # ..........................................................................
     async def republish_message(self, message):
@@ -393,10 +397,10 @@ class MessageBus(object):
                 asyncio.current_task()]
         [task.cancel() for task in tasks]
         self._log.info(Fore.RED + 'cancelling {:d} outstanding tasks...'.format(len(tasks)) + Style.RESET_ALL)
-        await asyncio.gather(*tasks, return_exceptions=True)
-        self._log.info(Fore.RED + "stopping loop..." + Style.RESET_ALL)
+        _result = await asyncio.gather(*tasks, return_exceptions=True)
+        self._log.info(Fore.RED + 'stopping loop...; result: {}'.format(_result) + Style.RESET_ALL)
         self._loop.stop()
-        self._log.info(Fore.RED + "shutting down..." + Style.RESET_ALL)
+        self._log.info(Fore.RED + 'shutting down...' + Style.RESET_ALL)
 #       sys.exit(1) # not really
 
     # ..........................................................................
@@ -410,7 +414,7 @@ class MessageBus(object):
             self._enabled = True
             self._log.info('enabled.')
             if not self._loop.is_running():
-                self._log.info('starting asyncio task loop...')
+                self._log.info('🌎 💋 💊 🔘 starting asyncio task loop...')
                 self._loop.run_forever()
             self._log.info('exited forever loop.')
         else:

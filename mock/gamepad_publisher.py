@@ -115,7 +115,7 @@ class GamepadPublisher(Publisher):
 #               _event = self.get_event_for_char(och)
                 if _event is not none:
                     self._log.info('[{:03d}] "{}" ({}) pressed; publishing message for event: {}'.format(_count, ch, och, _event))
-                    _message = self._message_factory.get_message(_event, true)
+                    _message = self._message_factory.get_message(_event, True)
                     await self._message_bus.publish_message(_message)
                     if self._exit_on_complete and self.all_triggered:
                         self._log.info('[{:03d}] complete.'.format(_count))
@@ -145,7 +145,7 @@ class GamepadPublisher(Publisher):
         self._log.info('enabling...')
         self._gamepad.enable()
         self._gamepad.start_gamepad_loop(self.gamepad_callback)
-        self._enabled = true
+        self._enabled = True
         self._log.info('enabled.')
 
     # ..........................................................................
