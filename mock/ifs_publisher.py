@@ -116,7 +116,7 @@ class IfsPublisher(Publisher):
             if _event is not None:
                 self._log.info('[{:03d}] "{}" ({}) pressed; publishing message for event: {}'.format(_count, ch, och, _event))
                 _message = self._message_factory.get_message(_event, True)
-                await self._publish_queue.put(message)
+                await self._publish_queue.put(_message)
                 await asyncio.sleep(0.2)
 #               elif self._message_bus.verbose:
 #                   self.waiting_for_message()
@@ -291,14 +291,14 @@ class IfsPublisher(Publisher):
 #        1         2         3         4         5         6         7         8         9         C         1         2
 #23456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
         self._log.info('''key map:
-                                                                                                          ┅━━┳━━━━━━━━━┓
-   ┍━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┓     ┃   DEL   ┃
+                                                                                                           ┅━┳━━━━━━━━━┓
+   ┏━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┓     ┃   DEL   ┃
    ┃    Q    ┃    W    ┃    E    ┃    R    ┃    T    ┃    Y    ┃    U    ┃    I    ┃    O    ┃    P    ┃     ┃ SHUTDWN ┃
-   ┃  QUIT   ┃  FLOOD  ┃  SNIFF  ┃  ROAM   ┃  NOOP   ┃         ┃         ┃  INFO   ┃ CLR_TSK ┃   POP   ┃  ┅━━┻━━━━━━━━━┛
-   ┗━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━┳━━━━━┛  ┅━━┳━━━━━━━━━┓
-        ┃    A    ┃    S    ┃    D    ┃    F    ┃    G    ┃    H    ┃    J    ┃    K    ┃    L   ┃           ┃   RET   ┃
-        ┃ IR_PSID ┃ IR_PORT ┃ IR_CNTR ┃ IR_STBD ┃ IR_SSID ┃  HALT   ┃         ┃         ┃        ┃           ┃  CLEAR  ┃
-        ┗━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━┻━━━━━┳━━━━━┻━━━┳━━━━━┛
+   ┃  QUIT   ┃  FLOOD  ┃  SNIFF  ┃  ROAM   ┃  NOOP   ┃         ┃         ┃  INFO   ┃ CLR TSK ┃ POP_MSG ┃   ┅━┻━━━━━━━━━┛
+   ┗━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┛   ┅━┳━━━━━━━━━┓
+        ┃    A    ┃    S    ┃    D    ┃    F    ┃    G    ┃    H    ┃    J    ┃    K    ┃    L    ┃          ┃   RET   ┃
+        ┃ IR_PSID ┃ IR_PORT ┃ IR_CNTR ┃ IR_STBD ┃ IR_SSID ┃  HALT   ┃         ┃         ┃         ┃          ┃  CLEAR  ┃
+        ┗━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━━┻━━━┳━━━━━┛
              ┃    Z    ┃    X    ┃    C    ┃    V    ┃    B    ┃    N    ┃    M    ┃    <    ┃    >    ┃    ?    ┃
              ┃ BM_PORT ┃ BM_CNTR ┃ BM_STBD ┃ VERBOSE ┃  BRAKE  ┃  STOP   ┃         ┃ DN_VELO ┃ UP_VELO ┃  HELP   ┃
              ┗━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┛
@@ -310,7 +310,7 @@ class IfsPublisher(Publisher):
    NOOP:      no operation event              IR_SSID:   starboard side infrared event      BRAKE:     brake motors
    INFO:      print system information        HALT:      halt motors                        STOP:      stop motors
    CLR_TSK:   clear completed tasks                                                         DN_VELO:   slow down motors
-   POP:       pop messages from queue                                                       UP_VELO:   speed up motors
+   POP_MSG:   pop messages from queue                                                       UP_VELO:   speed up motors
    SHUTDOWN:  shut down robot                 CLEAR:     clear screen                       HELP:      print help
 
         ''')

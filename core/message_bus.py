@@ -153,21 +153,13 @@ class MessageBus(object):
     def queue_size(self):
         return self._queue.qsize()
 
-    def clear(self):
+    def clear_queue(self):
         '''
         Clear the message bus of any messages.
         '''
-        self._queue.mutex.acquire()
-        self._queue.queue.clear()
-        self._queue.all_tasks_done.notify_all()
-        self._queue.unfinished_tasks = 0
-        self._queue.mutex.release()
-#       while not self._queue.empty():
-#           try:
-#               self._queue.get(False)
-#           except Empty:
-#               continue
-#           self._queue.task_done()
+        self._log.info(Fore.GREEN + 'clearing queue of {:d} message{}.'.format(self._queue.qsize(), '' if self._queue.qsize() == 1 else 's'))
+        self._queue.clear()
+        self._log.info(Fore.GREEN + 'queue contains {:d} message{} after clearing.'.format(self._queue.qsize(), '' if self._queue.qsize() == 1 else 's'))
 
     # ..........................................................................
     @property
@@ -440,6 +432,7 @@ class MessageBus(object):
             if self._loop.is_running():
                 self._loop.stop()
             self._log.info('disabled.')
+            self.clear_queue()
             self.clear_tasks()
             for _task in self._tasks:
                 if not _task.cancelled():
@@ -462,10 +455,12 @@ class MessageBus(object):
 
 # ..............................................................................
 class PeekableQueue(Queue):
-
+    '''
+    Extends the asyncio Queue to add peek() and clear() methods.
+    '''
     def __init__(self, level=Level.INFO):
         super().__init__(maxsize=0, loop=None)
-        self._log = Logger("q", level)
+        self._log = Logger("queue", level)
         self._log.info('ready.')
 
     # ..........................................................................
@@ -474,5 +469,17 @@ class PeekableQueue(Queue):
         self.task_done()
         await self.put(_message)
         return _message
+
+    # ..........................................................................
+    def clear(self): 
+        '''
+        Clears the queue of any messages, brute-force, without waiting.
+        '''
+        while not self.empty():
+            try:
+                self.get_nowait()
+            except Empty or QueueEmpty:
+                continue
+        self._log.info('cleared.')
 
 #EOF
