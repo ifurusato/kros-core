@@ -178,7 +178,6 @@ class MessageBus(object):
         if publisher in self._publishers:
             raise ValueError('publisher list already contains \'{}\''.format(publisher.name))
         self._publishers.append(publisher)
-        self._loop.create_task(publisher.publish(), name='publisher-{}'.format(publisher.name))
         self._log.info('registered publisher \'{}\'; {:d} publisher{} in list.'.format( \
                 publisher.name,
                 len(self._publishers),
@@ -280,22 +279,26 @@ class MessageBus(object):
         Start the subscribers' consume cycle. This remains active until the
         message bus is disabled.
         '''
-        self._log.info('begin {:d} subscribers\' consume cycle...'.format(len(self._subscribers)))
-        _coro_list = []
-        self._log.info('😰 begin {:d} gathering subscribers\' consume cycle...'.format(len(self._subscribers)))
-        for subscriber in self._subscribers:
-            _coro_list.append(subscriber.consume())
-#       self._log.info('😦 begin {:d} gathering publishers\' publish cycle...'.format(len(self._publishers)))
-#       for publisher in self._publishers:
-#           _coro_list.append(publisher.publish())
+        self._enable_publishers()
+#       self._log.info('begin {:d} subscribers\' consume cycle...'.format(len(self._subscribers)))
+#       _coro_list = []
+#       self._log.info('😰 begin {:d} gathering subscribers\' consume cycle...'.format(len(self._subscribers)))
+#       for subscriber in self._subscribers:
+#           _coro_list.append(subscriber.consume())
 
-        self._log.info('😠 starting {:d} consume loop...'.format(len(self._subscribers)))
-        _result = await asyncio.gather(*_coro_list) # loop=self._loop)
-        self._log.info('😡 completed {:d} consume loop; result: {}'.format(len(self._subscribers), _result))
-#       while self._enabled:
-#           for subscriber in self._subscribers:
-#               self._log.debug('publishing to subscriber {}...'.format(subscriber.name))
-#               await subscriber.consume()
+        self._log.info('😠 starting consume loop with {:d} subscribers...'.format(len(self._subscribers)))
+        while self._enabled:
+            for subscriber in self._subscribers:
+                self._log.debug('publishing to subscriber {}...'.format(subscriber.name))
+                await subscriber.consume()
+        self._log.info('😡 completed consume loop with {:d} subscribers.'.format(len(self._subscribers)))
+
+    # ..........................................................................
+    def _enable_publishers(self):
+        self._log.info('😦 enabling {:d} publishers...'.format(len(self._publishers)))
+        for publisher in self._publishers:
+            if not publisher.enabled:
+                publisher.enable()
 
     # ..........................................................................
     def print_bus_info(self):
@@ -313,12 +316,12 @@ class MessageBus(object):
         self.print_subscribers()
 
     # ..........................................................................
-    def peek_message(self):
+    async def peek_message(self):
         '''
         Asynchronously waits until it peeks a message from the queue. This
         does not remove the message from the queue.
         '''
-        return self._queue.peek()
+        return await self._queue.peek()
 
     # ..........................................................................
     def consume_message(self):
@@ -363,12 +366,12 @@ class MessageBus(object):
         asyncio.create_task(self._queue.put(message), name='republish-message-{}'.format(message.name))
         self._log.info('republished message: {} (event: {}; age: {:d}ms);'.format(message.name, message.event, message.age))
 
-    # ..........................................................................
-    async def x_garbage_collect(self, message):
-        '''
-        Explicitly garbage collect the message.
-        '''
-        await self._garbage_collector.collect(message)
+#   # ..........................................................................
+#   async def x_garbage_collect(self, message):
+#       '''
+#       Explicitly garbage collect the message.
+#       '''
+#       await self._garbage_collector.collect(message)
 
     # exception handling .......................................................
     def handle_exception(self, loop, context):
@@ -429,8 +432,10 @@ class MessageBus(object):
         '''
         if self._enabled:
             self._enabled = False
+            self._log.info('😦 disabling {:d} publishers...'.format(len(self._publishers)))
             for publisher in self._publishers:
                 publisher.disable()
+            self._log.info('😦 disabling {:d} subscribers...'.format(len(self._subscribers)))
             for subscriber in self._subscribers:
                 subscriber.disable()
             if self._loop.is_running():
@@ -469,9 +474,18 @@ class PeekableQueue(Queue):
 
     # ..........................................................................
     async def peek(self):
+        '''
+        Returns the message at the top of the queue without removing it.
+        If the queue is empty this returns None.
+
+        This actually gets (removes) the message but immediately puts it
+        back onto the queue.
+        '''
         _message = await self.get()
+#       _message = await self.get_nowait() # call only if queue not empty
         self.task_done()
-        await self.put(_message)
+#       await self.put(_message)
+        self.put_nowait(_message)
         return _message
 
     # ..........................................................................

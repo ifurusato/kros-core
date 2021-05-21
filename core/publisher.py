@@ -75,25 +75,15 @@ class Publisher(object):
         return self._message_bus
 
     # ................................................................
-    async def publish(self):
+    async def publish(self, message):
         '''
-        Begins publication of messages. The MessageBus itself calls this function
-        as part of its asynchronous loop; it shouldn't be called by anyone except
-        the MessageBus.
+        Asynchronously publishes the message to the message bus.
+        This is preferred to calling the message bus directly.
         '''
-        if self._enabled:
-            self._log.warning('publish cycle already started.')
-            return
-        self._enabled = True
-        while self._enabled:
-            _event = self._get_random_event()
-            _message = self._message_factory.get_message(_event, _event.description)
-            # publish the message
-            self._message_bus.publish_message(_message)
-            self._log.info(Fore.WHITE + Style.BRIGHT + '{} PUBLISHED message: {} (event: {})'.format(self.name, _message, _event.description))
-            # simulate randomness of publishing messages
-#           await asyncio.sleep(random.random())
-#           self._log.debug(Fore.BLACK + Style.BRIGHT + 'after await sleep.')
+        self._log.info(Fore.WHITE + Style.BRIGHT + '💔 {} PUBLISHING message: {} (event: {})'.format(self.name, message, message.event.description))
+        await self._message_bus.publish_message(message)
+        await asyncio.sleep(0.05)
+        self._log.info(Fore.WHITE + Style.BRIGHT + '💚 {} PUBLISHED message: {} (event: {})'.format(self.name, message, message.event.description))
 
     # ..........................................................................
     def _get_random_event(self):

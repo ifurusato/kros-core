@@ -19,6 +19,7 @@
 import sys, time, itertools, psutil, random
 #from threading import Thread
 import asyncio
+import concurrent.futures
 from asyncio.queues import Queue
 from pathlib import Path
 from colorama import init, Fore, Style
@@ -46,7 +47,7 @@ class IfsPublisher(Publisher):
         self._triggered_ir_stbd_side = self._triggered_bmp_port = self._triggered_bmp_cntr = self._triggered_bmp_stbd = 0
         self._limit = 3
         self._ploop = None
-        self._publish_queue = Queue(maxsize=1)
+#       self._publish_queue = Queue(maxsize=1)
         self._fmt = '{0:>9}'
         self._log.info('ready.')
 
@@ -59,30 +60,33 @@ class IfsPublisher(Publisher):
                 self._log.warning('loop thread already exists.')
             else:
                 # start loop as new task
-                self._log.info(Fore.YELLOW + 'starting publish loop...')
+                self._log.info(Fore.YELLOW + '💙 starting publish loop...')
                 self._ploop = self._message_bus.loop
 #               self._ploop.run_until_complete(self._publish_loop(lambda: self.enabled))
-                self._ploop.create_task(self._publish_loop(lambda: self.enabled), name='publish-loop')
-                self._log.info(Fore.YELLOW + 'publish loop started.')
+                self._ploop.create_task(self._start_loop(), name='publish-loop')
+#               self._ploop.create_task(self._publish_loop(lambda: self.enabled), name='publish-loop')
+                self._log.info(Fore.YELLOW + '💙 publish loop started.')
         else:
             self._log.info(Fore.BLACK + '<<< enabled: {}'.format(self.enabled))
 
+    async def _start_loop(self):
+        # run in a custom thread pool:
+        with concurrent.futures.ThreadPoolExecutor() as pool:
+            self._log.info(Fore.YELLOW + '💛 awaiting publish loop...')
+            _result = self._ploop.run_in_executor(
+                pool, await self._publish_loop(lambda: self.enabled))
+            self._log.info(Fore.YELLOW + '💛 publish loop result: {}'.format(_result))
+
     async def _publish_loop(self, f_is_enabled):
-        print('🍏 _start_publish_loop() BEGIN.')
-        self._log.info('_start_publish_loop() BEGIN.')
+        self._log.info('🍏 start publish loop.')
         _loop_freq_hz  = 20
         while f_is_enabled():
             _count = next(self._counter)
-            self._log.info(Fore.BLUE + '[{:03d}] A2. BEGIN publish loop...'.format(_count))
-            # get key press ..........................................
-
-            # see if any sensor (key) has been activated
-            _count = next(self._counter)
-            self._log.info('[{:03d}] loop.'.format(_count))
+            self._log.info(Fore.BLUE + '[{:03d}] A2. BEGIN loop...'.format(_count))
+            # get key press, see if any sensor (key) has been activated
             ch  = readchar.readchar()
             och = ord(ch)
-            if och == 10 or och == 13: # LF or CR to print NLs
-                self._log.info('[:03d]'.format(_count))
+            if och == 10 or och == 13: # LF or CR to print 48 newlines
                 print(Logger._repeat('\n',48))
                 continue
             elif och == 105: # 'i' print info
@@ -116,55 +120,34 @@ class IfsPublisher(Publisher):
             if _event is not None:
                 self._log.info('[{:03d}] "{}" ({}) pressed; publishing message for event: {}'.format(_count, ch, och, _event))
                 _message = self._message_factory.get_message(_event, True)
-                await self._publish_queue.put(_message)
-                await asyncio.sleep(0.2)
-#               elif self._message_bus.verbose:
-#                   self.waiting_for_message()
+#               await self._publish_queue.put(_message)
+                await super().publish(_message)
                 self._log.info('publish_loop() loop end...')
             else:
                 self._log.info('[{:03d}] unmapped key "{}" ({}) pressed.'.format(_count, ch, och))
-#           await asyncio.sleep(0.1)
-#           await asyncio.sleep(random.random())
-
-            # finished processing key press ..........................
-            _event = self._get_random_event()
-            _message = self._message_factory.get_message(_event, True)
+            await asyncio.sleep(0.05)
             self._log.info(Fore.BLUE + '[{:03d}] A2. END publish loop...'.format(_count))
-#           time.sleep(1.0)
         self._log.info('_start_publish_loop() END.')
 
-
-    # ................................................................
-    async def publish(self):
-        '''
-        Begins publication of messages. The MessageBus itself calls this function
-        as part of its asynchronous loop; it shouldn't be called by anyone except
-        the MessageBus.
-        '''
-        if self.enabled:
-            self._log.warning('publish cycle already started.')
-            return
-        self.enable()
-        self._log.info('start loop:\t' + Fore.YELLOW + 'type Ctrl-C or the \"q\" key to exit sensor loop, the \"?\" key for help.')
-        print('\n')
-        while self.enabled:
-            _message = await self._publish_queue.get()
-            await self._message_bus.publish_message(_message)
-            if self._exit_on_complete and self.all_triggered:
-                self._log.info('[{:03d}] COMPLETE.'.format(_count))
-                self.disable()
-            await asyncio.sleep(0.2)
-            self._log.info('publish() loop end...')
+#   async def publish(self, message):
+#       '''
+#       Begins publication of messages. The MessageBus itself calls this function
+#       as part of its asynchronous loop; it shouldn't be called by anyone except
+#       the MessageBus.
+#       '''
 
 
     # ..........................................................................
     def flood_zone(self):
         _flood = self._message_bus.get_publisher('flood')
-        _flood.suppress(not _flood.suppressed)
-        if _flood.suppressed:
-            self._log.info('publisher \'{}\' suppressed.'.format(_flood.name))
+        if _flood:
+            _flood.suppress(not _flood.suppressed)
+            if _flood.suppressed:
+                self._log.info('publisher \'{}\' suppressed.'.format(_flood.name))
+            else:
+                self._log.info('publisher \'{}\' not suppressed.'.format(_flood.name))
         else:
-            self._log.info('publisher \'{}\' not suppressed.'.format(_flood.name))
+            self._log.warning('no \'flood\' publisher found on bus.'.format(_flood.name))
 
     # ................................................................
     def print_sys_info(self):
