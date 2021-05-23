@@ -63,7 +63,7 @@ def test_pub_sub():
     _message_bus.register_controller(_controller)
 
     _publisher1  = IfsPublisher(_message_bus, _message_factory)
-    _publisher2  = FloodPublisher(_message_bus, _message_factory)
+#   _publisher2  = FloodPublisher(_message_bus, _message_factory)
 #   _publisher3  = GamepadPublisher(_config, _message_bus, _message_factory)
 
 #   _subscriber1 = Subscriber('action', Fore.BLUE, _message_bus, Level.INFO)

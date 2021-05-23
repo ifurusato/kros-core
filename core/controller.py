@@ -66,7 +66,7 @@ class Controller():
         _start_time = dt.datetime.now()
 
         _event = payload.event
-        self._log.info(Fore.CYAN + '🍥 act upon event:' + Style.BRIGHT + ' {}'.format(_event.description) + Fore.YELLOW)
+        self._log.info(Fore.CYAN + '🔘 🌧 🗨️ 🐟 💦 👥 💧 🈶 act upon event:' + Style.BRIGHT + ' {}'.format(_event.description) + Fore.YELLOW)
 
         # name                                          n   description             priority  ballistic?
         # system events ....................

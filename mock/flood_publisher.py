@@ -37,23 +37,21 @@ class FloodPublisher(Publisher):
         self._counter  = itertools.count()
         _loop_freq_hz  = 20
 #       self._ticker = Ticker(_loop_freq_hz, self._publish_message, Level.INFO)
-        self.enable()
+#       self.enable()
         self._log.info('ready.')
 
     def enable(self):
         super().enable()
         if self.enabled:
-            print('😈 enabled.')
-            print('⭐ creating task...')
+            self._log.info('⭐ creating task...')
 #           asyncio.create_task(self._publish_loop(self._message_bus, lambda: self.enabled), name='publish-loop')
             self._message_bus.loop.create_task(self._publish_loop(self._message_bus, lambda: self.enabled), name='publish-loop')
-            print('⭐ created task.')
+            self._log.info('⭐ created task.')
         else:
-            print('😈 disabled.')
+            self._log.info('⭐😈 disabled.')
 
     async def _publish_loop(self, message_bus, f_is_enabled):
-        print('🍏 _start_publish_loop() BEGIN.')
-        self._log.info('_start_publish_loop() BEGIN.')
+        self._log.info('🍏 start _publish_loop() BEGIN.')
         _loop_freq_hz  = 20
 #       asyncio.create_task(self._publish_message(self._message_bus), name='publish-loop')
 #       self._ticker = Ticker(_loop_freq_hz, self._publish_message, Level.INFO)
