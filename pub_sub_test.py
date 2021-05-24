@@ -70,7 +70,7 @@ def test_pub_sub():
 #   _subscriber1.events = [ Event.SNIFF, Event.VIDEO ] # reacts to SNIFF and VIDEO
 
     _subscriber2 = Subscriber('infrared', Fore.GREEN, _message_bus, Level.INFO)
-    _subscriber2.events = [ Event.INFRARED_PORT, Event.INFRARED_CNTR, Event.INFRARED_STBD ] # reacts to IR sensors
+    _subscriber2.events = [ Event.INFRARED_PORT_SIDE, Event.INFRARED_PORT, Event.INFRARED_CNTR, Event.INFRARED_STBD, Event.INFRARED_STBD_SIDE ] # reacts to IR sensors
 
     _subscriber3 = Subscriber('bumper', Fore.YELLOW, _message_bus, Level.INFO)
     _subscriber3.events = [ Event.BUMPER_PORT, Event.BUMPER_CNTR, Event.BUMPER_STBD ] # reacts to bumpers

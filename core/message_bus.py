@@ -95,11 +95,13 @@ class MessageBus(object):
             self._log.info('clearing {:d} task{}...'.format(len(self._tasks), ('' if len(self._tasks) == 1 else 's')))
             for _task in self._tasks:
                 if _task.done():
-                    self._log.info('removing completed task:\t' + Fore.YELLOW + '{}...'.format(_task.get_name()))
+                    self._log.debug('removing completed task:\t' + Fore.YELLOW + '{}...'.format(_task.get_name()))
                     self._tasks.remove(_task)
                 else:
                     self._log.warning(Fore.RED + 'task not complete:      \t' + Fore.YELLOW + '{}'.format(_task.get_name()))
-            self._log.info('{:d} task{} remain.'.format(len(self._tasks), ('' if len(self._tasks) == 1 else 's')))
+            self._log.info('{:d} task{} remain{}.'.format(len(self._tasks),
+                    ('' if len(self._tasks) == 1 else 's'),
+                    ('s' if len(self._tasks) == 1 else '')))
             for _task in self._tasks:
                 self._log.debug('unfinished task:\t' + Fore.YELLOW + '{}...'.format(_task.get_name()))
 
@@ -179,19 +181,18 @@ class MessageBus(object):
             raise ValueError('publisher list already contains \'{}\''.format(publisher.name))
         self._publishers.append(publisher)
         self._log.info('registered publisher \'{}\'; {:d} publisher{} in list.'.format( \
-                publisher.name,
-                len(self._publishers),
-                's' if len(self._publishers) > 1 else ''))
+                publisher.name, len(self._publishers), 's' if len(self._publishers) > 1 else ''))
 
     # ..........................................................................
     def get_publisher(self, name):
         '''
-        Return a registered publisher by name.
+        Return a registered publisher by name, None if not found.
         '''
         for publisher in self._publishers:
             if publisher.name == name:
                 return publisher
-        raise NameError('no publisher found with name \'{}\'.'.format(name))
+        return None
+#       raise NameError('no publisher found with name \'{}\'.'.format(name))
 
     def print_publishers(self):
         '''
@@ -200,9 +201,7 @@ class MessageBus(object):
         if not self._publishers:
             self._log.info('no registered publishers.')
             return
-        self._log.info('{:d} publisher{}:'.format( \
-                len(self._publishers),
-                's' if len(self._publishers) > 1 else ''))
+        self._log.info('{:d} publisher{}:'.format(len(self._publishers), 's' if len(self._publishers) > 1 else ''))
         for publisher in self._publishers:
             self._log.info(Fore.YELLOW + '\t{}'.format(publisher.name) \
                     + Fore.CYAN + ' {}enabled: '.format((' ' * max(0, (10 - len(publisher.name)))))
@@ -237,9 +236,7 @@ class MessageBus(object):
         self._subscribers.insert(0, subscriber)
 #       self._loop.create_task(subscriber.consume(), name='subscriber-{}'.format(subscriber.name))
         self._log.info('registered subscriber \'{}\'; {:d} subscriber{} in list.'.format( \
-                subscriber.name,
-                len(self._subscribers),
-                's' if len(self._subscribers) > 1 else ''))
+                subscriber.name, len(self._subscribers), 's' if len(self._subscribers) > 1 else ''))
 
     def print_subscribers(self):
         '''
@@ -248,9 +245,7 @@ class MessageBus(object):
         if not self._subscribers:
             self._log.info('no registered subscribers.')
             return
-        self._log.info('{:d} subscriber{}:'.format( \
-                len(self._subscribers),
-                's' if len(self._subscribers) > 1 else ''))
+        self._log.info('{:d} subscriber{}:'.format(len(self._subscribers), 's' if len(self._subscribers) > 1 else ''))
         for subscriber in self._subscribers:
             self._log.info(Fore.YELLOW + '\t{}'.format(subscriber.name)
                     + Fore.CYAN + ' {}enabled: '.format((' ' * max(0, (10 - len(subscriber.name)))))
@@ -286,16 +281,16 @@ class MessageBus(object):
 #       for subscriber in self._subscribers:
 #           _coro_list.append(subscriber.consume())
 
-        self._log.info('😠 starting consume loop with {:d} subscribers...'.format(len(self._subscribers)))
+        self._log.info('😠 starting consume loop with {:d} subscriber{}...'.format(len(self._subscribers), '' if len(self._subscribers) == 1 else 's'))
         while self._enabled:
             for subscriber in self._subscribers:
                 self._log.debug('publishing to subscriber {}...'.format(subscriber.name))
                 await subscriber.consume()
-        self._log.info('😡 completed consume loop with {:d} subscribers.'.format(len(self._subscribers)))
+        self._log.info('😡 completed consume loop with {:d} subscriber{}...'.format(len(self._subscribers), '' if len(self._subscribers) == 1 else 's'))
 
     # ..........................................................................
     def _enable_publishers(self):
-        self._log.info('😦 enabling {:d} publishers...'.format(len(self._publishers)))
+        self._log.info('😦 enabling {:d} publisher{}...'.format(len(self._publishers), '' if len(self._publishers) == 1 else 's'))
         for publisher in self._publishers:
             if not publisher.enabled:
                 publisher.enable()
@@ -349,7 +344,7 @@ class MessageBus(object):
         NOTE: calls to this function should be await'd.
         '''
         if ( message.event is not Event.CLOCK_TICK and message.event is not Event.CLOCK_TOCK ):
-            self._log.info(Style.BRIGHT + 'publishing message: {}'.format(message.name) + Style.NORMAL + ' (event: {}; age: {:d}ms);'.format(message.event, message.age))
+            self._log.info(Style.BRIGHT + 'publishing message: {}'.format(message.name) + Style.NORMAL + ' (event: {}; age: {:d}ms);'.format(message.event.description, message.age))
         _result = asyncio.create_task(self._queue.put(message), name='publish-message-{}'.format(message.name))
         self._log.info(Style.DIM + 'result from published message: {}'.format(_result.get_name()))
         await asyncio.sleep(0.05)
@@ -362,16 +357,9 @@ class MessageBus(object):
 
         NOTE: calls to this function should be await'd.
         '''
-        self._log.debug('republishing message: {} (event: {}; age: {:d}ms);'.format(message.name, message.event, message.age))
+        self._log.debug('republishing message: {} (event: {}; age: {:d}ms);'.format(message.name, message.event.description, message.age))
         asyncio.create_task(self._queue.put(message), name='republish-message-{}'.format(message.name))
-        self._log.info('republished message: {} (event: {}; age: {:d}ms);'.format(message.name, message.event, message.age))
-
-#   # ..........................................................................
-#   async def x_garbage_collect(self, message):
-#       '''
-#       Explicitly garbage collect the message.
-#       '''
-#       await self._garbage_collector.collect(message)
+        self._log.info('republished message: {} (event: {}; age: {:d}ms);'.format(message.name, message.event.description, message.age))
 
     # exception handling .......................................................
     def handle_exception(self, loop, context):
@@ -417,7 +405,7 @@ class MessageBus(object):
             self._enabled = True
             self._log.info('enabled.')
             if not self._loop.is_running():
-                self._log.info('🌎 💋 💊 🔘 starting asyncio task loop...')
+                self._log.info('🌎 starting asyncio task loop...')
                 self._loop.run_forever()
             self._log.info('exited forever loop.')
         else:

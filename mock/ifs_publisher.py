@@ -36,6 +36,9 @@ from core.publisher import Publisher
 
 # ...............................................................
 class IfsPublisher(Publisher):
+
+    _PUBLISH_LOOP_NAME = '__publish-loop__'
+
     '''
     A mock IFS.
     '''
@@ -46,8 +49,6 @@ class IfsPublisher(Publisher):
         self._triggered_ir_port_side = self._triggered_ir_port  = self._triggered_ir_cntr  = self._triggered_ir_stbd  = \
         self._triggered_ir_stbd_side = self._triggered_bmp_port = self._triggered_bmp_cntr = self._triggered_bmp_stbd = 0
         self._limit = 3
-        self._ploop = None
-#       self._publish_queue = Queue(maxsize=1)
         self._fmt = '{0:>9}'
         self._log.info('ready.')
 
@@ -55,34 +56,31 @@ class IfsPublisher(Publisher):
     def enable(self):
         super().enable()
         if self.enabled:
-            self._log.info(Fore.RED + '>>> enabled: {}'.format(self.enabled))
-            if self._ploop:
-                self._log.warning('loop thread already exists.')
-            else:
-                # start loop as new task
-                self._log.info(Fore.YELLOW + '💙 starting publish loop...')
-                self._ploop = self._message_bus.loop
-#               self._ploop.run_until_complete(self._publish_loop(lambda: self.enabled))
-                self._ploop.create_task(self._start_loop(), name='publish-loop')
-#               self._ploop.create_task(self._publish_loop(lambda: self.enabled), name='publish-loop')
-                self._log.info(Fore.YELLOW + '💙 publish loop started.')
+            for _task in asyncio.all_tasks(self._message_bus.loop):
+                self._log.info('🐰 task: {}'.format(_task.get_name()))
+                if _task.get_name() == IfsPublisher._PUBLISH_LOOP_NAME:
+                    self._log.warning('already enabled.')
+                    return
+            # start loop as new task
+            self._message_bus.loop.create_task(self._start_loop(), name=IfsPublisher._PUBLISH_LOOP_NAME)
+            self._log.info('enabled')
         else:
             self._log.info(Fore.BLACK + '<<< enabled: {}'.format(self.enabled))
 
     async def _start_loop(self):
         # run in a custom thread pool:
         with concurrent.futures.ThreadPoolExecutor() as pool:
-            self._log.info(Fore.YELLOW + '💛 awaiting publish loop...')
-            _result = self._ploop.run_in_executor(
+            self._log.info('starting publish loop...')
+            _result = self._message_bus.loop.run_in_executor(
                 pool, await self._publish_loop(lambda: self.enabled))
-            self._log.info(Fore.YELLOW + '💛 publish loop result: {}'.format(_result))
+            self._log.info('ending publish loop; result done: {}'.format(_result.done()))
 
     async def _publish_loop(self, f_is_enabled):
         self._log.info('🍏 start publish loop.')
         _loop_freq_hz  = 20
         while f_is_enabled():
             _count = next(self._counter)
-            self._log.info(Fore.BLUE + '[{:03d}] A2. BEGIN loop...'.format(_count))
+            self._log.info(Fore.BLUE + '🍏 [{:03d}] begin loop...'.format(_count))
             # get key press, see if any sensor (key) has been activated
             ch  = readchar.readchar()
             och = ord(ch)
@@ -118,7 +116,7 @@ class IfsPublisher(Publisher):
             # otherwise handle as event
             _event = self.get_event_for_char(och)
             if _event is not None:
-                self._log.info('[{:03d}] "{}" ({}) pressed; publishing message for event: {}'.format(_count, ch, och, _event))
+                self._log.info('🍏 [{:03d}] "{}" ({}) pressed; publishing message for event: {}'.format(_count, ch, och, _event))
                 _message = self._message_factory.get_message(_event, True)
 #               await self._publish_queue.put(_message)
                 await super().publish(_message)
@@ -126,16 +124,8 @@ class IfsPublisher(Publisher):
             else:
                 self._log.info('[{:03d}] unmapped key "{}" ({}) pressed.'.format(_count, ch, och))
             await asyncio.sleep(0.05)
-            self._log.info(Fore.BLUE + '[{:03d}] A2. END publish loop...'.format(_count))
-        self._log.info('_start_publish_loop() END.')
-
-#   async def publish(self, message):
-#       '''
-#       Begins publication of messages. The MessageBus itself calls this function
-#       as part of its asynchronous loop; it shouldn't be called by anyone except
-#       the MessageBus.
-#       '''
-
+            self._log.info(Fore.BLUE + '🍏 [{:03d}] end publish loop.'.format(_count))
+        self._log.info('🍏 publish loop complete.')
 
     # ..........................................................................
     def flood_zone(self):

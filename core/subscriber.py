@@ -152,20 +152,27 @@ class Subscriber(object):
             # create message processing task
             self._message_bus.add_task(asyncio.create_task(self.process_message(_message), name='{}:process-message-{}'.format(self.name, _message.name)))
             # create message cleanup task
-            self._message_bus.add_task(asyncio.create_task(self._cleanup_message(_message), name='{}:cleanup-message-{}'.format(self.name, _message.name)))
+#           self._message_bus.add_task(asyncio.create_task(self._cleanup_message(_message), name='{}:cleanup-message-{}'.format(self.name, _message.name)))
+
+            _task_name = '{}:cleanup-message-{}'.format(self.name, _message.name)
+            _cleanup_task = asyncio.create_task(self._cleanup_message(_message), _task_name)
+
+#           FIXME asyncio.all_tasks(self._message_bus.loop).
+#           if _task.get_name() == IfsPublisher._PUBLISH_LOOP_NAME:
+
+            _cleanup_task.add_done_callback(self._done_callback)
+            self._message_bus.add_task(_cleanup_task)
 
             self._log.debug(Fore.RED + 'end event tracking for message:' + Fore.WHITE + ' {}; for event: {}'.format(_message.name, _message.event.description))
             _event.set()
 
             # we've handled message so pass along to arbitrator
             if not _message.sent:
-                self._log.info(self._color + 'sending message:' + Fore.WHITE + ' {}; for event: {}'.format(_message.name, _message.event.description) \
-                        + self._color + ' to arbitrator...')
+                self._log.info(self._color + 'sending message: {}; for event: {} to arbitrator...'.format(_message.name, _message.event.description))
                 await self._arbitrate_message(_message)
-                self._log.info(self._color + 'sent message:' + Fore.WHITE + ' {}; for event: {}'.format(_message.name, _message.event.description) \
-                        + self._color + ' to arbitrator...')
+                self._log.info(self._color + 'sent message:' + Fore.WHITE + ' {}; for event: {} to arbitrator.'.format(_message.name, _message.event.description))
             else:
-                self._log.info(self._color + 'message:' + Fore.WHITE + ' {} already sent; for event: {}'.format(_message.name, _message.event.description))
+                self._log.info(self._color + 'message: {} already sent; for event: {}'.format(_message.name, _message.event.description))
 
             # republish the message
             self._log.debug(self._color + 'awaiting republication of message:' \
@@ -180,6 +187,14 @@ class Subscriber(object):
                     + Fore.WHITE + ' {}; event: {} (queue: {:d} elements)'.format(
                     _peeked_message.name, _peeked_message.event.description, self._message_bus.queue_size))
             _peeked_message.acknowledge(self)
+
+    # ..........................................................................
+    def _done_callback(self, task):
+        '''
+        Has the message bus clear any completed tasks.
+        '''
+        self._message_bus.clear_tasks()
+        self._log.info('👋 callback on message consume complete; {}'.format(task.name))
 
 #   # ..........................................................................
 #   def _get_timestamp(self):
@@ -238,7 +253,7 @@ class Subscriber(object):
 
         # set message flag as expired
         message.expire()
-        # clear tasks related to this message
+        # clear any tasks related to the message
         self._message_bus.clear_tasks()
 
         self._log.info(self._color + Style.DIM + 'end cleanup of message: {}'.format(message.name))

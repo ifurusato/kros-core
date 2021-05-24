@@ -80,10 +80,10 @@ class Publisher(object):
         Asynchronously publishes the message to the message bus.
         This is preferred to calling the message bus directly.
         '''
-        self._log.info(Fore.WHITE + Style.BRIGHT + '💔 {} PUBLISHING message: {} (event: {})'.format(self.name, message, message.event.description))
+        self._log.info(Fore.WHITE + '{} publishing message: {} (event: {})'.format(self.name, message.name, message.event.description))
         await self._message_bus.publish_message(message)
         await asyncio.sleep(0.05)
-        self._log.info(Fore.WHITE + Style.BRIGHT + '💚 {} PUBLISHED message: {} (event: {})'.format(self.name, message, message.event.description))
+        self._log.info(Fore.WHITE + '{} published message: {} (event: {})'.format(self.name, message.name, message.event.description))
 
     # ..........................................................................
     def _get_random_event(self):

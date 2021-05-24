@@ -10,7 +10,7 @@
 # modified: 2021-04-26
 #
 
-import time
+import time, itertools
 import datetime as dt
 from colorama import init, Fore, Style
 init()
@@ -26,7 +26,12 @@ class Controller():
     '''
     def __init__(self, level):
         self._log = Logger('controller', level)
-        self._enabled = True
+        self._previous_event       = Event.NOOP
+        self._enabled              = True
+        self._event_counter        = itertools.count()
+        self._event_count          = next(self._event_counter)
+        self._state_change_counter = itertools.count()
+        self._state_change_count   = next(self._state_change_counter)
         self._log.info('ready.')
 
     # ................................................................
@@ -58,15 +63,20 @@ class Controller():
         '''
         Responds to the Event contained within the Payload.
         '''
-        self._log.info('callback with payload {}'.format(payload.event.name))
+        self._log.debug('callback with payload {}'.format(payload.event.name))
         if not self._enabled:
             self._log.warning('action ignored: controller disabled.')
             return
+        self._event_count = next(self._event_counter)
+        if payload.event == self._previous_event: # 🚺🚹
+            self._log.info(Fore.CYAN + '🚻 [{:d}/{:d}] no state change on event:'.format(self._state_change_count, self._event_count)
+                    + Style.BRIGHT + ' {}'.format(self._previous_event.description))
+            return
+        self._state_change_count = next(self._state_change_counter)
 
         _start_time = dt.datetime.now()
-
         _event = payload.event
-        self._log.info(Fore.CYAN + '🔘 🌧 🗨️ 🐟 💦 👥 💧 🈶 act upon event:' + Style.BRIGHT + ' {}'.format(_event.description) + Fore.YELLOW)
+        self._log.info(Fore.CYAN + '🈶 [{:d}/{:d}] act upon event:'.format(self._state_change_count, self._event_count) + Style.BRIGHT + ' {}'.format(_event.description))
 
         # name                                          n   description             priority  ballistic?
         # system events ....................
@@ -210,8 +220,8 @@ class Controller():
         # unrecognised event  ..................................................
         else:
             self._log.error('unrecognised event: {}'.format(_event))
-            pass
 
+        self._previous_event = _event
         _delta = dt.datetime.now() - _start_time
         _elapsed_ms = int(_delta.total_seconds() * 1000)
         self._log.debug(Fore.MAGENTA + Style.DIM + 'elapsed: {}ms'.format(_elapsed_ms) + Style.DIM)
