@@ -72,8 +72,8 @@ def test_pub_sub():
     _subscriber2 = Subscriber('infrared', Fore.GREEN, _message_bus, Level.INFO)
     _subscriber2.events = [ Event.INFRARED_PORT_SIDE, Event.INFRARED_PORT, Event.INFRARED_CNTR, Event.INFRARED_STBD, Event.INFRARED_STBD_SIDE ] # reacts to IR sensors
 
-    _subscriber3 = Subscriber('bumper', Fore.YELLOW, _message_bus, Level.INFO)
-    _subscriber3.events = [ Event.BUMPER_PORT, Event.BUMPER_CNTR, Event.BUMPER_STBD ] # reacts to bumpers
+#   _subscriber3 = Subscriber('bumper', Fore.YELLOW, _message_bus, Level.INFO)
+#   _subscriber3.events = [ Event.BUMPER_PORT, Event.BUMPER_CNTR, Event.BUMPER_STBD ] # reacts to bumpers
 
     _motors = None
     # add motor controller, reacts to STOP, HALT, BRAKE, INCREASE_SPEED and DECREASE_SPEED

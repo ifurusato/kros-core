@@ -56,11 +56,9 @@ class IfsPublisher(Publisher):
     def enable(self):
         super().enable()
         if self.enabled:
-            for _task in asyncio.all_tasks(self._message_bus.loop):
-                self._log.info('🐰 task: {}'.format(_task.get_name()))
-                if _task.get_name() == IfsPublisher._PUBLISH_LOOP_NAME:
-                    self._log.warning('already enabled.')
-                    return
+            if self._message_bus.get_task_by_name(IfsPublisher._PUBLISH_LOOP_NAME):
+                self._log.warning('already enabled.')
+                return
             # start loop as new task
             self._message_bus.loop.create_task(self._start_loop(), name=IfsPublisher._PUBLISH_LOOP_NAME)
             self._log.info('enabled')

@@ -48,18 +48,12 @@ class MessageBus(object):
         if level is Level.DEBUG:
             self._log.debug('logging message bus set to debug level.')
             logging.basicConfig(level=logging.DEBUG)
-            self._loop.set_debug(True) # also set asyncio debug
-        self._loop        = asyncio.get_event_loop()
+
         self._queue       = PeekableQueue(level)
         self._publishers  = []
         self._subscribers = []
-        self._tasks       = []
-        # may want to catch other signals too
-        signals = (signal.SIGHUP, signal.SIGTERM, signal.SIGINT)
-        for s in signals:
-            self._loop.add_signal_handler(
-                s, lambda s = s: asyncio.create_task(self.shutdown(s), name='shutdown'),)
-        self._loop.set_exception_handler(self.handle_exception)
+        self._loop        = None
+
         self._garbage_collector = GarbageCollector('gc', Fore.RED, self, Level.INFO)
 #       self.register_subscriber(self._garbage_collector)
         self._arbitrator  = Arbitrator(level)
@@ -68,7 +62,6 @@ class MessageBus(object):
         self._enabled     = True # by default
         self._closed      = False
         self._log.info('creating subscriber task...')
-        self._loop.create_task(self.start_consuming(), name='coro-loop')
         self._log.info('ready.')
 
     # ..........................................................................
@@ -80,29 +73,44 @@ class MessageBus(object):
         return self._loop
 
     # ..........................................................................
-    def add_task(self, task):
-        self._tasks.append(task)
-        self._log.debug('{:d} active tasks.'.format(len(self._tasks)))
+    def get_all_tasks(self):
+        '''
+        Returns the task list, not including those whose name starts with '__'.
+        '''
+        _tasks = []
+        try:
+            for _task in asyncio.all_tasks(loop=self._loop):
+                if not _task.get_name().startswith('__'):
+                    _tasks.append(_task)
+        except Exception as e:
+            self._log.error('error getting all tasks: {}'.format(e))
+        return _tasks
 
     # ..........................................................................
     def clear_tasks(self):
         '''
         Clears the task list of any completed tasks.
         '''
-        if len(self._tasks) == 0:
+        _tasks = self.get_all_tasks()
+        if len(_tasks) == 0:
             self._log.info('clear: no outstanding tasks.')
         else:
-            self._log.info('clearing {:d} task{}...'.format(len(self._tasks), ('' if len(self._tasks) == 1 else 's')))
-            for _task in self._tasks:
+            self._log.info('clearing {:d} task{}...'.format(len(_tasks), ('' if len(_tasks) == 1 else 's')))
+            for _task in _tasks:
+#               if _task.get_name().startswith('__'):
+#                   self._log.debug('skipping task:\t' + Fore.YELLOW + '{}...'.format(_task.get_name()))
+#                   continue
+                if not _task.cancelled():
+                    _task.cancel()
                 if _task.done():
                     self._log.debug('removing completed task:\t' + Fore.YELLOW + '{}...'.format(_task.get_name()))
-                    self._tasks.remove(_task)
+                    _tasks.remove(_task)
                 else:
                     self._log.warning(Fore.RED + 'task not complete:      \t' + Fore.YELLOW + '{}'.format(_task.get_name()))
-            self._log.info('{:d} task{} remain{}.'.format(len(self._tasks),
-                    ('' if len(self._tasks) == 1 else 's'),
-                    ('s' if len(self._tasks) == 1 else '')))
-            for _task in self._tasks:
+            self._log.info('{:d} task{} remain{}.'.format(len(_tasks),
+                    ('' if len(_tasks) == 1 else 's'),
+                    ('s' if len(_tasks) == 1 else '')))
+            for _task in _tasks:
                 self._log.debug('unfinished task:\t' + Fore.YELLOW + '{}...'.format(_task.get_name()))
 
     # ..........................................................................
@@ -298,14 +306,15 @@ class MessageBus(object):
     # ..........................................................................
     def print_bus_info(self):
         self._log.info('in queue:    \t' + Fore.YELLOW + '{:d} message{}.'.format(self._queue.qsize(), '' if self._queue.qsize() == 1 else 's'))
-        if len(self._tasks) == 0:
+        _tasks = self.get_all_tasks()
+        if len(_tasks) == 0:
             self._log.info('active tasks:\t' + Fore.YELLOW + 'none.')
         else:
-            if len(self._tasks) == 1:
+            if len(_tasks) == 1:
                 self._log.info('active tasks:\t' + Fore.YELLOW + '1 remains:')
             else:
-                self._log.info('active tasks:\t' + Fore.YELLOW + '{:d} remain:'.format(len(self._tasks)))
-            for _task in self._tasks:
+                self._log.info('active tasks:\t' + Fore.YELLOW + '{:d} remain:'.format(len(_tasks)))
+            for _task in _tasks:
                 self._log.info(Fore.YELLOW + '    \t\t{};  \t'.format(_task.get_name()) + Fore.BLACK + ' done? {}'.format(_task.done()))
         self.print_publishers()
         self.print_subscribers()
@@ -382,17 +391,27 @@ class MessageBus(object):
         '''
         if signal:
             self._log.info('received exit signal {}...'.format(signal))
-#       self._log.info(Fore.RED + 'closing services...' + Style.RESET_ALL)
         self._log.info(Fore.RED + 'nacking outstanding tasks...' + Style.RESET_ALL)
-        tasks = [t for t in asyncio.all_tasks() if t is not
-                asyncio.current_task()]
+        tasks = [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]
         [task.cancel() for task in tasks]
         self._log.info(Fore.RED + 'cancelling {:d} outstanding tasks...'.format(len(tasks)) + Style.RESET_ALL)
         _result = await asyncio.gather(*tasks, return_exceptions=True)
         self._log.info(Fore.RED + 'stopping loop...; result: {}'.format(_result) + Style.RESET_ALL)
         self._loop.stop()
         self._log.info(Fore.RED + 'shutting down...' + Style.RESET_ALL)
-#       sys.exit(1) # not really
+
+    # ..........................................................................
+    def get_task_by_name(self, name):
+        '''
+        A convenience method that returns the first found instance of a task
+        with the given name, otherwise null (None).
+        '''
+        self._log.info('😡 1. get_task_by_name.')
+        for _task in asyncio.all_tasks():
+            if _task.get_name() == name:
+                return _task
+        self._log.info('😡 2. get_task_by_name.')
+        return None
 
     # ..........................................................................
     @property
@@ -404,12 +423,35 @@ class MessageBus(object):
         if not self._closed:
             self._enabled = True
             self._log.info('enabled.')
-            if not self._loop.is_running():
-                self._log.info('🌎 starting asyncio task loop...')
-                self._loop.run_forever()
+            self._get_event_loop()
+#           if not self._loop.is_running():
+#               self._log.info('🌎 starting asyncio task loop...')
+#               self._loop.run_forever()
             self._log.info('exited forever loop.')
         else:
             self._log.warning('cannot enable: already closed.')
+
+    # ..........................................................................
+    def _get_event_loop(self):
+        '''
+        Return the asyncio event loop, starting it if it is not already running.
+        '''
+        if not self._loop:
+            self._log.info('🌎 creating asyncio task loop...')
+            self._loop = asyncio.get_event_loop()
+            if self._log.level is Level.DEBUG:
+                self._loop.set_debug(True) # also set asyncio debug
+            # may want to catch other signals too
+            signals = (signal.SIGHUP, signal.SIGTERM, signal.SIGINT)
+            for s in signals:
+                self._loop.add_signal_handler(
+                    s, lambda s = s: asyncio.create_task(self.shutdown(s), name='shutdown'),)
+            self._loop.set_exception_handler(self.handle_exception)
+            self._loop.create_task(self.start_consuming(), name='__coro-loop__')
+        if not self._loop.is_running():
+            self._log.info('🌎 starting asyncio task loop...')
+            self._loop.run_forever()
+        return self._loop
 
     # ..........................................................................
     def disable(self):
@@ -431,9 +473,6 @@ class MessageBus(object):
             self._log.info('disabled.')
             self.clear_queue()
             self.clear_tasks()
-            for _task in self._tasks:
-                if not _task.cancelled():
-                    _task.cancel()
             self._log.info('disabled.')
         else:
             self._log.warning('already disabled.')

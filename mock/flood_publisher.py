@@ -45,7 +45,8 @@ class FloodPublisher(Publisher):
         if self.enabled:
             self._log.info('⭐ creating task...')
 #           asyncio.create_task(self._publish_loop(self._message_bus, lambda: self.enabled), name='publish-loop')
-            self._message_bus.loop.create_task(self._publish_loop(self._message_bus, lambda: self.enabled), name='publish-loop')
+#           self._message_bus.loop.create_task(self._publish_loop(self._message_bus, lambda: self.enabled), name='publish-loop')
+            asyncio.create_task(self._publish_loop(self._message_bus, lambda: self.enabled), name='publish-loop')
             self._log.info('⭐ created task.')
         else:
             self._log.info('⭐😈 disabled.')

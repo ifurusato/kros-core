@@ -150,21 +150,32 @@ class Subscriber(object):
             self._log.debug(self._color + Style.DIM + 'creating task for processing message:' \
                     + Fore.WHITE + ' {}; for event: {}'.format(_message.name, _message.event.description))
             # create message processing task
-            self._message_bus.add_task(asyncio.create_task(self.process_message(_message), name='{}:process-message-{}'.format(self.name, _message.name)))
+#           self._message_bus.add_task(asyncio.create_task(self.process_message(_message), name='{}:process-message-{}'.format(self.name, _message.name)))
+
+#           self._message_bus.loop.create_task(self.process_message(_message), name='{}:process-message-{}'.format(self.name, _message.name))
+            asyncio.create_task(self.process_message(_message), name='{}:process-message-{}'.format(self.name, _message.name))
+
             # create message cleanup task
-#           self._message_bus.add_task(asyncio.create_task(self._cleanup_message(_message), name='{}:cleanup-message-{}'.format(self.name, _message.name)))
-
+            print('🐬 7. ')
             _task_name = '{}:cleanup-message-{}'.format(self.name, _message.name)
-            _cleanup_task = asyncio.create_task(self._cleanup_message(_message), _task_name)
+            asyncio.create_task(self._cleanup_message(_message), name=_task_name)
+#           asyncio.create_task(self._cleanup_message(_message), name='{}:cleanup-message-{}'.format(self.name, _message.name))
 
+#           _task_name = '{}:cleanup-message-{}'.format(self.name, _message.name)
+#           self._message_bus.loop.create_task(self._cleanup_message(_message), _task_name)
+#           asyncio.create_task(self._cleanup_message(_message), _task_name)
+            _cleanup_task = self._message_bus.get_task_by_name(_task_name)
+            if _cleanup_task:
+                self._log.info(Fore.YELLOW + 'adding cleanup task for message:' + Fore.WHITE + ' {}; for event: {}'.format(_message.name, _message.event.description))
+                _cleanup_task.add_done_callback(self._done_callback)
+            print('🐬 8. ')
+ 
 #           FIXME asyncio.all_tasks(self._message_bus.loop).
 #           if _task.get_name() == IfsPublisher._PUBLISH_LOOP_NAME:
 
-            _cleanup_task.add_done_callback(self._done_callback)
-            self._message_bus.add_task(_cleanup_task)
-
             self._log.debug(Fore.RED + 'end event tracking for message:' + Fore.WHITE + ' {}; for event: {}'.format(_message.name, _message.event.description))
             _event.set()
+            print('🐬 9. ')
 
             # we've handled message so pass along to arbitrator
             if not _message.sent:
@@ -241,10 +252,12 @@ class Subscriber(object):
         Cleanup tasks related to completing work on a message (by this subscriber). 
 
         This currently sets the message's 'expire' flag as True and tells the
-        message bus to clear any completed tasks.
+        message bus to clear any completed tasks. It's not really async but is
+        declared as such as part of the asyncio experiment.
 
         :param message:  consumed message that is done being processed.
         '''
+        print('🐬 A. ')
         if self._message_bus.verbose:
             self._log.info(self._color + Style.DIM + 'begin cleanup of message: {}'.format(message.name))
         if message.gcd:
@@ -257,6 +270,7 @@ class Subscriber(object):
         self._message_bus.clear_tasks()
 
         self._log.info(self._color + Style.DIM + 'end cleanup of message: {}'.format(message.name))
+        print('🐬 B. ')
 
     # ..........................................................................
     def _get_formatted_time(self, label, value):
