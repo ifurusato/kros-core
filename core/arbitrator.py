@@ -29,7 +29,8 @@ class Arbitrator(object):
         self._queue       = PriorityQueue()
         self._suppressed  = False
         self._controllers = []
-        self._log.info(Fore.MAGENTA + Style.DIM + 'ready.')
+        self._color       = Fore.MAGENTA + Style.NORMAL
+        self._log.info(self._color + 'ready.')
 
     # ..........................................................................
     def register_controller(self, controller: Controller):
@@ -38,7 +39,7 @@ class Arbitrator(object):
         from the MessageBus its callback(Payload) method is called.
         '''
         self._controllers.append(controller)
-        self._log.info(Fore.MAGENTA + Style.DIM + 'registering controller: {}'.format(controller.name))
+        self._log.info(self._color + 'registering controller: {}'.format(controller.name))
 
     # ..........................................................................
     def suppress(self, suppressed):
@@ -46,7 +47,7 @@ class Arbitrator(object):
         When set True incoming events are suppressed.
         '''
         self._suppressed = suppressed
-        self._log.info(Fore.MAGENTA + Style.DIM + 'suppressed: {}'.format(suppressed))
+        self._log.info(self._color + 'suppressed: {}'.format(suppressed))
 
     # ..........................................................................
     async def arbitrate(self, payload):
@@ -54,15 +55,16 @@ class Arbitrator(object):
         Arbitrates the addition of the payload into the priority queue.
         If suppressed the queue is cleared so that events don't accumulate.
         '''
-        self._log.debug(Fore.MAGENTA + Style.DIM + 'arbitrating payload: {}'.format(payload.event.name))
+        self._log.debug(self._color + 'arbitrating payload: {}'.format(payload.event.description))
         if self._suppressed:
             self._queue.clear()
         else:
             _start_time = dt.datetime.now()
-            self._log.debug(Fore.MAGENTA + Style.DIM + 'putting payload: {} onto queue...'.format(payload.event.name))
+            self._log.debug(self._color + 'putting payload: \'{}\' onto queue...'.format(payload.event.description))
             if len(self._controllers) > 0:
                 await self._queue.put(( payload.priority, payload ))
-                self._log.info(Fore.MAGENTA + Style.DIM + 'complete: put payload \'{}\' onto queue: {} elements.'.format(payload.event.name, self._queue.qsize()))
+                self._log.info(self._color + 'payload \'{}\' put onto queue: {} element{}.'.format(
+                        payload.event.description, self._queue.qsize(), '' if self._queue.qsize() == 1 else 's'))
                 await self.trigger_callback()
                 _delta = dt.datetime.now() - _start_time
                 _elapsed_ms = int(_delta.total_seconds() * 1000)

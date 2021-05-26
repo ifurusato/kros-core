@@ -66,14 +66,14 @@ def test_pub_sub():
 #   _publisher2  = FloodPublisher(_message_bus, _message_factory)
 #   _publisher3  = GamepadPublisher(_config, _message_bus, _message_factory)
 
-#   _subscriber1 = Subscriber('action', Fore.BLUE, _message_bus, Level.INFO)
+#   _subscriber1 = Subscriber('action', _message_bus, Fore.BLUE, Level.INFO)
 #   _subscriber1.events = [ Event.SNIFF, Event.VIDEO ] # reacts to SNIFF and VIDEO
 
-    _subscriber2 = Subscriber('infrared', Fore.GREEN, _message_bus, Level.INFO)
+    _subscriber2 = Subscriber('infrared', _message_bus, Fore.GREEN, Level.INFO)
     _subscriber2.events = [ Event.INFRARED_PORT_SIDE, Event.INFRARED_PORT, Event.INFRARED_CNTR, Event.INFRARED_STBD, Event.INFRARED_STBD_SIDE ] # reacts to IR sensors
 
-#   _subscriber3 = Subscriber('bumper', Fore.YELLOW, _message_bus, Level.INFO)
-#   _subscriber3.events = [ Event.BUMPER_PORT, Event.BUMPER_CNTR, Event.BUMPER_STBD ] # reacts to bumpers
+    _subscriber3 = Subscriber('bumper', _message_bus, Fore.YELLOW, Level.INFO)
+    _subscriber3.events = [ Event.BUMPER_PORT, Event.BUMPER_CNTR, Event.BUMPER_STBD ] # reacts to bumpers
 
     _motors = None
     # add motor controller, reacts to STOP, HALT, BRAKE, INCREASE_SPEED and DECREASE_SPEED
@@ -83,7 +83,7 @@ def test_pub_sub():
     # ROAM is commonly accepted by all subscribers
 #   _subscriber1.add_event(Event.ROAM)
     _subscriber2.add_event(Event.ROAM)
-#   _subscriber3.add_event(Event.ROAM)
+    _subscriber3.add_event(Event.ROAM)
 #   _motors.add_event(Event.ROAM)
 
 #   _message_bus.print_publishers()

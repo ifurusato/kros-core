@@ -37,7 +37,7 @@ class Controller():
     # ................................................................
     @property
     def name(self):
-        return 'controller'
+        return 'default-controller'
 
     # ................................................................
     def enable(self):

@@ -48,20 +48,16 @@ class MessageBus(object):
         if level is Level.DEBUG:
             self._log.debug('logging message bus set to debug level.')
             logging.basicConfig(level=logging.DEBUG)
-
         self._queue       = PeekableQueue(level)
         self._publishers  = []
         self._subscribers = []
         self._loop        = None
-
-        self._garbage_collector = GarbageCollector('gc', Fore.RED, self, Level.INFO)
-#       self.register_subscriber(self._garbage_collector)
+        self._garbage_collector = GarbageCollector('gc', self, Fore.BLUE, Level.INFO)
         self._arbitrator  = Arbitrator(level)
         self._max_age     = 20.0 # ms
         self._verbose     = True
         self._enabled     = True # by default
         self._closed      = False
-        self._log.info('creating subscriber task...')
         self._log.info('ready.')
 
     # ..........................................................................
@@ -78,12 +74,9 @@ class MessageBus(object):
         Returns the task list, not including those whose name starts with '__'.
         '''
         _tasks = []
-        try:
-            for _task in asyncio.all_tasks(loop=self._loop):
-                if not _task.get_name().startswith('__'):
-                    _tasks.append(_task)
-        except Exception as e:
-            self._log.error('error getting all tasks: {}'.format(e))
+        for _task in asyncio.all_tasks(loop=self._loop):
+            if not _task.get_name().startswith('__'):
+                _tasks.append(_task)
         return _tasks
 
     # ..........................................................................
@@ -93,25 +86,22 @@ class MessageBus(object):
         '''
         _tasks = self.get_all_tasks()
         if len(_tasks) == 0:
-            self._log.info('clear: no outstanding tasks.')
+            self._log.info('no outstanding tasks.')
         else:
             self._log.info('clearing {:d} task{}...'.format(len(_tasks), ('' if len(_tasks) == 1 else 's')))
             for _task in _tasks:
-#               if _task.get_name().startswith('__'):
-#                   self._log.debug('skipping task:\t' + Fore.YELLOW + '{}...'.format(_task.get_name()))
-#                   continue
                 if not _task.cancelled():
                     _task.cancel()
                 if _task.done():
-                    self._log.debug('removing completed task:\t' + Fore.YELLOW + '{}...'.format(_task.get_name()))
+                    self._log.debug('removing completed task:\t' + Fore.BLUE + '{}...'.format(_task.get_name()))
                     _tasks.remove(_task)
                 else:
-                    self._log.warning(Fore.RED + 'task not complete:      \t' + Fore.YELLOW + '{}'.format(_task.get_name()))
+                    self._log.debug('incomplete task:\t' + Fore.BLUE + '{}'.format(_task.get_name()))
             self._log.info('{:d} task{} remain{}.'.format(len(_tasks),
                     ('' if len(_tasks) == 1 else 's'),
                     ('s' if len(_tasks) == 1 else '')))
             for _task in _tasks:
-                self._log.debug('unfinished task:\t' + Fore.YELLOW + '{}...'.format(_task.get_name()))
+                self._log.info('unfinished task:\t' + Fore.BLUE + '{}...'.format(_task.get_name()))
 
     # ..........................................................................
     @property
@@ -119,7 +109,7 @@ class MessageBus(object):
         '''
         Returns the backing message queue.
 
-        IMPORTANT: This is an admin function and should not be considered part of the API.
+        IMPORTANT: This is an admin method and should not be considered part of the API.
         '''
         return self._queue
 
@@ -129,7 +119,7 @@ class MessageBus(object):
         '''
         Returns True if the queue is empty.
 
-        IMPORTANT: This is an admin function and should not be considered part of the API.
+        IMPORTANT: This is an admin method and should not be considered part of the API.
         '''
         return self._queue.empty()
 
@@ -138,7 +128,7 @@ class MessageBus(object):
         '''
         Pops the queue but does nothing with the message, if there is one.
 
-        IMPORTANT: This is an admin function and should not be considered part of the API.
+        IMPORTANT: This is an admin method and should not be considered part of the API.
         '''
         if self._queue.empty():
             self._log.info('message bus queue is empty.')
@@ -155,14 +145,11 @@ class MessageBus(object):
         await self._arbitrator.arbitrate(payload)
 
     # ..........................................................................
-#   @property
-#   def queue(self):
-#       return self._queue
-
     @property
     def queue_size(self):
         return self._queue.qsize()
 
+    # ..........................................................................
     def clear_queue(self):
         '''
         Clear the message bus of any messages.
@@ -180,7 +167,8 @@ class MessageBus(object):
     def verbose(self, verbose):
         self._verbose = verbose
 
-    # ..........................................................................
+    # publisher ................................................................
+
     def register_publisher(self, publisher):
         '''
         Register a message publisher with the message bus.
@@ -191,7 +179,6 @@ class MessageBus(object):
         self._log.info('registered publisher \'{}\'; {:d} publisher{} in list.'.format( \
                 publisher.name, len(self._publishers), 's' if len(self._publishers) > 1 else ''))
 
-    # ..........................................................................
     def get_publisher(self, name):
         '''
         Return a registered publisher by name, None if not found.
@@ -200,7 +187,6 @@ class MessageBus(object):
             if publisher.name == name:
                 return publisher
         return None
-#       raise NameError('no publisher found with name \'{}\'.'.format(name))
 
     def print_publishers(self):
         '''
@@ -225,14 +211,7 @@ class MessageBus(object):
     def publisher_count(self):
         return len(self._publishers)
 
-    # ..........................................................................
-    def register_controller(self, controller):
-        '''
-        Register a controller with the Arbitrator.
-        '''
-        self._arbitrator.register_controller(controller)
-
-    # ..........................................................................
+    # subscriber ...............................................................
     def register_subscriber(self, subscriber):
         '''
         Register a message subscriber with the message bus.
@@ -242,7 +221,6 @@ class MessageBus(object):
         if subscriber in self._subscribers:
             raise ValueError('subscriber list already contains \'{}\''.format(subscriber.name))
         self._subscribers.insert(0, subscriber)
-#       self._loop.create_task(subscriber.consume(), name='subscriber-{}'.format(subscriber.name))
         self._log.info('registered subscriber \'{}\'; {:d} subscriber{} in list.'.format( \
                 subscriber.name, len(self._subscribers), 's' if len(self._subscribers) > 1 else ''))
 
@@ -268,6 +246,14 @@ class MessageBus(object):
     def subscriber_count(self):
         return len(self._subscribers)
 
+    # controller ................................................................
+
+    def register_controller(self, controller):
+        '''
+        Register a controller with the Arbitrator.
+        '''
+        self._arbitrator.register_controller(controller)
+
     # ..........................................................................
     def is_expired(self, message):
         '''
@@ -277,28 +263,22 @@ class MessageBus(object):
         return message.expired or message.age > self._max_age
 
     # ..........................................................................
-    async def start_consuming(self):
+    async def _start_consuming(self):
         '''
-        Start the subscribers' consume cycle. This remains active until the
-        message bus is disabled.
+        Enable the publishers and then start the subscribers' consume cycle.
+        This remains active until the message bus is disabled.
         '''
         self._enable_publishers()
-#       self._log.info('begin {:d} subscribers\' consume cycle...'.format(len(self._subscribers)))
-#       _coro_list = []
-#       self._log.info('😰 begin {:d} gathering subscribers\' consume cycle...'.format(len(self._subscribers)))
-#       for subscriber in self._subscribers:
-#           _coro_list.append(subscriber.consume())
-
-        self._log.info('😠 starting consume loop with {:d} subscriber{}...'.format(len(self._subscribers), '' if len(self._subscribers) == 1 else 's'))
+        self._log.info('starting consume loop with {:d} subscriber{}...'.format(len(self._subscribers), '' if len(self._subscribers) == 1 else 's'))
         while self._enabled:
             for subscriber in self._subscribers:
                 self._log.debug('publishing to subscriber {}...'.format(subscriber.name))
                 await subscriber.consume()
-        self._log.info('😡 completed consume loop with {:d} subscriber{}...'.format(len(self._subscribers), '' if len(self._subscribers) == 1 else 's'))
+        self._log.info('completed consume loop with {:d} subscriber{}...'.format(len(self._subscribers), '' if len(self._subscribers) == 1 else 's'))
 
     # ..........................................................................
     def _enable_publishers(self):
-        self._log.info('😦 enabling {:d} publisher{}...'.format(len(self._publishers), '' if len(self._publishers) == 1 else 's'))
+        self._log.info('enabling {:d} publisher{}...'.format(len(self._publishers), '' if len(self._publishers) == 1 else 's'))
         for publisher in self._publishers:
             if not publisher.enabled:
                 publisher.enable()
@@ -353,9 +333,10 @@ class MessageBus(object):
         NOTE: calls to this function should be await'd.
         '''
         if ( message.event is not Event.CLOCK_TICK and message.event is not Event.CLOCK_TOCK ):
-            self._log.info(Style.BRIGHT + 'publishing message: {}'.format(message.name) + Style.NORMAL + ' (event: {}; age: {:d}ms);'.format(message.event.description, message.age))
-        _result = asyncio.create_task(self._queue.put(message), name='publish-message-{}'.format(message.name))
-        self._log.info(Style.DIM + 'result from published message: {}'.format(_result.get_name()))
+            self._log.info('rx request to publish message: {}'.format(message.name)
+                    + ' (event: {}; age: {:d}ms);'.format(message.event.description, message.age))
+        _put_task = asyncio.create_task(self._queue.put(message), name='publish-message-{}'.format(message.name))
+        self._log.info(Style.DIM + 'created task: {}'.format(_put_task.get_name()))
         await asyncio.sleep(0.05)
 
     # ..........................................................................
@@ -376,7 +357,7 @@ class MessageBus(object):
         # context["message"] will always be there; but context["exception"] may not
         _exception = context.get('exception', context['message'])
         if _exception != None:
-            self._log.error('caught {}: {}'.format(type(_exception), _exception))
+            self._log.error('caught {}: {}\n{}'.format(type(_exception), _exception, traceback.print_stack()))
         else:
             self._log.error('caught exception: {}'.format(context.get('message')))
         if loop.is_running() and not loop.is_closed():
@@ -406,11 +387,9 @@ class MessageBus(object):
         A convenience method that returns the first found instance of a task
         with the given name, otherwise null (None).
         '''
-        self._log.info('😡 1. get_task_by_name.')
         for _task in asyncio.all_tasks():
             if _task.get_name() == name:
                 return _task
-        self._log.info('😡 2. get_task_by_name.')
         return None
 
     # ..........................................................................
@@ -424,9 +403,6 @@ class MessageBus(object):
             self._enabled = True
             self._log.info('enabled.')
             self._get_event_loop()
-#           if not self._loop.is_running():
-#               self._log.info('🌎 starting asyncio task loop...')
-#               self._loop.run_forever()
             self._log.info('exited forever loop.')
         else:
             self._log.warning('cannot enable: already closed.')
@@ -437,7 +413,7 @@ class MessageBus(object):
         Return the asyncio event loop, starting it if it is not already running.
         '''
         if not self._loop:
-            self._log.info('🌎 creating asyncio task loop...')
+            self._log.info('creating asyncio task loop...')
             self._loop = asyncio.get_event_loop()
             if self._log.level is Level.DEBUG:
                 self._loop.set_debug(True) # also set asyncio debug
@@ -447,9 +423,9 @@ class MessageBus(object):
                 self._loop.add_signal_handler(
                     s, lambda s = s: asyncio.create_task(self.shutdown(s), name='shutdown'),)
             self._loop.set_exception_handler(self.handle_exception)
-            self._loop.create_task(self.start_consuming(), name='__coro-loop__')
+            self._loop.create_task(self._start_consuming(), name='__coro-loop__')
         if not self._loop.is_running():
-            self._log.info('🌎 starting asyncio task loop...')
+            self._log.info('starting asyncio task loop...')
             self._loop.run_forever()
         return self._loop
 
@@ -462,10 +438,10 @@ class MessageBus(object):
         '''
         if self._enabled:
             self._enabled = False
-            self._log.info('😦 disabling {:d} publishers...'.format(len(self._publishers)))
+            self._log.info('disabling {:d} publishers...'.format(len(self._publishers)))
             for publisher in self._publishers:
                 publisher.disable()
-            self._log.info('😦 disabling {:d} subscribers...'.format(len(self._subscribers)))
+            self._log.info('disabling {:d} subscribers...'.format(len(self._subscribers)))
             for subscriber in self._subscribers:
                 subscriber.disable()
             if self._loop.is_running():
@@ -509,14 +485,12 @@ class PeekableQueue(Queue):
         back onto the queue.
         '''
         _message = await self.get()
-#       _message = await self.get_nowait() # call only if queue not empty
         self.task_done()
-#       await self.put(_message)
         self.put_nowait(_message)
         return _message
 
     # ..........................................................................
-    def clear(self): 
+    def clear(self):
         '''
         Clears the queue of any messages, brute-force, without waiting.
         '''

@@ -68,17 +68,16 @@ class IfsPublisher(Publisher):
     async def _start_loop(self):
         # run in a custom thread pool:
         with concurrent.futures.ThreadPoolExecutor() as pool:
-            self._log.info('starting publish loop...')
             _result = self._message_bus.loop.run_in_executor(
                 pool, await self._publish_loop(lambda: self.enabled))
             self._log.info('ending publish loop; result done: {}'.format(_result.done()))
 
     async def _publish_loop(self, f_is_enabled):
-        self._log.info('🍏 start publish loop.')
+        self._log.info('starting publish loop...')
         _loop_freq_hz  = 20
         while f_is_enabled():
             _count = next(self._counter)
-            self._log.info(Fore.BLUE + '🍏 [{:03d}] begin loop...'.format(_count))
+            self._log.info('🍏 [{:03d}] begin loop...'.format(_count))
             # get key press, see if any sensor (key) has been activated
             ch  = readchar.readchar()
             och = ord(ch)
@@ -114,16 +113,16 @@ class IfsPublisher(Publisher):
             # otherwise handle as event
             _event = self.get_event_for_char(och)
             if _event is not None:
-                self._log.info('🍏 [{:03d}] "{}" ({}) pressed; publishing message for event: {}'.format(_count, ch, och, _event))
+                self._log.info('[{:03d}] "{}" ({}) pressed; publishing message for event: {}'.format(_count, ch, och, _event))
                 _message = self._message_factory.get_message(_event, True)
 #               await self._publish_queue.put(_message)
                 await super().publish(_message)
                 self._log.info('publish_loop() loop end...')
             else:
-                self._log.info('[{:03d}] unmapped key "{}" ({}) pressed.'.format(_count, ch, och))
+                self._log.warning('[{:03d}] unmapped key "{}" ({}) pressed.'.format(_count, ch, och))
             await asyncio.sleep(0.05)
-            self._log.info(Fore.BLUE + '🍏 [{:03d}] end publish loop.'.format(_count))
-        self._log.info('🍏 publish loop complete.')
+            self._log.info('[{:03d}] end publish loop.'.format(_count))
+        self._log.info('publish loop complete.')
 
     # ..........................................................................
     def flood_zone(self):
@@ -135,7 +134,7 @@ class IfsPublisher(Publisher):
             else:
                 self._log.info('publisher \'{}\' not suppressed.'.format(_flood.name))
         else:
-            self._log.warning('no \'flood\' publisher found on bus.'.format(_flood.name))
+            self._log.warning('no \'flood\' publisher found on bus.')
 
     # ................................................................
     def print_sys_info(self):
@@ -143,17 +142,14 @@ class IfsPublisher(Publisher):
         _vm = psutil.virtual_memory()
         self._log.info('virtual memory: \t' + Fore.YELLOW + 'total: {:4.1f}MB; available: {:4.1f}MB ({:5.2f}%); used: {:4.1f}MB; free: {:4.1f}MB'.format(\
                 _vm[0]/_M, _vm[1]/_M, _vm[2], _vm[3]/_M, _vm[4]/_M))
-        # svmem(total=10367352832, available=6472179712, percent=37.6, used=8186245120, free=2181107712, active=4748992512, inactive=2758115328, buffers=790724608, cached=3500347392, shared=787554304)
+        # svmem(total=n, available=n, percent=n, used=n, free=n, active=n, inactive=n, buffers=n, cached=n, shared=n)
         _sw = psutil.swap_memory()
-        # sswap(total=2097147904, used=296128512, free=1801019392, percent=14.1, sin=304193536, sout=677842944)
+        # sswap(total=n, used=n, free=n, percent=n, sin=n, sout=n)
         self._log.info('swap memory:    \t' + Fore.YELLOW + 'total: {:4.1f}MB; used: {:4.1f}MB; free: {:4.1f}MB ({:5.2f}%)'.format(\
                 _sw[0]/_M, _sw[1]/_M, _sw[2]/_M, _sw[3]))
         temperature = self.read_cpu_temperature()
         if temperature:
             self._log.info('cpu temperature:\t' + Fore.YELLOW + '{:5.2f}°C'.format(temperature))
-        else:
-#           self._log.info('cpu temperature:\t' + Fore.YELLOW + 'n/a')
-            pass
 
     # ................................................................
     def read_cpu_temperature(self):
@@ -268,27 +264,24 @@ class IfsPublisher(Publisher):
    ┃  QUIT   ┃  FLOOD  ┃  SNIFF  ┃  ROAM   ┃  NOOP   ┃         ┃         ┃  INFO   ┃ CLR TSK ┃ POP_MSG ┃   ┅━┻━━━━━━━━━┛
    ┗━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┛   ┅━┳━━━━━━━━━┓
         ┃    A    ┃    S    ┃    D    ┃    F    ┃    G    ┃    H    ┃    J    ┃    K    ┃    L    ┃          ┃   RET   ┃
-        ┃ IR_PSID ┃ IR_PORT ┃ IR_CNTR ┃ IR_STBD ┃ IR_SSID ┃  HALT   ┃         ┃         ┃         ┃          ┃  CLEAR  ┃
+        ┃ IR_PSID ┃ IR_PORT ┃ IR_CNTR ┃ IR_STBD ┃ IR_SSID ┃         ┃ BM_PORT ┃ BM_CNTR ┃ BM_STBD ┃          ┃  CLEAR  ┃
         ┗━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━━┻━━━┳━━━━━┛
              ┃    Z    ┃    X    ┃    C    ┃    V    ┃    B    ┃    N    ┃    M    ┃    <    ┃    >    ┃    ?    ┃
-             ┃ BM_PORT ┃ BM_CNTR ┃ BM_STBD ┃ VERBOSE ┃  BRAKE  ┃  STOP   ┃         ┃ DN_VELO ┃ UP_VELO ┃  HELP   ┃
+             ┃         ┃         ┃         ┃ VERBOSE ┃  BRAKE  ┃  HALT   ┃  STOP   ┃ DN_VELO ┃ UP_VELO ┃  HELP   ┃
              ┗━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┛
 
-   QUIT:      quit application                IR_PSID:   port side infrared event           BM_PORT:   port bumper
-   FLOOD:     toggle flood publisher          IR_PORT:   port infrared event                BM_CNTR:   center bumper
-   SNIFF:     tirgger SNIFF behaviour         IR_CNTR:   center infrared event              BM_STBD:   starboard bumper
+   QUIT:      quit application                IR_PSID:   port side infrared event           
+   FLOOD:     toggle flood publisher          IR_PORT:   port infrared event                
+   SNIFF:     tirgger SNIFF behaviour         IR_CNTR:   center infrared event              
    ROAM:      trigger ROAM behaviour          IR_STBD:   starboard infrared event           VERBOSE:   toggle verbosity
    NOOP:      no operation event              IR_SSID:   starboard side infrared event      BRAKE:     brake motors
-   INFO:      print system information        HALT:      halt motors                        STOP:      stop motors
-   CLR_TSK:   clear completed tasks                                                         DN_VELO:   slow down motors
-   POP_MSG:   pop messages from queue                                                       UP_VELO:   speed up motors
+   INFO:      print system information                                                      HALT:      halt motors
+   CLR_TSK:   clear completed tasks           BM_PORT:   port bumper                        STOP:      stop motors
+   POP_MSG:   pop messages from queue         BM_CNTR:   center bumper                      DN_VELO:   slow down motors
+                                              BM_STBD:   starboard bumper                   UP_VELO:   speed up motors
    SHUTDOWN:  shut down robot                 CLEAR:     clear screen                       HELP:      print help
 
         ''')
-#           elif _event == Event.AHEAD:
-#           elif _event == Event.ASTERN:
-        self._log.info('note:\t' + Fore.YELLOW + 'will exit after receiving 3 events on each sensor.')
-        print('')
 
     # ..........................................................................
     def get_event_for_char(self, och):
@@ -302,44 +295,43 @@ class IfsPublisher(Publisher):
 
            141   97    61    a *    port side IR
            142   98    62    b *    brake
-           143   99    63    c *    stbd BMP
+           143   99    63    c
            144   100   64    d *    cntr IR
            145   101   65    e *    sniff
            146   102   66    f *    stbd IR
            147   103   67    g *    stbd side IR
-           150   104   68    h *    halt
+           150   104   68    h
            151   105   69    i      info
-           152   106   6A    j
-           153   107   6B    k
-           154   108   6C    l
-           155   109   6D    m
-           156   110   6E    n *    stop
+           152   106   6A    j *    port BMP
+           153   107   6B    k *    cntr BMP
+           154   108   6C    l *    stbd BMP
+           155   109   6D    m *    stop
+           156   110   6E    n *    halt 
            157   111   6F    o      clear task list
            160   112   70    p      pop message
            161   113   71    q
-           162   114   72    r *    roam
+           162   114   72    r      roam
            163   115   73    s *    port IR
            164   116   74    t      noop (test message)
            165   117   75    u
            166   118   76    v      verbose
            167   119   77    w      flood with random messages
-           170   120   78    x *    cntr BMP
+           170   120   78    x
            171   121   79    y
-           172   122   7A    z  *   port BMP
+           172   122   7A    z
            177   127   7f   del     shut down
 
         * represents robot sensor or control input.
         '''
+
         if och   == 44:  # ,
             return Event.DECREASE_SPEED
-        elif och   == 46:  # .
+        elif och == 46:  # .
             return Event.INCREASE_SPEED
-        elif och   == 97:  # a
+        elif och == 97:  # a
             return Event.INFRARED_PORT_SIDE
         elif och == 98:  # b
             return Event.BRAKE
-        elif och == 99:  # c
-            return Event.BUMPER_STBD
         elif och == 100: # d
             return Event.INFRARED_CNTR
         elif och == 101: # e
@@ -348,20 +340,22 @@ class IfsPublisher(Publisher):
             return Event.INFRARED_STBD
         elif och == 103: # g
             return Event.INFRARED_STBD_SIDE
-        elif och == 104: # h
-            return Event.HALT
-        elif och == 110: # n
+        elif och == 106: # j
+            return Event.BUMPER_PORT
+        elif och == 107: # k
+            return Event.BUMPER_CNTR
+        elif och == 108: # l
+            return Event.BUMPER_STBD
+        elif och == 109: # m
             return Event.STOP
+        elif och == 110: # h
+            return Event.HALT
         elif och == 114: # r
             return Event.ROAM
         elif och == 115: # s
             return Event.INFRARED_PORT
         elif och == 116: # s
             return Event.NOOP
-        elif och == 120: # x
-            return Event.BUMPER_CNTR
-        elif och == 122: # z
-            return Event.BUMPER_PORT
         elif och == 127: # del
             return Event.SHUTDOWN
         else:
