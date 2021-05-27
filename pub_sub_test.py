@@ -62,7 +62,7 @@ def test_pub_sub():
     _controller = Controller(Level.INFO)
     _message_bus.register_controller(_controller)
 
-    _publisher1  = IfsPublisher(_message_bus, _message_factory)
+    _publisher1  = IfsPublisher(_message_bus, _message_factory, level=Level.INFO)
 #   _publisher2  = FloodPublisher(_message_bus, _message_factory)
 #   _publisher3  = GamepadPublisher(_config, _message_bus, _message_factory)
 

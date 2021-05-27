@@ -17,13 +17,20 @@
 #
 
 import sys, time, itertools, psutil, random
+import select, tty, termios # used by Getch
 #from threading import Thread
+import select
 import asyncio
 import concurrent.futures
 from asyncio.queues import Queue
 from pathlib import Path
 from colorama import init, Fore, Style
 init()
+
+try:
+    import readkeys
+except ImportError:
+    sys.exit(Fore.RED + "This script requires the readkeys module.\nInstall with: pip3 install --user readkeys" + Style.RESET_ALL)
 try:
     import readchar
 except ImportError:
@@ -33,6 +40,39 @@ from core.event import Event
 from core.message_factory import MessageFactory
 from core.logger import Logger, Level
 from core.publisher import Publisher
+
+
+# ...............................................................
+class _Getch:
+    def __init__(self):
+        import tty, sys
+
+    def __call__(self):
+        import sys, tty, termios
+        fd = sys.stdin.fileno()
+        old_settings = termios.tcgetattr(fd)
+        try:
+            tty.setraw(sys.stdin.fileno())
+            ch = sys.stdin.read(1)
+        finally:
+            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+        return ch
+
+class Getch():
+    def __init__(self):
+        self._old_settings = termios.tcgetattr(sys.stdin)
+        tty.setcbreak(sys.stdin.fileno())
+        pass
+
+    def isData(self):
+        return select.select([sys.stdin], [], [], 0) == ([sys.stdin], [], [])
+
+    def readchar(self):
+        return sys.stdin.read(1)
+
+    def close(self):
+        termios.tcsetattr(sys.stdin, termios.TCSADRAIN, self._old_settings)
+
 
 # ...............................................................
 class IfsPublisher(Publisher):
@@ -48,6 +88,7 @@ class IfsPublisher(Publisher):
         self._counter  = itertools.count()
         self._triggered_ir_port_side = self._triggered_ir_port  = self._triggered_ir_cntr  = self._triggered_ir_stbd  = \
         self._triggered_ir_stbd_side = self._triggered_bmp_port = self._triggered_bmp_cntr = self._triggered_bmp_stbd = 0
+        self._getch = Getch()
         self._limit = 3
         self._fmt = '{0:>9}'
         self._log.info('ready.')
@@ -60,69 +101,97 @@ class IfsPublisher(Publisher):
                 self._log.warning('already enabled.')
                 return
             # start loop as new task
-            self._message_bus.loop.create_task(self._start_loop(), name=IfsPublisher._PUBLISH_LOOP_NAME)
+            with concurrent.futures.ThreadPoolExecutor() as pool:
+                self._message_bus.loop.run_in_executor(self._key_listener_loop(lambda: self.enabled), name=IfsPublisher._PUBLISH_LOOP_NAME)
+#           self._message_bus.loop.create_task(self._publish_loop(lambda: self.enabled), name=IfsPublisher._PUBLISH_LOOP_NAME)
             self._log.info('enabled')
         else:
             self._log.info(Fore.BLACK + '<<< enabled: {}'.format(self.enabled))
 
-    async def _start_loop(self):
-        # run in a custom thread pool:
-        with concurrent.futures.ThreadPoolExecutor() as pool:
-            _result = self._message_bus.loop.run_in_executor(
-                pool, await self._publish_loop(lambda: self.enabled))
-            self._log.info('ending publish loop; result done: {}'.format(_result.done()))
 
-    async def _publish_loop(self, f_is_enabled):
-        self._log.info('starting publish loop...')
-        _loop_freq_hz  = 20
+    # ................................................................
+#   async def _publish_loop(self, f_is_enabled):
+    def _key_listener_loop(self, f_is_enabled):
+        self._log.info('starting key listener loop...')
         while f_is_enabled():
             _count = next(self._counter)
-            self._log.info('🍏 [{:03d}] begin loop...'.format(_count))
-            # get key press, see if any sensor (key) has been activated
-            ch  = readchar.readchar()
-            och = ord(ch)
-            if och == 10 or och == 13: # LF or CR to print 48 newlines
-                print(Logger._repeat('\n',48))
-                continue
-            elif och == 105: # 'i' print info
-                self._log.heading('System Information','Memory, CPU and Message Bus Information.')
-                self.print_sys_info()
-                self._message_bus.print_bus_info()
-                continue
-            elif och == 111: # 'o'
-                self._message_bus.clear_tasks()
-                continue
-            elif och == 112: # 'p'
-                await self._message_bus.pop_queue()
-                continue
-            elif och == 3 or och == 113: # 'q'
-                self.disable()
-                self._message_bus.disable()
-                self._log.info(Fore.YELLOW + 'type Ctrl-C to exit.')
-                continue
-            elif och == 47 or och == 63: # '/' or '?' for help
-                self.print_keymap()
-                continue
-            elif och == 118: # 'v' toggle verbose
-                self._message_bus.verbose = not self._message_bus.verbose
-                self._log.info('setting verbosity to: ' + Fore.YELLOW + '{}'.format(self._message_bus.verbose))
-                continue
-            elif och == 119: # 'w'
-                self.flood_zone()
-                continue
-            # otherwise handle as event
-            _event = self.get_event_for_char(och)
-            if _event is not None:
-                self._log.info('[{:03d}] "{}" ({}) pressed; publishing message for event: {}'.format(_count, ch, och, _event))
-                _message = self._message_factory.get_message(_event, True)
-#               await self._publish_queue.put(_message)
-                await super().publish(_message)
-                self._log.info('publish_loop() loop end...')
+            self._log.info('♑ [{:03d}] begin loop...'.format(_count))
+
+            if self._getch.isData():
+                ch = self._getch.readchar()
             else:
-                self._log.warning('[{:03d}] unmapped key "{}" ({}) pressed.'.format(_count, ch, och))
-            await asyncio.sleep(0.05)
+                ch = None
+#           dr,dw,de = select.select([sys.stdin], [], [], 0)
+#           ch = readkeys.getch(NONBLOCK=True)
+#           if ch is not None and ch is not '':
+#               ch = sys.stdin.read(1)
+#               och = ord(ch)
+#               self._log.info('♒ key "{}" pressed.'.format(ch))
+#               self._process_keypress(ch, och)
+#           else:
+#               self._log.info('⛎ NO key pressed.')
+#               pass # idle
+
+            # get key press, see if any sensor (key) has been activated
+#           ch  = readchar.readchar()
+
+#           ch = readkeys.getch(NONBLOCK=True)
+#           self._log.warning('♒ key "{}" pressed.'.format(ch))
+            if ch != None and ch != '':
+                och = ord(ch)
+                self._log.warning('⛎ key "{}" ({}) pressed.'.format(ch, och))
+                self.process_keypress(ch, och)
+            else:
+                self._log.info('⛎ NO key pressed.')
+            time.sleep(0.5)
+#           await asyncio.sleep(0.05)
             self._log.info('[{:03d}] end publish loop.'.format(_count))
         self._log.info('publish loop complete.')
+
+    # ..........................................................................
+    def process_keypress(self, ch, och):
+        self._log.warning('♓ key "{}" ({}) pressed.'.format(ch, och))
+        if och == 10 or och == 13: # LF or CR to print 48 newlines
+            print(Logger._repeat('\n',48))
+            return
+        elif och == 105: # 'i' print info
+            self._log.heading('System Information','Memory, CPU and Message Bus Information.')
+            self.print_sys_info()
+            self._message_bus.print_bus_info()
+            return
+        elif och == 111: # 'o'
+            self._message_bus.clear_tasks()
+            return
+        elif och == 112: # 'p'
+#           await self._message_bus.pop_queue()
+#           return
+            raise NotImplementedError
+        elif och == 3 or och == 113: # 'q'
+            self.disable()
+            self._message_bus.disable()
+            self._log.info(Fore.YELLOW + 'type Ctrl-C to exit.')
+            return
+        elif och == 47 or och == 63: # '/' or '?' for help
+            self.print_keymap()
+            return
+        elif och == 118: # 'v' toggle verbose
+            self._message_bus.verbose = not self._message_bus.verbose
+            self._log.info('setting verbosity to: ' + Fore.YELLOW + '{}'.format(self._message_bus.verbose))
+            return
+        elif och == 119: # 'w'
+            self.flood_zone()
+            return
+        # otherwise handle as event
+        _event = self.get_event_for_char(och)
+        if _event is not None:
+            self._log.info('"{}" ({}) pressed; publishing message for event: {}'.format(ch, och, _event))
+            _message = self._message_factory.get_message(_event, True)
+            self._log.info('key generated message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
+#               await self._publish_queue.put(_message)
+#           await super().publish(_message)
+            self._log.info('publish_loop() loop end...')
+        else:
+            self._log.warning('unmapped key "{}" ({}) pressed.'.format(ch, och))
 
     # ..........................................................................
     def flood_zone(self):

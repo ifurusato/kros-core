@@ -49,7 +49,7 @@ class FloodPublisher(Publisher):
             asyncio.create_task(self._publish_loop(self._message_bus, lambda: self.enabled), name='publish-loop')
             self._log.info('⭐ created task.')
         else:
-            self._log.info('⭐😈 disabled.')
+            self._log.warning('already enabled.')
 
     async def _publish_loop(self, message_bus, f_is_enabled):
         self._log.info('🍏 start _publish_loop() BEGIN.')
@@ -59,36 +59,36 @@ class FloodPublisher(Publisher):
 #       self._ticker.enable()
         while f_is_enabled():
             _count = next(self._counter)
-            self._log.info(Fore.BLUE + '[{:03d}] A2. BEGIN loop...'.format(_count))
+            self._log.info(Fore.BLUE + '🍏 [{:03d}] BEGIN loop...'.format(_count))
             if not self.suppressed:
                 _event = self._get_random_event()
                 _message = self._message_factory.get_message(_event, True)
 #               await self._message_bus.publish_message(_message)
-                await super().publish(_message)
-#               await self._pxblish_message(message_bus)
-                self._log.info(Fore.BLUE + '[{:03d}] A2. END loop...'.format(_count))
+#               await super().publish(_message)
+                await self._publish_message(_message)
+                self._log.info(Fore.BLUE + '🍏 [{:03d}] END loop.'.format(_count))
                 await asyncio.sleep(1.0)
             else:
-                self._log.info(Fore.BLUE + '[{:03d}] A2. END SUPPRESSED loop...'.format(_count))
+                self._log.info(Fore.BLUE + '🍏 [{:03d}] END SUPPRESSED loop.'.format(_count))
                 await asyncio.sleep(1.0)
 #           time.sleep(1.0)
         self._log.info('_start_publish_loop() END.')
 
-    async def _publish_message(self):
+    async def _publish_message(self, message):
         # 🍈 🍅 🍋 🍐 🍓 🍥 🥝 🥚 🥧 🧀
         self._log.info('tick: publish message...')
-        _event = self._get_random_event()
+#       _event = self._get_random_event()
 #       _event = FloodPublisher.RANDOM_EVENTS[random.randint(1,len(FloodPublisher.RANDOM_EVENTS)) - 1]
 #       self._log.info('🍎 publishing message for event: {}'.format(_event))
-        print('🍎 generating message for event: {}'.format(_event))
-        _message = self._message_factory.get_message(_event, True)
-        print('🍎 publishing message: {}'.format(_message.name))
-        await self.message_bus.publish_message(_message)
+#       print('🍎 generating message for event: {}'.format(_event))
+#       _message = self._message_factory.get_message(_event, True)
+        print('🍎 publishing message: {}'.format(message.name))
+        await self.message_bus.publish_message(message)
 #       self._log.info(Style.BRIGHT + 'publishing message: {}'.format(message.name) + Style.NORMAL + ' (_event: {}; age: {:d}ms);'.format(message.event, message.age))
 #       asyncio.create_task(self._message_bus.queue.put(_message), name='publish-message-{}'.format(_message.name))
         await asyncio.sleep(0.05)
 #       self._log.info('🍏 published message for event: {}'.format(event))
-        print('🍏 published message {} for event: {}'.format(_message.name, _message.event.description))
+        print('🍏 published message {} for event: {}'.format(message.name, message.event.description))
 
 #   # ................................................................
 #   async def publish(self):

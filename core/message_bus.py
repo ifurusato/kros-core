@@ -52,11 +52,11 @@ class MessageBus(object):
         self._publishers  = []
         self._subscribers = []
         self._loop        = None
-        self._garbage_collector = GarbageCollector('gc', self, Fore.BLUE, Level.INFO)
+        self._garbage_collector = GarbageCollector('gc', self, Fore.BLUE, level)
         self._arbitrator  = Arbitrator(level)
-        self._max_age     = 20.0 # ms
+        self._max_age_ms  = 20.0
         self._verbose     = True
-        self._enabled     = True # by default
+        self._enabled     = True
         self._closed      = False
         self._log.info('ready.')
 
@@ -133,11 +133,13 @@ class MessageBus(object):
         if self._queue.empty():
             self._log.info('message bus queue is empty.')
         else:
+            print('📯 1.')
             _message = await self._queue.get()
             self._queue.task_done()
             self._log.info('popped message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
             if self._queue.empty():
                 self._log.info('message bus queue is now empty.')
+            print('📯 2.')
 
     # ..........................................................................
     async def arbitrate(self, payload):
@@ -260,7 +262,7 @@ class MessageBus(object):
         Returns True if the message has been manually expired or its age has
         passed the maximum age limit.
         '''
-        return message.expired or message.age > self._max_age
+        return message.expired or message.age > self._max_age_ms
 
     # ..........................................................................
     async def _start_consuming(self):
@@ -485,9 +487,12 @@ class PeekableQueue(Queue):
         back onto the queue.
         '''
         _message = await self.get()
+#       if _message:
         self.task_done()
         self.put_nowait(_message)
         return _message
+#       else:
+#           return None
 
     # ..........................................................................
     def clear(self):
