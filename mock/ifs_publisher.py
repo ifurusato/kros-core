@@ -22,7 +22,6 @@ import select, tty, termios # used by Getch
 import select
 import asyncio
 import concurrent.futures
-from asyncio.queues import Queue
 from pathlib import Path
 from colorama import init, Fore, Style
 init()
@@ -47,10 +46,13 @@ class IfsPublisher(Publisher):
         self._counter  = itertools.count()
         self._triggered_ir_port_side = self._triggered_ir_port  = self._triggered_ir_cntr  = self._triggered_ir_stbd  = \
         self._triggered_ir_stbd_side = self._triggered_bmp_port = self._triggered_bmp_cntr = self._triggered_bmp_stbd = 0
-        self._queue = Queue()
-        self._getch = _Getch()
-        self._limit = 3
-        self._fmt = '{0:>9}'
+        self._getch        = _Getch()
+        self._flood_enable = False
+        # TODO configuration
+        self._publish_delay_sec = 0.05 # delay after IFS event
+        self._loop_delay_sec    = 0.5  # delay on noop loop
+        self._flood_delay_sec   = 2.0  # delay on flood loop
+        self._limit             = 3
         self._log.info('ready.')
 
     # ................................................................
@@ -60,117 +62,104 @@ class IfsPublisher(Publisher):
             if self._message_bus.get_task_by_name(IfsPublisher._PUBLISH_LOOP_NAME):
                 self._log.warning('already enabled.')
                 return
-            self._log.info('🍉 1.')
-            asyncio.create_task(self._publish_loop(lambda: self.enabled), name='__publish_loop')
-
-            self._log.info('🍉 2.')
-            # start loop as new task
-#           with concurrent.futures.ProcessPoolExecutor() as pool:
-#           with concurrent.futures.ThreadPoolExecutor() as pool:
-            self._message_bus.loop.run_in_executor(None, self._key_listener_loop(lambda: self.enabled))
-            self._log.info('🍉 3.')
-            self._log.info('🍉 4.')
-
-#               self._message_bus.loop.run_in_executor(self._key_listener_loop(lambda: self.enabled), name=IfsPublisher._PUBLISH_LOOP_NAME)
-#           self._message_bus.loop.create_task(self._publish_loop(lambda: self.enabled), name=IfsPublisher._PUBLISH_LOOP_NAME)
-            self._log.info('🍉 5.')
+            self._message_bus.loop.create_task(self._key_listener_loop(lambda: self.enabled), name='__key_listener_loop')
             self._log.info('enabled')
         else:
             self._log.info(Fore.BLACK + '<<< enabled: {}'.format(self.enabled))
 
     # ................................................................
-    async def _publish_loop(self, f_is_enabled):
-        self._log.info('🏀 start _publish_loop...')
-        while f_is_enabled():
-            _message = await self._queue.get()
-            self._log.info('🏀 publishing message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
-            await super().publish(_message)
-            self._log.info('🏀 published message:' + Fore.WHITE + ' {}.'.format(_message.name))
-            await asyncio.sleep(0.05)
-        self._log.info('🏀 end _publish_loop...')
-
-    # ................................................................
-    def _key_listener_loop(self, f_is_enabled):
-        self._log.info('starting key listener loop...')
+    async def _key_listener_loop(self, f_is_enabled):
+        self._log.info('starting key listener loop: ' + Fore.YELLOW + 'type \'?\' for help, \'q\' or Ctrl-C to exit.')
         try:
             while f_is_enabled():
                 _count = next(self._counter)
-#               self._log.info('🌿 [{:03d}] begin loop...'.format(_count))
+                self._log.debug('[{:03d}] BEGIN loop...'.format(_count))
+                _event = None
                 if self._getch.available():
                     ch = self._getch.readchar()
                     if ch != None and ch != '':
                         och = ord(ch)
-                        self._log.warning('⛎ key "{}" ({}) pressed, processing...'.format(ch, och))
-                        self.process_keypress(ch, och)
+                        self._log.info('key "{}" ({}) pressed, processing...'.format(ch, och))
+                        if och == 10 or och == 13: # LF or CR to print 48 newlines
+                            print(Logger._repeat('\n',48))
+                            continue
+                        elif och == 105: # 'i' print info
+                            self._log.heading('System Information','Memory, CPU and Message Bus Information.')
+                            self.print_sys_info()
+                            self._message_bus.print_bus_info()
+                            continue
+                        elif och == 111: # 'o'
+                            self._message_bus.clear_tasks()
+                            continue
+                        elif och == 112: # 'p'
+#                           raise NotImplementedError
+                            await self._message_bus.pop_queue()
+                            continue
+                        elif och == 3 or och == 113: # 'q'
+                            self.disable()
+                            self._log.info(Fore.YELLOW + 'exit on \'q\' or Ctrl-C...')
+                            continue
+                        elif och == 47 or och == 63: # '/' or '?' for help
+                            self.print_keymap()
+                            continue
+                        elif och == 118: # 'v' toggle verbose
+                            self._message_bus.verbose = not self._message_bus.verbose
+                            self._log.info('setting verbosity to: ' + Fore.YELLOW + '{}'.format(self._message_bus.verbose))
+                            continue
+                        elif och == 119: # 'w' toggle flood mode
+                            if self._flood_enable:
+                                self._flood_enable = False
+                                self._log.info('flood disabled: ' + Fore.YELLOW + 'type \'w\' to enable.')
+                            else:
+                                await asyncio.sleep(self._flood_delay_sec) # delay before starting flood loop
+                                self._flood_enable = True
+                                self._log.info('flood enabled: ' + Fore.YELLOW + 'type \'w\' to disable.')
+                            continue
+                        # otherwise handle as event
+                        _event = self.get_event_for_char(och)
+                        if _event is not None:
+                            self._log.info('"{}" ({}) pressed; publishing message for event: {}'.format(ch, och, _event))
+                            _message = self._message_factory.get_message(_event, True)
+                            _message.value = 0
+                            self._log.info('key-publishing message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
+                            await super().publish(_message)
+                            self._log.info('key-published message:' + Fore.WHITE + ' {}.'.format(_message.name))
+                            self._accumulate_message(_message)
+                            self._waiting_for_message()
+                            if self.all_triggered:
+                                self.disable()
+                                self._log.info(Fore.YELLOW + 'exit having triggered all sensors.')
+                        else:
+                            self._log.warning('unmapped key "{}" ({}) pressed.'.format(ch, och))
+                        await asyncio.sleep(self._publish_delay_sec)
                     else:
-                        self._log.info(Fore.BLACK + '🌙 ch returned null.')
+                        self._log.warning('readchar returned null.')
+                elif self._flood_enable:
+                    _event = self._get_random_event()
+                    _message = self._message_factory.get_message(_event, True)
+                    self._log.info('flood-publishing message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
+                    await super().publish(_message)
+                    self._log.info('flood-published message:' + Fore.WHITE + ' {}.'.format(_message.name))
+                    await asyncio.sleep(self._flood_delay_sec)
                 else:
-                    pass
-                time.sleep(0.5)
-    #           await asyncio.sleep(0.05)
-#               self._log.info('[{:03d}] end publish loop.'.format(_count))
+                    # nothing happening...
+                    self._log.debug('[{:03d}] waiting for key press...'.format(_count))
+                    await asyncio.sleep(self._loop_delay_sec)
+
+                self._log.debug('[{:03d}] END loop.'.format(_count))
             self._log.info('publish loop complete.')
         finally:
             if self._getch:
                 self._getch.close()
 
     # ..........................................................................
-    def process_keypress(self, ch, och):
-#       self._log.warning('♓ key "{}" ({}) pressed.'.format(ch, och))
-        if och == 10 or och == 13: # LF or CR to print 48 newlines
-            print(Logger._repeat('\n',48))
-            return
-        elif och == 105: # 'i' print info
-            self._log.heading('System Information','Memory, CPU and Message Bus Information.')
-            self.print_sys_info()
-            self._message_bus.print_bus_info()
-            return
-        elif och == 111: # 'o'
-            self._message_bus.clear_tasks()
-            return
-        elif och == 112: # 'p'
-#           await self._message_bus.pop_queue()
-#           return
-            raise NotImplementedError
-        elif och == 3 or och == 113: # 'q'
-            self.disable()
-            self._message_bus.disable()
-            self._log.info(Fore.YELLOW + 'type Ctrl-C to exit.')
-            return
-        elif och == 47 or och == 63: # '/' or '?' for help
-            self.print_keymap()
-            return
-        elif och == 118: # 'v' toggle verbose
-            self._message_bus.verbose = not self._message_bus.verbose
-            self._log.info('setting verbosity to: ' + Fore.YELLOW + '{}'.format(self._message_bus.verbose))
-            return
-        elif och == 119: # 'w'
-            self.flood_zone()
-            return
-        # otherwise handle as event
-        _event = self.get_event_for_char(och)
-        if _event is not None:
-            self._log.info('"{}" ({}) pressed; publishing message for event: {}'.format(ch, och, _event))
-            _message = self._message_factory.get_message(_event, True)
-            self._log.info('key generated message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
-            self._queue.put_nowait(_message)
-#           await self._publish_queue.put(_message)
-#           await super().publish(_message)
-            self._log.info('publish_loop() loop end...')
-        else:
-            self._log.warning('unmapped key "{}" ({}) pressed.'.format(ch, och))
-
-    # ..........................................................................
-    def flood_zone(self):
-        _flood = self._message_bus.get_publisher('flood')
-        if _flood:
-            _flood.suppress(not _flood.suppressed)
-            if _flood.suppressed:
-                self._log.info('publisher \'{}\' suppressed.'.format(_flood.name))
-            else:
-                self._log.info('publisher \'{}\' not suppressed.'.format(_flood.name))
-        else:
-            self._log.warning('no \'flood\' publisher found on bus.')
+    def disable(self):
+        '''
+        Disable this publisher as well as shut down the message bus.
+        '''
+        self._message_bus.disable()
+        super().disable()
+        self._log.info(Fore.YELLOW + 'disabled publisher.')
 
     # ................................................................
     def print_sys_info(self):
@@ -199,7 +188,7 @@ class IfsPublisher(Publisher):
             return None
 
     # ..........................................................................
-    def waiting_for_message(self):
+    def _waiting_for_message(self):
         _div = Fore.CYAN + Style.NORMAL + ' | '
         self._log.info('waiting for: | ' \
                 + self._get_output(Fore.RED, 'PSID', self._triggered_ir_port_side) \
@@ -221,7 +210,7 @@ class IfsPublisher(Publisher):
 
     # message handling .........................................................
 
-    def process_message(self, message):
+    def _accumulate_message(self, message):
         '''
         Processes the message, keeping count and providing a display of status.
         '''
@@ -275,7 +264,7 @@ class IfsPublisher(Publisher):
             _style = color + Style.DIM
         else:
             _style = Fore.BLACK + Style.DIM
-        return _style + self._fmt.format( label if ( value < self._limit ) else '' )
+        return _style + '{0:>9}'.format( label if ( value < self._limit ) else '' )
 
     # ......................................................
     @property
@@ -351,7 +340,7 @@ class IfsPublisher(Publisher):
            164   116   74    t      noop (test message)
            165   117   75    u
            166   118   76    v      verbose
-           167   119   77    w      flood with random messages
+           167   119   77    w      toggle flood mode with random messages
            170   120   78    x
            171   121   79    y
            172   122   7A    z

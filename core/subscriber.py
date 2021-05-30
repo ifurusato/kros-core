@@ -348,7 +348,7 @@ class GarbageCollector(Subscriber):
         _elapsed_ms = (dt.now() - message.timestamp).total_seconds() * 1000.0
         if self._message_bus.is_expired(message) and message.fully_acknowledged:
             if self._message_bus.verbose:
-                self._print_message_info('😡 garbage collecting expired, fully-acknowledged message:', message, _elapsed_ms)
+                self._print_message_info('😋 garbage collecting expired, fully-acknowledged message:', message, _elapsed_ms)
             return True
         elif self._message_bus.is_expired(message):
             if self._message_bus.verbose:
@@ -360,7 +360,7 @@ class GarbageCollector(Subscriber):
             return True
         else:
             if self._message_bus.verbose:
-                self._print_message_info('😭 garbage collector ignoring unprocessed message:', message, _elapsed_ms)
+                self._print_message_info('😟 garbage collector ignoring unprocessed message:', message, _elapsed_ms)
             return False
 
     # ..........................................................................
@@ -376,7 +376,7 @@ class GarbageCollector(Subscriber):
         elif _peeked_message.gcd:
             self._log.warning('message has already been garbage collected. [1]'.format(self.name))
         if self._message_bus.verbose:
-            self._log.info(self._color + '😈 gc-consume() message:' + Fore.WHITE + ' {}; event: {}'.format(_peeked_message.name, _peeked_message.event.description))
+            self._log.info(self._color + 'gc-consume() message:' + Fore.WHITE + ' {}; event: {}'.format(_peeked_message.name, _peeked_message.event.description))
 
         # garbage collect (consume) if filter accepts the peeked message
         if self.acceptable(_peeked_message):
@@ -384,7 +384,7 @@ class GarbageCollector(Subscriber):
             self._message_bus.consumed()
             _message.gc() # mark as garbage collected and don't republish
             if not _message.sent:
-                self._log.warning('😤 garbage collected undelivered message: {}; event: {}'.format(_message.name, _message.event.name))
+                self._log.warning('😡 garbage collected undelivered message: {}; event: {}'.format(_message.name, _message.event.name))
             if self._message_bus.verbose:
                 self._log.info(self._color + '👍 garbage collected message:' + Fore.WHITE + ' {}; gcd: {}'.format(_message.name, _message.gcd))
         else:
