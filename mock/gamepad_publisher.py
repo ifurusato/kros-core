@@ -159,6 +159,63 @@ class GamepadPublisher(Publisher):
             return frame.f_code.co_filename, frame.f_code.co_name, frame.f_code.co_firstlineno
 
     # ..........................................................................
+    def print_buttons(self):
+#        1         2         3         4         5         6         7         8         9         C         1         2
+#23456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
+        self._log.info('''key map:
+
+     ┏━━━━━━━━┳━━━━━━┓                                             ┏━━━━━━┳━━━━━━━━┓
+     ┃    L1  ┃  L2  ┃                                             ┃  R2  ┃  R1    ┃
+     ┃   ┏━━━━┻━━━━━━┻━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┻━━━━━━┻━━━━┓   ┃
+     ┃   ┃        ┏━━━━┓                                                       ┃   ┃
+     ┗━━━┫        ┃    ┃                                                       ┣━━━┛
+         ┃   ┏━━━━┛    ┗━━━━┓                                                  ┃
+         ┃   ┃              ┃                                                  ┃
+         ┃   ┗━━━━┓    ┏━━━━┛                                                  ┃
+         ┃        ┃    ┃                                                       ┃
+         ┃        ┗━━━━┛                                                       ┃
+         ┃                                                                     ┃
+         ┃                                                                     ┃
+         ┗━━━━━━━━━┻━━━━━━━━━┻━━┳━━━━━━┻━┳━━━━━┳━┻━━━━━━┳━━┻━━━━━━━━━┻━━━━━━━━━┛
+                                ┃        ┃     ┃        ┃  
+                                ┗━━━━━━━━┻━━━━━┻━━━━━━━━┛
+
+
+─	━	│	┃	┄	┅	┆	┇	┈	┉	┊	┋	┌	┍	┎	┏
+U+251x	┐	┑	┒	┓	└	┕	┖	┗	┘	┙	┚	┛	├	┝	┞	┟
+U+252x	┠	┡	┢	┣	┤	┥	┦	┧	┨	┩	┪	┫	┬	┭	┮	┯
+U+253x	┰	┱	┲	┳	┴	┵	┶	┷	┸	┹	┺	┻	┼	┽	┾	┿
+U+254x	╀	╁	╂	╃	╄	╅	╆	╇	╈	╉	╊	╋	╌	╍	╎	╏
+U+255x	═	║	╒	╓	╔	╕	╖	╗	╘	╙	╚	╛	╜	╝	╞	╟
+U+256x	╠	╡	╢	╣	╤	╥	╦	╧	╨	╩	╪	╫	╬	╭	╮	╯
+U+257x	╰	╱	╲	╳	╴	╵	╶	╷	╸	╹	╺	╻	╼	╽	╾	╿
+Notes
+                                                                                                           ┅━┳━━━━━━━━━┓
+   ┏━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┓     ┃   DEL   ┃
+   ┃    Q    ┃    W    ┃    E    ┃    R    ┃    T    ┃    Y    ┃    U    ┃    I    ┃    O    ┃    P    ┃     ┃ SHUTDWN ┃
+   ┃  QUIT   ┃  FLOOD  ┃  SNIFF  ┃  ROAM   ┃  NOOP   ┃         ┃         ┃  INFO   ┃ CLR TSK ┃ POP_MSG ┃   ┅━┻━━━━━━━━━┛
+   ┗━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┛   ┅━┳━━━━━━━━━┓
+        ┃    A    ┃    S    ┃    D    ┃    F    ┃    G    ┃    H    ┃    J    ┃    K    ┃    L    ┃          ┃   RET   ┃
+        ┃ IR_PSID ┃ IR_PORT ┃ IR_CNTR ┃ IR_STBD ┃ IR_SSID ┃         ┃ BM_PORT ┃ BM_CNTR ┃ BM_STBD ┃          ┃  CLEAR  ┃
+        ┗━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━━┻━━━┳━━━━━┛
+             ┃    Z    ┃    X    ┃    C    ┃    V    ┃    B    ┃    N    ┃    M    ┃    <    ┃    >    ┃    ?    ┃
+             ┃         ┃         ┃         ┃ VERBOSE ┃  BRAKE  ┃  HALT   ┃  STOP   ┃ DN_VELO ┃ UP_VELO ┃  HELP   ┃
+             ┗━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┛
+
+   QUIT:      quit application                IR_PSID:   port side infrared event           
+   FLOOD:     toggle flood publisher          IR_PORT:   port infrared event                
+   SNIFF:     tirgger SNIFF behaviour         IR_CNTR:   center infrared event              
+   ROAM:      trigger ROAM behaviour          IR_STBD:   starboard infrared event           VERBOSE:   toggle verbosity
+   NOOP:      no operation event              IR_SSID:   starboard side infrared event      BRAKE:     brake motors
+   INFO:      print system information                                                      HALT:      halt motors
+   CLR_TSK:   clear completed tasks           BM_PORT:   port bumper                        STOP:      stop motors
+   POP_MSG:   pop messages from queue         BM_CNTR:   center bumper                      DN_VELO:   slow down motors
+                                              BM_STBD:   starboard bumper                   UP_VELO:   speed up motors
+   SHUTDOWN:  shut down robot                 CLEAR:     clear screen                       HELP:      print help
+
+        ''')
+
+    # ..........................................................................
     def disable(self):
         if not self._enabled:
             self._log.warning('already disabled.')
