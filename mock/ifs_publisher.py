@@ -9,11 +9,12 @@
 # created:  2020-05-19
 # modified: 2020-11-06
 #
-# A mock Integrated Front Sensor (IFS) that responds to key presses. Kinda a
-# robot front end when you don't actually # have a robot. This expands the
-# notion a bit, as rather than provide a second key-input mechanism, this one
-# is also used for keyboard control of the mocked robot, i.e., it includes
-# events unrelated to the original IFS.
+# A mock Integrated Front Sensor (IFS) that responds to key presses. Acts as a
+# robot front sensor array for when you don't actually have a robot. Rather
+# than provide simply a second key-input mechanism, this can also be used for
+# keyboard control of the mocked robot, i.e., it includes events unrelated to
+# the original IFS. It also has a "flood" mode that auto-generates random
+# event-bearing messages at a random interval.
 #
 
 import sys, time, itertools, psutil, random
@@ -49,10 +50,9 @@ class IfsPublisher(Publisher):
         self._getch        = _Getch()
         self._flood_enable = False
         # TODO configuration
-        self._publish_delay_sec = 0.05 # delay after IFS event
-        self._loop_delay_sec    = 0.5  # delay on noop loop
-        self._flood_delay_sec   = 2.0  # delay on flood loop
-        self._limit             = 3
+        self._publish_delay_sec   = 0.05 # delay after IFS event
+        self._loop_delay_sec      = 0.5  # delay on noop loop
+        self._limit               = 3
         self._log.info('ready.')
 
     # ................................................................
@@ -79,7 +79,7 @@ class IfsPublisher(Publisher):
                     ch = self._getch.readchar()
                     if ch != None and ch != '':
                         och = ord(ch)
-                        self._log.info('key "{}" ({}) pressed, processing...'.format(ch, och))
+                        self._log.debug('key "{}" ({}) pressed, processing...'.format(ch, och))
                         if och == 10 or och == 13: # LF or CR to print 48 newlines
                             print(Logger._repeat('\n',48))
                             continue
@@ -111,7 +111,7 @@ class IfsPublisher(Publisher):
                                 self._flood_enable = False
                                 self._log.info('flood disabled: ' + Fore.YELLOW + 'type \'w\' to enable.')
                             else:
-                                await asyncio.sleep(self._flood_delay_sec) # delay before starting flood loop
+                                await asyncio.sleep(3.0) # delay before starting flood loop
                                 self._flood_enable = True
                                 self._log.info('flood enabled: ' + Fore.YELLOW + 'type \'w\' to disable.')
                             continue
@@ -140,7 +140,7 @@ class IfsPublisher(Publisher):
                     self._log.info('flood-publishing message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
                     await super().publish(_message)
                     self._log.info('flood-published message:' + Fore.WHITE + ' {}.'.format(_message.name))
-                    await asyncio.sleep(self._flood_delay_sec)
+                    await asyncio.sleep(random.triangular(0.2, 5.0, 2.0))
                 else:
                     # nothing happening...
                     self._log.debug('[{:03d}] waiting for key press...'.format(_count))
@@ -295,9 +295,9 @@ class IfsPublisher(Publisher):
              ┃         ┃         ┃         ┃ VERBOSE ┃  BRAKE  ┃  HALT   ┃  STOP   ┃ DN_VELO ┃ UP_VELO ┃  HELP   ┃
              ┗━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┛
 
-   QUIT:      quit application                IR_PSID:   port side infrared event           
-   FLOOD:     toggle flood publisher          IR_PORT:   port infrared event                
-   SNIFF:     tirgger SNIFF behaviour         IR_CNTR:   center infrared event              
+   QUIT:      quit application                IR_PSID:   port side infrared event
+   FLOOD:     toggle flood publisher          IR_PORT:   port infrared event
+   SNIFF:     tirgger SNIFF behaviour         IR_CNTR:   center infrared event
    ROAM:      trigger ROAM behaviour          IR_STBD:   starboard infrared event           VERBOSE:   toggle verbosity
    NOOP:      no operation event              IR_SSID:   starboard side infrared event      BRAKE:     brake motors
    INFO:      print system information                                                      HALT:      halt motors
@@ -331,7 +331,7 @@ class IfsPublisher(Publisher):
            153   107   6B    k *    cntr BMP
            154   108   6C    l *    stbd BMP
            155   109   6D    m *    stop
-           156   110   6E    n *    halt 
+           156   110   6E    n *    halt
            157   111   6F    o      clear task list
            160   112   70    p      pop message
            161   113   71    q

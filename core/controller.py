@@ -37,7 +37,7 @@ class Controller():
     # ................................................................
     @property
     def name(self):
-        return 'default-controller'
+        return 'def-controller'
 
     # ................................................................
     def enable(self):
@@ -226,5 +226,9 @@ class Controller():
         _delta = dt.datetime.now() - _start_time
         _elapsed_ms = int(_delta.total_seconds() * 1000)
         self._log.debug(Fore.MAGENTA + Style.DIM + 'elapsed: {}ms'.format(_elapsed_ms) + Style.DIM)
+
+    # ..........................................................................
+    def print_statistics(self):
+        self._log.info('{}:'.format(self.name) + Fore.YELLOW + '\t{} events; {} state changes.'.format(self._event_count, self._state_change_count))
 
 # EOF

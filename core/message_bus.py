@@ -205,6 +205,14 @@ class MessageBus(object):
                     + Fore.CYAN + 'suppressed: '
                     + Fore.YELLOW + '{}'.format(publisher.suppressed))
 
+    def print_arbitrator_info(self):
+        '''
+        Print the stats available from the arbitrator.
+        '''
+        self._log.info('arbitrator:' + Fore.YELLOW + '\t{} payloads.'.format(self._arbitrator.count))
+        for _controller in self._arbitrator.controllers:
+            _controller.print_statistics()
+
     @property
     def publishers(self):
         return self._publishers
@@ -300,6 +308,7 @@ class MessageBus(object):
                 self._log.info(Fore.YELLOW + '    \t\t{};  \t'.format(_task.get_name()) + Fore.BLACK + ' done? {}'.format(_task.done()))
         self.print_publishers()
         self.print_subscribers()
+        self.print_arbitrator_info()
 
     # ..........................................................................
     async def peek_message(self):

@@ -9,6 +9,7 @@
 # modified: 2021-04-26
 #
 
+import itertools
 import datetime as dt
 from asyncio.queues import PriorityQueue
 from colorama import init, Fore, Style
@@ -26,11 +27,18 @@ class Arbitrator(object):
     def __init__(self, level):
         super().__init__()
         self._log = Logger('arbitrator', level)
+        self._counter     = itertools.count()
+        self._count       = 0
         self._queue       = PriorityQueue()
         self._suppressed  = False
         self._controllers = []
         self._color       = Fore.MAGENTA + Style.NORMAL
         self._log.info(self._color + 'ready.')
+
+    # ..........................................................................
+    @property
+    def controllers(self):
+        return self._controllers
 
     # ..........................................................................
     def register_controller(self, controller: Controller):
@@ -50,6 +58,15 @@ class Arbitrator(object):
         self._log.info(self._color + 'suppressed: {}'.format(suppressed))
 
     # ..........................................................................
+    @property
+    def count(self):
+        '''
+        Return the number of payloads delivered to the Arbitrator, not including
+        those sent while suppressed.
+        '''
+        return self._count
+
+    # ..........................................................................
     async def arbitrate(self, payload):
         '''
         Arbitrates the addition of the payload into the priority queue.
@@ -60,7 +77,8 @@ class Arbitrator(object):
             self._queue.clear()
         else:
             _start_time = dt.datetime.now()
-            self._log.debug(self._color + 'putting payload: \'{}\' onto queue...'.format(payload.event.description))
+            self._count = next(self._counter)
+            self._log.debug(self._color + '[{:03d}] putting payload: \'{}\' onto queue...'.format(self._count, payload.event.description))
             if len(self._controllers) > 0:
                 await self._queue.put(( payload.priority, payload ))
                 self._log.info(self._color + 'payload \'{}\' put onto queue: {} element{}.'.format(
