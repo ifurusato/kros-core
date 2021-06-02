@@ -55,7 +55,7 @@ class MockGamepad(object):
 
     # ..........................................................................
     async def _read_loop(self):
-        await sleep(2.0 * random.random())
+        await asyncio.sleep(2.0 * random.random())
         self._log.info('🤙 read_loop called.')
         _loop  = []
         _loop.append(Event.MOTION_DETECT)
@@ -131,7 +131,8 @@ class MockGamepad(object):
             '''
             try:
                 self._log.info('😨 closing gamepad device...')
-                self._gamepad.close()
+                if self._gamepad:
+                    self._gamepad.close()
                 self._log.info(Fore.YELLOW + '😨 gamepad device closed.')
             except Exception as e:
                 self._log.info('😨 error closing gamepad device: {}'.format(e))
@@ -154,6 +155,7 @@ class GamepadPublisher(Publisher):
         super().__init__('gp', message_bus, message_factory, level)
         if config is None:
             raise ValueError('no configuration provided.')
+        self._config = config
         if message_bus is None:
             raise ValueError('null message bus argument.')
         elif isinstance(message_bus, MessageBus):
@@ -166,6 +168,7 @@ class GamepadPublisher(Publisher):
             self._message_factory = message_factory
         else:
             raise ValueError('unrecognised message factory argument: {}'.format(type(message_bus)))
+        self._level = level
 
         self._exit_on_complete = exit_on_complete
         self._counter  = itertools.count()
@@ -194,7 +197,7 @@ class GamepadPublisher(Publisher):
             self._log.info('creating gamepad...')
             try:
                 from mock.gamepad import Gamepad
-                self._gamepad = Gamepad(self._config, self._queue, Level.INFO)
+                self._gamepad = Gamepad(self._config, self._message_bus, self._message_factory, self._level)
             except GamepadConnectException as e:
                 self._log.error('unable to connect to gamepad: {}'.format(e))
                 self._gamepad = None
@@ -204,22 +207,26 @@ class GamepadPublisher(Publisher):
 #           except Exception as e:
             except ModuleNotFoundError as e:
                 self._log.error('{} thrown establishing gamepad: {}\n{}'.format(type(e), e, traceback.print_stack()))
-
+        # attempt connection ..................................
         if self._gamepad is not None:
             self._log.info(Fore.YELLOW + 'enabling gamepad...')
-            self._gamepad.enable()
-            _count = 0
-            while not self._gamepad.has_connection():
-                _count += 1
-                if _count == 1:
-                    self._log.info(Fore.YELLOW + 'connecting to gamepad...') 
-                else:
-                    self._log.info(Fore.YELLOW + 'gamepad not connected; re-trying... [{:d}]'.format(_count))
-                self._gamepad.connect()
-                time.sleep(0.5)
-                if self._gamepad.has_connection() or _count > 5:
-                    break
-        else:
+            try:    
+                self._gamepad.enable()
+                _count = 0
+                while not self._gamepad.has_connection():
+                    _count += 1
+                    if _count == 1:
+                        self._log.info(Fore.YELLOW + 'connecting to gamepad...') 
+                    else:
+                        self._log.info(Fore.YELLOW + 'gamepad not connected; re-trying... [{:d}]'.format(_count))
+                    self._gamepad.connect()
+                    time.sleep(0.5)
+                    if self._gamepad.has_connection() or _count > 5:
+                        break
+            except Exception as e:
+                self._log.error('🐶 {} thrown connecting to gamepad: {}\n{}'.format(type(e), e, traceback.print_stack()))
+
+        if self._gamepad is None:
             self._gamepad = MockGamepad(self._message_bus, self._message_factory)
             self._log.info(Fore.YELLOW + 'using mocked gamepad.')
 
@@ -239,9 +246,10 @@ class GamepadPublisher(Publisher):
                 self._log.warning('already enabled.')
                 return
 #           if self._gamepad:
-            self._gamepad.enable()
-#           self._gamepad.start_gamepad_loop(self.gamepad_callback)
-            self._message_bus.loop.create_task(self._gamepad._gamepad_loop(self._gamepad.gamepad_callback, lambda: self.enabled), name='__gamepad_loop')
+            if self._gamepad:
+                self._gamepad.enable()
+#               self._gamepad.start_gamepad_loop(self.gamepad_callback)
+                self._message_bus.loop.create_task(self._gamepad._gamepad_loop(self._gamepad.gamepad_callback, lambda: self.enabled), name='__gamepad_loop')
             self._log.info('enabled')
         else:
             self._log.info(Fore.BLACK + '<<< enabled: {}'.format(self.enabled))

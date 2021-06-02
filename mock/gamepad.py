@@ -201,29 +201,29 @@ class Gamepad():
         return self._enabled
 
     # ..........................................................................
-    def start_gamepad_loop(self, callback):
-        '''
-        This is the method to call to actually start the loop.
-
-        The arguments to the callback method include the event.
-        '''
-        self._log.info(Fore.YELLOW + 'start gamepad loop...')
-        if not self._enabled:
-            self._log.error('attempt to start gamepad event loop while disabled.')
-        elif self._gamepad is None:
-            self._log.error(Gamepad._NOT_AVAILABLE_ERROR + ' [no gamepad found]')
-            sys.exit(3)
-        elif not self._closed:
-            if self._thread is None:
-                self._enabled = True
-                self._thread = Thread(name='gamepad', target=Gamepad._gamepad_loop, args=[self, callback, lambda: self._enabled], daemon=True)
+#   def start_gamepad_loop(self, callback):
+#       '''
+#       This is the method to call to actually start the loop.
+#
+#       The arguments to the callback method include the event.
+#       '''
+#       self._log.info(Fore.YELLOW + 'start gamepad loop...')
+#       if not self._enabled:
+#           self._log.error('attempt to start gamepad event loop while disabled.')
+#       elif self._gamepad is None:
+#           self._log.error(Gamepad._NOT_AVAILABLE_ERROR + ' [no gamepad found]')
+#           sys.exit(3)
+#       elif not self._closed:
+#           if self._thread is None:
+#               self._enabled = True
+#               self._thread = Thread(name='gamepad', target=Gamepad._gamepad_loop, args=[self, callback, lambda: self._enabled], daemon=True)
 #               self._thread.setDaemon(False)
-                self._thread.start()
-                self._log.info('started.')
-            else:
-                self._log.warning('cannot enable: process already running.')
-        else:
-            self._log.warning('cannot enable: already closed.')
+#               self._thread.start()
+#               self._log.info('started.')
+#           else:
+#               self._log.warning('cannot enable: process already running.')
+#       else:
+#           self._log.warning('cannot enable: already closed.')
 
     # ..........................................................................
     def disable(self):
