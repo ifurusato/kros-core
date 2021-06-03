@@ -30,73 +30,78 @@ class Event(Enum):
     '''
     # name                     n   description             priority  ballistic?
     # system events ....................
-    NOOP                   = ( 0, "no operation",             0,     False)
-    BATTERY_LOW            = ( 1, "battery low",              0,     True)
-    SHUTDOWN               = ( 2, "shutdown",                 1,     True)
-    HIGH_TEMPERATURE       = ( 3, "high temperature",         1,     False)
+    NOOP                   = ( 0, "no operation",          1000,     False)
+
+    # emergency events .................
+    BATTERY_LOW            = ( 10, "battery low",               1,    True)
+    SHUTDOWN               = ( 11, "shutdown",                  1,    True)
+    HIGH_TEMPERATURE       = ( 12, "high temperature",          1,   False)
+    COLLISION_DETECT       = ( 13, "collision detect",          2,   False)
+    EMERGENCY_ASTERN       = ( 14, "emergency astern",          2,    True)
+
+    # gamepad events ...................
+    GAMEPAD                = ( 20, "gamepad",                  10,   False)
+
     # stopping and halting .............
-    STOP                   = ( 4, "stop",                     2,     True)
-    HALT                   = ( 5, "halt",                     3,     False)
-    BRAKE                  = ( 6, "brake",                    4,     False)
-    BUTTON                 = ( 7, "button",                   5,     False)
-    STANDBY                = ( 8, "standby",                  6,     False)
+    STOP                   = ( 54, "stop",                     12,    True)
+    HALT                   = ( 55, "halt",                     13,   False)
+    BRAKE                  = ( 56, "brake",                    14,   False)
+    BUTTON                 = ( 57, "button",                   15,   False)
+    STANDBY                = ( 58, "standby",                  16,   False)
 
     # bumper ...........................
-    COLLISION_DETECT       = ( 10, "collision detect",         9,   False)
-    BUMPER_PORT            = ( 11, "bumper port",             10,    True)
-    BUMPER_CNTR            = ( 12, "bumper center",           10,    True)
-    BUMPER_STBD            = ( 13, "bumper starboard",        10,    True)
-    # infrared .........................
-    INFRARED_PORT_SIDE     = ( 20, "infrared port side",      20,    True)
-    INFRARED_PORT          = ( 21, "infrared port",           20,    True)
-    INFRARED_CNTR          = ( 22, "infrared cntr",           20,    True)
-    INFRARED_STBD          = ( 23, "infrared stbd",           20,    True)
-    INFRARED_STBD_SIDE     = ( 24, "infrared stbd side",      20,    True)
+    BUMPER_PORT            = ( 111, "bumper port",             40,    True)
+    BUMPER_CNTR            = ( 112, "bumper center",           40,    True)
+    BUMPER_STBD            = ( 113, "bumper starboard",        40,    True)
 
-    # emergency movements ..............
-    EMERGENCY_ASTERN       = ( 30, "emergency astern",        15,    True)
+    # infrared .........................
+    INFRARED_PORT_SIDE     = ( 120, "infrared port side",      50,    True)
+    INFRARED_PORT          = ( 121, "infrared port",           50,    True)
+    INFRARED_CNTR          = ( 122, "infrared cntr",           50,    True)
+    INFRARED_STBD          = ( 123, "infrared stbd",           50,    True)
+    INFRARED_STBD_SIDE     = ( 124, "infrared stbd side",      50,    True)
     # movement ahead ...................
-    FULL_AHEAD             = ( 45, "full ahead",              100,   False)
-    HALF_AHEAD             = ( 46, "half ahead",              100,   False)
-    SLOW_AHEAD             = ( 47, "slow ahead",              100,   False)
-    DEAD_SLOW_AHEAD        = ( 48, "dead slow ahead",         100,   False)
-    AHEAD                  = ( 49, "ahead",                   100,   False)
+    FULL_AHEAD             = ( 145, "full ahead",             100,   False)
+    HALF_AHEAD             = ( 146, "half ahead",             100,   False)
+    SLOW_AHEAD             = ( 147, "slow ahead",             100,   False)
+    DEAD_SLOW_AHEAD        = ( 148, "dead slow ahead",        100,   False)
+    AHEAD                  = ( 149, "ahead",                  100,   False)
     # movement astern ..................
-    ASTERN                 = ( 50, "astern",                  100,   False)
-    DEAD_SLOW_ASTERN       = ( 51, "dead slow astern",        100,   False)
-    SLOW_ASTERN            = ( 52, "slow astern",             100,   False)
-    HALF_ASTERN            = ( 53, "half astern",             100,   False)
-    FULL_ASTERN            = ( 54, "full astern",             100,   False)
+    ASTERN                 = ( 150, "astern",                 100,   False)
+    DEAD_SLOW_ASTERN       = ( 151, "dead slow astern",       100,   False)
+    SLOW_ASTERN            = ( 152, "slow astern",            100,   False)
+    HALF_ASTERN            = ( 153, "half astern",            100,   False)
+    FULL_ASTERN            = ( 154, "full astern",            100,   False)
     # relative change ..................
-    INCREASE_SPEED         = ( 60, "increase speed",          100,   False)
-    EVEN                   = ( 61, "even",                    100,   False)
-    DECREASE_SPEED         = ( 62, "decrease speed",          100,   False)
+    INCREASE_SPEED         = ( 160, "increase speed",         100,   False)
+    EVEN                   = ( 161, "even",                   100,   False)
+    DECREASE_SPEED         = ( 162, "decrease speed",         100,   False)
     # port turns .......................
-    TURN_AHEAD_PORT        = ( 70, "turn ahead port",         100,   False)
-    TURN_TO_PORT           = ( 71, "turn to port",            100,   False)
-    TURN_ASTERN_PORT       = ( 72, "turn astern port",        100,   False)
-    SPIN_PORT              = ( 73, "spin port",               100,   False)
+    TURN_AHEAD_PORT        = ( 170, "turn ahead port",        100,   False)
+    TURN_TO_PORT           = ( 171, "turn to port",           100,   False)
+    TURN_ASTERN_PORT       = ( 172, "turn astern port",       100,   False)
+    SPIN_PORT              = ( 173, "spin port",              100,   False)
     # starboard turns ..................
-    SPIN_STBD              = ( 80, "spin starboard",          100,   False)
-    TURN_ASTERN_STBD       = ( 81, "turn astern starboard",   100,   False)
-    TURN_TO_STBD           = ( 82, "turn to starboard",       100,   False)
-    TURN_AHEAD_STBD        = ( 83, "turn ahead starboard",    100,   False)
+    SPIN_STBD              = ( 180, "spin starboard",         100,   False)
+    TURN_ASTERN_STBD       = ( 181, "turn astern starboard",  100,   False)
+    TURN_TO_STBD           = ( 182, "turn to starboard",      100,   False)
+    TURN_AHEAD_STBD        = ( 183, "turn ahead starboard",   100,   False)
     # high level behaviours ............
-    ROAM                   = ( 90, "roam",                    100,   False)
-    SNIFF                  = ( 91, "sniff",                   100,    True) # A Button
-    VIDEO                  = ( 92, "video",                   150,   False) # L1 Button
-    EVENT_L2               = ( 93, "L2",                      150,   False) # L2 Button
-    EVENT_R1               = ( 94, "cruise",                  150,   False) # R1 Button
-    LIGHTS                 = ( 95, "lights",                  150,   False) # R2 Button
-    MOTION_DETECT          = ( 96, "motion detect",           150,   False)
+    ROAM                   = ( 190, "roam",                   100,   False)
+    SNIFF                  = ( 191, "sniff",                  100,    True) # A Button
+    VIDEO                  = ( 192, "video",                  150,   False) # L1 Button
+    EVENT_L2               = ( 193, "L2",                     150,   False) # L2 Button
+    EVENT_R1               = ( 194, "cruise",                 150,   False) # R1 Button
+    LIGHTS                 = ( 195, "lights",                 150,   False) # R2 Button
+    MOTION_DETECT          = ( 196, "motion detect",          150,   False)
 
     # movement directives ..............
-    FORWARD_VELOCITY       = ( 101, "forward velocity",       200,   False)
-    THETA                  = ( 102, "theta",                  200,   False)
-    PORT_VELOCITY          = ( 103, "port velocity",          200,   False)
-    PORT_THETA             = ( 104, "port theta",             200,   False)
-    STBD_VELOCITY          = ( 105, "starboard velocity",     200,   False)
-    STBD_THETA             = ( 106, "starboard theta",        200,   False)
+    FORWARD_VELOCITY       = ( 201, "forward velocity",       200,   False)
+    THETA                  = ( 202, "theta",                  200,   False)
+    PORT_VELOCITY          = ( 203, "port velocity",          200,   False)
+    PORT_THETA             = ( 204, "port theta",             200,   False)
+    STBD_VELOCITY          = ( 205, "starboard velocity",     200,   False)
+    STBD_THETA             = ( 206, "starboard theta",        200,   False)
 
     # other behaviours (> 500) .........
     NO_ACTION              = ( 500, "no action",              500,   False)

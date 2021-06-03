@@ -18,8 +18,7 @@
 #
 
 import sys, time, itertools, psutil, random
-import select, tty, termios # used by Getch
-#from threading import Thread
+import select, tty, termios # used by _Getch
 import select
 import asyncio
 import concurrent.futures
@@ -31,7 +30,6 @@ from core.event import Event
 from core.message_factory import MessageFactory
 from core.logger import Logger, Level
 from core.publisher import Publisher
-
 
 # ...............................................................
 class IfsPublisher(Publisher):
@@ -47,8 +45,9 @@ class IfsPublisher(Publisher):
         self._counter  = itertools.count()
         self._triggered_ir_port_side = self._triggered_ir_port  = self._triggered_ir_cntr  = self._triggered_ir_stbd  = \
         self._triggered_ir_stbd_side = self._triggered_bmp_port = self._triggered_bmp_cntr = self._triggered_bmp_stbd = 0
-        self._getch        = _Getch()
-        self._flood_enable = False
+        self._getch          = _Getch()
+        self._flood_enable   = False
+        self._gamepad_enable = False
         # TODO configuration
         self._publish_delay_sec   = 0.05 # delay after IFS event
         self._loop_delay_sec      = 0.5  # delay on noop loop
@@ -106,14 +105,11 @@ class IfsPublisher(Publisher):
                             self._message_bus.verbose = not self._message_bus.verbose
                             self._log.info('setting verbosity to: ' + Fore.YELLOW + '{}'.format(self._message_bus.verbose))
                             continue
+                        elif och == 101: # 'e' toggle gamepad
+                            await self._toggle_gamepad()
+                            continue
                         elif och == 119: # 'w' toggle flood mode
-                            if self._flood_enable:
-                                self._flood_enable = False
-                                self._log.info('flood disabled: ' + Fore.YELLOW + 'type \'w\' to enable.')
-                            else:
-                                await asyncio.sleep(3.0) # delay before starting flood loop
-                                self._flood_enable = True
-                                self._log.info('flood enabled: ' + Fore.YELLOW + 'type \'w\' to disable.')
+                            self._toggle_flood()
                             continue
                         # otherwise handle as event
                         _event = self.get_event_for_char(och)
@@ -151,6 +147,28 @@ class IfsPublisher(Publisher):
         finally:
             if self._getch:
                 self._getch.close()
+
+    # ..........................................................................
+    async def _toggle_gamepad(self):
+        if self._gamepad_enable:
+            self._gamepad_enable = False
+            self._log.info('gamepad disabled: ' + Fore.YELLOW + 'type \'e\' to enable.')
+        else:
+            self._gamepad_enable = True
+            self._log.info('gamepad enabled: ' + Fore.YELLOW + 'type \'e\' to disable.')
+        _message = self._message_factory.get_message(Event.GAMEPAD, self._gamepad_enable)
+        self._log.info('gamepad control-publishing message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
+        await super().publish(_message)
+
+    # ..........................................................................
+    def _toggle_flood(self):
+        if self._flood_enable:
+            self._flood_enable = False
+            self._log.info('flood disabled: ' + Fore.YELLOW + 'type \'w\' to enable.')
+        else:
+#           await asyncio.sleep(3.0) # delay before starting flood loop
+            self._flood_enable = True
+            self._log.info('flood enabled: ' + Fore.YELLOW + 'type \'w\' to disable.')
 
     # ..........................................................................
     def disable(self):
@@ -286,7 +304,7 @@ class IfsPublisher(Publisher):
                                                                                                            ┅━┳━━━━━━━━━┓
    ┏━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┓     ┃   DEL   ┃
    ┃    Q    ┃    W    ┃    E    ┃    R    ┃    T    ┃    Y    ┃    U    ┃    I    ┃    O    ┃    P    ┃     ┃ SHUTDWN ┃
-   ┃  QUIT   ┃  FLOOD  ┃  SNIFF  ┃  ROAM   ┃  NOOP   ┃         ┃         ┃  INFO   ┃ CLR TSK ┃ POP_MSG ┃   ┅━┻━━━━━━━━━┛
+   ┃  QUIT   ┃  FLOOD  ┃ GAMEPAD ┃  ROAM   ┃  NOOP   ┃  SNIFF  ┃         ┃  INFO   ┃ CLR TSK ┃ POP_MSG ┃   ┅━┻━━━━━━━━━┛
    ┗━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┛   ┅━┳━━━━━━━━━┓
         ┃    A    ┃    S    ┃    D    ┃    F    ┃    G    ┃    H    ┃    J    ┃    K    ┃    L    ┃          ┃   RET   ┃
         ┃ IR_PSID ┃ IR_PORT ┃ IR_CNTR ┃ IR_STBD ┃ IR_SSID ┃         ┃ BM_PORT ┃ BM_CNTR ┃ BM_STBD ┃          ┃  CLEAR  ┃
@@ -322,7 +340,7 @@ class IfsPublisher(Publisher):
            142   98    62    b *    brake
            143   99    63    c
            144   100   64    d *    cntr IR
-           145   101   65    e *    sniff
+           145   101   65    e      gamepad
            146   102   66    f *    stbd IR
            147   103   67    g *    stbd side IR
            150   104   68    h
@@ -342,7 +360,7 @@ class IfsPublisher(Publisher):
            166   118   76    v      verbose
            167   119   77    w      toggle flood mode with random messages
            170   120   78    x
-           171   121   79    y
+           171   121   79    y *    sniff
            172   122   7A    z
            177   127   7f   del     shut down
 
@@ -359,8 +377,6 @@ class IfsPublisher(Publisher):
             return Event.BRAKE
         elif och == 100: # d
             return Event.INFRARED_CNTR
-        elif och == 101: # e
-            return Event.SNIFF
         elif och == 102: # f
             return Event.INFRARED_STBD
         elif och == 103: # g
@@ -381,6 +397,8 @@ class IfsPublisher(Publisher):
             return Event.INFRARED_PORT
         elif och == 116: # s
             return Event.NOOP
+        elif och == 121: # y
+            return Event.SNIFF
         elif och == 127: # del
             return Event.SHUTDOWN
         else:

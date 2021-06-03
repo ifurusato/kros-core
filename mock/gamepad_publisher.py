@@ -15,7 +15,6 @@
 #
 
 import sys, time, itertools, psutil, random, traceback
-#from threading import Thread
 import asyncio
 import concurrent.futures
 from pathlib import Path
@@ -32,18 +31,19 @@ from core.publisher import Publisher
 # ...............................................................
 class MockGamepad(object):
     def __init__(self, message_bus, message_factory, level=Level.INFO):
-        self._level = level
-        self._log = Logger("mock-gp", level)
+        self._message_bus = message_bus
+        self._message_factory = message_factory
+        self._level   = level
+        self._log     = Logger("mock-gp", level)
         self._enabled = False
         self._closed  = False
-        self._thread  = None
         _loop_freq_hz = 1
         self._rate = Rate(_loop_freq_hz)
         self._log.info('ready.')
 
     # ..........................................................................
     def enable(self):
-        if self._thread:
+        if self._enabled:
             self._log.info('already enabled.')
         else:
             self._enabled = True
@@ -54,18 +54,20 @@ class MockGamepad(object):
         self._enabled = False
 
     # ..........................................................................
-    async def _read_loop(self):
+    async def _get_messages(self):
+        '''
+        Mocks one or more messages being returned by a Gamepad.
+        '''
         await asyncio.sleep(2.0 * random.random())
-        self._log.info('🤙 read_loop called.')
-        _loop  = []
-        _loop.append(Event.MOTION_DETECT)
-        _loop.append(Event.COLLISION_DETECT)
-        _loop.append(Event.HIGH_TEMPERATURE)
-        return _loop
+        self._log.info('🤙 get_messages called.')
+        _messages = []
+        _messages.append(self._message_factory.get_message(Event.INFRARED_PORT, self._get_random_distance()))
+        _messages.append(self._message_factory.get_message(Event.INFRARED_CNTR, self._get_random_distance()))
+        _messages.append(self._message_factory.get_message(Event.INFRARED_STBD, self._get_random_distance()))
+        return _messages
 
-    # ..........................................................................
-    def gamepad_callback(self, obj):
-        self._log.info(Fore.YELLOW + 'gamepad callback for obj: {}'.format(type(obj)))
+    def _get_random_distance(self):
+        return random.triangular(20.0, 100.0, 70.0)
 
     # ..........................................................................
     def start_gamepad_loop(self, callback):
@@ -74,21 +76,15 @@ class MockGamepad(object):
 
         The arguments to the callback method include the event.
         '''
-        self._log.info(Fore.YELLOW + 'start gamepad loop...')
+        self._log.info(Fore.YELLOW + '🎱 start gamepad loop...')
         if not self._enabled:
             self._log.error('attempt to start gamepad event loop while disabled.')
-#       elif self._gamepad is None:
-#           self._log.error(Gamepad._NOT_AVAILABLE_ERROR + ' [no gamepad found]')
-#           sys.exit(3)
         elif not self._closed:
-            if self._thread is None:
+            if not self._enabled:
                 self._enabled = True
-#               self._thread = Thread(name='mock-gp', target=MockGamepad._gamepad_loop, args=[self, callback, lambda: self._enabled], daemon=True)
-#               self._thread.setDaemon(False)
-#               self._thread.start()
                 self._log.info('enabled.')
             else:
-                self._log.warning('cannot enable: process already running.')
+                self._log.warning('already enabled.')
         else:
             self._log.warning('cannot enable: already closed.')
 
@@ -100,14 +96,10 @@ class MockGamepad(object):
             while __enabled and f_is_enabled():
                 self._log.info('🤚 START gamepad loop.')
                 self._log.info(Fore.BLUE + 'gamepad enabled: {}; f_is_enabled: {}'.format(__enabled, f_is_enabled()))
-#                   if self._gamepad is None:
-#                       raise Exception(Gamepad._NOT_AVAILABLE_ERROR + ' [gamepad no longer available]')
-                    # loop and filter by event code and print the mapped label
-#               for event in self._read_loop():
-                _event = await self._read_loop()
-#                   if callback:
-                callback(event)
-#               self._handleEvent(event)
+                _messages = await self._get_messages()
+                for _message in _messages:
+                    await callback(_message)
+#                   self._handleEvent(_message)
                 if not f_is_enabled():
                     self._log.info(Fore.BLACK + '🚫 breaking from event loop.')
                     break
@@ -230,10 +222,6 @@ class GamepadPublisher(Publisher):
             self._gamepad = MockGamepad(self._message_bus, self._message_factory)
             self._log.info(Fore.YELLOW + 'using mocked gamepad.')
 
-#   # ..........................................................................
-#   def gamepad_callback(self, event):
-#       self._log.info(Fore.YELLOW + 'gamepad callback for event: {}'.format(event))
-
     # ..........................................................................
     def has_connected_gamepad(self):
         return self._gamepad is not None and self._gamepad.has_connection()
@@ -245,14 +233,21 @@ class GamepadPublisher(Publisher):
             if self._message_bus.get_task_by_name(GamepadPublisher._PUBLISH_LOOP_NAME):
                 self._log.warning('already enabled.')
                 return
-#           if self._gamepad:
             if self._gamepad:
                 self._gamepad.enable()
-#               self._gamepad.start_gamepad_loop(self.gamepad_callback)
-                self._message_bus.loop.create_task(self._gamepad._gamepad_loop(self._gamepad.gamepad_callback, lambda: self.enabled), name='__gamepad_loop')
+                self._message_bus.loop.create_task(self._gamepad._gamepad_loop(self._publish_message, lambda: self.enabled), name='__gamepad_loop')
             self._log.info('enabled')
         else:
             self._log.info(Fore.BLACK + '<<< enabled: {}'.format(self.enabled))
+
+    # ..........................................................................
+    async def _publish_message(self, message):
+        '''
+        Unless there is a class-level usage this can be replaced by a direct
+        call to the superclass' method.
+        '''
+        self._log.info('🎲 gamepad callback for message:\t' + Fore.YELLOW + '{}'.format(message.event.description))
+        await super().publish(message)
 
     # ................................................................
     async def _key_listener_loop(self, f_is_enabled):

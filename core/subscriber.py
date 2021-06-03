@@ -258,12 +258,21 @@ class Subscriber(object):
         '''
         self._log.info(self._color + Style.BRIGHT + title + Style.NORMAL + '\n' \
                 + Subscriber.LOG_INDENT + 'id: ' + Style.BRIGHT + '{};'.format(message.name) + Style.NORMAL \
-                + ' event: ' + Style.BRIGHT + ( '{}\n'.format(message.event.description) if message.event else 'n/a: [gc\'d]\n' ) + Style.NORMAL \
+                + ' event: ' + Style.BRIGHT + ( '{}; '.format(message.event.description) if message.event else 'n/a: [gc\'d] ' ) + Style.NORMAL \
+                + ' value: ' + Style.BRIGHT + self._get_formatted_value(message.payload.value) + Style.NORMAL \
                 + Subscriber.LOG_INDENT + '{:d} procd;'.format(message.processed) + ' sent {:d}x;'.format(message.sent) \
                         + ' expired? {}\n'.format(self._message_bus.is_expired(message)) \
                 + Subscriber.LOG_INDENT + 'procd by:\t{}\n'.format(message.print_procd()) \
                 + Subscriber.LOG_INDENT + 'acked by:\t{}\n'.format(message.print_acks()) \
                 + Subscriber.LOG_INDENT + self._get_formatted_time('msg age: ', message.age) + '; ' + self._get_formatted_time('elapsed: ', elapsed))
+
+    # ..........................................................................
+    def _get_formatted_value(self, value):
+#       print('TYPE: {}'.format(type(value)))
+        if isinstance(value, float):
+            return '{:5.2f}\n'.format(value)
+        else:
+            return '{}\n'.format(value)
 
     # ..........................................................................
     def _get_formatted_time(self, label, value):

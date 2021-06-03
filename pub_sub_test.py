@@ -37,6 +37,7 @@ from core.event import Event
 from mock.ifs_publisher import IfsPublisher
 from mock.flood_publisher import FloodPublisher
 from mock.gamepad_publisher import GamepadPublisher
+from mock.gamepad_controller import GamepadController
 
 from mock.motor_configurer import MotorConfigurer
 from mock.motors import Motors
@@ -62,9 +63,12 @@ def test_pub_sub():
     _controller = Controller(Level.INFO)
     _message_bus.register_controller(_controller)
 
-#   _publisher1  = IfsPublisher(_message_bus, _message_factory, level=Level.INFO)
+    _gp_controller = GamepadController(Level.INFO)
+    _message_bus.register_controller(_gp_controller)
+
+    _publisher1  = IfsPublisher(_message_bus, _message_factory, level=Level.INFO)
 #   _publisher2  = FloodPublisher(_message_bus, _message_factory)
-    _publisher3  = GamepadPublisher(_config, _message_bus, _message_factory)
+#   _publisher3  = GamepadPublisher(_config, _message_bus, _message_factory)
 
 #   _subscriber1 = Subscriber('action', _message_bus, Fore.BLUE, Level.INFO)
 #   _subscriber1.events = [ Event.SNIFF, Event.VIDEO ] # reacts to SNIFF and VIDEO
