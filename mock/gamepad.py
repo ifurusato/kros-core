@@ -151,7 +151,7 @@ class Gamepad():
         return ( (value - 127.0) / 255.0 ) * -2.0
 
     # ..........................................................................
-    def _gamepad_loop(self, callback, f_is_enabled):
+    async def _gamepad_loop(self, callback, f_is_enabled):
         self._log.info('starting event loop...')
         __enabled = True
         while __enabled and f_is_enabled():
@@ -161,9 +161,10 @@ class Gamepad():
                     raise Exception(Gamepad._NOT_AVAILABLE_ERROR + ' [gamepad no longer available]')
                 # loop and filter by event code and print the mapped label
                 for event in self._gamepad.read_loop():
-                    if callback:
-                        callback(event)
-                    self._handleEvent(event)
+                    _message = self._handleEvent(event)
+                    if callback and _message:
+                        await callback(_message)
+#                       await asyncio.sleep(0.02)
                     if not f_is_enabled():
                         self._log.info(Fore.BLACK + 'breaking from event loop.')
                         break
@@ -199,31 +200,6 @@ class Gamepad():
     @property
     def enabled(self):
         return self._enabled
-
-    # ..........................................................................
-#   def start_gamepad_loop(self, callback):
-#       '''
-#       This is the method to call to actually start the loop.
-#
-#       The arguments to the callback method include the event.
-#       '''
-#       self._log.info(Fore.YELLOW + 'start gamepad loop...')
-#       if not self._enabled:
-#           self._log.error('attempt to start gamepad event loop while disabled.')
-#       elif self._gamepad is None:
-#           self._log.error(Gamepad._NOT_AVAILABLE_ERROR + ' [no gamepad found]')
-#           sys.exit(3)
-#       elif not self._closed:
-#           if self._thread is None:
-#               self._enabled = True
-#               self._thread = Thread(name='gamepad', target=Gamepad._gamepad_loop, args=[self, callback, lambda: self._enabled], daemon=True)
-#               self._thread.setDaemon(False)
-#               self._thread.start()
-#               self._log.info('started.')
-#           else:
-#               self._log.warning('cannot enable: process already running.')
-#       else:
-#           self._log.warning('cannot enable: already closed.')
 
     # ..........................................................................
     def disable(self):
@@ -269,41 +245,39 @@ class Gamepad():
             if event.value == 1:
                 if event.code == GamepadControl.A_BUTTON.code:
                     self._log.info(Fore.RED + "A Button")
-#                   _control = GamepadControl.A_BUTTON
+                    _control = GamepadControl.A_BUTTON
                 elif event.code == GamepadControl.B_BUTTON.code:
                     self._log.info(Fore.RED + "B Button")
-#                   _control = GamepadControl.B_BUTTON
+                    _control = GamepadControl.B_BUTTON
                 elif event.code == GamepadControl.X_BUTTON.code:
                     self._log.info(Fore.RED + "X Button")
-#                   _control = GamepadControl.X_BUTTON
+                    _control = GamepadControl.X_BUTTON
                 elif event.code == GamepadControl.Y_BUTTON.code:
                     self._log.info(Fore.RED + "Y Button")
-#                   _control = GamepadControl.Y_BUTTON
+                    _control = GamepadControl.Y_BUTTON
                 elif event.code == GamepadControl.L1_BUTTON.code:
                     self._log.info(Fore.YELLOW + "L1 Button")
-#                   _control = GamepadControl.L1_BUTTON
+                    _control = GamepadControl.L1_BUTTON
                 elif event.code == GamepadControl.L2_BUTTON.code:
                     self._log.info(Fore.YELLOW + "L2 Button")
-#                   _control = GamepadControl.L2_BUTTON
+                    _control = GamepadControl.L2_BUTTON
                 elif event.code == GamepadControl.R1_BUTTON.code:
                     self._log.info(Fore.YELLOW + "R1 Button")
-#                   _control = GamepadControl.R1_BUTTON
+                    _control = GamepadControl.R1_BUTTON
                 elif event.code == GamepadControl.R2_BUTTON.code:
                     self._log.info(Fore.YELLOW + "R2 Button")
-#                   _control = GamepadControl.R2_BUTTON
+                    _control = GamepadControl.R2_BUTTON
                 elif event.code == GamepadControl.START_BUTTON.code:
                     self._log.info(Fore.GREEN + "Start Button")
-#                   _control = GamepadControl.START_BUTTON
+                    _control = GamepadControl.START_BUTTON
                 elif event.code == GamepadControl.SELECT_BUTTON.code:
                     self._log.info(Fore.GREEN + "Select Button")
-#                   _control = GamepadControl.SELECT_BUTTON
+                    _control = GamepadControl.SELECT_BUTTON
                 elif event.code == GamepadControl.HOME_BUTTON.code:
                     self._log.info(Fore.MAGENTA + "Home Button")
-#                   _control = GamepadControl.HOME_BUTTON
+                    _control = GamepadControl.HOME_BUTTON
                 else:
                     self._log.info(Fore.BLACK + "event type: EV_KEY; event: {}; value: {}".format(event.code, event.value))
-            else:
-    #               self._log.info(Fore.BLACK + Style.DIM + "event type: EV_KEY; value: {}".format(event.value))
                 pass
         elif event.type == ecodes.EV_ABS:
             _control = GamepadControl.get_by_code(self, event.code)
@@ -327,33 +301,18 @@ class Gamepad():
                 self._log.info(Fore.YELLOW + "L3 Horizontal {}".format(event.value))
             elif event.code == GamepadControl.R3_VERTICAL.code:
                 self._log.info(Fore.GREEN + "R3 Vertical {}".format(event.value))
-#               _control = GamepadControl.R3_VERTICAL
+                _control = GamepadControl.R3_VERTICAL
             elif event.code == GamepadControl.R3_HORIZONTAL.code:
                 self._log.info(Fore.GREEN + "R3 Horizontal {}".format(event.value))
-#               _control = GamepadControl.R3_HORIZONTAL
+                _control = GamepadControl.R3_HORIZONTAL
             else:
-    #           self._log.info(Fore.BLACK + "type: EV_ABS; event code: {}; value: {}".format(event.code, event.value))
                 pass
         else:
-    #       self._log.info(Fore.BLACK + Style.DIM + "ZZ. event type: {}; code: {}; value: {}".format(event.type, event.code, event.value))
             pass
         if _control != None:
             _message = self._message_factory.get_message(_control.event, event.value)
-            self._log.info(Fore.CYAN + Style.BRIGHT + "triggered control with message {}".format(_message))
-#           self._message_bus.add(_message)
-            self._trigger_callback(self._message_bus, _message)
-
-    def _trigger_callback(self, message_bus, message):
-        self._log.info(Fore.YELLOW + "_trigger_callback with message {}".format(message))
-        asyncio.set_event_loop(message_bus.loop)
-        message_bus.loop.run_until_complete(self._publish(message))
-        self._log.info(Fore.YELLOW + "COMPLETE: _trigger_callback with message {}".format(message))
-
-    async def _publish(self, message):
-        self._log.info(Fore.YELLOW + "awaiting _publish message {}".format(message))
-        await self._message_bus.publish_message(message)
-        self._log.info(Fore.YELLOW + "COMPLETE: _publish message {}".format(message))
-
+            return _message
+        return None
 
 # ..............................................................................
 class GamepadControl(Enum):

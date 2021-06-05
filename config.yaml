@@ -182,7 +182,7 @@ kros:
         enabled: False
         device_path: '/dev/input/event5'         # the path to the bluetooth gamepad on the pi (see find_gamepad.py)
         loop_delay: 0.01                         # main loop delay
-        loop_freq_hz: 20                         # main loop frequency
+        loop_freq_hz: 50                         # main loop frequency
 #    gamepad_demo:
 #        enable_compass:        False             # if True, enable Compass
 #        enable_indicator:      False             # if True, enable RGB Indicator

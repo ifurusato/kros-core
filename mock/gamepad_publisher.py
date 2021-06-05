@@ -89,51 +89,53 @@ class MockGamepad(object):
             self._log.warning('cannot enable: already closed.')
 
     # ..........................................................................
-    async def _gamepad_loop(self, callback, f_is_enabled):
-        self._log.info('🤚 starting event loop with enabled argument: {}...'.format(f_is_enabled()))
-        __enabled = True
-        try:
-            while __enabled and f_is_enabled():
-                self._log.info('🤚 START gamepad loop.')
-                self._log.info(Fore.BLUE + 'gamepad enabled: {}; f_is_enabled: {}'.format(__enabled, f_is_enabled()))
-                _messages = await self._get_messages()
-                for _message in _messages:
-                    await callback(_message)
+#   async def _gamepad_loop(self, callback, f_is_enabled):
+#       '''
+#       The mocked Gamepad loop.
+#       '''
+#       self._log.info('🤚 starting event loop with enabled argument: {}...'.format(f_is_enabled()))
+#       __enabled = True
+#       try:
+#           while __enabled and f_is_enabled():
+#               self._log.info('🤚 START gamepad loop.')
+#               self._log.info(Fore.BLUE + 'gamepad enabled: {}; f_is_enabled: {}'.format(__enabled, f_is_enabled()))
+#               _messages = await self._get_messages()
+#               for _message in _messages:
+#                   await callback(_message)
 #                   self._handleEvent(_message)
-                if not f_is_enabled():
-                    self._log.info(Fore.BLACK + '🚫 breaking from event loop.')
-                    break
-                self._rate.wait()
-                self._log.info('🤚 END gamepad loop with enabled argument: {}...'.format(f_is_enabled()))
+#               if not f_is_enabled():
+#                   self._log.info(Fore.BLACK + '🚫 breaking from event loop.')
+#                   break
+#               self._rate.wait()
+#               self._log.info('🤚 END gamepad loop with enabled argument: {}...'.format(f_is_enabled()))
 
-        except KeyboardInterrupt:
-            self._log.info('🚫 caught Ctrl-C, exiting...')
-            __enabled = False
-        except Exception as e:
-            self._log.error('🚫 gamepad device error: {}'.format(e))
-            __enabled = False
-        except OSError as e:
-            self._log.error(Gamepad._NOT_AVAILABLE_ERROR + '🚫 [lost connection to gamepad]')
-            __enabled = False
-        finally:
-            '''
-            Note that closing the InputDevice is a bit tricky, and we're currently
-            masking an exception that's always thrown. As there is no data loss on
-            a gamepad event loop being closed suddenly this is not an issue.
-            '''
-            try:
-                self._log.info('😨 closing gamepad device...')
-                if self._gamepad:
-                    self._gamepad.close()
-                self._log.info(Fore.YELLOW + '😨 gamepad device closed.')
-            except Exception as e:
-                self._log.info('😨 error closing gamepad device: {}'.format(e))
-            finally:
-                __enabled = False
-                self._gamepad_closed = True
+#       except KeyboardInterrupt:
+#           self._log.info('🚫 caught Ctrl-C, exiting...')
+#           __enabled = False
+#       except Exception as e:
+#           self._log.error('🚫 gamepad device error: {}'.format(e))
+#           __enabled = False
+#       except OSError as e:
+#           self._log.error(Gamepad._NOT_AVAILABLE_ERROR + '🚫 [lost connection to gamepad]')
+#           __enabled = False
+#       finally:
+#           '''
+#           Note that closing the InputDevice is a bit tricky, and we're currently
+#           masking an exception that's always thrown. As there is no data loss on
+#           a gamepad event loop being closed suddenly this is not an issue.
+#           '''
+#           try:
+#               self._log.info('😨 closing gamepad device...')
+#               if self._gamepad:
+#                   self._gamepad.close()
+#               self._log.info(Fore.YELLOW + '😨 gamepad device closed.')
+#           except Exception as e:
+#               self._log.info('😨 error closing gamepad device: {}'.format(e))
+#           finally:
+#               __enabled = False
+#               self._gamepad_closed = True
 
-        self._log.info('exited event loop.')
-
+#       self._log.info('exited event loop.')
 
 # ...............................................................
 class GamepadPublisher(Publisher):
@@ -162,13 +164,10 @@ class GamepadPublisher(Publisher):
             raise ValueError('unrecognised message factory argument: {}'.format(type(message_bus)))
         self._level = level
 
-        self._exit_on_complete = exit_on_complete
         self._counter  = itertools.count()
-        self._triggered_ir_port_side = self._triggered_ir_port  = self._triggered_ir_cntr  = self._triggered_ir_stbd  = \
-        self._triggered_ir_stbd_side = self._triggered_bmp_port = self._triggered_bmp_cntr = self._triggered_bmp_stbd = 0
-        self._flood_enable      = False
-        self._publish_delay_sec = 0.05 # delay after IFS event
-        self._loop_delay_sec    = 0.5  # delay on noop loop
+        self._gamepad_enable    = False # TODO
+        self._publish_delay_sec = 0.05  # delay after IFS event
+        self._loop_delay_sec    = 0.5   # delay on noop loop
         self._limit             = 3
 
         # attempt to find the gamepad
@@ -235,46 +234,53 @@ class GamepadPublisher(Publisher):
                 return
             if self._gamepad:
                 self._gamepad.enable()
-                self._message_bus.loop.create_task(self._gamepad._gamepad_loop(self._publish_message, lambda: self.enabled), name='__gamepad_loop')
+                self._message_bus.loop.create_task(self._gamepad._gamepad_loop(self._gamepad_callback, lambda: self.enabled), name='__gamepad_callback')
+#               self._message_bus.loop.create_task(self._gamepad._gamepad_loop(self._gamepad_listener_loop, lambda: self.enabled), name='__gamepad_loop')
+#               self._message_bus.loop.create_task(self._gamepad._gamepad_loop(self._publish_message, lambda: self.enabled), name='__gamepad_loop')
             self._log.info('enabled')
         else:
             self._log.info(Fore.BLACK + '<<< enabled: {}'.format(self.enabled))
 
     # ..........................................................................
-    async def _publish_message(self, message):
-        '''
-        Unless there is a class-level usage this can be replaced by a direct
-        call to the superclass' method.
-        '''
-        self._log.info('🎲 gamepad callback for message:\t' + Fore.YELLOW + '{}'.format(message.event.description))
-        await super().publish(message)
+#   async def _publish_message(self, message):
+#       '''
+#       Unless there is a class-level usage this can be replaced by a direct
+#       call to the superclass' method.
+#       '''
+#       self._log.info('🎲 gamepad callback for message:\t' + Fore.YELLOW + '{}'.format(message.event.description))
+#       await super().publish(message)
 
     # ................................................................
-    async def _key_listener_loop(self, f_is_enabled):
-        self._log.info('starting key listener loop: ' + Fore.YELLOW + 'type \'?\' for help, \'q\' or Ctrl-C to exit.')
-        try:
+    async def _gamepad_callback(self, message):
+        self._log.info('🎲 gamepad callback for message:\t' + Fore.YELLOW + '{}'.format(message.event.description))
+        await super().publish(message)
+        await asyncio.sleep(self._publish_delay_sec)
 
-            while f_is_enabled():
-                _count = next(self._counter)
-                self._log.info('[{:03d}] BEGIN loop...'.format(_count))
-                _event = None # TODO
-                if _event is not None:
-                    self._log.info('"{}" ({}) pressed; publishing message for event: {}'.format(_event))
-                    _message = self._message_factory.get_message(_event, True)
-                    _message.value = 0
-                    self._log.info('key-publishing message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
-                    await super().publish(_message)
-                    self._log.info('key-published message:' + Fore.WHITE + ' {}.'.format(_message.name))
-                    await asyncio.sleep(self._publish_delay_sec)
-                else:
-                    self._log.warning('no event generated.')
-                    await asyncio.sleep(self._loop_delay_sec)
-                self._log.debug('[{:03d}] END loop.'.format(_count))
-
-            self._log.info('publish loop complete.')
-        finally:
-            self._log.info('publish loop finally.')
-            pass
+    # ................................................................
+#   async def _gamepad_listener_loop(self, f_is_enabled):
+#       self._log.info('starting key listener loop: ' + Fore.YELLOW + 'type \'?\' for help, \'q\' or Ctrl-C to exit.')
+#       try:
+#           while f_is_enabled():
+#               _count = next(self._counter)
+#               self._log.info('[{:03d}] BEGIN loop...'.format(_count))
+#               _event = None # TODO
+#               if _event is not None:
+#                   self._log.info('"{}" ({}) pressed; publishing message for event: {}'.format(_event))
+#                   _message = self._message_factory.get_message(_event, True)
+#                   _message.value = 0
+#                   self._log.info('key-publishing message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
+#                   await super().publish(_message)
+#                   self._log.info('key-published message:' + Fore.WHITE + ' {}.'.format(_message.name))
+#                   await asyncio.sleep(self._publish_delay_sec)
+#               else:
+#                   self._log.warning('no event generated.')
+#                   await asyncio.sleep(self._loop_delay_sec)
+#               self._log.debug('[{:03d}] END loop.'.format(_count))
+#
+#           self._log.info('publish loop complete.')
+#       finally:
+#           self._log.info('publish loop finally.')
+#           pass
       
     # ..........................................................................
     def disable(self):

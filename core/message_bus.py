@@ -58,6 +58,7 @@ class MessageBus(object):
         self._verbose     = True
         self._enabled     = True
         self._closed      = False
+        self._publish_delay_sec = 0.01
         self._log.info('ready.')
 
     # ..........................................................................
@@ -348,7 +349,7 @@ class MessageBus(object):
                     + ' (event: {}; age: {:d}ms);'.format(message.event.description, message.age))
         _put_task = asyncio.create_task(self._queue.put(message), name='publish-message-{}'.format(message.name))
         self._log.info(Style.DIM + 'created task: {}'.format(_put_task.get_name()))
-        await asyncio.sleep(0.05)
+        await asyncio.sleep(self._publish_delay_sec)
 
     # ..........................................................................
     async def republish_message(self, message):

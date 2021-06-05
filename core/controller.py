@@ -26,7 +26,7 @@ class Controller():
     '''
     def __init__(self, level):
         self._log = Logger('controller', level)
-        self._previous_event       = Event.NOOP
+        self._previous_payload     = None
         self._enabled              = True
         self._event_counter        = itertools.count()
         self._event_count          = next(self._event_counter)
@@ -68,10 +68,21 @@ class Controller():
             self._log.warning('action ignored: controller disabled.')
             return
         self._event_count = next(self._event_counter)
-        if payload.event == self._previous_event:
-            self._log.info(Fore.CYAN + '😖 no state change on event: ' + Style.BRIGHT + ' {}'.format(self._previous_event.description)
+        if self._previous_payload == None:
+            self._log.info(Fore.CYAN + '🐸 no previous payload.')
+        elif payload == self._previous_payload:
+            self._log.info(Fore.CYAN + '😖 no state change on event: ' + Style.BRIGHT + ' {}'.format(self._previous_payload.event.description)
                     + Fore.BLACK + Style.NORMAL + '[{:d}/{:d}]'.format(self._state_change_count, self._event_count))
+        else:
+            if payload.event == self._previous_payload.event:
+                self._log.info(Fore.CYAN + '🤡 value {} changed on event: '.format(payload.value) + Style.BRIGHT + ' {}'.format(self._previous_payload.event.description)
+                        + Fore.BLACK + Style.NORMAL + '[{:d}/{:d}]'.format(self._state_change_count, self._event_count))
+            else:
+                self._log.info(Fore.CYAN + '👿 event changed on event: ' + Style.BRIGHT + ' {}'.format(self._previous_payload.event.description)
+                        + Fore.BLACK + Style.NORMAL + '[{:d}/{:d}]'.format(self._state_change_count, self._event_count))
             return
+
+        self._previous_payload = payload
         self._state_change_count = next(self._state_change_counter)
 
         _start_time = dt.datetime.now()
@@ -222,7 +233,6 @@ class Controller():
         else:
             self._log.error('unrecognised event: {}'.format(_event))
 
-        self._previous_event = _event
         _delta = dt.datetime.now() - _start_time
         _elapsed_ms = int(_delta.total_seconds() * 1000)
         self._log.debug(Fore.MAGENTA + Style.DIM + 'elapsed: {}ms'.format(_elapsed_ms) + Style.DIM)

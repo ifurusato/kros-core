@@ -43,6 +43,7 @@ class Subscriber(object):
         self._message_bus = message_bus
         self._events      = None # list of acceptable event types
         self._enabled     = True # by default
+        self._brief       = True # brief messages by default
         self._message_bus.register_subscriber(self)
         self._log.info(self._color + 'ready.')
 
@@ -125,8 +126,8 @@ class Subscriber(object):
             self._log.debug(Fore.RED + 'begin event tracking for message:' + Fore.WHITE + ' {}; event: {}'.format(_peeked_message.name, _peeked_message.event.description))
 
             # acknowledge we've seen the message
-            self._log.info(self._color + Style.DIM + 'acknowledging accepted message:' \
-                    + Fore.WHITE + ' {}; event: {}'.format(_peeked_message.name, _peeked_message.event.description))
+#           self._log.debug(self._color + Style.DIM + 'acknowledging accepted message:' \
+#                   + Fore.WHITE + ' {}; event: {}'.format(_peeked_message.name, _peeked_message.event.description))
             _peeked_message.acknowledge(self)
 
             # this subscriber accepts this message and hasn't seen it before so consume and handle the message
@@ -160,17 +161,17 @@ class Subscriber(object):
 
             # we've handled message so pass along to arbitrator
             if not _message.sent:
-                self._log.info(self._color + 'sending message: {}; event: {} to arbitrator...'.format(_message.name, _message.event.description))
+                self._log.debug(self._color + 'sending message: {}; event: {} to arbitrator...'.format(_message.name, _message.event.description))
                 await self._arbitrate_message(_message)
-                self._log.info(self._color + 'sent message:' + Fore.WHITE + ' {}; event: {} to arbitrator.'.format(_message.name, _message.event.description))
+                self._log.debug(self._color + 'sent message:' + Fore.WHITE + ' {}; event: {} to arbitrator.'.format(_message.name, _message.event.description))
             else:
-                self._log.info(self._color + 'message: {} already sent; event: {}'.format(_message.name, _message.event.description))
+                self._log.warning(self._color + 'message: {} already sent; event: {}'.format(_message.name, _message.event.description))
 
             # republish the message
             self._log.debug(self._color + 'awaiting republication of message:' \
                 + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
             await self._message_bus.republish_message(_message)
-            self._log.info(self._color + 'message:' \
+            self._log.debug(self._color + 'message:' \
                 + Fore.WHITE + ' {} with event: {}'.format(_message.name, _message.event.description) + self._color + ' has been republished.')
 
         elif not _ackd:
@@ -186,7 +187,7 @@ class Subscriber(object):
         Has the message bus clear any completed tasks.
         '''
         self._message_bus.clear_tasks()
-        self._log.info('callback on message consume complete; {}'.format(task.get_name()))
+        self._log.debug('callback on message consume complete; {}'.format(task.get_name()))
 
 #   # ..........................................................................
 #   def _get_timestamp(self):
@@ -209,7 +210,7 @@ class Subscriber(object):
             raise GarbageCollectedError('cannot process message: message has been garbage collected. [3]')
         # indicate that this subscriber has processed the message
         message.process(self)
-        self._log.info(self._color + Style.DIM + 'processed message {}'.format(message.name))
+        self._log.debug(self._color + Style.DIM + 'processed message {}'.format(message.name))
 
     # ..........................................................................
     async def _arbitrate_message(self, message):
@@ -256,23 +257,29 @@ class Subscriber(object):
         :param message:  the message and its payload to display
         :param elapsed:  the optional elapsed time (in milliseconds) for an operation
         '''
-        self._log.info(self._color + Style.BRIGHT + title + Style.NORMAL + '\n' \
-                + Subscriber.LOG_INDENT + 'id: ' + Style.BRIGHT + '{};'.format(message.name) + Style.NORMAL \
-                + ' event: ' + Style.BRIGHT + ( '{}; '.format(message.event.description) if message.event else 'n/a: [gc\'d] ' ) + Style.NORMAL \
-                + ' value: ' + Style.BRIGHT + self._get_formatted_value(message.payload.value) + Style.NORMAL \
-                + Subscriber.LOG_INDENT + '{:d} procd;'.format(message.processed) + ' sent {:d}x;'.format(message.sent) \
-                        + ' expired? {}\n'.format(self._message_bus.is_expired(message)) \
-                + Subscriber.LOG_INDENT + 'procd by:\t{}\n'.format(message.print_procd()) \
-                + Subscriber.LOG_INDENT + 'acked by:\t{}\n'.format(message.print_acks()) \
-                + Subscriber.LOG_INDENT + self._get_formatted_time('msg age: ', message.age) + '; ' + self._get_formatted_time('elapsed: ', elapsed))
+        if self._brief:
+            self._log.info(self._color + Style.BRIGHT + title + Style.NORMAL \
+                    + ' id: ' + Style.BRIGHT + '{};'.format(message.name) + Style.NORMAL \
+                    + ' event: ' + Style.BRIGHT + ( '{}; '.format(message.event.description) if message.event else 'n/a' ) + Style.NORMAL \
+                    + ' value: ' + Style.BRIGHT + self._get_formatted_value(message.payload.value))
+        else:
+            self._log.info(self._color + Style.BRIGHT + title + Style.NORMAL + '\n' \
+                    + Subscriber.LOG_INDENT + 'id: ' + Style.BRIGHT + '{};'.format(message.name) + Style.NORMAL \
+                    + ' event: ' + Style.BRIGHT + ( '{}; '.format(message.event.description) if message.event else 'n/a: [gc\'d] ' ) + Style.NORMAL \
+                    + ' value: ' + Style.BRIGHT + self._get_formatted_value(message.payload.value) + '\n' + Style.NORMAL \
+                    + Subscriber.LOG_INDENT + '{:d} procd;'.format(message.processed) + ' sent {:d}x;'.format(message.sent) \
+                            + ' expired? {}\n'.format(self._message_bus.is_expired(message)) \
+                    + Subscriber.LOG_INDENT + 'procd by:\t{}\n'.format(message.print_procd()) \
+                    + Subscriber.LOG_INDENT + 'acked by:\t{}\n'.format(message.print_acks()) \
+                    + Subscriber.LOG_INDENT + self._get_formatted_time('msg age: ', message.age) + '; ' + self._get_formatted_time('elapsed: ', elapsed))
 
     # ..........................................................................
     def _get_formatted_value(self, value):
 #       print('TYPE: {}'.format(type(value)))
         if isinstance(value, float):
-            return '{:5.2f}\n'.format(value)
+            return '{:5.2f}'.format(value)
         else:
-            return '{}\n'.format(value)
+            return '{}'.format(value)
 
     # ..........................................................................
     def _get_formatted_time(self, label, value):
@@ -393,7 +400,7 @@ class GarbageCollector(Subscriber):
             self._message_bus.consumed()
             _message.gc() # mark as garbage collected and don't republish
             if not _message.sent:
-                self._log.warning('😡 garbage collected undelivered message: {}; event: {}'.format(_message.name, _message.event.name))
+                self._log.warning('garbage collected undelivered message: {}; event: {}'.format(_message.name, _message.event.name))
             if self._message_bus.verbose:
                 self._log.info(self._color + '👍 garbage collected message:' + Fore.WHITE + ' {}; gcd: {}'.format(_message.name, _message.gcd))
         else:

@@ -34,10 +34,11 @@ from core.publisher import Publisher
 from core.subscriber import Subscriber
 from core.event import Event
 
-from mock.ifs_publisher import IfsPublisher
-from mock.flood_publisher import FloodPublisher
-from mock.gamepad_publisher import GamepadPublisher
-from mock.gamepad_controller import GamepadController
+from mock.event_publisher import EventPublisher
+from mock.motor_subscriber import MotorSubscriber
+#from mock.flood_publisher import FloodPublisher
+#from mock.gamepad_publisher import GamepadPublisher
+#from mock.gamepad_controller import GamepadController
 
 from mock.motor_configurer import MotorConfigurer
 from mock.motors import Motors
@@ -63,15 +64,18 @@ def test_pub_sub():
     _controller = Controller(Level.INFO)
     _message_bus.register_controller(_controller)
 
-    _gp_controller = GamepadController(Level.INFO)
-    _message_bus.register_controller(_gp_controller)
+#    _gp_controller = GamepadController(Level.WARN)
+#    _message_bus.register_controller(_gp_controller)
 
-    _publisher1  = IfsPublisher(_message_bus, _message_factory, level=Level.INFO)
+    _publisher1  = EventPublisher(_config, _message_bus, _message_factory, level=Level.INFO)
 #   _publisher2  = FloodPublisher(_message_bus, _message_factory)
 #   _publisher3  = GamepadPublisher(_config, _message_bus, _message_factory)
 
+    _subscriber0 = MotorSubscriber('motor', _message_bus, Fore.MAGENTA, Level.INFO)
+#   _subscriber0.events = [ Event.PORT_VELOCITY, Event.STBD_VELOCITY ] # reacts to velocity changes on Gamepad
+
 #   _subscriber1 = Subscriber('action', _message_bus, Fore.BLUE, Level.INFO)
-#   _subscriber1.events = [ Event.SNIFF, Event.VIDEO ] # reacts to SNIFF and VIDEO
+#   _subscriber1.events = [ Event.PORT_VELOCITY, Event.STBD_VELOCITY ] # reacts to velocity changes on Gamepad
 
     _subscriber2 = Subscriber('infrared', _message_bus, Fore.GREEN, Level.INFO)
     _subscriber2.events = [ Event.INFRARED_PORT_SIDE, Event.INFRARED_PORT, Event.INFRARED_CNTR, Event.INFRARED_STBD, Event.INFRARED_STBD_SIDE ] # reacts to IR sensors
@@ -81,7 +85,7 @@ def test_pub_sub():
 
     _motors = None
     # add motor controller, reacts to STOP, HALT, BRAKE, INCREASE_SPEED and DECREASE_SPEED
-#   _motor_configurer = MotorConfigurer(_config, _message_bus, enable_mock=True, level=Level.INFO)
+#   _motor_configurer = MotorConfigurer(_config, _message_bus, enable_mock=True, level=Level.WARN)
 #   _motors = _motor_configurer.get_motors()
 
     # ROAM is commonly accepted by all subscribers
