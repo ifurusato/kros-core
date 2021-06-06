@@ -30,6 +30,10 @@
 #
 #  % python3 -m build
 #
+# Then to download dependencies and install:
+#
+#  % sudo ./setup.py install
+#
 # To run tests:
 #
 #  % pytest --pyargs kros-core
@@ -69,6 +73,7 @@ setup(
     include_package_data=True,
     install_requires=[
         'colorama',
+#       'evdev', # for gamepad
         'pytest',
         'psutil',
         'readchar',

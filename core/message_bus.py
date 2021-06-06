@@ -26,8 +26,8 @@
 # see; /usr/local/lib/python3.8/asyncio/queues.py
 #
 
-import asyncio, signal, traceback
-import sys, logging
+import sys, traceback, logging
+import asyncio, signal
 from colorama import init, Fore, Style
 init()
 from asyncio.queues import Queue, QueueEmpty
@@ -483,7 +483,8 @@ class PeekableQueue(Queue):
     Extends the asyncio Queue to add peek() and clear() methods.
     '''
     def __init__(self, level=Level.INFO):
-        super().__init__(maxsize=0, loop=None)
+#       super().__init__(maxsize=0, loop=None)
+        super().__init__(maxsize=0)
         self._log = Logger("queue", level)
         self._log.info('ready.')
 

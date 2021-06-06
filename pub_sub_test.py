@@ -20,8 +20,8 @@
 # Python Style Guide: https://www.python.org/dev/peps/pep-0008/
 #
 
-import pytest
 import sys, traceback
+import pytest
 from colorama import init, Fore, Style
 init()
 
