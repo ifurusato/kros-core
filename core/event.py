@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python3 # -*- coding: utf-8 -*-
 #
 # Copyright 2020-2021 by Murray Altheim. All rights reserved. This file is part
 # of the Robot Operating System project, released under the MIT License. Please
@@ -43,16 +42,16 @@ class Event(Enum):
     GAMEPAD                = ( 20, "gamepad",                  10,   False)
 
     # stopping and halting .............
-    STOP                   = ( 54, "stop",                     12,    True)
-    HALT                   = ( 55, "halt",                     13,   False)
-    BRAKE                  = ( 56, "brake",                    14,   False)
-    BUTTON                 = ( 57, "button",                   15,   False)
-    STANDBY                = ( 58, "standby",                  16,   False)
+    STOP                   = ( 50, "stop",                     12,    True)
+    HALT                   = ( 51, "halt",                     13,   False)
+    BRAKE                  = ( 52, "brake",                    14,   False)
+    BUTTON                 = ( 53, "button",                   15,   False)
+    STANDBY                = ( 54, "standby",                  16,   False)
 
     # bumper ...........................
-    BUMPER_PORT            = ( 111, "bumper port",             40,    True)
-    BUMPER_CNTR            = ( 112, "bumper center",           40,    True)
-    BUMPER_STBD            = ( 113, "bumper starboard",        40,    True)
+    BUMPER_PORT            = ( 110, "bumper port",             40,    True)
+    BUMPER_CNTR            = ( 111, "bumper center",           40,    True)
+    BUMPER_STBD            = ( 112, "bumper stbd",             40,    True)
 
     # infrared .........................
     INFRARED_PORT_SIDE     = ( 120, "infrared port side",      50,    True)
@@ -60,48 +59,63 @@ class Event(Enum):
     INFRARED_CNTR          = ( 122, "infrared cntr",           50,    True)
     INFRARED_STBD          = ( 123, "infrared stbd",           50,    True)
     INFRARED_STBD_SIDE     = ( 124, "infrared stbd side",      50,    True)
+
     # movement ahead ...................
-    FULL_AHEAD             = ( 145, "full ahead",             100,   False)
-    HALF_AHEAD             = ( 146, "half ahead",             100,   False)
-    SLOW_AHEAD             = ( 147, "slow ahead",             100,   False)
-    DEAD_SLOW_AHEAD        = ( 148, "dead slow ahead",        100,   False)
-    AHEAD                  = ( 149, "ahead",                  100,   False)
+    FULL_AHEAD             = ( 140, "full ahead",             100,   False)
+    HALF_AHEAD             = ( 141, "half ahead",             100,   False)
+    SLOW_AHEAD             = ( 142, "slow ahead",             100,   False)
+    DEAD_SLOW_AHEAD        = ( 143, "dead slow ahead",        100,   False)
+    AHEAD                  = ( 144, "ahead",                  100,   False)
+
     # movement astern ..................
     ASTERN                 = ( 150, "astern",                 100,   False)
     DEAD_SLOW_ASTERN       = ( 151, "dead slow astern",       100,   False)
     SLOW_ASTERN            = ( 152, "slow astern",            100,   False)
     HALF_ASTERN            = ( 153, "half astern",            100,   False)
     FULL_ASTERN            = ( 154, "full astern",            100,   False)
+
     # relative change ..................
-    INCREASE_SPEED         = ( 160, "increase speed",         100,   False)
+    INCREASE_VELOCITY      = ( 160, "increase velocity",      100,   False)
     EVEN                   = ( 161, "even",                   100,   False)
-    DECREASE_SPEED         = ( 162, "decrease speed",         100,   False)
-    # port turns .......................
-    TURN_AHEAD_PORT        = ( 170, "turn ahead port",        100,   False)
-    TURN_TO_PORT           = ( 171, "turn to port",           100,   False)
-    TURN_ASTERN_PORT       = ( 172, "turn astern port",       100,   False)
-    SPIN_PORT              = ( 173, "spin port",              100,   False)
-    # starboard turns ..................
-    SPIN_STBD              = ( 180, "spin starboard",         100,   False)
-    TURN_ASTERN_STBD       = ( 181, "turn astern starboard",  100,   False)
-    TURN_TO_STBD           = ( 182, "turn to starboard",      100,   False)
-    TURN_AHEAD_STBD        = ( 183, "turn ahead starboard",   100,   False)
-    # high level behaviours ............
-    ROAM                   = ( 190, "roam",                   100,   False)
-    SNIFF                  = ( 191, "sniff",                  100,    True) # A Button
-    VIDEO                  = ( 192, "video",                  150,   False) # L1 Button
-    EVENT_L2               = ( 193, "L2",                     150,   False) # L2 Button
-    EVENT_R1               = ( 194, "cruise",                 150,   False) # R1 Button
-    LIGHTS                 = ( 195, "lights",                 150,   False) # R2 Button
-    MOTION_DETECT          = ( 196, "motion detect",          150,   False)
+    DECREASE_VELOCITY      = ( 162, "decrease velocity",      100,   False)
 
     # movement directives ..............
-    FORWARD_VELOCITY       = ( 201, "forward velocity",       200,   False)
-    THETA                  = ( 202, "theta",                  200,   False)
-    PORT_VELOCITY          = ( 203, "port velocity",          200,   False)
-    PORT_THETA             = ( 204, "port theta",             200,   False)
-    STBD_VELOCITY          = ( 205, "starboard velocity",     200,   False)
-    STBD_THETA             = ( 206, "starboard theta",        200,   False)
+    VELOCITY               = ( 170, "velocity",               100,   False)
+    THETA                  = ( 171, "theta",                  100,   False)
+    PORT_VELOCITY          = ( 172, "port velocity",          100,   False)
+    PORT_THETA             = ( 173, "port theta",             100,   False)
+    STBD_VELOCITY          = ( 174, "stbd velocity",          100,   False)
+    STBD_THETA             = ( 175, "stbd theta",             100,   False)
+
+    INCREASE_PORT_VELOCITY = ( 176, "increase port velocity", 100,   False)
+    DECREASE_PORT_VELOCITY = ( 177, "decrease port velocity", 100,   False)
+    INCREASE_STBD_VELOCITY = ( 178, "increase stbd velocity", 100,   False)
+    DECREASE_STBD_VELOCITY = ( 179, "decrease stbd velocity", 100,   False)
+    INCREASE_PORT_THETA    = ( 180, "increase port theta",    100,   False)
+    DECREASE_PORT_THETA    = ( 181, "decrease port theta",    100,   False)
+    INCREASE_STBD_THETA    = ( 182, "increase stbd theta",    100,   False)
+    DECREASE_STBD_THETA    = ( 183, "decrease stbd theta",    100,   False)
+
+    # port turns .......................
+    TURN_AHEAD_PORT        = ( 200, "turn ahead port",        100,   False)
+    TURN_TO_PORT           = ( 201, "turn to port",           100,   False)
+    TURN_ASTERN_PORT       = ( 202, "turn astern port",       100,   False)
+    SPIN_PORT              = ( 203, "spin port",              100,   False)
+
+    # starboard turns ..................
+    SPIN_STBD              = ( 210, "spin stbd",              100,   False)
+    TURN_ASTERN_STBD       = ( 211, "turn astern stbd",       100,   False)
+    TURN_TO_STBD           = ( 212, "turn to stbd",           100,   False)
+    TURN_AHEAD_STBD        = ( 213, "turn ahead stbd",        100,   False)
+
+    # high level behaviours ............
+    ROAM                   = ( 300, "roam",                   100,   False)
+    SNIFF                  = ( 301, "sniff",                  100,    True) # A Button
+    VIDEO                  = ( 302, "video",                  150,   False) # L1 Button
+    EVENT_L2               = ( 303, "L2",                     150,   False) # L2 Button
+    EVENT_R1               = ( 304, "cruise",                 150,   False) # R1 Button
+    LIGHTS                 = ( 305, "lights",                 150,   False) # R2 Button
+    MOTION_DETECT          = ( 306, "motion detect",          150,   False)
 
     # other behaviours (> 500) .........
     NO_ACTION              = ( 500, "no action",              500,   False)
@@ -128,16 +142,27 @@ class Event(Enum):
         self._priority = priority
         self._is_ballistic = is_ballistic
 
-    # ..................................
+    # ................................................................
     @staticmethod
-    def is_bumper(event):
-        return event.value >= 10 and event.value < 20
+    def is_motor_event(event):
+        return ( 50 <= event.value <= 54 ) or ( 140 <= event.value <= 199 )
 
     # ..................................
     @staticmethod
-    def is_infrared(event):
-        return event.value >= 20 and event.value < 30
+    def is_bumper_event(event):
+        return event.value >= 110 and event.value <= 112
 
+    # ..................................
+    @staticmethod
+    def is_infrared_event(event):
+        return event.value >= 120 and event.value <= 124
+
+    # ................................................................
+    @staticmethod
+    def is_ifs_event(event):
+        return Event.is_bumper_event(event) or Event.is_infrared_event(event)
+
+    # ................................................................
     # this makes sure the description is read-only
     @property
     def description(self):
@@ -160,111 +185,150 @@ class Event(Enum):
     @staticmethod
     def from_str(label):
         # system events ....................
-        if label.upper() == 'BATTERY_LOW': 
+        if label.upper() == 'NOOP':
+            return Event.NOOP
+        # emergency events .................
+        elif label.upper() == 'BATTERY_LOW':
             return Event.BATTERY_LOW
-        elif label.upper() == 'SHUTDOWN': 
+        elif label.upper() == 'SHUTDOWN':
             return Event.SHUTDOWN
+        elif label.upper() == 'HIGH_TEMPERATURE':
+            return Event.HIGH_TEMPERATURE
+        elif label.upper() == 'COLLISION_DETECT':
+            return Event.COLLISION_DETECT
+        elif label.upper() == 'EMERGENCY_ASTERN':
+            return Event.EMERGENCY_ASTERN
+        # gamepad events ...................
+        elif label.upper() == 'GAMEPAD':
+            return Event.GAMEPAD
         # stopping and halting .............
-        elif label.upper() == 'STOP': 
+        elif label.upper() == 'STOP':
             return Event.STOP
-        elif label.upper() == 'HALT': 
+        elif label.upper() == 'HALT':
             return Event.HALT
-        elif label.upper() == 'BRAKE': 
+        elif label.upper() == 'BRAKE':
             return Event.BRAKE
-        elif label.upper() == 'BUTTON': 
+        elif label.upper() == 'BUTTON':
             return Event.BUTTON
-        elif label.upper() == 'STANDBY': 
+        elif label.upper() == 'STANDBY':
             return Event.STANDBY
         # bumper ...........................
-        elif label.upper() == 'BUMPER_PORT': 
+        elif label.upper() == 'BUMPER_PORT':
             return Event.BUMPER_PORT
-        elif label.upper() == 'BUMPER_CNTR': 
+        elif label.upper() == 'BUMPER_CNTR':
             return Event.BUMPER_CNTR
-        elif label.upper() == 'BUMPER_STBD': 
+        elif label.upper() == 'BUMPER_STBD':
             return Event.BUMPER_STBD
         # infrared .........................
-        elif label.upper() == 'INFRARED_PORT': 
-            return Event.INFRARED_PORT
-        elif label.upper() == 'INFRARED_CNTR': 
-            return Event.INFRARED_CNTR
-        elif label.upper() == 'INFRARED_STBD': 
-            return Event.INFRARED_STBD
-        elif label.upper() == 'INFRARED_PORT_SIDE': 
+        elif label.upper() == 'INFRARED_PORT_SIDE':
             return Event.INFRARED_PORT_SIDE
-        elif label.upper() == 'INFRARED_STBD_SIDE': 
+        elif label.upper() == 'INFRARED_PORT':
+            return Event.INFRARED_PORT
+        elif label.upper() == 'INFRARED_CNTR':
+            return Event.INFRARED_CNTR
+        elif label.upper() == 'INFRARED_STBD':
+            return Event.INFRARED_STBD
+        elif label.upper() == 'INFRARED_STBD_SIDE':
             return Event.INFRARED_STBD_SIDE
-        # emergency movements ..............
-        elif label.upper() == 'EMERGENCY_ASTERN': 
-            return Event.EMERGENCY_ASTERN
         # movement ahead ...................
-        elif label.upper() == 'FULL_AHEAD': 
+        elif label.upper() == 'FULL_AHEAD':
             return Event.FULL_AHEAD
-        elif label.upper() == 'HALF_AHEAD': 
+        elif label.upper() == 'HALF_AHEAD':
             return Event.HALF_AHEAD
-        elif label.upper() == 'SLOW_AHEAD': 
+        elif label.upper() == 'SLOW_AHEAD':
             return Event.SLOW_AHEAD
-        elif label.upper() == 'DEAD_SLOW_AHEAD': 
+        elif label.upper() == 'DEAD_SLOW_AHEAD':
             return Event.DEAD_SLOW_AHEAD
-        elif label.upper() == 'AHEAD': 
+        elif label.upper() == 'AHEAD':
             return Event.AHEAD
         # movement astern ..................
-        elif label.upper() == 'ASTERN': 
+        elif label.upper() == 'ASTERN':
             return Event.ASTERN
-        elif label.upper() == 'DEAD_SLOW_ASTERN': 
+        elif label.upper() == 'DEAD_SLOW_ASTERN':
             return Event.DEAD_SLOW_ASTERN
-        elif label.upper() == 'SLOW_ASTERN': 
+        elif label.upper() == 'SLOW_ASTERN':
             return Event.SLOW_ASTERN
-        elif label.upper() == 'HALF_ASTERN': 
+        elif label.upper() == 'HALF_ASTERN':
             return Event.HALF_ASTERN
-        elif label.upper() == 'FULL_ASTERN': 
+        elif label.upper() == 'FULL_ASTERN':
             return Event.FULL_ASTERN
         # relative change ..................
-        elif label.upper() == 'INCREASE_SPEED': 
-            return Event.INCREASE_SPEED
-        elif label.upper() == 'EVEN': 
+        elif label.upper() == 'INCREASE_VELOCITY':
+            return Event.INCREASE_VELOCITY
+        elif label.upper() == 'EVEN':
             return Event.EVEN
-        elif label.upper() == 'DECREASE_SPEED': 
-            return Event.DECREASE_SPEED
+        elif label.upper() == 'DECREASE_VELOCITY':
+            return Event.DECREASE_VELOCITY
+        # movement directives ..............
+        elif label.upper() == 'VELOCITY':
+            return Event.VELOCITY
+        elif label.upper() == 'THETA':
+            return Event.THETA
+        elif label.upper() == 'PORT_VELOCITY':
+            return Event.PORT_VELOCITY
+        elif label.upper() == 'PORT_THETA':
+            return Event.PORT_THETA
+        elif label.upper() == 'STBD_VELOCITY':
+            return Event.STBD_VELOCITY
+        elif label.upper() == 'STBD_THETA':
+            return Event.STBD_THETA
+        elif label.upper() == 'INCREASE_PORT_VELOCITY':
+            return Event.INCREASE_PORT_VELOCITY
+        elif label.upper() == 'DECREASE_PORT_VELOCITY':
+            return Event.DECREASE_PORT_VELOCITY
+        elif label.upper() == 'INCREASE_STBD_VELOCITY':
+            return Event.INCREASE_STBD_VELOCITY
+        elif label.upper() == 'DECREASE_STBD_VELOCITY':
+            return Event.DECREASE_STBD_VELOCITY
+        elif label.upper() == 'INCREASE_PORT_THETA':
+            return Event.INCREASE_PORT_THETA
+        elif label.upper() == 'DECREASE_PORT_THETA':
+            return Event.DECREASE_PORT_THETA
+        elif label.upper() == 'INCREASE_STBD_THETA':
+            return Event.INCREASE_STBD_THETA
+        elif label.upper() == 'DECREASE_STBD_THETA':
+            return Event.DECREASE_STBD_THETA
         # port turns .......................
-        elif label.upper() == 'TURN_AHEAD_PORT': 
+        elif label.upper() == 'TURN_AHEAD_PORT':
             return Event.TURN_AHEAD_PORT
-        elif label.upper() == 'TURN_TO_PORT': 
+        elif label.upper() == 'TURN_TO_PORT':
             return Event.TURN_TO_PORT
-        elif label.upper() == 'TURN_ASTERN_PORT': 
+        elif label.upper() == 'TURN_ASTERN_PORT':
             return Event.TURN_ASTERN_PORT
-        elif label.upper() == 'SPIN_PORT': 
+        elif label.upper() == 'SPIN_PORT':
             return Event.SPIN_PORT
         # starboard turns ..................
-        elif label.upper() == 'SPIN_STBD': 
+        elif label.upper() == 'SPIN_STBD':
             return Event.SPIN_STBD
-        elif label.upper() == 'TURN_ASTERN_STBD': 
+        elif label.upper() == 'TURN_ASTERN_STBD':
             return Event.TURN_ASTERN_STBD
-        elif label.upper() == 'TURN_TO_STBD': 
+        elif label.upper() == 'TURN_TO_STBD':
             return Event.TURN_TO_STBD
-        elif label.upper() == 'TURN_AHEAD_STBD': 
+        elif label.upper() == 'TURN_AHEAD_STBD':
             return Event.TURN_AHEAD_STBD
         # high level behaviours ............
-        elif label.upper() == 'ROAM': 
+        elif label.upper() == 'ROAM':
             return Event.ROAM
-        elif label.upper() == 'FORWARD_VELOCITY':     
-            return Event.FORWARD_VELOCITY
-        elif label.upper() == 'THETA':               
-            return Event.THETA
-        elif label.upper() == 'PORT_VELOCITY':      
-            return Event.PORT_VELOCITY
-        elif label.upper() == 'PORT_THETA':        
-            return Event.PORT_THETA
-        elif label.upper() == 'STBD_VELOCITY':   
-            return Event.STBD_VELOCITY
-        elif label.upper() == 'STBD_THETA':      
-            return Event.STBD_THETA
-        elif label.upper() == 'SNIFF':      
+        elif label.upper() == 'SNIFF':
             return Event.SNIFF
-
-        elif label.upper() == 'NO_ACTION':      
+        elif label.upper() == 'VIDEO':
+            return Event.VIDEO
+        elif label.upper() == 'EVENT_L2':
+            return Event.EVENT_L2
+        elif label.upper() == 'EVENT_R1':
+            return Event.EVENT_R1
+        elif label.upper() == 'LIGHTS':
+            return Event.LIGHTS
+        elif label.upper() == 'MOTION_DETECT':
+            return Event.MOTION_DETECT
+        # other behaviours (> 500) .........
+        elif label.upper() == 'NO_ACTION':
             return Event.NO_ACTION
+        elif label.upper() == 'CLOCK_TICK':
+            return Event.CLOCK_TICK
+        elif label.upper() == 'CLOCK_TOCK':
+            return Event.CLOCK_TOCK
         else:
             raise NotImplementedError
-
 
 #EOF

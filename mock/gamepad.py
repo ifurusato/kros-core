@@ -166,7 +166,7 @@ class Gamepad():
                         await callback(_message)
 #                       await asyncio.sleep(0.02)
                     if not f_is_enabled():
-                        self._log.info(Fore.BLACK + 'breaking from event loop.')
+                        self._log.info('breaking from event loop.')
                         break
             except KeyboardInterrupt:
                 self._log.info('caught Ctrl-C, exiting...')
@@ -347,7 +347,7 @@ class GamepadControl(Enum):
     SELECT_BUTTON   = ( 10, 314,  'select',   'Select Button',       Event.STANDBY)
     HOME_BUTTON     = ( 11, 306,  'home',     'Home Button',         Event.SHUTDOWN)
     DPAD_HORIZONTAL = ( 12, 16,   'dph',      'D-PAD Horizontal',    Event.THETA)
-    DPAD_VERTICAL   = ( 13, 17,   'dpv',      'D-PAD Vertical',      Event.FORWARD_VELOCITY)
+    DPAD_VERTICAL   = ( 13, 17,   'dpv',      'D-PAD Vertical',      Event.VELOCITY)
 
     L3_VERTICAL     = ( 14, 1,    'l3v',      'L3 Vertical',         Event.PORT_VELOCITY)
     L3_HORIZONTAL   = ( 15, 0,    'l3h',      'L3 Horizontal',       Event.PORT_THETA)

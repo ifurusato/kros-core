@@ -55,7 +55,6 @@ class MessageBus(object):
         self._garbage_collector = GarbageCollector('gc', self, Fore.BLUE, level)
         self._arbitrator  = Arbitrator(level)
         self._max_age_ms  = 20.0
-        self._verbose     = True
         self._enabled     = True
         self._closed      = False
         self._publish_delay_sec = 0.01
@@ -70,13 +69,13 @@ class MessageBus(object):
         return self._loop
 
     # ..........................................................................
-    def get_all_tasks(self):
+    def get_all_tasks(self, include_hidden=False):
         '''
         Returns the task list, not including those whose name starts with '__'.
         '''
         _tasks = []
         for _task in asyncio.all_tasks(loop=self._loop):
-            if not _task.get_name().startswith('__'):
+            if include_hidden or not _task.get_name().startswith('__'):
                 _tasks.append(_task)
         return _tasks
 
@@ -98,11 +97,12 @@ class MessageBus(object):
                     _tasks.remove(_task)
                 else:
                     self._log.debug('incomplete task:\t' + Fore.BLUE + '{}'.format(_task.get_name()))
-            self._log.info('{:d} task{} remain{}.'.format(len(_tasks),
-                    ('' if len(_tasks) == 1 else 's'),
-                    ('s' if len(_tasks) == 1 else '')))
-            for _task in _tasks:
-                self._log.info('unfinished task:\t' + Fore.BLUE + '{}...'.format(_task.get_name()))
+            if self._log.is_at_least(Level.INFO):
+                self._log.info('{:d} task{} remain{}.'.format(len(_tasks),
+                        ('' if len(_tasks) == 1 else 's'),
+                        ('s' if len(_tasks) == 1 else '')))
+                for _task in _tasks:
+                    self._log.info('unfinished task:\t' + Fore.BLUE + '{}...'.format(_task.get_name()))
 
     # ..........................................................................
     @property
@@ -164,11 +164,28 @@ class MessageBus(object):
     # ..........................................................................
     @property
     def verbose(self):
-        return self._verbose
+        '''
+        Returns True if the logger level is INFO.
+        '''
+        return self._log.level == Level.INFO
 
     @verbose.setter
     def verbose(self, verbose):
-        self._verbose = verbose
+        '''
+        Sets the logger level to INFO when verbose, ERROR when not verbose.
+        '''
+        if verbose:
+            self._log.level = Level.INFO
+        else:
+            self._log.level = Level.ERROR
+        # now set the log level of publishers and subscribers to match that of the message bus
+        for publisher in self._publishers:
+            publisher.set_log_level(self._log.level)
+        for subscriber in self._subscribers:
+            subscriber.set_log_level(self._log.level)
+        self._arbitrator.set_log_level(self._log.level)
+        for _controller in self._arbitrator.controllers:
+            _controller.set_log_level(self._log.level)
 
     # publisher ................................................................
 
@@ -179,7 +196,7 @@ class MessageBus(object):
         if publisher in self._publishers:
             raise ValueError('publisher list already contains \'{}\''.format(publisher.name))
         self._publishers.append(publisher)
-        self._log.info('registered publisher \'{}\'; {:d} publisher{} in list.'.format( \
+        self._log.info('registered publisher: \'{}\'; {:d} publisher{} in list.'.format( \
                 publisher.name, len(self._publishers), 's' if len(self._publishers) > 1 else ''))
 
     def get_publisher(self, name):
@@ -232,7 +249,7 @@ class MessageBus(object):
         if subscriber in self._subscribers:
             raise ValueError('subscriber list already contains \'{}\''.format(subscriber.name))
         self._subscribers.insert(0, subscriber)
-        self._log.info('registered subscriber \'{}\'; {:d} subscriber{} in list.'.format( \
+        self._log.info('registered subscriber: \'{}\'; {:d} subscriber{} in list.'.format( \
                 subscriber.name, len(self._subscribers), 's' if len(self._subscribers) > 1 else ''))
 
     def print_subscribers(self):
@@ -425,7 +442,7 @@ class MessageBus(object):
         Return the asyncio event loop, starting it if it is not already running.
         '''
         if not self._loop:
-            self._log.info('creating asyncio task loop...')
+            self._log.debug('creating asyncio task loop...')
             self._loop = asyncio.get_event_loop()
             if self._log.level is Level.DEBUG:
                 self._loop.set_debug(True) # also set asyncio debug
@@ -435,9 +452,9 @@ class MessageBus(object):
                 self._loop.add_signal_handler(
                     s, lambda s = s: asyncio.create_task(self.shutdown(s), name='shutdown'),)
             self._loop.set_exception_handler(self.handle_exception)
-            self._loop.create_task(self._start_consuming(), name='__coro-loop__')
+            self._loop.create_task(self._start_consuming(), name='__event_loop__')
         if not self._loop.is_running():
-            self._log.info('starting asyncio task loop...')
+            self._log.debug('starting asyncio task loop...')
             self._loop.run_forever()
         return self._loop
 

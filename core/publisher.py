@@ -25,7 +25,7 @@ from core.message_factory import MessageFactory
 class Publisher(object):
 
     RANDOM_EVENTS = [
-            Event.DECREASE_SPEED, Event.INCREASE_SPEED, Event.INFRARED_PORT_SIDE, Event.BRAKE,
+            Event.DECREASE_VELOCITY, Event.INCREASE_VELOCITY, Event.INFRARED_PORT_SIDE, Event.BRAKE,
             Event.BUMPER_STBD, Event.INFRARED_CNTR, Event.SNIFF, Event.INFRARED_STBD,
             Event.INFRARED_STBD_SIDE, Event.HALT, Event.STOP, Event.ROAM,
             Event.INFRARED_PORT, Event.NOOP, Event.BUMPER_CNTR, Event.BUMPER_PORT,
@@ -63,6 +63,10 @@ class Publisher(object):
         self._closed     = False
         self._message_bus.register_publisher(self)
         self._log.info(Fore.BLACK + 'ready.')
+
+    # ..........................................................................
+    def set_log_level(self, level):
+        self._log.level = level
 
     # ..........................................................................
     @property

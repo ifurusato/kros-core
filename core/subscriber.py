@@ -7,7 +7,7 @@
 #
 # author:   Murray Altheim
 # created:  2021-03-10
-# modified: 2021-04-28
+# modified: 2021-06-11
 #
 
 import asyncio
@@ -19,7 +19,6 @@ init()
 
 from core.logger import Logger, Level
 from core.event import Event
-
 
 # ..............................................................................
 class Subscriber(object):
@@ -46,6 +45,10 @@ class Subscriber(object):
         self._brief       = True # brief messages by default
         self._message_bus.register_subscriber(self)
         self._log.info(self._color + 'ready.')
+
+    # ..........................................................................
+    def set_log_level(self, level):
+        self._log.level = level
 
     # ..........................................................................
     @property
@@ -91,7 +94,8 @@ class Subscriber(object):
         if self._events:
             _events = []
             for event in self._events:
-                _events.append('{} '.format(event.name))
+                _description = event.description.replace(' ','-')
+                _events.append('{} '.format(_description))
             return ''.join(_events)
         else:
             return '[ANY]'

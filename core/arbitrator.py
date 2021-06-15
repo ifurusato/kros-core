@@ -36,6 +36,10 @@ class Arbitrator(object):
         self._log.info(self._color + 'ready.')
 
     # ..........................................................................
+    def set_log_level(self, level):
+        self._log.level = level
+
+    # ..........................................................................
     @property
     def controllers(self):
         return self._controllers
@@ -47,7 +51,7 @@ class Arbitrator(object):
         from the MessageBus its callback(Payload) method is called.
         '''
         self._controllers.append(controller)
-        self._log.info(self._color + 'registering controller: {}'.format(controller.name))
+        self._log.info(self._color + 'registered controller: \'{}\''.format(controller.name))
 
     # ..........................................................................
     def suppress(self, suppressed):

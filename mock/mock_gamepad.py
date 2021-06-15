@@ -88,30 +88,32 @@ class MockGamepad(object):
         '''
         The mocked Gamepad loop.
         '''
-        self._log.info('🤚 starting event loop with enabled argument: {}...'.format(f_is_enabled()))
+        self._log.info('starting event loop with enabled argument: {}...'.format(f_is_enabled()))
         __enabled = True
         try:
             while __enabled and f_is_enabled():
-                self._log.info('🤚 START gamepad loop.')
+                self._log.info('START gamepad loop.')
                 self._log.info(Fore.BLUE + 'gamepad enabled: {}; f_is_enabled: {}'.format(__enabled, f_is_enabled()))
                 _messages = await self._get_messages()
                 for _message in _messages:
                     await callback(_message)
-                    self._handleEvent(_message)
+                    # in the original we receive evdev InputDevice events, not messages
+#                   self._handleEvent(_event)
+                    self._handleMessage(_message)
                 if not f_is_enabled():
-                    self._log.info(Fore.BLACK + '🚫 breaking from event loop.')
+                    self._log.info('breaking from event loop.')
                     break
                 self._rate.wait()
-                self._log.info('🤚 END gamepad loop with enabled argument: {}...'.format(f_is_enabled()))
+                self._log.info('END gamepad loop with enabled argument: {}...'.format(f_is_enabled()))
 
         except KeyboardInterrupt:
-            self._log.info('🚫 caught Ctrl-C, exiting...')
+            self._log.info('caught Ctrl-C, exiting...')
             __enabled = False
         except Exception as e:
-            self._log.error('🚫 gamepad device error: {}'.format(e))
+            self._log.error('gamepad device error: {}'.format(e))
             __enabled = False
         except OSError as e:
-            self._log.error(Gamepad._NOT_AVAILABLE_ERROR + '🚫 [lost connection to gamepad]')
+            self._log.error(Gamepad._NOT_AVAILABLE_ERROR + ' [lost connection to gamepad]')
             __enabled = False
         finally:
             '''
@@ -119,17 +121,28 @@ class MockGamepad(object):
             masking an exception that's always thrown. As there is no data loss on
             a gamepad event loop being closed suddenly this is not an issue.
             '''
-            try:
-                self._log.info('😨 closing gamepad device...')
-                if self._gamepad:
-                    self._gamepad.close()
-                self._log.info(Fore.YELLOW + '😨 gamepad device closed.')
-            except Exception as e:
-                self._log.info('😨 error closing gamepad device: {}'.format(e))
-            finally:
-                __enabled = False
-                self._gamepad_closed = True
+#           try:
+#               self._log.info('😨 closing gamepad device...')
+#               if self._gamepad:
+#                   self._gamepad.close()
+#               self._log.info(Fore.YELLOW + '😨 gamepad device closed.')
+#           except Exception as e:
+#               self._log.info('😨 error closing gamepad device: {}'.format(e))
+#           finally:
+#               __enabled = False
+#               self._gamepad_closed = True
+            pass
 
         self._log.info('exited event loop.')
+
+    # ..........................................................................
+    def _handleMessage(self, message):
+        '''
+        Note that the parameter in the original lass is an evdev InputDevice
+        event, not one of our Events. In the mocked version we receive a Message
+        so no conversion is necessary.
+        '''
+        self._log.info('❄️  handle message:' + Fore.WHITE + ' {}; event: {}'.format(message.name, message.event.description))
+        return message
 
 #EOF

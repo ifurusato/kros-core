@@ -296,9 +296,9 @@ class GamepadPublisher(Publisher):
         '''
 
         if och   == 44:  # ,
-            return Event.DECREASE_SPEED
+            return Event.DECREASE_VELOCITY
         elif och == 46:  # .
-            return Event.INCREASE_SPEED
+            return Event.INCREASE_VELOCITY
         elif och == 97:  # a
             return Event.INFRARED_PORT_SIDE
         elif och == 98:  # b

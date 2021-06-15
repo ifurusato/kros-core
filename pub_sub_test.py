@@ -71,7 +71,11 @@ def test_pub_sub():
 #   _publisher2  = FloodPublisher(_message_bus, _message_factory)
 #   _publisher3  = GamepadPublisher(_config, _message_bus, _message_factory)
 
-    _subscriber0 = MotorSubscriber('motor', _message_bus, Fore.MAGENTA, Level.INFO)
+    # add motor controller, reacts to STOP, HALT, BRAKE, INCREASE_VELOCITY and DECREASE_VELOCITY
+    _motor_configurer = MotorConfigurer(_config, _message_bus, enable_mock=True, level=Level.WARN)
+    _motors = _motor_configurer.get_motors()
+
+    _subscriber0 = MotorSubscriber('motor', _message_bus, _motors, Fore.MAGENTA, Level.INFO)
 #   _subscriber0.events = [ Event.PORT_VELOCITY, Event.STBD_VELOCITY ] # reacts to velocity changes on Gamepad
 
 #   _subscriber1 = Subscriber('action', _message_bus, Fore.BLUE, Level.INFO)
@@ -83,10 +87,6 @@ def test_pub_sub():
     _subscriber3 = Subscriber('bumper', _message_bus, Fore.YELLOW, Level.INFO)
     _subscriber3.events = [ Event.BUMPER_PORT, Event.BUMPER_CNTR, Event.BUMPER_STBD ] # reacts to bumpers
 
-    _motors = None
-    # add motor controller, reacts to STOP, HALT, BRAKE, INCREASE_SPEED and DECREASE_SPEED
-#   _motor_configurer = MotorConfigurer(_config, _message_bus, enable_mock=True, level=Level.WARN)
-#   _motors = _motor_configurer.get_motors()
 
     # ROAM is commonly accepted by all subscribers
 #   _subscriber1.add_event(Event.ROAM)

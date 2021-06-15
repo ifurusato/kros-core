@@ -34,6 +34,10 @@ class Controller():
         self._state_change_count   = next(self._state_change_counter)
         self._log.info('ready.')
 
+    # ..........................................................................
+    def set_log_level(self, level):
+        self._log.level = level
+
     # ................................................................
     @property
     def name(self):
@@ -164,11 +168,11 @@ class Controller():
            self._log.info('event: full-astern.')
 
         # relative change ..................
-        elif _event is Event.INCREASE_SPEED:        # ( 60, "increase speed",          100,   False)
+        elif _event is Event.INCREASE_VELOCITY:     # ( 60, "increase speed",          100,   False)
            self._log.info('event: increase-speed.')
         elif _event is Event.EVEN:                  # ( 61, "even",                    100,   False)
            self._log.info('event: even.')
-        elif _event is Event.DECREASE_SPEED:        # ( 62, "decrease speed",          100,   False)
+        elif _event is Event.DECREASE_VELOCITY:     # ( 62, "decrease speed",          100,   False)
            self._log.info('event: decrease-speed.')
 
         # port turns .......................
@@ -208,8 +212,8 @@ class Controller():
            self._log.info('event: motion-detect.')
         
         # movement directives ..............
-        elif _event is Event.FORWARD_VELOCITY:      # ( 101, "forward velocity",       200,   False)
-           self._log.info('event: forward-velocity.')
+        elif _event is Event.VELOCITY:              # ( 101, "forward velocity",       200,   False)
+           self._log.info('event: velocity.')
         elif _event is Event.THETA:                 # ( 102, "theta",                  200,   False)
            self._log.info('event: theta.')
         elif _event is Event.PORT_VELOCITY:         # ( 103, "port velocity",          200,   False)

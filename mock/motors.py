@@ -19,23 +19,20 @@ init()
 from core.logger import Logger, Level
 from core.orient import Orientation
 from core.event import Event
-from core.subscriber import Subscriber
 from mock.motor import Motor
 
 # ..............................................................................
-class Motors(Subscriber):
+class Motors(object):
     '''
     A mocked dual motor controller with encoders.
 
     :param name:         the subscriber name (for logging)
     :param tb:           the ThunderBorg motor controller
-    :param message_bus:  the message bus
     :param events:       the list of events used as a filter, None to set as cleanup task
     :param level:        the logging level 
     '''
-    def __init__(self, config, tb, message_bus, level=Level.INFO):
-        super().__init__('motors', Fore.BLUE, message_bus, level)
-        self._events = [ Event.DECREASE_SPEED, Event.INCREASE_SPEED, Event.HALT, Event.STOP, Event.BRAKE ]
+    def __init__(self, config, tb, level=Level.INFO):
+        self._log = Logger('motors', level)
         self._log.info('initialising motors...')
         if config is None:
             raise Exception('no config argument provided.')
@@ -47,8 +44,12 @@ class Motors(Subscriber):
         self._stbd_motor = Motor(self._config, _tb, Orientation.STBD, level)
         self._closed  = False
         self._enabled = False # used to be enabled by default
-        # a dictionary of motor # to last set value
-        self._last_set_power = { 0:0, 1:0 }
+        # temporary until we move functionality to motors
+        self._color         = Fore.MAGENTA
+        self._port_velocity = 0
+        self._stbd_velocity = 0
+        self._increment     = 5
+        self._max_velocity  = 100
         self._log.info('motors ready.')
 
     # ..........................................................................
@@ -63,6 +64,44 @@ class Motors(Subscriber):
         else:
             return self._stbd_motor
 
+    # ..........................................................................
+    def velocity_event(self, event):
+        if event is Event.INCREASE_PORT_VELOCITY: # TODO
+            self._port_velocity = self._update_value(self._port_velocity, self._increment)
+            self._log.info(self._color + Style.BRIGHT + '🈴👍 INCREASE PORT VELOCITY; velocity: {:d}'.format(self._port_velocity) + Style.RESET_ALL)
+            pass       
+        elif event is Event.DECREASE_PORT_VELOCITY: # TODO
+            self._port_velocity = self._update_value(self._port_velocity, -1 * self._increment)
+            self._log.info(self._color + Style.BRIGHT + '🈴👎 DECREASE PORT VELOCITY; velocity: {:d}'.format(self._port_velocity) + Style.RESET_ALL)
+            pass       
+        elif event is Event.INCREASE_STBD_VELOCITY: # TODO
+            self._stbd_velocity = self._update_value(self._stbd_velocity, self._increment)
+            self._log.info(self._color + Style.BRIGHT + '🈯👍 INCREASE STBD VELOCITY; velocity: {:d}'.format(self._stbd_velocity) + Style.RESET_ALL)
+            pass       
+        elif event is Event.DECREASE_STBD_VELOCITY: # TODO
+            self._stbd_velocity = self._update_value(self._stbd_velocity, -1 * self._increment)
+            self._log.info(self._color + Style.BRIGHT + '🈯👎 DECREASE STBD VELOCITY; velocity: {:d}'.format(self._stbd_velocity) + Style.RESET_ALL)
+            pass       
+
+    # ..........................................................................
+    def stop_event(self, event):
+        if event is Event.HALT: # TODO
+            self._log.info(self._color + '🛑 HALT.' + Style.RESET_ALL)
+        elif event is Event.STOP: # TODO
+            self._log.info(self._color + '🛑 STOP.' + Style.RESET_ALL)
+        elif event is Event.BRAKE: # TODO
+            self._log.info(self._color + '🛑 BRAKE.' + Style.RESET_ALL)
+        self._port_velocity = 0
+        self._stbd_velocity = 0
+
+    # ..........................................................................
+    def _update_value(self, value, increment):
+        value += increment
+        if value > self._max_velocity:
+            value = self._max_velocity
+        elif value < -1 * self._max_velocity:
+            value = -1 * self._max_velocity
+        return value
     # ..........................................................................
     def change_speed(self, orientation, change):
         if orientation is Orientation.PORT:
@@ -139,60 +178,6 @@ class Motors(Subscriber):
         '''
         return self._port_motor.is_in_motion() or self._stbd_motor.is_in_motion()
 
-    # ................................................................
-    async def process_message(self, message, event):
-        '''
-        Process the message, i.e., do something with it to change the state of the robot.
-
-        :param message:  the message to process, with its contained Event type.
-        :param event:    the asyncio.Event to watch for message extention or cleaning up,
-                         notably not the robot Event.
-        '''
-#       while not event.is_set():
-        while not event.is_set() and not message.gcd:
-            if message.gcd:
-                self._log.warning('exiting process loop: message {} has been garbage collected.'.format(message.name))
-#               raise Exception('cannot process: message has been garbage collected.')
-                return
-            print('motors.process_message() 1. ---------------------------------- ')
-            message.process(self)
-            print('motors.process_message() 2. ---------------------------------- ')
-            if self._message_bus.verbose:
-                _elapsed_ms = (dt.now() - message.timestamp).total_seconds() * 1000.0
-                self.print_message_info('processing message:', message, _elapsed_ms)
-            # switch on event type...
-            _event = message.event
-            if _event == Event.STOP:
-                self._log.info(self._color + Style.BRIGHT + 'event: STOP')
-                self.stop()
-            elif _event == Event.HALT:
-                self._log.info(self._color + Style.BRIGHT + 'event: HALT')
-                self.halt()
-            elif _event == Event.BRAKE:
-                self._log.info(self._color + Style.BRIGHT + 'event: BRAKE')
-                self.brake()
-            elif _event == Event.INCREASE_SPEED:
-                self._log.info(self._color + Style.BRIGHT + 'event: INCREASE_SPEED')
-                self.change_speed(Orientation.PORT, +0.01)
-                self.change_speed(Orientation.STBD, +0.01)
-            elif _event == Event.DECREASE_SPEED:
-                self._log.info(self._color + Style.BRIGHT + 'event: DECREASE_SPEED')
-                self.change_speed(Orientation.PORT, -0.01)
-                self.change_speed(Orientation.STBD, -0.01)
-            elif _event == Event.AHEAD:
-                self._log.info(self._color + Style.BRIGHT + 'event: AHEAD')
-            elif _event == Event.ASTERN:
-                self._log.info(self._color + Style.BRIGHT + 'event: ASTERN')
-            else:
-                self._log.info(self._color + Style.BRIGHT + 'ignored message: {} (event: {})'.format(message.name, message.event.description))
-
-            # want to sleep for less than the deadline amount
-#           await asyncio.sleep(2)
-
-            if self._message_bus.verbose:
-                _elapsed_ms = (dt.now() - message.timestamp).total_seconds() * 1000.0
-                self.print_message_info('processing complete:', message, _elapsed_ms)
-
     # ..........................................................................
     def enable(self):
         '''
@@ -245,7 +230,7 @@ class Motors(Subscriber):
     # ..........................................................................
     @staticmethod
     def cancel():
-        print('cancelling motors...')
+        self._log.info('cancelling motors...')
 #       Motor.cancel()
 
 #EOF

@@ -110,6 +110,16 @@ class Logger:
             self._sh.setLevel(level.value)
 
     # ..........................................................................
+    def is_at_least(self, level):
+        '''
+        Returns True if the current log level is less than or equals the argument.
+        E.g., 
+            if self._log.is_at_least(Level.WARN):
+                # returns True for WARN or ERROR or CRITICAL
+        '''
+        return self._level.value >= level.value
+
+    # ..........................................................................
     @property
     def suppressed(self):
         '''
@@ -247,11 +257,21 @@ class Logger:
 
 # ..............................................................................
 class Level(Enum):
-    DEBUG    = logging.DEBUG     # 10
-    INFO     = logging.INFO      # 20
-    WARN     = logging.WARN      # 30
-    ERROR    = logging.ERROR     # 40
-    CRITICAL = logging.CRITICAL  # 50
+    DEBUG    = ( logging.DEBUG,    'DEBUG'    ) # 10
+    INFO     = ( logging.INFO,     'INFO'     ) # 20
+    WARN     = ( logging.WARN,     'WARN'     ) # 30
+    ERROR    = ( logging.ERROR,    'ERROR'    ) # 40
+    CRITICAL = ( logging.CRITICAL, 'CRITICAL' ) # 50
+
+    # ..................................
+    def __new__(cls, *args, **kwds):
+        obj = object.__new__(cls)
+        obj._value_ = args[0]
+        return obj
+
+    # ignore the first param since it's already set by __new__
+    def __init__(self, num, label):
+        self._label = label
 
     @staticmethod
     def from_str(label):

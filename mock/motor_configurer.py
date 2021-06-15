@@ -77,7 +77,7 @@ class MotorConfigurer():
         # now import motors
         try:
             self._log.info('configuring motors...')
-            self._motors = Motors(self._config, TB, self._message_bus, level=Level.INFO)
+            self._motors = Motors(self._config, TB, level=Level.INFO)
             self._motors.get_motor(Orientation.PORT).set_max_power_ratio(self._max_power_ratio)
             self._motors.get_motor(Orientation.STBD).set_max_power_ratio(self._max_power_ratio)
         except OSError as oe:

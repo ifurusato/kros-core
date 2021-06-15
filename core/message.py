@@ -265,7 +265,6 @@ class Payload(object):
     def __eq__(self, other):
         if other is None:
             return False
-        print(Fore.GREEN + '👾💚 __eq__() self.value: {}; other.value: {}'.format(self.value, other.value) + Style.RESET_ALL)
         return self.event == other.event and self.value == other.value
 
 #EOF
