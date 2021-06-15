@@ -71,6 +71,10 @@ manually via pip3::
 
     sudo pip3 install numpy colorama pytest pyyaml psutil board readchar
 
+Alternately, use the setup.py script to install dependencies. As this is a work
+in progress you may find error messages referring to missing libraries; if so,
+you will need to install these manually. 
+
 
 Installation
 ************
@@ -116,7 +120,8 @@ progress.
 Support & Liability
 *******************
 
-This project comes with no promise of support or liability. Use at your own risk.
+This project comes with no promise of support or acceptance of liability. Use at
+your own risk.
 
 
 Further Information
