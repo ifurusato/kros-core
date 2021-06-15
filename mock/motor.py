@@ -46,6 +46,7 @@ class Motor(object):
         self._max_power = 0.0                # capture maximum power applied
         self._max_driving_power = 0.0        # capture maximum adjusted power applied
         self._enabled = False                # was by default enabled
+        self._velocity = 0                   # currently a proxy for actual velocity
         self._log.info('ready.')
 
     # ..........................................................................
@@ -59,7 +60,12 @@ class Motor(object):
     # ..........................................................................
     @property
     def velocity(self):
-        return 0.0
+        return self._velocity
+
+    # ..........................................................................
+    @velocity.setter
+    def velocity(self, velocity):
+        self._velocity = velocity
 
     # ..........................................................................
     @property

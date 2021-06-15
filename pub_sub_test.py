@@ -74,6 +74,7 @@ def test_pub_sub():
     # add motor controller, reacts to STOP, HALT, BRAKE, INCREASE_VELOCITY and DECREASE_VELOCITY
     _motor_configurer = MotorConfigurer(_config, _message_bus, enable_mock=True, level=Level.WARN)
     _motors = _motor_configurer.get_motors()
+    _publisher1.set_motors(_motors)
 
     _subscriber0 = MotorSubscriber('motor', _message_bus, _motors, Fore.MAGENTA, Level.INFO)
 #   _subscriber0.events = [ Event.PORT_VELOCITY, Event.STBD_VELOCITY ] # reacts to velocity changes on Gamepad

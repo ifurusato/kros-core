@@ -10,8 +10,10 @@
 # modified: 2021-04-22
 #
 
+from threading import Thread
 import asyncio
 import random
+import time
 from datetime import datetime as dt
 from colorama import init, Fore, Style
 init()
@@ -46,7 +48,9 @@ class Motors(object):
         self._enabled = False # used to be enabled by default
         # temporary until we move functionality to motors
         self._color         = Fore.MAGENTA
-        self._port_velocity = 0
+        self._loop_thread   = None
+        self._loop_enabled  = False
+#       self._port_velocity = 0
         self._stbd_velocity = 0
         self._increment     = 5
         self._max_velocity  = 100
@@ -58,6 +62,45 @@ class Motors(object):
         return 'motors'
 
     # ..........................................................................
+    def start_loop(self):
+        '''
+        Start the display loop.
+        '''
+        if self._loop_thread is None:
+            self._loop_enabled = True
+            self._loop_thread = Thread(name='display_loop', target=Motors._loop, args=[self, lambda: self._loop_enabled], daemon=True)
+            self._loop_thread.start()
+            self._log.info('clock enabled.')
+        else:
+            self._log.warning('cannot enable loop: thread already exists.')
+
+    # ..........................................................................
+    def stop_loop(self):
+        '''
+        Stop the display loop.
+        '''
+        if self._loop_enabled:
+            self._loop_enabled = False
+            self._loop_thread  = None
+            self._log.info('loop disabled.')
+        else:
+            self._log.warning('already disabled.')
+
+    # ..........................................................................
+    def loop_is_running(self):
+        return self._loop_enabled
+
+    # ..........................................................................
+    def _loop(self, f_is_enabled):
+        '''
+        The display loop, which executes while the f_is_enabled flag is True.
+        '''
+        while f_is_enabled():
+            self._log.info('loop...')
+            time.sleep(1.0)
+        self._log.info('exited display loop.')
+
+    # ..........................................................................
     def get_motor(self, orientation):
         if orientation is Orientation.PORT:
             return self._port_motor
@@ -67,20 +110,20 @@ class Motors(object):
     # ..........................................................................
     def velocity_event(self, event):
         if event is Event.INCREASE_PORT_VELOCITY: # TODO
-            self._port_velocity = self._update_value(self._port_velocity, self._increment)
-            self._log.info(self._color + Style.BRIGHT + '🈴👍 INCREASE PORT VELOCITY; velocity: {:d}'.format(self._port_velocity) + Style.RESET_ALL)
+            self._port_motor.velocity = self._update_value(self._port_motor.velocity, self._increment)
+            self._log.info(self._color + Style.BRIGHT + '🈴👍 INCREASE PORT VELOCITY; velocity: {:d}'.format(self._port_motor.velocity) + Style.RESET_ALL)
             pass       
         elif event is Event.DECREASE_PORT_VELOCITY: # TODO
-            self._port_velocity = self._update_value(self._port_velocity, -1 * self._increment)
-            self._log.info(self._color + Style.BRIGHT + '🈴👎 DECREASE PORT VELOCITY; velocity: {:d}'.format(self._port_velocity) + Style.RESET_ALL)
+            self._port_motor.velocity = self._update_value(self._port_motor.velocity, -1 * self._increment)
+            self._log.info(self._color + Style.BRIGHT + '🈴👎 DECREASE PORT VELOCITY; velocity: {:d}'.format(self._port_motor.velocity) + Style.RESET_ALL)
             pass       
         elif event is Event.INCREASE_STBD_VELOCITY: # TODO
-            self._stbd_velocity = self._update_value(self._stbd_velocity, self._increment)
-            self._log.info(self._color + Style.BRIGHT + '🈯👍 INCREASE STBD VELOCITY; velocity: {:d}'.format(self._stbd_velocity) + Style.RESET_ALL)
+            self._stbd_motor.velocity = self._update_value(self._stbd_motor.velocity, self._increment)
+            self._log.info(self._color + Style.BRIGHT + '🈯👍 INCREASE STBD VELOCITY; velocity: {:d}'.format(self._stbd_motor.velocity) + Style.RESET_ALL)
             pass       
         elif event is Event.DECREASE_STBD_VELOCITY: # TODO
-            self._stbd_velocity = self._update_value(self._stbd_velocity, -1 * self._increment)
-            self._log.info(self._color + Style.BRIGHT + '🈯👎 DECREASE STBD VELOCITY; velocity: {:d}'.format(self._stbd_velocity) + Style.RESET_ALL)
+            self._stbd_motor.velocity = self._update_value(self._stbd_motor.velocity, -1 * self._increment)
+            self._log.info(self._color + Style.BRIGHT + '🈯👎 DECREASE STBD VELOCITY; velocity: {:d}'.format(self._stbd_motor.velocity) + Style.RESET_ALL)
             pass       
 
     # ..........................................................................
@@ -91,8 +134,8 @@ class Motors(object):
             self._log.info(self._color + '🛑 STOP.' + Style.RESET_ALL)
         elif event is Event.BRAKE: # TODO
             self._log.info(self._color + '🛑 BRAKE.' + Style.RESET_ALL)
-        self._port_velocity = 0
-        self._stbd_velocity = 0
+        self._port_motor.velocity = 0
+        self._stbd_motor.velocity = 0
 
     # ..........................................................................
     def _update_value(self, value, increment):

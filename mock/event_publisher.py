@@ -66,11 +66,16 @@ class EventPublisher(Publisher):
         self._loop_delay_sec  = 0.01           # delay on noop loop
         self._limit           = 3
 
+        self._motors          = None
         # attempt to find the gamepad ......................
         self._gamepad = None
         self._log.info('connecting gamepad...')
         self._gamepad_enabled = False
         self._log.info('ready.')
+
+    # ..........................................................................
+    def set_motors(self, motors):
+        self._motors = motors
 
     # ..........................................................................
     def _connect_gamepad(self):
@@ -185,6 +190,9 @@ class EventPublisher(Publisher):
                         elif och == 119: # 'w' toggle flood mode
                             self._toggle_flood()
                             continue
+                        elif och == 122: # 'z' toggle motors loop
+                            self._toggle_motors()
+                            continue
                         # otherwise handle as event
                         _event = self.get_event_for_char(och)
                         if _event is not None:
@@ -274,6 +282,18 @@ class EventPublisher(Publisher):
 #           await asyncio.sleep(3.0) # delay before starting flood loop
             self._flood_enable = True
             self._log.info('flood enabled: ' + Fore.YELLOW + 'type \'w\' to disable.')
+
+    # ..........................................................................
+    def _toggle_motors(self):
+        if self._motors:
+            self._log.info('toggle motors...')
+            if self._motors.loop_is_running():
+                self._motors.stop_loop()
+            else:
+                self._motors.start_loop()
+            self._log.info('🌸 loop is running? ' + Fore.YELLOW + '{}'.format(self._motors.loop_is_running()))
+        else:
+            self._log.warning('no motors available.')
 
     # ..........................................................................
     def disable(self):
@@ -406,7 +426,6 @@ class EventPublisher(Publisher):
 #        1         2         3         4         5         6         7         8         9         C         1         2
 #23456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
         self._log.info('''key map:
-
                                                                                                                     ┅━┳━━━━━━━━━┓
                                                                                                                       ┃   DEL   ┃
                                                                                                                       ┃ SHUTDWN ┃
@@ -418,10 +437,10 @@ class EventPublisher(Publisher):
         ┃ IR_PSID ┃ IR_PORT ┃ IR_CNTR ┃ IR_STBD ┃ IR_SSID ┃  HELP   ┃ BM_PORT ┃ BM_CNTR ┃ BM_STBD ┃ DE_PORT ┃ DE_STBD ┃  CLEAR  ┃
         ┗━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━━━━━━┛
              ┃    Z    ┃    X    ┃    C    ┃    V    ┃    B    ┃    N    ┃    M    ┃    <    ┃    >    ┃    ?    ┃
-             ┃         ┃         ┃         ┃ VERBOSE ┃  BRAKE  ┃  HALT   ┃  STOP   ┃ DE_VELO ┃ IN_VELO ┃  HELP   ┃
+             ┃ MOTORS  ┃         ┃         ┃ VERBOSE ┃  BRAKE  ┃  HALT   ┃  STOP   ┃ DE_VELO ┃ IN_VELO ┃  HELP   ┃
              ┗━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┛
 
-   QUIT:      quit application                IR_PSID:   port side infrared event
+   QUIT:      quit application                IR_PSID:   port side infrared event           MOTORS:    toggle motors thread
    FLOOD:     toggle flood publisher          IR_PORT:   port infrared event
    SNIFF:     tirgger SNIFF behaviour         IR_CNTR:   center infrared event
    ROAM:      trigger ROAM behaviour          IR_STBD:   starboard infrared event           VERBOSE:   toggle verbosity
@@ -475,7 +494,7 @@ class EventPublisher(Publisher):
            119   w      toggle flood mode with random messages
            120   x
            121   y *    sniff
-           122   z
+           122   z      toggle motors loop
            127   del    shut down
 
         * represents robot sensor or control input.
