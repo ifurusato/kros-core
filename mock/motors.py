@@ -96,7 +96,8 @@ class Motors(object):
         The display loop, which executes while the f_is_enabled flag is True.
         '''
         while f_is_enabled():
-            self._log.info('loop...')
+            self._log.info('velocity:\t' + Fore.RED   + 'port: {:d}\t'.format(self._port_motor.velocity) 
+                                         + Fore.GREEN + 'stbd: {:d}'.format(self._stbd_motor.velocity))
             time.sleep(1.0)
         self._log.info('exited display loop.')
 
