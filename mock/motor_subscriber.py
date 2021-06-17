@@ -40,6 +40,8 @@ class MotorSubscriber(Subscriber):
                 Event.INCREASE_STBD_VELOCITY, Event.DECREASE_STBD_VELOCITY,
                 Event.INCREASE_PORT_THETA, Event.DECREASE_PORT_THETA,
                 Event.INCREASE_STBD_THETA, Event.DECREASE_STBD_THETA,
+                Event.FULL_ASTERN, Event.HALF_ASTERN, Event.SLOW_ASTERN, Event.DEAD_SLOW_ASTERN,
+                Event.DEAD_SLOW_AHEAD, Event.SLOW_AHEAD, Event.HALF_AHEAD, Event.FULL_AHEAD,  
                 Event.DECREASE_VELOCITY, Event.INCREASE_VELOCITY, Event.HALT, Event.STOP, Event.BRAKE ]
         self._motors        = motors
         self._log.info('motor subscriber ready.')
@@ -84,13 +86,13 @@ class MotorSubscriber(Subscriber):
         elif _event is Event.STBD_THETA:
             pass       
         elif _event is Event.INCREASE_PORT_VELOCITY: # TODO
-            self._motors.velocity_event(_event)
+            self._motors.velocity_event(message.payload)
         elif _event is Event.DECREASE_PORT_VELOCITY: # TODO
-            self._motors.velocity_event(_event)
+            self._motors.velocity_event(message.payload)
         elif _event is Event.INCREASE_STBD_VELOCITY: # TODO
-            self._motors.velocity_event(_event)
+            self._motors.velocity_event(message.payload)
         elif _event is Event.DECREASE_STBD_VELOCITY: # TODO
-            self._motors.velocity_event(_event)
+            self._motors.velocity_event(message.payload)
         elif _event is Event.INCREASE_PORT_THETA: 
             pass       
         elif _event is Event.DECREASE_PORT_THETA:
@@ -100,15 +102,15 @@ class MotorSubscriber(Subscriber):
         elif _event is Event.DECREASE_STBD_THETA:
             pass       
         elif _event is Event.DECREASE_VELOCITY: 
-            self._motors.velocity_event(_event)
+            self._motors.velocity_event(message.payload)
         elif _event is Event.INCREASE_VELOCITY: 
-            self._motors.velocity_event(_event)
-        elif _event is Event.HALT: 
+            self._motors.velocity_event(message.payload)
+        elif _event.value >= 200 and _event.value <= 215:
+            self._motors.chadburn_event(_event)
+        elif _event.value >= 50 and _event.value <= 53:
             self._motors.stop_event(_event)
-        elif _event is Event.STOP: 
-            self._motors.stop_event(_event)
-        elif _event is Event.BRAKE:
-            self._motors.stop_event(_event)
+        else:
+            self._log.warning('un-processed message {}'.format(message.name) + ''.format(message.event.description))
         await super().process_message(message)
         self._log.info(self._color + Style.NORMAL + '💗 post-processing message {}'.format(message.name))
 

@@ -45,8 +45,8 @@ class Event(Enum):
     STOP                   = ( 50, "stop",                     12,    True)
     HALT                   = ( 51, "halt",                     13,   False)
     BRAKE                  = ( 52, "brake",                    14,   False)
-    BUTTON                 = ( 53, "button",                   15,   False)
-    STANDBY                = ( 54, "standby",                  16,   False)
+    STANDBY                = ( 53, "standby",                  15,   False)
+    BUTTON                 = ( 54, "button",                   16,   False)
 
     # bumper ...........................
     BUMPER_PORT            = ( 110, "bumper port",             40,    True)
@@ -59,20 +59,6 @@ class Event(Enum):
     INFRARED_CNTR          = ( 122, "infrared cntr",           50,    True)
     INFRARED_STBD          = ( 123, "infrared stbd",           50,    True)
     INFRARED_STBD_SIDE     = ( 124, "infrared stbd side",      50,    True)
-
-    # movement ahead ...................
-    FULL_AHEAD             = ( 140, "full ahead",             100,   False)
-    HALF_AHEAD             = ( 141, "half ahead",             100,   False)
-    SLOW_AHEAD             = ( 142, "slow ahead",             100,   False)
-    DEAD_SLOW_AHEAD        = ( 143, "dead slow ahead",        100,   False)
-    AHEAD                  = ( 144, "ahead",                  100,   False)
-
-    # movement astern ..................
-    ASTERN                 = ( 150, "astern",                 100,   False)
-    DEAD_SLOW_ASTERN       = ( 151, "dead slow astern",       100,   False)
-    SLOW_ASTERN            = ( 152, "slow astern",            100,   False)
-    HALF_ASTERN            = ( 153, "half astern",            100,   False)
-    FULL_ASTERN            = ( 154, "full astern",            100,   False)
 
     # relative change ..................
     INCREASE_VELOCITY      = ( 160, "increase velocity",      100,   False)
@@ -96,26 +82,40 @@ class Event(Enum):
     INCREASE_STBD_THETA    = ( 182, "increase stbd theta",    100,   False)
     DECREASE_STBD_THETA    = ( 183, "decrease stbd theta",    100,   False)
 
+    # chadburn event astern ............
+    FULL_ASTERN            = ( 201, "full astern",            100,   False)
+    HALF_ASTERN            = ( 202, "half astern",            100,   False)
+    SLOW_ASTERN            = ( 203, "slow astern",            100,   False)
+    DEAD_SLOW_ASTERN       = ( 204, "dead slow astern",       100,   False)
+    ASTERN                 = ( 205, "astern",                 100,   False) # with value
+
+    # chadburn event ahead .............
+    AHEAD                  = ( 211, "ahead",                  100,   False) # with value
+    DEAD_SLOW_AHEAD        = ( 212, "dead slow ahead",        100,   False)
+    SLOW_AHEAD             = ( 213, "slow ahead",             100,   False)
+    HALF_AHEAD             = ( 214, "half ahead",             100,   False)
+    FULL_AHEAD             = ( 215, "full ahead",             100,   False)
+
     # port turns .......................
-    TURN_AHEAD_PORT        = ( 200, "turn ahead port",        100,   False)
-    TURN_TO_PORT           = ( 201, "turn to port",           100,   False)
-    TURN_ASTERN_PORT       = ( 202, "turn astern port",       100,   False)
-    SPIN_PORT              = ( 203, "spin port",              100,   False)
+    TURN_AHEAD_PORT        = ( 220, "turn ahead port",        100,   False)
+    TURN_TO_PORT           = ( 221, "turn to port",           100,   False)
+    TURN_ASTERN_PORT       = ( 222, "turn astern port",       100,   False)
+    SPIN_PORT              = ( 223, "spin port",              100,   False)
 
     # starboard turns ..................
-    SPIN_STBD              = ( 210, "spin stbd",              100,   False)
-    TURN_ASTERN_STBD       = ( 211, "turn astern stbd",       100,   False)
-    TURN_TO_STBD           = ( 212, "turn to stbd",           100,   False)
-    TURN_AHEAD_STBD        = ( 213, "turn ahead stbd",        100,   False)
+    SPIN_STBD              = ( 230, "spin stbd",              100,   False)
+    TURN_ASTERN_STBD       = ( 231, "turn astern stbd",       100,   False)
+    TURN_TO_STBD           = ( 232, "turn to stbd",           100,   False)
+    TURN_AHEAD_STBD        = ( 233, "turn ahead stbd",        100,   False)
 
     # high level behaviours ............
-    ROAM                   = ( 300, "roam",                   100,   False)
-    SNIFF                  = ( 301, "sniff",                  100,    True) # A Button
-    VIDEO                  = ( 302, "video",                  150,   False) # L1 Button
-    EVENT_L2               = ( 303, "L2",                     150,   False) # L2 Button
-    EVENT_R1               = ( 304, "cruise",                 150,   False) # R1 Button
-    LIGHTS                 = ( 305, "lights",                 150,   False) # R2 Button
-    MOTION_DETECT          = ( 306, "motion detect",          150,   False)
+    ROAM                   = ( 400, "roam",                   100,   False)
+    SNIFF                  = ( 401, "sniff",                  100,    True) # A Button
+    VIDEO                  = ( 402, "video",                  150,   False) # L1 Button
+    EVENT_L2               = ( 403, "L2",                     150,   False) # L2 Button
+    EVENT_R1               = ( 404, "cruise",                 150,   False) # R1 Button
+    LIGHTS                 = ( 405, "lights",                 150,   False) # R2 Button
+    MOTION_DETECT          = ( 406, "motion detect",          150,   False)
 
     # other behaviours (> 500) .........
     NO_ACTION              = ( 500, "no action",              500,   False)

@@ -291,7 +291,7 @@ class EventPublisher(Publisher):
                 self._motors.stop_loop()
             else:
                 self._motors.start_loop()
-            self._log.info('🌸 loop is running? ' + Fore.YELLOW + '{}'.format(self._motors.loop_is_running()))
+            self._log.debug('loop is running? ' + Fore.YELLOW + '{}'.format(self._motors.loop_is_running()))
         else:
             self._log.warning('no motors available.')
 
@@ -391,7 +391,7 @@ class EventPublisher(Publisher):
             if self._triggered_ir_stbd_side < self._limit:
                 self._triggered_ir_stbd_side += 1
         else:
-            self._log.info(Fore.BLACK + Style.BRIGHT + 'other event: {}'.format(_event.description))
+            self._log.debug(Fore.BLACK + Style.BRIGHT + 'other event: {}'.format(_event.description))
 
     # ......................................................
     def _print_event(self, color, event, value):
@@ -423,35 +423,35 @@ class EventPublisher(Publisher):
 
     # ..........................................................................
     def print_help(self):
-#        1         2         3         4         5         6         7         8         9         C         1         2
-#23456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
+#        1         2         3         4         5         6         7         8         9         C         1         2         3         4
+#2345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
         self._log.info('''key map:
-                                                                                                                    ┅━┳━━━━━━━━━┓
-                                                                                                                      ┃   DEL   ┃
-                                                                                                                      ┃ SHUTDWN ┃
-   ┏━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━┻━━━━┳━━━━┛
-   ┃    Q    ┃    W    ┃    E    ┃    R    ┃    T    ┃    Y    ┃    U    ┃    I    ┃    O    ┃    P    ┃    [    ┃    ]    ┃
-   ┃  QUIT   ┃  FLOOD  ┃ GAMEPAD ┃  ROAM   ┃  NOOP   ┃  SNIFF  ┃         ┃  INFO   ┃ CLR TSK ┃ POP_MSG ┃ IN_PORT ┃ IN_STBD ┃
-   ┗━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┓
-        ┃    A    ┃    S    ┃    D    ┃    F    ┃    G    ┃    H    ┃    J    ┃    K    ┃    L    ┃    :    ┃    "    ┃   RET   ┃
-        ┃ IR_PSID ┃ IR_PORT ┃ IR_CNTR ┃ IR_STBD ┃ IR_SSID ┃  HELP   ┃ BM_PORT ┃ BM_CNTR ┃ BM_STBD ┃ DE_PORT ┃ DE_STBD ┃  CLEAR  ┃
-        ┗━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━━━━━━┛
-             ┃    Z    ┃    X    ┃    C    ┃    V    ┃    B    ┃    N    ┃    M    ┃    <    ┃    >    ┃    ?    ┃
-             ┃ MOTORS  ┃         ┃         ┃ VERBOSE ┃  BRAKE  ┃  HALT   ┃  STOP   ┃ DE_VELO ┃ IN_VELO ┃  HELP   ┃
-             ┗━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┛
-
-   QUIT:      quit application                IR_PSID:   port side infrared event           MOTORS:    toggle motors thread
-   FLOOD:     toggle flood publisher          IR_PORT:   port infrared event
-   SNIFF:     tirgger SNIFF behaviour         IR_CNTR:   center infrared event
-   ROAM:      trigger ROAM behaviour          IR_STBD:   starboard infrared event           VERBOSE:   toggle verbosity
-   NOOP:      no operation event              IR_SSID:   starboard side infrared event      BRAKE:     brake motors
-   INFO:      print system information        HELP:      print help                         HALT:      halt motors
-   CLR_TSK:   clear completed tasks           BM_PORT:   port bumper                        STOP:      stop motors
-   POP_MSG:   pop messages from queue         BM_CNTR:   center bumper                      DE_VELO:   decrease velocity
-   IN_PORT:   increase port velocity          BM_STBD:   starboard bumper                   IN_VELO:   increase velocity
-   IN_STBD:   increase starboard velocity     DE_PORT:   decrease port velocity             HELP:      print help
-   SHUTDOWN:  shut down robot                 DE_STBD:   decrease starboard velocity
-                                              CLEAR:     clear window
+  ┏━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┓
+  ┃    1    ┃    2    ┃    3    ┃    4    ┃    5    ┃    6    ┃    7    ┃    8    ┃    9    ┃    0    ┃    -    ┃    +    ┃   DEL   ┃
+  ┃ FUL AST ┃ HAF AST ┃ SLO AST ┃ DSL AST ┃  STOP   ┃ DSL AHD ┃ SLO AHD ┃ HAF AHD ┃ FUL AHD ┃  HALT   ┃  BRAKE  ┃         ┃ SHUTDWN ┃
+  ┗━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┛
+       ┃    Q    ┃    W    ┃    E    ┃    R    ┃    T    ┃    Y    ┃    U    ┃    I    ┃    O    ┃    P    ┃    [    ┃    ]    ┃
+       ┃  QUIT   ┃  FLOOD  ┃ GAMEPAD ┃  ROAM   ┃  NOOP   ┃  SNIFF  ┃         ┃  INFO   ┃ CLR TSK ┃ POP_MSG ┃ IN_PORT ┃ IN_STBD ┃
+       ┗━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┓
+            ┃    A    ┃    S    ┃    D    ┃    F    ┃    G    ┃    H    ┃    J    ┃    K    ┃    L    ┃    :    ┃    "    ┃   RET   ┃
+            ┃ IR_PSID ┃ IR_PORT ┃ IR_CNTR ┃ IR_STBD ┃ IR_SSID ┃  HELP   ┃ BM_PORT ┃ BM_CNTR ┃ BM_STBD ┃ DE_PORT ┃ DE_STBD ┃  CLEAR  ┃
+            ┗━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━━━━━━┛
+                 ┃    Z    ┃    X    ┃    C    ┃    V    ┃    B    ┃    N    ┃    M    ┃    <    ┃    >    ┃    ?    ┃
+                 ┃ MOTORS  ┃         ┃         ┃ VERBOSE ┃         ┃         ┃         ┃ DE_VELO ┃ IN_VELO ┃  HELP   ┃
+                 ┗━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┛
+    
+  FUL AST:   full astern        QUIT:     quit application              IR_PSID:  port side infrared            MOTORS:   toggle motors
+  HAF AST:   half astern        FLOOD:    toggle flood publisher        IR_PORT:  port infrared      
+  SLO AST:   slow astern        SNIFF:    tirgger SNIFF behaviour       IR_CNTR:  center infrared      
+  DSL AST:   dead slow astern   ROAM:     trigger ROAM behaviour        IR_STBD:  starboard infrared            VERBOSE:  toggle verbosity
+  STOP:      stop               NOOP:     no operation event            IR_SSID:  starboard side infrared        
+  DSL AHD:   dead slow ahead    INFO:     print system information      HELP:     print help                    
+  SLO AHD:   slow ahead         CLR_TSK:  clear completed tasks         BM_PORT:  port bumper                    
+  HAF AHD:   half ahead         POP_MSG:  pop messages from queue       BM_CNTR:  center bumper                 DE_VELO:  decrease velocity
+  FUL AHD:   full ahead         IN_PORT:  increase port velocity        BM_STBD:  starboard bumper              IN_VELO:  increase velocity
+  HALT:      halt               IN_STBD:  increase starboard velocity   DE_PORT:  decrease port velocity        HELP:     print help
+  BRAKE:     brake                                                      DE_STBD:  decrease starboard velocity
+  SHUTDOWN:  shut down robot                                            CLEAR:    clear window
         ''')
 
     # ..........................................................................
@@ -499,9 +499,30 @@ class EventPublisher(Publisher):
 
         * represents robot sensor or control input.
         '''
-
         if och   == 39:  # ' decrease stbd velocity
             return Event.DECREASE_STBD_VELOCITY
+        elif och == 45:  # - break
+            return Event.BRAKE
+        elif och == 48:  # 0 halt
+            return Event.HALT
+        elif och == 49:  # 1 full astern
+            return Event.FULL_ASTERN
+        elif och == 50:  # 2 half astern
+            return Event.HALF_ASTERN
+        elif och == 51:  # 3 slow astern
+            return Event.SLOW_ASTERN
+        elif och == 52:  # 4 dead slow astern
+            return Event.DEAD_SLOW_ASTERN 
+        elif och == 53:  # 5 stop
+            return Event.STOP
+        elif och == 54:  # 6 dead slow ahead
+            return Event.DEAD_SLOW_AHEAD
+        elif och == 55:  # 7 slow ahead
+            return Event.SLOW_AHEAD    
+        elif och == 56:  # 8 half ahead
+            return Event.HALF_AHEAD   
+        elif och == 57:  # 9 full ahead
+            return Event.FULL_AHEAD  
         elif och == 59:  # . decrease port velocity
             return Event.DECREASE_PORT_VELOCITY
         elif och == 44:  # , decrease velocity
@@ -514,8 +535,8 @@ class EventPublisher(Publisher):
             return Event.INCREASE_STBD_VELOCITY
         elif och == 97:  # a
             return Event.INFRARED_PORT_SIDE
-        elif och == 98:  # b
-            return Event.BRAKE
+#       elif och == 98:  # b
+#           return Event.BRAKE
         elif och == 100: # d
             return Event.INFRARED_CNTR
         elif och == 102: # f
@@ -528,10 +549,10 @@ class EventPublisher(Publisher):
             return Event.BUMPER_CNTR
         elif och == 108: # l
             return Event.BUMPER_STBD
-        elif och == 109: # m
-            return Event.STOP
-        elif och == 110: # h
-            return Event.HALT
+#       elif och == 109: # m
+#           return Event.STOP
+#       elif och == 110: # h
+#           return Event.HALT
         elif och == 114: # r
             return Event.ROAM
         elif och == 115: # s
