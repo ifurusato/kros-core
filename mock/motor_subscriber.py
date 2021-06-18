@@ -34,16 +34,18 @@ class MotorSubscriber(Subscriber):
     '''
     def __init__(self, name, message_bus, motors, color=Fore.MAGENTA, level=Level.INFO):
         super().__init__(name, message_bus, color, level)
-        self.events = [ Event.VELOCITY, Event.THETA,
+        self._motors = motors
+        self.events = [ Event.VELOCITY, Event.THETA, Event.EVEN,
                 Event.PORT_VELOCITY, Event.PORT_THETA, Event.STBD_VELOCITY, Event.STBD_THETA,
                 Event.INCREASE_PORT_VELOCITY, Event.DECREASE_PORT_VELOCITY,
                 Event.INCREASE_STBD_VELOCITY, Event.DECREASE_STBD_VELOCITY,
                 Event.INCREASE_PORT_THETA, Event.DECREASE_PORT_THETA,
                 Event.INCREASE_STBD_THETA, Event.DECREASE_STBD_THETA,
+                Event.TURN_AHEAD_PORT, Event.TURN_TO_PORT, Event.TURN_ASTERN_PORT, Event.SPIN_PORT,
+                Event.SPIN_STBD, Event.TURN_ASTERN_STBD, Event.TURN_TO_STBD, Event.TURN_AHEAD_STBD,
                 Event.FULL_ASTERN, Event.HALF_ASTERN, Event.SLOW_ASTERN, Event.DEAD_SLOW_ASTERN,
                 Event.DEAD_SLOW_AHEAD, Event.SLOW_AHEAD, Event.HALF_AHEAD, Event.FULL_AHEAD,  
                 Event.DECREASE_VELOCITY, Event.INCREASE_VELOCITY, Event.HALT, Event.STOP, Event.BRAKE ]
-        self._motors        = motors
         self._log.info('motor subscriber ready.')
 
     # ..........................................................................
@@ -70,48 +72,18 @@ class MotorSubscriber(Subscriber):
         if message.gcd:
             raise GarbageCollectedError('cannot process message: message has been garbage collected. [3]')
         _event = message.event
-        self._log.info(self._color + Style.NORMAL + '💗 pre-processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.description) + Style.RESET_ALL)
-        if _event is Event.BUMPER_PORT:
-            pass       
-        elif _event is Event.VELOCITY: 
-            pass       
-        elif _event is Event.THETA:
-            pass       
-        elif _event is Event.PORT_VELOCITY: 
-            pass       
-        elif _event is Event.PORT_THETA: 
-            pass       
-        elif _event is Event.STBD_VELOCITY: 
-            pass       
-        elif _event is Event.STBD_THETA:
-            pass       
-        elif _event is Event.INCREASE_PORT_VELOCITY: # TODO
-            self._motors.velocity_event(message.payload)
-        elif _event is Event.DECREASE_PORT_VELOCITY: # TODO
-            self._motors.velocity_event(message.payload)
-        elif _event is Event.INCREASE_STBD_VELOCITY: # TODO
-            self._motors.velocity_event(message.payload)
-        elif _event is Event.DECREASE_STBD_VELOCITY: # TODO
-            self._motors.velocity_event(message.payload)
-        elif _event is Event.INCREASE_PORT_THETA: 
-            pass       
-        elif _event is Event.DECREASE_PORT_THETA:
-            pass       
-        elif _event is Event.INCREASE_STBD_THETA: 
-            pass       
-        elif _event is Event.DECREASE_STBD_THETA:
-            pass       
-        elif _event is Event.DECREASE_VELOCITY: 
-            self._motors.velocity_event(message.payload)
-        elif _event is Event.INCREASE_VELOCITY: 
-            self._motors.velocity_event(message.payload)
-        elif _event.value >= 200 and _event.value <= 215:
-            self._motors.chadburn_event(_event)
-        elif _event.value >= 50 and _event.value <= 53:
-            self._motors.stop_event(_event)
+        self._log.info('pre-processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.description) + Style.RESET_ALL)
+        if _event.value >= 50 and _event.value <= 53:
+            self._motors.dispatch_stop_event(_event)
+        elif _event.value >= 200 and _event.value <= 299:
+            self._motors.dispatch_velocity_event(message.payload)
+        elif _event.value >= 300 and _event.value <= 399:
+            self._motors.dispatch_theta_event(_event)
+        elif _event.value >= 400 and _event.value <= 499:
+            self._motors.dispatch_chadburn_event(_event)
         else:
-            self._log.warning('un-processed message {}'.format(message.name) + ''.format(message.event.description))
+            self._log.warning('unrecognised message {}'.format(message.name) + ''.format(message.event.description))
         await super().process_message(message)
-        self._log.info(self._color + Style.NORMAL + '💗 post-processing message {}'.format(message.name))
+        self._log.debug('post-processing message {}'.format(message.name))
 
 #EOF

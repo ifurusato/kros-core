@@ -97,12 +97,12 @@ class MessageBus(object):
                     _tasks.remove(_task)
                 else:
                     self._log.debug('incomplete task:\t' + Fore.BLUE + '{}'.format(_task.get_name()))
-            if self._log.is_at_least(Level.INFO):
-                self._log.info('{:d} task{} remain{}.'.format(len(_tasks),
+            if self._log.is_at_least(Level.DEBUG):
+                self._log.debug('{:d} task{} remain{}.'.format(len(_tasks),
                         ('' if len(_tasks) == 1 else 's'),
                         ('s' if len(_tasks) == 1 else '')))
                 for _task in _tasks:
-                    self._log.info('unfinished task:\t' + Fore.BLUE + '{}...'.format(_task.get_name()))
+                    self._log.debug('unfinished task:\t' + Fore.BLUE + '{}...'.format(_task.get_name()))
 
     # ..........................................................................
     @property

@@ -28,99 +28,93 @@ class Event(Enum):
     permit interruptions from *higher* priority events.
     '''
     # name                     n   description             priority  ballistic?
-    # system events ....................
+    # system events .......................................................
     NOOP                   = ( 0, "no operation",          1000,     False)
-
-    # emergency events .................
     BATTERY_LOW            = ( 10, "battery low",               1,    True)
     SHUTDOWN               = ( 11, "shutdown",                  1,    True)
     HIGH_TEMPERATURE       = ( 12, "high temperature",          1,   False)
     COLLISION_DETECT       = ( 13, "collision detect",          2,   False)
     EMERGENCY_ASTERN       = ( 14, "emergency astern",          2,    True)
 
-    # gamepad events ...................
-    GAMEPAD                = ( 20, "gamepad",                  10,   False)
+    # gamepad events ......................................................
+    GAMEPAD                = ( 40, "gamepad",                  10,   False)
 
-    # stopping and halting .............
+    # stopping and halting ................................................
     STOP                   = ( 50, "stop",                     12,    True)
     HALT                   = ( 51, "halt",                     13,   False)
     BRAKE                  = ( 52, "brake",                    14,   False)
     STANDBY                = ( 53, "standby",                  15,   False)
     BUTTON                 = ( 54, "button",                   16,   False)
 
-    # bumper ...........................
+    # bumper ..............................................................
     BUMPER_PORT            = ( 110, "bumper port",             40,    True)
     BUMPER_CNTR            = ( 111, "bumper center",           40,    True)
     BUMPER_STBD            = ( 112, "bumper stbd",             40,    True)
 
-    # infrared .........................
+    # infrared ............................................................
     INFRARED_PORT_SIDE     = ( 120, "infrared port side",      50,    True)
     INFRARED_PORT          = ( 121, "infrared port",           50,    True)
     INFRARED_CNTR          = ( 122, "infrared cntr",           50,    True)
     INFRARED_STBD          = ( 123, "infrared stbd",           50,    True)
     INFRARED_STBD_SIDE     = ( 124, "infrared stbd side",      50,    True)
 
-    # relative change ..................
-    INCREASE_VELOCITY      = ( 160, "increase velocity",      100,   False)
-    EVEN                   = ( 161, "even",                   100,   False)
-    DECREASE_VELOCITY      = ( 162, "decrease velocity",      100,   False)
+    # velocity directives .................................................
+    VELOCITY               = ( 200, "velocity",               100,   False) # with value
+    PORT_VELOCITY          = ( 201, "port velocity",          100,   False) # with value
+    STBD_VELOCITY          = ( 202, "stbd velocity",          100,   False) # with value
+    INCREASE_PORT_VELOCITY = ( 203, "increase port velocity", 100,   False)
+    DECREASE_PORT_VELOCITY = ( 204, "decrease port velocity", 100,   False)
+    INCREASE_STBD_VELOCITY = ( 205, "increase stbd velocity", 100,   False)
+    DECREASE_STBD_VELOCITY = ( 206, "decrease stbd velocity", 100,   False)
+    INCREASE_VELOCITY      = ( 220, "increase velocity",      100,   False)
+    DECREASE_VELOCITY      = ( 221, "decrease velocity",      100,   False)
 
-    # movement directives ..............
-    VELOCITY               = ( 170, "velocity",               100,   False)
-    THETA                  = ( 171, "theta",                  100,   False)
-    PORT_VELOCITY          = ( 172, "port velocity",          100,   False)
-    PORT_THETA             = ( 173, "port theta",             100,   False)
-    STBD_VELOCITY          = ( 174, "stbd velocity",          100,   False)
-    STBD_THETA             = ( 175, "stbd theta",             100,   False)
-
-    INCREASE_PORT_VELOCITY = ( 176, "increase port velocity", 100,   False)
-    DECREASE_PORT_VELOCITY = ( 177, "decrease port velocity", 100,   False)
-    INCREASE_STBD_VELOCITY = ( 178, "increase stbd velocity", 100,   False)
-    DECREASE_STBD_VELOCITY = ( 179, "decrease stbd velocity", 100,   False)
-    INCREASE_PORT_THETA    = ( 180, "increase port theta",    100,   False)
-    DECREASE_PORT_THETA    = ( 181, "decrease port theta",    100,   False)
-    INCREASE_STBD_THETA    = ( 182, "increase stbd theta",    100,   False)
-    DECREASE_STBD_THETA    = ( 183, "decrease stbd theta",    100,   False)
+    # theta directives ....................................................
+    THETA                  = ( 300, "theta",                  100,   False) # with value
+    PORT_THETA             = ( 301, "port theta",             100,   False)
+    STBD_THETA             = ( 302, "stbd theta",             100,   False)
+    EVEN                   = ( 303, "even",                   100,   False)
+    INCREASE_PORT_THETA    = ( 304, "increase port theta",    100,   False)
+    DECREASE_PORT_THETA    = ( 305, "decrease port theta",    100,   False)
+    INCREASE_STBD_THETA    = ( 306, "increase stbd theta",    100,   False)
+    DECREASE_STBD_THETA    = ( 307, "decrease stbd theta",    100,   False)
+    # port turns .......................
+    TURN_AHEAD_PORT        = ( 310, "turn ahead port",        100,   False)
+    TURN_TO_PORT           = ( 311, "turn to port",           100,   False)
+    TURN_ASTERN_PORT       = ( 312, "turn astern port",       100,   False)
+    SPIN_PORT              = ( 313, "spin port",              100,   False)
+    # starboard turns ..................
+    SPIN_STBD              = ( 320, "spin stbd",              100,   False)
+    TURN_ASTERN_STBD       = ( 321, "turn astern stbd",       100,   False)
+    TURN_TO_STBD           = ( 322, "turn to stbd",           100,   False)
+    TURN_AHEAD_STBD        = ( 323, "turn ahead stbd",        100,   False)
 
     # chadburn event astern ............
-    FULL_ASTERN            = ( 201, "full astern",            100,   False)
-    HALF_ASTERN            = ( 202, "half astern",            100,   False)
-    SLOW_ASTERN            = ( 203, "slow astern",            100,   False)
-    DEAD_SLOW_ASTERN       = ( 204, "dead slow astern",       100,   False)
-    ASTERN                 = ( 205, "astern",                 100,   False) # with value
-
+    FULL_ASTERN            = ( 300, "full astern",            100,   False)
+    HALF_ASTERN            = ( 301, "half astern",            100,   False)
+    SLOW_ASTERN            = ( 302, "slow astern",            100,   False)
+    DEAD_SLOW_ASTERN       = ( 303, "dead slow astern",       100,   False)
+    ASTERN                 = ( 304, "astern",                 100,   False) # with value
     # chadburn event ahead .............
-    AHEAD                  = ( 211, "ahead",                  100,   False) # with value
-    DEAD_SLOW_AHEAD        = ( 212, "dead slow ahead",        100,   False)
-    SLOW_AHEAD             = ( 213, "slow ahead",             100,   False)
-    HALF_AHEAD             = ( 214, "half ahead",             100,   False)
-    FULL_AHEAD             = ( 215, "full ahead",             100,   False)
-
-    # port turns .......................
-    TURN_AHEAD_PORT        = ( 220, "turn ahead port",        100,   False)
-    TURN_TO_PORT           = ( 221, "turn to port",           100,   False)
-    TURN_ASTERN_PORT       = ( 222, "turn astern port",       100,   False)
-    SPIN_PORT              = ( 223, "spin port",              100,   False)
-
-    # starboard turns ..................
-    SPIN_STBD              = ( 230, "spin stbd",              100,   False)
-    TURN_ASTERN_STBD       = ( 231, "turn astern stbd",       100,   False)
-    TURN_TO_STBD           = ( 232, "turn to stbd",           100,   False)
-    TURN_AHEAD_STBD        = ( 233, "turn ahead stbd",        100,   False)
+    AHEAD                  = ( 310, "ahead",                  100,   False) # with value
+    DEAD_SLOW_AHEAD        = ( 311, "dead slow ahead",        100,   False)
+    SLOW_AHEAD             = ( 312, "slow ahead",             100,   False)
+    HALF_AHEAD             = ( 313, "half ahead",             100,   False)
+    FULL_AHEAD             = ( 314, "full ahead",             100,   False)
 
     # high level behaviours ............
-    ROAM                   = ( 400, "roam",                   100,   False)
-    SNIFF                  = ( 401, "sniff",                  100,    True) # A Button
-    VIDEO                  = ( 402, "video",                  150,   False) # L1 Button
-    EVENT_L2               = ( 403, "L2",                     150,   False) # L2 Button
-    EVENT_R1               = ( 404, "cruise",                 150,   False) # R1 Button
-    LIGHTS                 = ( 405, "lights",                 150,   False) # R2 Button
-    MOTION_DETECT          = ( 406, "motion detect",          150,   False)
+    ROAM                   = ( 500, "roam",                   100,   False)
+    SNIFF                  = ( 501, "sniff",                  100,    True) # A Button
+    VIDEO                  = ( 502, "video",                  150,   False) # L1 Button
+    EVENT_L2               = ( 503, "L2",                     150,   False) # L2 Button
+    EVENT_R1               = ( 504, "cruise",                 150,   False) # R1 Button
+    LIGHTS                 = ( 505, "lights",                 150,   False) # R2 Button
+    MOTION_DETECT          = ( 506, "motion detect",          150,   False)
 
     # other behaviours (> 500) .........
-    NO_ACTION              = ( 500, "no action",              500,   False)
-    CLOCK_TICK             = ( 501, "tick",                   500,   False)
-    CLOCK_TOCK             = ( 502, "tock",                   500,   False)
+    NO_ACTION              = ( 600, "no action",              500,   False)
+    CLOCK_TICK             = ( 601, "tick",                   500,   False)
+    CLOCK_TOCK             = ( 602, "tock",                   500,   False)
 
     @property
     def is_ignoreable(self):

@@ -10,13 +10,9 @@
 # modified: 2020-03-12
 #
 
-#import itertools
 from datetime import datetime as dt
-
 from colorama import init, Fore, Style
 init()
-
-# ..............
 
 from core.logger import Logger, Level
 from core.message import Message
@@ -30,7 +26,6 @@ class MessageFactory(object):
     def __init__(self, message_bus=None, level=Level.INFO):
         self._log = Logger("msgfactory", level)
         self._message_bus = message_bus
-#       self._counter = itertools.count()
         self._log.info('ready.')
 
     # ..........................................................................

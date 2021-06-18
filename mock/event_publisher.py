@@ -429,7 +429,7 @@ class EventPublisher(Publisher):
 
   ┏━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┓
   ┃    1    ┃    2    ┃    3    ┃    4    ┃    5    ┃    6    ┃    7    ┃    8    ┃    9    ┃    0    ┃    -    ┃    +    ┃   DEL   ┃
-  ┃ FUL AST ┃ HAF AST ┃ SLO AST ┃ DSL AST ┃  STOP   ┃ DSL AHD ┃ SLO AHD ┃ HAF AHD ┃ FUL AHD ┃  HALT   ┃  BRAKE  ┃         ┃ SHUTDWN ┃
+  ┃ FUL AST ┃ HAF AST ┃ SLO AST ┃ DSL AST ┃  STOP   ┃ DSL AHD ┃ SLO AHD ┃ HAF AHD ┃ FUL AHD ┃  HALT   ┃  BRAKE  ┃  EVEN   ┃ SHUTDWN ┃
   ┗━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┛
        ┃    Q    ┃    W    ┃    E    ┃    R    ┃    T    ┃    Y    ┃    U    ┃    I    ┃    O    ┃    P    ┃    [    ┃    ]    ┃
        ┃  QUIT   ┃  FLOOD  ┃ GAMEPAD ┃  ROAM   ┃  NOOP   ┃  SNIFF  ┃         ┃  INFO   ┃ CLR TSK ┃ POP_MSG ┃ IN_PORT ┃ IN_STBD ┃
@@ -438,21 +438,22 @@ class EventPublisher(Publisher):
             ┃ IR_PSID ┃ IR_PORT ┃ IR_CNTR ┃ IR_STBD ┃ IR_SSID ┃  HELP   ┃ BM_PORT ┃ BM_CNTR ┃ BM_STBD ┃ DE_PORT ┃ DE_STBD ┃  CLEAR  ┃
             ┗━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━━━━━━┛
                  ┃    Z    ┃    X    ┃    C    ┃    V    ┃    B    ┃    N    ┃    M    ┃    <    ┃    >    ┃    ?    ┃
-                 ┃ MOTORS  ┃         ┃         ┃ VERBOSE ┃         ┃         ┃         ┃ DE_VELO ┃ IN_VELO ┃  HELP   ┃
+                 ┃ MOTORS  ┃ SP_PORT ┃ TN_PORT ┃ VERBOSE ┃ TN_STBD ┃ SP_STBD ┃         ┃ DE_VELO ┃ IN_VELO ┃  HELP   ┃
                  ┗━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┛
     
   FUL AST:   full astern        QUIT:     quit application              IR_PSID:  port side infrared            MOTORS:   toggle motors
-  HAF AST:   half astern        FLOOD:    toggle flood publisher        IR_PORT:  port infrared      
-  SLO AST:   slow astern        SNIFF:    tirgger SNIFF behaviour       IR_CNTR:  center infrared      
+  HAF AST:   half astern        FLOOD:    toggle flood publisher        IR_PORT:  port infrared                 SP_PORT:  spin port
+  SLO AST:   slow astern        SNIFF:    tirgger SNIFF behaviour       IR_CNTR:  center infrared               TN_PORT:  turn to port
   DSL AST:   dead slow astern   ROAM:     trigger ROAM behaviour        IR_STBD:  starboard infrared            VERBOSE:  toggle verbosity
-  STOP:      stop               NOOP:     no operation event            IR_SSID:  starboard side infrared        
-  DSL AHD:   dead slow ahead    INFO:     print system information      HELP:     print help                    
+  STOP:      stop               NOOP:     no operation event            IR_SSID:  starboard side infrared       TN_STBD:  turn to starboard 
+  DSL AHD:   dead slow ahead    INFO:     print system information      HELP:     print help                    SP_STBD:  spin starboard
   SLO AHD:   slow ahead         CLR_TSK:  clear completed tasks         BM_PORT:  port bumper                    
   HAF AHD:   half ahead         POP_MSG:  pop messages from queue       BM_CNTR:  center bumper                 DE_VELO:  decrease velocity
   FUL AHD:   full ahead         IN_PORT:  increase port velocity        BM_STBD:  starboard bumper              IN_VELO:  increase velocity
   HALT:      halt               IN_STBD:  increase starboard velocity   DE_PORT:  decrease port velocity        HELP:     print help
   BRAKE:     brake                                                      DE_STBD:  decrease starboard velocity
-  SHUTDOWN:  shut down robot                                            CLEAR:    clear window
+  EVEN:      even velocity, port and stbd motors
+  SHUTDOWN:  shut down robot
         ''')
 
     # ..........................................................................
@@ -467,12 +468,13 @@ class EventPublisher(Publisher):
             44   , *    decrease velocity
             46   . *    increase velocity
             47   /      help
+            61   + *    even velocity
             91   [ *    increase port velocity
             93   ] *    increase stbd velocity
 
             97   a *    port side infrared
-            98   b *    brake
-            99   c
+            98   b *    turn to stbd
+            99   c *    turn to port
            100   d *    cntr infrared
            101   e      gamepad
            102   f *    stbd infrared
@@ -482,8 +484,8 @@ class EventPublisher(Publisher):
            106   j *    port bumper
            107   k *    cntr bumper
            108   l *    stbd bumper
-           109   m *    stop
-           110   n *    halt
+           109   m 
+           110   n *    spin stbd
            111   o      clear task list
            112   p      pop message
            113   q
@@ -493,7 +495,7 @@ class EventPublisher(Publisher):
            117   u
            118   v      verbose
            119   w      toggle flood mode with random messages
-           120   x
+           120   x *    spin port
            121   y *    sniff
            122   z      toggle motors loop
            127   del    shut down
@@ -502,8 +504,12 @@ class EventPublisher(Publisher):
         '''
         if och   == 39:  # ' decrease stbd velocity
             return Event.DECREASE_STBD_VELOCITY
+        elif och == 44:  # , decrease velocity
+            return Event.DECREASE_VELOCITY
         elif och == 45:  # - break
             return Event.BRAKE
+        elif och == 46:  # . increase port velocity
+            return Event.INCREASE_VELOCITY
         elif och == 48:  # 0 halt
             return Event.HALT
         elif och == 49:  # 1 full astern
@@ -526,18 +532,18 @@ class EventPublisher(Publisher):
             return Event.FULL_AHEAD  
         elif och == 59:  # . decrease port velocity
             return Event.DECREASE_PORT_VELOCITY
-        elif och == 44:  # , decrease velocity
-            return Event.DECREASE_VELOCITY
-        elif och == 46:  # . increase port velocity
-            return Event.INCREASE_VELOCITY
+        elif och == 61:  # + even
+            return Event.EVEN  
         elif och == 91:  # [ increase port velocity
             return Event.INCREASE_PORT_VELOCITY
         elif och == 93:  # . increase stbd velocity
             return Event.INCREASE_STBD_VELOCITY
         elif och == 97:  # a
             return Event.INFRARED_PORT_SIDE
-#       elif och == 98:  # b
-#           return Event.BRAKE
+        elif och == 98:  # b
+            return Event.TURN_TO_STBD
+        elif och == 99:  # c
+            return Event.TURN_TO_PORT
         elif och == 100: # d
             return Event.INFRARED_CNTR
         elif och == 102: # f
@@ -552,14 +558,16 @@ class EventPublisher(Publisher):
             return Event.BUMPER_STBD
 #       elif och == 109: # m
 #           return Event.STOP
-#       elif och == 110: # h
-#           return Event.HALT
+        elif och == 110: # n
+            return Event.SPIN_STBD
         elif och == 114: # r
             return Event.ROAM
         elif och == 115: # s
             return Event.INFRARED_PORT
         elif och == 116: # s
             return Event.NOOP
+        elif och == 120: # x
+            return Event.SPIN_PORT
         elif och == 121: # y
             return Event.SNIFF
         elif och == 127: # del
