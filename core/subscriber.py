@@ -127,15 +127,14 @@ class Subscriber(object):
         if not _ackd and self.acceptable(_peeked_message):
 
             _event = asyncio.Event()
-            self._log.debug(Fore.RED + 'begin event tracking for message:' + Fore.WHITE + ' {}; event: {}'.format(_peeked_message.name, _peeked_message.event.description))
+            self._log.debug(Fore.RED + 'begin event tracking for message:' + Fore.WHITE 
+                    + ' {}; event: {}'.format(_peeked_message.name, _peeked_message.event.description))
 
             # acknowledge we've seen the message
-#           self._log.debug(self._color + Style.DIM + 'acknowledging accepted message:' \
-#                   + Fore.WHITE + ' {}; event: {}'.format(_peeked_message.name, _peeked_message.event.description))
             _peeked_message.acknowledge(self)
 
             # this subscriber accepts this message and hasn't seen it before so consume and handle the message
-            self._log.debug(self._color + Style.DIM + 'waiting to consume acceptable message:' \
+            self._log.debug(self._color + Style.DIM + 'waiting to consume acceptable message:'
                     + Fore.WHITE + ' {}; event: {}'.format(_peeked_message.name, _peeked_message.event.description))
 
             _message = await self._message_bus.consume_message()
@@ -145,12 +144,9 @@ class Subscriber(object):
                     + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
 
             # handle acceptable message
-#           self._message_bus.add_task(asyncio.create_task(self.handle_message(_message, _event), name='{}:handle-message-{}'.format(self.name, _message.name)))
-
             if self._message_bus.verbose:
                 _elapsed_ms = (dt.now() - _message.timestamp).total_seconds() * 1000.0
                 self._print_message_info('process message:', _message, _elapsed_ms)
-
             self._log.debug(self._color + Style.DIM + 'creating task for processing message:' \
                     + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
             # create message processing task
@@ -368,19 +364,19 @@ class GarbageCollector(Subscriber):
         _elapsed_ms = (dt.now() - message.timestamp).total_seconds() * 1000.0
         if self._message_bus.is_expired(message) and message.fully_acknowledged:
             if self._message_bus.verbose:
-                self._print_message_info('😋 garbage collecting expired, fully-acknowledged message:', message, _elapsed_ms)
+                self._print_message_info('garbage collecting expired, fully-acknowledged message:', message, _elapsed_ms)
             return True
         elif self._message_bus.is_expired(message):
             if self._message_bus.verbose:
-                self._print_message_info('😨 garbage collecting expired message:', message, _elapsed_ms)
+                self._print_message_info('garbage collecting expired message:', message, _elapsed_ms)
             return True
         elif message.fully_acknowledged:
             if self._message_bus.verbose:
-                self._print_message_info('😎 garbage collecting fully-acknowledged message:', message, _elapsed_ms)
+                self._print_message_info('garbage collecting fully-acknowledged message:', message, _elapsed_ms)
             return True
         else:
             if self._message_bus.verbose:
-                self._print_message_info('😟 garbage collector ignoring unprocessed message:', message, _elapsed_ms)
+                self._print_message_info('garbage collector ignoring unprocessed message:', message, _elapsed_ms)
             return False
 
     # ..........................................................................
@@ -406,11 +402,11 @@ class GarbageCollector(Subscriber):
             if not _message.sent:
                 self._log.warning('garbage collected undelivered message: {}; event: {}'.format(_message.name, _message.event.name))
             if self._message_bus.verbose:
-                self._log.info(self._color + '👍 garbage collected message:' + Fore.WHITE + ' {}; gcd: {}'.format(_message.name, _message.gcd))
+                self._log.info(self._color + 'garbage collected message:' + Fore.WHITE + ' {}; gcd: {}'.format(_message.name, _message.gcd))
         else:
             # acknowledge we've seen the message
             _peeked_message.acknowledge(self)
-            self._log.info(self._color + Style.DIM + '👎 acknowledged unacceptable message:' \
+            self._log.info(self._color + Style.DIM + 'acknowledged unacceptable message:' \
                     + Fore.WHITE + ' {}; event: {} (queue: {:d} elements)'.format(
                     _peeked_message.name, _peeked_message.event.description, self._message_bus.queue_size))
 

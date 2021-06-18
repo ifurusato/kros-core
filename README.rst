@@ -63,13 +63,18 @@ code will only run on a Raspberry Pi, though KROS Core should function
 independently of the various Pi libraries.
 
 KROS requires installation of a number of dependencies (support libraries),
-which should be automatically installed via pip3 when you installed kros-core.
+which should be automatically installed via pip3 when you installed kros-core::
+
 
 If you install kros-core by cloning the repository, you can install its
 dependencies either by running the setup.py script (as described below) or
 manually via pip3::
 
-    sudo pip3 install numpy colorama pytest pyyaml psutil board readchar
+    sudo pip3 install -e .
+
+or directly::
+
+    sudo pip3 install colorama pytest pyyaml psutil
 
 Alternately, use the setup.py script to install dependencies. As this is a work
 in progress you may find error messages referring to missing libraries; if so,
@@ -83,7 +88,7 @@ While this is a work-in-progress the aim is that the pip3 installer will handle
 installation of all dependencies, so that you may be able to install via the
 command line::
 
-    % pip3 install --user kros-core
+    pip3 install --user kros-core
 
 This ability will be available once kros-core has been published to PyPI.
 
@@ -95,12 +100,19 @@ The current functionality is entirely as a robot simulator, i.e., once installed
 it's possible to run the a test script without requiring an actual robot. Execute
 the script via::
 
-    % pub_sub_test.py
+    pub_sub_test.py
 
 to start the message bus event loop. The robot sensors are simulated via key
-presses. You can type '?' to see a display mapping which key fires which event.
-Type 'i' for system information, Ctrl-C or 'q' to quit. For example, typing 'd'
-simulates the center infrared sensor being triggered.
+presses. You can type '?' to see a display mapping which key fires which event
+(apologies if your keyboard doesn't match mine). You can type 'i' for system 
+information. To quit, type 'q' or Ctrl-C.
+
+For example, you can type 'z' to display the motor status in a loop, then '8' 
+for Full Ahead (maximum speed), increase or decrease port and starboard motor
+velocity with the four keys ('[', ']', ';', "'") near the Return key, brake 
+(slow down gradually) to a stop with '-'. 
+
+Typing 'd' simulates the center infrared sensor being triggered.
 
 
 Status
@@ -116,6 +128,7 @@ entirely or are close to passing.
 
 The project is being exposed publicly so that those interested can follow its
 progress.
+
 
 Support & Liability
 *******************
@@ -145,7 +158,7 @@ Execution
 To force the Raspberry Pi to prioritise execution of a python script, use
 the 'chrt' command, e.g.::
 
-    % chrt -f 5 python3 ./my_script.py
+    chrt -f 5 python3 ./my_script.py
 
 
 Copyright & License

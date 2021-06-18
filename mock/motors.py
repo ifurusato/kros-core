@@ -26,7 +26,12 @@ from mock.motor import Motor
 # ..............................................................................
 class Motors(object):
     '''
-    A mocked dual motor controller with encoders.
+    A mocked dual motor controller with encoders. 
+
+    This incorporates an increment value for halting and braking by 
+    altering the set velocity of the motors, but also relies upon a 
+    SlewLimiter installed on each of the motors, so that velocity 
+    changes occur gradually.
 
     :param name:         the subscriber name (for logging)
     :param tb:           the ThunderBorg motor controller
@@ -57,11 +62,11 @@ class Motors(object):
 #       self._port_velocity     = 0
 #       self._stbd_velocity     = 0
         self._max_velocity      = 100
-        self._halting_increment = 10 # slew value
-        self._braking_increment = 5  # slew value
+        self._halting_increment = 10 # increment used for halt behaviour
+        self._braking_increment = 5  # increment used for brake behaviour
         self._accel_increment   = 5  # normal acceleration
         self._decel_increment   = 5  # normal deceleration
-        self._slew_value        = 0  # variable used in loop
+        self._increment_value        = 0  # variable used in loop
         self._log.info('motors ready.')
 
     # ..........................................................................
@@ -105,11 +110,14 @@ class Motors(object):
         '''
         while f_is_enabled():
             _event_count = next(self._event_counter)
-            self._log.info('[{:04d}] velocity: '.format(_event_count) 
-                    + Fore.RED   + 'port: {:5.2f} '.format(self._port_motor.velocity)
-                    + Fore.CYAN  + '| '
-                    + Fore.GREEN + 'stbd: {:5.2f}'.format(self._stbd_motor.velocity))
-            if self._slew_value > 0:
+            if self.is_stopped():
+                self._log.info('[{:04d}] velocity: '.format(_event_count) + Fore.BLUE + 'stopped.')
+            else:
+                self._log.info('[{:04d}] velocity: '.format(_event_count) 
+                        + Fore.RED   + 'port: {:5.2f} '.format(self._port_motor.velocity)
+                        + Fore.CYAN  + '| '
+                        + Fore.GREEN + 'stbd: {:5.2f}'.format(self._stbd_motor.velocity))
+            if self._increment_value > 0:
                 self._decelerate()
             time.sleep(1.0)
         self._log.info('exited display loop.')
@@ -164,43 +172,45 @@ class Motors(object):
         '''
         _speed = None
         _direction = None
-        if event is Event.FULL_ASTERN:
+        if event is Event.STOP:
             _speed = Speed.STOP
-            self._log.info(self._color + '🐢 STOP.')
+            self._log.info(self._color + 'STOP.')
         elif event is Event.FULL_ASTERN:
             _direction = Direction.ASTERN
             _speed = Speed.FULL
-            self._log.info(self._color + '🐢 FULL ASTERN.')
+            self._log.info(self._color + 'FULL ASTERN.')
         elif event is Event.HALF_ASTERN:
             _direction = Direction.ASTERN
             _speed = Speed.HALF
-            self._log.info(self._color + '🐢 HALF ASTERN.')
+            self._log.info(self._color + 'HALF ASTERN.')
         elif event is Event.SLOW_ASTERN:
             _direction = Direction.ASTERN
             _speed = Speed.SLOW
-            self._log.info(self._color + '🐢 SLOW ASTERN.')
+            self._log.info(self._color + 'SLOW ASTERN.')
         elif event is Event.DEAD_SLOW_ASTERN:
             _direction = Direction.ASTERN
             _speed = Speed.DEAD_SLOW
-            self._log.info(self._color + '🐢 DEAD SLOW ASTERN.')
+            self._log.info(self._color + 'DEAD SLOW ASTERN.')
         elif event is Event.DEAD_SLOW_AHEAD:
             _direction = Direction.AHEAD
             _speed = Speed.DEAD_SLOW
-            self._log.info(self._color + '🐰 DEAD SLOW AHEAD.')
+            self._log.info(self._color + 'DEAD SLOW AHEAD.')
         elif event is Event.SLOW_AHEAD:
             _direction = Direction.AHEAD
             _speed = Speed.SLOW
-            self._log.info(self._color + '🐰 SLOW AHEAD.')
+            self._log.info(self._color + 'SLOW AHEAD.')
         elif event is Event.HALF_AHEAD:
             _direction = Direction.AHEAD
             _speed = Speed.HALF
-            self._log.info(self._color + '🐰 HALF AHEAD.')
+            self._log.info(self._color + 'HALF AHEAD.')
         elif event is Event.FULL_AHEAD:
             _direction = Direction.AHEAD
             _speed = Speed.FULL
-            self._log.info(self._color + ' FULL AHEAD.')
+            self._log.info(self._color + 'FULL AHEAD.')
         else:
             raise ValueError('unrecognised chadburn event {}'.format(event.description))
+        if _speed is not Speed.STOP and not self.loop_is_running():
+            self.start_loop()
         # ........
         self._log.debug('set chadburn velocity: {}  {}.'.format(_speed.label, _direction))
         _value = _speed.value if _direction is Direction.AHEAD else -1 * _speed.value
@@ -287,12 +297,12 @@ class Motors(object):
             _port_velocity = self._port_motor.velocity
             _updated_port_velocity = self._update_value(_port_velocity, increment)
             self._port_motor.velocity = _updated_port_velocity
-            self._log.info('increment port motor velocity: {:5.2f} + {:5.2f} -▶ {:<5.2f}'.format(_port_velocity, increment, _updated_port_velocity))
+            self._log.info('increment port motor velocity:' + Fore.RED + ' {:5.2f} + {:5.2f} -▶ {:<5.2f}'.format(_port_velocity, increment, _updated_port_velocity))
         else:
             _stbd_velocity = self._stbd_motor.velocity
             _updated_stbd_velocity = self._update_value(_stbd_velocity, increment)
             self._stbd_motor.velocity = _updated_stbd_velocity
-            self._log.info('increment stbd motor velocity: {:5.2f} + {:5.2f} -▶ {:<5.2f}'.format(_stbd_velocity, increment, _updated_stbd_velocity))
+            self._log.info('increment stbd motor velocity:' + Fore.GREEN + ' {:5.2f} + {:5.2f} -▶ {:<5.2f}'.format(_stbd_velocity, increment, _updated_stbd_velocity))
 
     # ..........................................................................
     def _set_motor_velocity(self, orientation, velocity):
@@ -316,7 +326,7 @@ class Motors(object):
         self._log.info('halting...')
         if not self.is_stopped():
             if self._loop_enabled:
-                self._slew_value = self._halting_increment
+                self._increment_value = self._halting_increment
             else:
                 self._port_motor.stop()
                 self._stbd_motor.stop()
@@ -333,9 +343,9 @@ class Motors(object):
         if not self.is_stopped():
             if self.loop_is_running():
                 self._log.info('🍏 braking...')
-                self._slew_value = self._braking_increment
+                self._increment_value = self._braking_increment
             else:
-                self._log.info('🍎 stopping immediately: no slew available.')
+                self._log.info('🍎 stopping immediately: no increment loop running.')
                 self._port_motor.stop()
                 self._stbd_motor.stop()
             self._log.info('braked.')
@@ -346,12 +356,13 @@ class Motors(object):
     # ..........................................................................
     def _decelerate(self):
         '''
-        Applies the slew value to incrementally slow the motor target velocity
+        Applies the value to incrementally slow the motor target velocity
         to zero, using either a slow (brake) or fast (halt) deceleration. Both
         halting and braking perform the same function, varying only by how
         quickly the change (acceleration) occurs.
 
-        The slew function operates as a percentage of the motor target velocity
+        TODO
+        The function should increment as a percentage of the motor target velocity
         so that if the robot is moving in an arc the braking will roughly follow
         that arc rather than having the slower motor come to a stop first,
         avoiding a final spiral inwards.
@@ -360,22 +371,22 @@ class Motors(object):
         if isclose(self._port_motor.velocity, 0.0, abs_tol=1e-3):
             pass
         elif self._port_motor.velocity < 0:
-            self._increment_motor_velocity(Orientation.PORT, self._slew_value)
+            self._increment_motor_velocity(Orientation.PORT, self._increment_value)
         elif self._port_motor.velocity > 0:
-            self._increment_motor_velocity(Orientation.PORT, -1 * self._slew_value)
+            self._increment_motor_velocity(Orientation.PORT, -1 * self._increment_value)
 
         if isclose(self._stbd_motor.velocity, 0.0, abs_tol=1e-3):
             pass
         elif self._stbd_motor.velocity < 0:
-            self._increment_motor_velocity(Orientation.STBD, self._slew_value)
+            self._increment_motor_velocity(Orientation.STBD, self._increment_value)
         elif self._stbd_motor.velocity > 0:
-            self._increment_motor_velocity(Orientation.STBD, -1 * self._slew_value)
+            self._increment_motor_velocity(Orientation.STBD, -1 * self._increment_value)
 
         if self.is_stopped():
-            self._slew_value = 0 # reset slew value
+            self._increment_value = 0 # reset increment value
             self._log.info('deceleration complete.')
         else:
-            self._log.info('decelerating...')
+            self._log.debug('decelerating...')
 
     # ..........................................................................
     def stop(self):

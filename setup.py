@@ -73,11 +73,10 @@ setup(
     include_package_data=True,
     install_requires=[
         'colorama',
-#       'evdev', # for gamepad
         'pytest',
-        'psutil',
-        'readchar',
-        'pyyaml'
+        'pyyaml',
+        'psutil'
+#       'evdev' # for gamepad
     ],
     test_suite='tests',
     zip_safe=False,

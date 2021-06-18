@@ -18,7 +18,7 @@ init()
 
 from core.logger import Logger, Level
 from core.orient import Orientation
-from core.event import Event
+from core.event import Event, Group
 from core.subscriber import Subscriber
 from mock.motor import Motor
 
@@ -60,7 +60,7 @@ class MotorSubscriber(Subscriber):
         # increment sent acknowledgement count
         message.acknowledge_sent()
 #       if self._message_bus.verbose:
-        self._log.info(self._color + Style.NORMAL + '🍖 arbitrated payload for event {}; value: {}'.format(message.payload.event.name, message.payload.value))
+        self._log.info(self._color + Style.NORMAL + 'arbitrated payload for event {}; value: {}'.format(message.payload.event.name, message.payload.value))
 
     # ..........................................................................
     async def process_message(self, message):
@@ -73,13 +73,13 @@ class MotorSubscriber(Subscriber):
             raise GarbageCollectedError('cannot process message: message has been garbage collected. [3]')
         _event = message.event
         self._log.info('pre-processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.description) + Style.RESET_ALL)
-        if _event.value >= 50 and _event.value <= 53:
+        if _event.group is Group.STOP:
             self._motors.dispatch_stop_event(_event)
-        elif _event.value >= 200 and _event.value <= 299:
+        elif _event.group is Group.VELOCITY:
             self._motors.dispatch_velocity_event(message.payload)
-        elif _event.value >= 300 and _event.value <= 399:
+        elif _event.group is Group.THETA:
             self._motors.dispatch_theta_event(_event)
-        elif _event.value >= 400 and _event.value <= 499:
+        elif _event.group is Group.CHADBURN:
             self._motors.dispatch_chadburn_event(_event)
         else:
             self._log.warning('unrecognised message {}'.format(message.name) + ''.format(message.event.description))
