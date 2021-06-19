@@ -41,7 +41,7 @@ from mock.motor_subscriber import MotorSubscriber
 #from mock.gamepad_controller import GamepadController
 
 from mock.motor_configurer import MotorConfigurer
-from mock.motors import Motors
+#from mock.motors import Motors
 
 # ..............................................................................
 @pytest.mark.unit
@@ -99,8 +99,8 @@ def test_pub_sub():
 #   _message_bus.print_subscribers()
 
 #   sys.exit(0)
-#   if _motors:
-#       _motors.enable()
+    if _motors:
+        _motors.enable()
     _message_bus.enable()
 
 #   except Exception as e:

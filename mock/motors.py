@@ -49,24 +49,25 @@ class Motors(object):
         _tb = tb
         self._port_motor = Motor(self._config, _tb, Orientation.PORT, level)
         self._stbd_motor = Motor(self._config, _tb, Orientation.STBD, level)
-        self._port_slew = SlewLimiter(self._config, 'slew-port', level)
-        self._stbd_slew = SlewLimiter(self._config, 'slew-stbd', level)
+        self._port_slew_limiter = SlewLimiter(self._config, Orientation.PORT, level)
+        self._stbd_slew_limiter = SlewLimiter(self._config, Orientation.STBD, level)
         self._closed  = False
         self._enabled = False # used to be enabled by default
         # temporary until we move functionality to motors
-        self._color             = Fore.MAGENTA
-        self._loop_thread       = None
-        self._loop_enabled      = False
-        self._is_braking        = False # for halting or braking
-        self._event_counter     = itertools.count()
-#       self._port_velocity     = 0
-#       self._stbd_velocity     = 0
-        self._max_velocity      = 100
-        self._halting_increment = 10 # increment used for halt behaviour
-        self._braking_increment = 5  # increment used for brake behaviour
-        self._accel_increment   = 5  # normal acceleration
-        self._decel_increment   = 5  # normal deceleration
-        self._increment_value        = 0  # variable used in loop
+        self._color                = Fore.MAGENTA
+        self._loop_thread          = None
+        self._loop_enabled         = False
+        self._event_counter        = itertools.count()
+        # constants
+        self._max_velocity         = 100
+        self._halting_increment    = 10 # increment used for halt behaviour
+        self._braking_increment    = 5  # increment used for brake behaviour
+        self._accel_increment      = 5  # normal acceleration
+        self._decel_increment      = 5  # normal deceleration
+        # variables
+        self._port_target_velocity = 0.0
+        self._stbd_target_velocity = 0.0
+        self._increment_value      = 0  # variable used in loop
         self._log.info('motors ready.')
 
     # ..........................................................................
@@ -77,8 +78,11 @@ class Motors(object):
     # ..........................................................................
     def start_loop(self):
         '''
-        Start the display loop.
+        Start the loop.
         '''
+        if not self._enabled:
+            self._log.warning('not enabled.')
+            raise Exception('not enabled.')
         if self._loop_thread is None:
             self._loop_enabled = True
             self._loop_thread = Thread(name='display_loop', target=Motors._loop, args=[self, lambda: self._loop_enabled], daemon=True)
@@ -90,7 +94,7 @@ class Motors(object):
     # ..........................................................................
     def stop_loop(self):
         '''
-        Stop the display loop.
+        Stop the loop.
         '''
         if self._loop_enabled:
             self._loop_enabled = False
@@ -106,7 +110,7 @@ class Motors(object):
     # ..........................................................................
     def _loop(self, f_is_enabled):
         '''
-        The display loop, which executes while the f_is_enabled flag is True.
+        The motors loop, which executes while the f_is_enabled flag is True.
         '''
         while f_is_enabled():
             _event_count = next(self._event_counter)
@@ -114,11 +118,19 @@ class Motors(object):
                 self._log.info('[{:04d}] velocity: '.format(_event_count) + Fore.BLUE + 'stopped.')
             else:
                 self._log.info('[{:04d}] velocity: '.format(_event_count) 
-                        + Fore.RED   + 'port: {:5.2f} '.format(self._port_motor.velocity)
+                        + Fore.RED   + 'port: {:5.2f} / {:5.2f}'.format(self._port_motor.velocity, self._port_target_velocity)
                         + Fore.CYAN  + '| '
-                        + Fore.GREEN + 'stbd: {:5.2f}'.format(self._stbd_motor.velocity))
+                        + Fore.GREEN + 'stbd: {:5.2f} / {:5.2f}'.format(self._stbd_motor.velocity, self._stbd_target_velocity)
+                        + Fore.CYAN  + ' :: increment: '
+                        + Fore.BLUE + '{:5.2f} '.format(self._increment_value))
+            # if we're trying to decelerate that takes precedence
             if self._increment_value > 0:
                 self._decelerate()
+            else:
+                if self._port_motor.velocity != self._port_target_velocity:
+                    self._set_motor_velocity(Orientation.PORT, self._port_target_velocity)
+                if self._stbd_motor.velocity != self._stbd_target_velocity:
+                    self._set_motor_velocity(Orientation.STBD, self._stbd_target_velocity)
             time.sleep(1.0)
         self._log.info('exited display loop.')
 
@@ -280,6 +292,7 @@ class Motors(object):
 
     # ..........................................................................
     def _update_value(self, value, increment):
+        # FIXME this overshoots the value
         value += increment
         if value > self._max_velocity:
             value = self._max_velocity
@@ -296,38 +309,43 @@ class Motors(object):
         if orientation is Orientation.PORT:
             _port_velocity = self._port_motor.velocity
             _updated_port_velocity = self._update_value(_port_velocity, increment)
-            self._port_motor.velocity = _updated_port_velocity
+#           self._port_motor.velocity = _updated_port_velocity
+            self._port_motor.velocity = self._port_slew_limiter.slew(_port_velocity, _updated_port_velocity)
             self._log.info('increment port motor velocity:' + Fore.RED + ' {:5.2f} + {:5.2f} -▶ {:<5.2f}'.format(_port_velocity, increment, _updated_port_velocity))
         else:
             _stbd_velocity = self._stbd_motor.velocity
             _updated_stbd_velocity = self._update_value(_stbd_velocity, increment)
-            self._stbd_motor.velocity = _updated_stbd_velocity
+#           self._stbd_motor.velocity = _updated_stbd_velocity
+            self._stbd_motor.velocity = self._stbd_slew_limiter.slew(_stbd_velocity, _updated_stbd_velocity)
             self._log.info('increment stbd motor velocity:' + Fore.GREEN + ' {:5.2f} + {:5.2f} -▶ {:<5.2f}'.format(_stbd_velocity, increment, _updated_stbd_velocity))
 
     # ..........................................................................
-    def _set_motor_velocity(self, orientation, velocity):
+    def _set_motor_velocity(self, orientation, target_velocity):
         '''
         Set the target velocity of the specified motor.
         '''
         if orientation is Orientation.PORT:
-            _port_velocity = self._port_motor.velocity
-            self._port_motor.velocity = velocity
-            self._log.info('set port motor velocity: {:5.2f} -▶ {:<5.2f}'.format(_port_velocity, self._port_motor.velocity))
+            _current_port_velocity = self._port_motor.velocity
+            self._port_target_velocity = target_velocity
+            self._port_motor.velocity = self._port_slew_limiter.slew(_current_port_velocity, self._port_target_velocity)
+            self._log.info('set port motor velocity: {:5.2f} -▶ {:<5.2f}'.format(_current_port_velocity, self._port_target_velocity))
         else:
-            _stbd_velocity = self._stbd_motor.velocity
-            self._stbd_motor.velocity = velocity
-            self._log.info('set stbd motor velocity: {:5.2f} -▶ {:<5.2f}'.format(_stbd_velocity, self._stbd_motor.velocity))
+            _current_stbd_velocity = self._stbd_motor.velocity
+            self._stbd_target_velocity = target_velocity
+            self._stbd_motor.velocity = self._stbd_slew_limiter.slew(_current_stbd_velocity, self._stbd_target_velocity)
+            self._log.info('set stbd motor velocity: {:5.2f} -▶ {:<5.2f}'.format(_current_stbd_velocity, target_velocity))
 
     # ..........................................................................
     def halt(self):
         '''
         Quickly (but not immediately) stops both motors.
         '''
-        self._log.info('halting...')
         if not self.is_stopped():
             if self._loop_enabled:
+                self._log.info('🍏 halting...')
                 self._increment_value = self._halting_increment
             else:
+                self._log.info('🍎 halting immediately: no increment loop running.')
                 self._port_motor.stop()
                 self._stbd_motor.stop()
             self._log.info('halted.')
@@ -395,8 +413,10 @@ class Motors(object):
         '''
         self._log.info('stopping...')
         if not self.is_stopped():
-            self._port_motor.velocity = 0
-            self._stbd_motor.velocity = 0
+            self._port_target_velocity = 0.0
+            self._stbd_target_velocity = 0.0
+            self._port_motor.velocity  = 0
+            self._stbd_motor.velocity  = 0
 #           self._port_motor.stop()
 #           self._stbd_motor.stop()
             self._log.info('stopped.')
@@ -426,8 +446,10 @@ class Motors(object):
             self._log.warning('already enabled.')
         if not self._port_motor.enabled:
             self._port_motor.enable()
+        self._port_slew_limiter.enable()
         if not self._stbd_motor.enabled:
             self._stbd_motor.enable()
+        self._stbd_slew_limiter.enable()
         self._enabled = True
         self._log.info('enabled.')
 
@@ -442,7 +464,9 @@ class Motors(object):
             if self.is_in_motion(): # if we're moving then halt
                 self._log.warning('event: motors are in motion (halting).')
                 self.halt()
+            self._port_slew_limiter.disable()
             self._port_motor.disable()
+            self._stbd_slew_limiter.disable()
             self._stbd_motor.disable()
             self._log.info('disabling pigpio...')
             self._log.info('disabled.')

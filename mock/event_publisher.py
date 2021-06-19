@@ -299,7 +299,7 @@ class EventPublisher(Publisher):
         '''
         self._message_bus.disable()
         super().disable()
-        self._log.info(Fore.YELLOW + 'disabled publisher.')
+        self._log.info('disabled publisher.')
 
     # ................................................................
     def print_sys_info(self):
