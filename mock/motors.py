@@ -20,7 +20,7 @@ init()
 from core.logger import Logger, Level
 from core.orient import Orientation, Speed, Direction
 from core.event import Event
-from core.slew import SlewLimiter
+from mock.slew import SlewLimiter
 from mock.motor import Motor
 
 # ..............................................................................
@@ -119,7 +119,7 @@ class Motors(object):
             else:
                 self._log.info('[{:04d}] velocity: '.format(_event_count) 
                         + Fore.RED   + 'port: {:5.2f} / {:5.2f}'.format(self._port_motor.velocity, self._port_target_velocity)
-                        + Fore.CYAN  + '| '
+                        + Fore.CYAN  + ' | '
                         + Fore.GREEN + 'stbd: {:5.2f} / {:5.2f}'.format(self._stbd_motor.velocity, self._stbd_target_velocity)
                         + Fore.CYAN  + ' :: increment: '
                         + Fore.BLUE + '{:5.2f} '.format(self._increment_value))
@@ -225,9 +225,11 @@ class Motors(object):
             self.start_loop()
         # ........
         self._log.debug('set chadburn velocity: {}  {}.'.format(_speed.label, _direction))
-        _value = _speed.value if _direction is Direction.AHEAD else -1 * _speed.value
-        self._set_motor_velocity(Orientation.PORT, _value)
-        self._set_motor_velocity(Orientation.STBD, _value)
+        _velocity = _speed.value if _direction is Direction.AHEAD else -1 * _speed.value
+        self._port_target_velocity = _velocity
+        self._stbd_target_velocity = _velocity
+#       self._set_motor_velocity(Orientation.PORT, _velocity)
+#       self._set_motor_velocity(Orientation.STBD, _velocity)
 
     # ..........................................................................
     def dispatch_theta_event(self, event):
@@ -310,13 +312,15 @@ class Motors(object):
             _port_velocity = self._port_motor.velocity
             _updated_port_velocity = self._update_value(_port_velocity, increment)
 #           self._port_motor.velocity = _updated_port_velocity
-            self._port_motor.velocity = self._port_slew_limiter.slew(_port_velocity, _updated_port_velocity)
+#           self._port_motor.velocity = self._port_slew_limiter.slew(_port_velocity, _updated_port_velocity)
+            self._port_target_velocity = self._port_slew_limiter.slew(_port_velocity, _updated_port_velocity)
             self._log.info('increment port motor velocity:' + Fore.RED + ' {:5.2f} + {:5.2f} -▶ {:<5.2f}'.format(_port_velocity, increment, _updated_port_velocity))
         else:
             _stbd_velocity = self._stbd_motor.velocity
             _updated_stbd_velocity = self._update_value(_stbd_velocity, increment)
 #           self._stbd_motor.velocity = _updated_stbd_velocity
-            self._stbd_motor.velocity = self._stbd_slew_limiter.slew(_stbd_velocity, _updated_stbd_velocity)
+#           self._stbd_motor.velocity = self._stbd_slew_limiter.slew(_stbd_velocity, _updated_stbd_velocity)
+            self._stbd_target_velocity = self._stbd_slew_limiter.slew(_stbd_velocity, _updated_stbd_velocity)
             self._log.info('increment stbd motor velocity:' + Fore.GREEN + ' {:5.2f} + {:5.2f} -▶ {:<5.2f}'.format(_stbd_velocity, increment, _updated_stbd_velocity))
 
     # ..........................................................................
@@ -327,13 +331,15 @@ class Motors(object):
         if orientation is Orientation.PORT:
             _current_port_velocity = self._port_motor.velocity
             self._port_target_velocity = target_velocity
-            self._port_motor.velocity = self._port_slew_limiter.slew(_current_port_velocity, self._port_target_velocity)
-            self._log.info('set port motor velocity: {:5.2f} -▶ {:<5.2f}'.format(_current_port_velocity, self._port_target_velocity))
+            self._port_motor.velocity  = self._port_slew_limiter.slew(_current_port_velocity, self._port_target_velocity)
+#           self._port_target_velocity = self._port_slew_limiter.slew(self._port_motor.velocity, target_velocity)
+            self._log.debug(Fore.RED + Style.DIM + 'set port motor velocity: {:5.2f} -▶ {:<5.2f}'.format(_current_port_velocity, self._port_target_velocity))
         else:
             _current_stbd_velocity = self._stbd_motor.velocity
             self._stbd_target_velocity = target_velocity
-            self._stbd_motor.velocity = self._stbd_slew_limiter.slew(_current_stbd_velocity, self._stbd_target_velocity)
-            self._log.info('set stbd motor velocity: {:5.2f} -▶ {:<5.2f}'.format(_current_stbd_velocity, target_velocity))
+            self._stbd_motor.velocity  = self._stbd_slew_limiter.slew(_current_stbd_velocity, self._stbd_target_velocity)
+#           self._stbd_target_velocity = self._stbd_slew_limiter.slew(self._stbd_motor.velocity, target_velocity)
+            self._log.debug(Fore.GREEN + Style.DIM + 'set stbd motor velocity: {:5.2f} -▶ {:<5.2f}'.format(_current_stbd_velocity, target_velocity))
 
     # ..........................................................................
     def halt(self):

@@ -11,6 +11,9 @@ kros:
     slew:
         minimum_output: 0.00                     # lower limit of permitted output values
         maximum_output: 100.00                   # upper limit of permitted output values
+        rate: 'FAST'                             # select value of enum: EXTREMELY_SLOW, VERY_SLOW, SLOWER, SLOW, NORMAL, FAST, VERY_FAST
+        hysteresis: 2.0                          # how close do we get to the target velocity?
+        use_elapsed_time: False                  # used elapsed time or percentage
         # GPIO pins configured for A1, B1, A2 and B2
 #       motor_encoder_a1_port:  22               # port A
 #       motor_encoder_b1_port:  23               # port B
