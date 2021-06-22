@@ -119,7 +119,7 @@ class Motors(object):
             else:
                 self._log.info('[{:04d}] velocity: '.format(_event_count) 
                         + Fore.RED   + 'port: {:5.2f} / {:5.2f}'.format(self._port_motor.velocity, self._port_target_velocity)
-                        + Fore.CYAN  + ' | '
+                        + Fore.CYAN  + '| '
                         + Fore.GREEN + 'stbd: {:5.2f} / {:5.2f}'.format(self._stbd_motor.velocity, self._stbd_target_velocity)
                         + Fore.CYAN  + ' :: increment: '
                         + Fore.BLUE + '{:5.2f} '.format(self._increment_value))
@@ -225,11 +225,9 @@ class Motors(object):
             self.start_loop()
         # ........
         self._log.debug('set chadburn velocity: {}  {}.'.format(_speed.label, _direction))
-        _velocity = _speed.value if _direction is Direction.AHEAD else -1 * _speed.value
-        self._port_target_velocity = _velocity
-        self._stbd_target_velocity = _velocity
-#       self._set_motor_velocity(Orientation.PORT, _velocity)
-#       self._set_motor_velocity(Orientation.STBD, _velocity)
+        _value = _speed.value if _direction is Direction.AHEAD else -1 * _speed.value
+        self._set_motor_velocity(Orientation.PORT, _value)
+        self._set_motor_velocity(Orientation.STBD, _value)
 
     # ..........................................................................
     def dispatch_theta_event(self, event):
@@ -245,8 +243,7 @@ class Motors(object):
         elif event is Event.STBD_THETA:
             pass
         elif event is Event.EVEN:
-            self._log.info('theta EVEN event.')
-            pass
+            self.even()
         elif event is Event.INCREASE_PORT_THETA:
             pass
         elif event is Event.DECREASE_PORT_THETA:
@@ -279,6 +276,22 @@ class Motors(object):
             raise ValueError('unrecognised theta event {}'.format(event.description))
 
     # ..........................................................................
+    def even(self):
+        '''
+        Set the target velocity of both motors to the average of their target 
+        velocities. If they are both currently equal this exits gracefully.
+        '''
+        if self._port_target_velocity == self._stbd_target_velocity:
+            self._log.info('target velocities of both motors already equal.')
+        else:
+            _average_velocity = ( self._port_target_velocity + self._stbd_target_velocity ) / 2.0
+            self._log.info('even velocity from: ' + Fore.RED + 'port: {:5.2f}; '.format(self._port_target_velocity) 
+                    + Fore.GREEN + 'stbd: {:5.2f}; '.format(self._stbd_target_velocity)
+                    + Fore.YELLOW + 'average: {:5.2f}.'.format(_average_velocity))
+            self._set_motor_velocity(Orientation.PORT, _average_velocity)
+            self._set_motor_velocity(Orientation.STBD, _average_velocity)
+
+    # ..........................................................................
     def dispatch_stop_event(self, event):
         '''
         A dispatcher for deceleration events: halt, brake and stop.
@@ -293,6 +306,22 @@ class Motors(object):
             raise ValueError('unrecognised stop event {}'.format(event.description))
 
     # ..........................................................................
+    def _increment_motor_velocity(self, orientation, increment):
+        '''
+        Increment the target velocity of the specified motor by the supplied increment
+        (which can be a positive or negative value).
+        '''
+        if orientation is Orientation.PORT:
+            _updated_target_velocity = self._update_value(self._port_target_velocity, increment)
+            self._log.info('increment PORT motor velocity:' + Fore.RED + ' {:5.2f} + {:5.2f} -▶ {:<5.2f}'.format(\
+                    self._port_motor.velocity, increment, _updated_target_velocity))
+        else:
+            _updated_target_velocity = self._update_value(self._stbd_target_velocity, increment)
+            self._log.info('increment STBD motor velocity:' + Fore.GREEN + ' {:5.2f} + {:5.2f} -▶ {:<5.2f}'.format(\
+                    self._stbd_motor.velocity, increment, _updated_target_velocity))
+        self._set_motor_velocity(orientation, _updated_target_velocity)
+
+    # ..........................................................................
     def _update_value(self, value, increment):
         # FIXME this overshoots the value
         value += increment
@@ -303,27 +332,6 @@ class Motors(object):
         return value
 
     # ..........................................................................
-    def _increment_motor_velocity(self, orientation, increment):
-        '''
-        Increment the velocity of the specified motor by the supplied increment
-        (which can be a positive or negative value).
-        '''
-        if orientation is Orientation.PORT:
-            _port_velocity = self._port_motor.velocity
-            _updated_port_velocity = self._update_value(_port_velocity, increment)
-#           self._port_motor.velocity = _updated_port_velocity
-#           self._port_motor.velocity = self._port_slew_limiter.slew(_port_velocity, _updated_port_velocity)
-            self._port_target_velocity = self._port_slew_limiter.slew(_port_velocity, _updated_port_velocity)
-            self._log.info('increment port motor velocity:' + Fore.RED + ' {:5.2f} + {:5.2f} -▶ {:<5.2f}'.format(_port_velocity, increment, _updated_port_velocity))
-        else:
-            _stbd_velocity = self._stbd_motor.velocity
-            _updated_stbd_velocity = self._update_value(_stbd_velocity, increment)
-#           self._stbd_motor.velocity = _updated_stbd_velocity
-#           self._stbd_motor.velocity = self._stbd_slew_limiter.slew(_stbd_velocity, _updated_stbd_velocity)
-            self._stbd_target_velocity = self._stbd_slew_limiter.slew(_stbd_velocity, _updated_stbd_velocity)
-            self._log.info('increment stbd motor velocity:' + Fore.GREEN + ' {:5.2f} + {:5.2f} -▶ {:<5.2f}'.format(_stbd_velocity, increment, _updated_stbd_velocity))
-
-    # ..........................................................................
     def _set_motor_velocity(self, orientation, target_velocity):
         '''
         Set the target velocity of the specified motor.
@@ -331,15 +339,13 @@ class Motors(object):
         if orientation is Orientation.PORT:
             _current_port_velocity = self._port_motor.velocity
             self._port_target_velocity = target_velocity
-            self._port_motor.velocity  = self._port_slew_limiter.slew(_current_port_velocity, self._port_target_velocity)
-#           self._port_target_velocity = self._port_slew_limiter.slew(self._port_motor.velocity, target_velocity)
-            self._log.debug(Fore.RED + Style.DIM + 'set port motor velocity: {:5.2f} -▶ {:<5.2f}'.format(_current_port_velocity, self._port_target_velocity))
+            self._port_motor.velocity = self._port_slew_limiter.slew(_current_port_velocity, self._port_target_velocity)
+            self._log.info('set port motor velocity: {:5.2f} -▶ {:<5.2f}'.format(_current_port_velocity, self._port_target_velocity))
         else:
             _current_stbd_velocity = self._stbd_motor.velocity
             self._stbd_target_velocity = target_velocity
-            self._stbd_motor.velocity  = self._stbd_slew_limiter.slew(_current_stbd_velocity, self._stbd_target_velocity)
-#           self._stbd_target_velocity = self._stbd_slew_limiter.slew(self._stbd_motor.velocity, target_velocity)
-            self._log.debug(Fore.GREEN + Style.DIM + 'set stbd motor velocity: {:5.2f} -▶ {:<5.2f}'.format(_current_stbd_velocity, target_velocity))
+            self._stbd_motor.velocity = self._stbd_slew_limiter.slew(_current_stbd_velocity, self._stbd_target_velocity)
+            self._log.info('set stbd motor velocity: {:5.2f} -▶ {:<5.2f}'.format(_current_stbd_velocity, target_velocity))
 
     # ..........................................................................
     def halt(self):

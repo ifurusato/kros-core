@@ -71,7 +71,7 @@ class SlewLimiter():
 
     # ..........................................................................
     def enable(self):
-        self._log.info(Fore.YELLOW + 'starting slew limiter with rate limit of {:5.3f}/cycle.'.format(self._slew_rate.limit))
+        self._log.info('starting slew limiter with rate limit of {:5.3f}/cycle.'.format(self._slew_rate.limit))
         self._enabled = True
         self._start_time = self._millis()
         self._log.info('enabled.')

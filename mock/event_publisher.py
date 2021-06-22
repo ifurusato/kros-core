@@ -64,7 +64,6 @@ class EventPublisher(Publisher):
         self._publish_delay_sec = 0.01         # delay after IFS event
         self._loop_delay_sec  = 0.01           # delay on noop loop
         self._limit           = 3
-
         self._motors          = None
         # attempt to find the gamepad ......................
         self._gamepad = None
