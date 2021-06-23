@@ -122,7 +122,7 @@ class SlewLimiter():
                         _value, target_value, _min, _max, _elapsed))
         else:
             if isclose(target_value, current_value, abs_tol=1e-3):
-                self._log.info(Fore.BLACK + '=value: {:+06.2f}; (close)'.format(current_value))
+                self._log.debug(Fore.BLACK + '=value: {:+06.2f}; (close)'.format(current_value))
                 return current_value
             elif target_value > current_value: # increasing ..........
                 # add a percentage of difference between current and target to current
@@ -130,7 +130,7 @@ class SlewLimiter():
                 if abs(_diff) < self._slew_hysteresis:
                     _diff = self._slew_hysteresis
                 _value = current_value + _diff
-                self._log.info(Fore.BLACK + '+value: {:+06.2f}; diff: {:06.2f} ({:3.1f}%); target_value: {:+06.2f}'.format(\
+                self._log.debug(Fore.BLACK + '+value: {:+06.2f}; diff: {:06.2f} ({:3.1f}%); target_value: {:+06.2f}'.format(\
                         _value, _diff, 100.0 * self._slew_rate.ratio, target_value))
             else: # decreasing .......................................
                 # subtract a percentage of difference between current and target to current
@@ -138,9 +138,8 @@ class SlewLimiter():
                 if abs(_diff) < self._slew_hysteresis:
 #                   _value = target_value
                     _diff = self._slew_hysteresis
-                
                 _value = current_value - _diff
-                self._log.info(Fore.BLACK + '-value: {:+06.2f}; diff: {:06.2f} ({:3.1f}%); target_value: {:+06.2f}'.format(\
+                self._log.debug(Fore.BLACK + '-value: {:+06.2f}; diff: {:06.2f} ({:3.1f}%); target_value: {:+06.2f}'.format(\
                         _value, _diff, 100.0 * self._slew_rate.ratio, target_value))
             pass
 
@@ -174,7 +173,7 @@ class SlewRate(Enum): #        tested to 50.0 velocity:
     SLOW             = ( 3,   0.08,   0.48, 00.0010 ) # 1.3 sec
     NORMAL           = ( 4,   0.10,   0.58, 00.0050 ) # 1.0 sec
     FAST             = ( 5,   0.25,   0.68, 00.0100 ) # 0.6 sec
-    VERY_FAST        = ( 6,   0.33,    0.90, 00.0200 ) # 0.5 sec
+    VERY_FAST        = ( 6,   0.40,    0.90, 00.0200 ) # 0.5 sec
 
     def __new__(cls, *args, **kwds):
         obj = object.__new__(cls)
