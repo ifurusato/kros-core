@@ -310,7 +310,7 @@ class Motors(object):
         elif event is Event.BRAKE: 
             self._brake()
         elif event is Event.STOP:
-            self.stop()
+            self._stop()
         else:
             raise ValueError('unrecognised stop event {}'.format(event.description))
 
