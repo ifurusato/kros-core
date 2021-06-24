@@ -30,6 +30,14 @@ class EventPublisher(Publisher):
 
     _PUBLISH_LOOP_NAME = '__publish-loop__'
 
+    _RANDOM_EVENTS = [
+            Event.DECREASE_VELOCITY, Event.INCREASE_VELOCITY, Event.INFRARED_PORT_SIDE, Event.BRAKE,
+            Event.BUMPER_STBD, Event.INFRARED_CNTR, Event.SNIFF, Event.INFRARED_STBD,
+            Event.INFRARED_STBD_SIDE, Event.HALT, Event.STOP, Event.ROAM,
+            Event.INFRARED_PORT, Event.NOOP, Event.BUMPER_CNTR, Event.BUMPER_PORT,
+            Event.SHUTDOWN, Event.AHEAD, Event.ASTERN, Event.ROAM, Event.SNIFF
+        ]
+
     '''
     A mock IFS, Gamepad and 'Flood' event source.
     EventPublisher extends the Publisher class providing robot events from three
@@ -226,6 +234,13 @@ class EventPublisher(Publisher):
         finally:
             if self._getch:
                 self._getch.close()
+
+    # ..........................................................................
+    def _get_random_event(self):
+        '''
+        Returns one of the randomly-assigned event types.
+        '''
+        return EventPublisher._RANDOM_EVENTS[random.randint(0, len(EventPublisher._RANDOM_EVENTS)-1)]
 
     # ................................................................
     async def _gamepad_callback(self, message):

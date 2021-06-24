@@ -18,32 +18,44 @@ from colorama import init, Fore, Style
 init()
 
 from core.logger import Logger, Level
+from core.fsm import FiniteStateMachine
 from core.rate import Rate
 
 # ...............................................................
-class Behaviour(object):
+class Behaviour(FiniteStateMachine):
     __NAME = 'roam'
     '''
     A simple threaded loop that executes a callback every loop.
     One or more subscribers can be added to the callback list.
 
+    :param name:           the name of this behaviour
     :param loop_freq_hz:   the loop frequency in Hertz
     :param callback:       the optional callback function (can be added later)
     :param level:          the optional log level
     '''
-    def __init__(self, loop_freq_hz, callback, level=Level.INFO):
-        super().__init__()
-        self._log = Logger(Behaviour.__NAME, level)
+    def __init__(self, name, loop_freq_hz, callback, level=Level.INFO):
+        super().__init__(name)
+        self._name = name
+        self._log = Logger('behave-{}'.format(name), level)
         self._loop_freq_hz = loop_freq_hz
         self._rate         = Rate(self._loop_freq_hz)
         self._log.info('tick frequency: {:d}Hz'.format(self._loop_freq_hz))
         self._callbacks    = []
         self._thread       = None
+        self._suppressed   = False
         self._enabled      = False
         self._closed       = False
         if callback:
             self.add_callback(callback)
         self._log.info('ready.')
+
+    # ..........................................................................
+    def start(self):
+        '''
+        The necessary state machine call to start the publisher, which performs
+        any initialisations of active sub-components, etc.
+        '''
+        super().start()
 
     # ..........................................................................
     def add_callback(self, callback):
@@ -52,7 +64,7 @@ class Behaviour(object):
     # ..........................................................................
     @property
     def name(self):
-        return Behaviour.__NAME
+        return self._name
 
     # ..........................................................................
     @property
@@ -73,11 +85,34 @@ class Behaviour(object):
 
     # ..........................................................................
     @property
+    def suppressed(self):
+        '''
+        Return True if the publisher is suppressed.
+        '''
+        return self._suppressed
+
+    def suppress(self, mode):
+        '''
+        Initially the suppress flag is set False, but can be enabled
+        or disabled as necessary without halting the thread.
+        '''
+        self._suppressed = mode
+        if self.suppressed:
+            self._log.info('publishing suppressed.')
+        else:
+            self._log.info('publishing unsuppressed.')
+
+    # ..........................................................................
+    @property
     def enabled(self):
         return self._enabled
 
     # ..........................................................................
     def enable(self):
+        '''
+        The necessary state machine call to enable the publisher.
+        '''
+        super().enable()
         self._log.info('enabling loop...')
         if not self._closed:
             if self._enabled:
@@ -96,7 +131,11 @@ class Behaviour(object):
 
     # ..........................................................................
     def disable(self):
+        '''
+        The state machine call to disable the publisher.
+        '''
         if self._enabled:
+            super().disable()
             self._enabled = False
             self._thread = None
             self._log.info('loop disabled.')
@@ -108,6 +147,7 @@ class Behaviour(object):
         if not self._closed:
             if self._enabled:
                 self.disable()
+            super().close()
             self._closed = True
             self._log.info('closed.')
         else:

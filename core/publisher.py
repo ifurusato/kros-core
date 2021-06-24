@@ -16,26 +16,21 @@ from colorama import init, Fore, Style
 init()
 
 from core.logger import Logger, Level
+from core.fsm import FiniteStateMachine
 from core.message import Message
 from core.event import Event
 from core.message_bus import MessageBus
 from core.message_factory import MessageFactory
 
 # Publisher ....................................................................
-class Publisher(object):
-
-    RANDOM_EVENTS = [
-            Event.DECREASE_VELOCITY, Event.INCREASE_VELOCITY, Event.INFRARED_PORT_SIDE, Event.BRAKE,
-            Event.BUMPER_STBD, Event.INFRARED_CNTR, Event.SNIFF, Event.INFRARED_STBD,
-            Event.INFRARED_STBD_SIDE, Event.HALT, Event.STOP, Event.ROAM,
-            Event.INFRARED_PORT, Event.NOOP, Event.BUMPER_CNTR, Event.BUMPER_PORT,
-            Event.SHUTDOWN, Event.AHEAD, Event.ASTERN, Event.ROAM, Event.SNIFF
-        ]
-
+class Publisher(FiniteStateMachine):
     '''
+    Extends FiniteStateMachine as an event publisher.
+
     Eventually this will be an abstract class.
     '''
     def __init__(self, name, message_bus, message_factory, level=Level.INFO):
+        super().__init__(name)
         '''
         Simulates a publisher of messages.
 
@@ -90,11 +85,12 @@ class Publisher(object):
         self._log.info(Fore.WHITE + '{} published message: {} (event: {})'.format(self.name, message.name, message.event.description))
 
     # ..........................................................................
-    def _get_random_event(self):
+    def start(self):
         '''
-        Returns one of the randomly-assigned event types.
+        The necessary state machine call to start the publisher, which performs
+        any initialisations of active sub-components, etc.
         '''
-        return Publisher.RANDOM_EVENTS[random.randint(0, len(Publisher.RANDOM_EVENTS)-1)]
+        super().start()
 
     # ..........................................................................
     @property
@@ -102,6 +98,10 @@ class Publisher(object):
         return self._enabled
 
     def enable(self):
+        '''
+        The necessary state machine call to enable the publisher.
+        '''
+        super().enable()
         if not self._closed:
             if self._enabled:
                 self._log.warning('already enabled.')
@@ -121,20 +121,21 @@ class Publisher(object):
 
     def suppress(self, mode):
         '''
-        Enable or disable capturing characters. Upon starting the loop the
-        suppress flag is set False, but can be enabled or disabled as
-        necessary without halting the thread.
-
-        Future feature: not currently functional.
+        Initially the suppress flag is set False, but can be enabled
+        or disabled as necessary without halting the thread.
         '''
         self._suppressed = mode
         if self.suppressed:
-            self._log.info('😡 publishing suppressed.')
+            self._log.info('publishing suppressed.')
         else:
-            self._log.info('😋 publishing unsuppressed.')
+            self._log.info('publishing unsuppressed.')
 
     # ..........................................................................
     def disable(self):
+        '''
+        The state machine call to disable the publisher.
+        '''
+        super().disable()
         if self._enabled:
             self._enabled = False
             self._log.info('disabled.')
@@ -144,10 +145,12 @@ class Publisher(object):
     # ..........................................................................
     def close(self):
         '''
-        Permanently close and disable the message bus.
+        The state machine call to permanently disable and close
+        the publisher.
         '''
         if not self._closed:
             self.disable()
+            super().close()
             self._closed = True
             self._log.info('closed.')
         else:

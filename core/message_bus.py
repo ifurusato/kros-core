@@ -308,6 +308,7 @@ class MessageBus(object):
     def _enable_publishers(self):
         self._log.info('enabling {:d} publisher{}...'.format(len(self._publishers), '' if len(self._publishers) == 1 else 's'))
         for publisher in self._publishers:
+            publisher.start()
             if not publisher.enabled:
                 publisher.enable()
 
