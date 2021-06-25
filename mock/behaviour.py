@@ -14,6 +14,7 @@
 #
 
 from threading import Thread
+from abc import ABC, abstractmethod
 from colorama import init, Fore, Style
 init()
 
@@ -22,11 +23,10 @@ from core.fsm import FiniteStateMachine
 from core.rate import Rate
 
 # ...............................................................
-class Behaviour(FiniteStateMachine):
-    __NAME = 'roam'
+class Behaviour(ABC, FiniteStateMachine):
     '''
-    A simple threaded loop that executes a callback every loop.
-    One or more subscribers can be added to the callback list.
+    An abstract class providing the basis for a looped behaviour
+    that executes a callback every loop.
 
     :param name:           the name of this behaviour
     :param loop_freq_hz:   the loop frequency in Hertz
@@ -50,6 +50,7 @@ class Behaviour(FiniteStateMachine):
         self._log.info('ready.')
 
     # ..........................................................................
+    @abstractmethod
     def start(self):
         '''
         The necessary state machine call to start the publisher, which performs
@@ -77,11 +78,22 @@ class Behaviour(FiniteStateMachine):
         The behaviour loop, which executes while the f_is_enabled flag is True.
         '''
         while f_is_enabled():
-            for callback in self._callbacks:
-                self._log.debug('executing callback...')
-                callback()
+            for _callback in self._callbacks:
+                self._log.info('executing loop method...')
+                self.execute()
+                self._log.info('executing callback...')
+                _callback()
             self._rate.wait()
         self._log.info('exited loop.')
+
+    # ..........................................................................
+    @abstractmethod
+    def execute(self):
+        '''
+        The method called upon each loop iteration. This does nothing in this
+        abstract class and is meant to be extended by subclasses.
+        '''
+        self._log.info('loop execute.')
 
     # ..........................................................................
     @property
@@ -112,12 +124,12 @@ class Behaviour(FiniteStateMachine):
         '''
         The necessary state machine call to enable the publisher.
         '''
-        super().enable()
         self._log.info('enabling loop...')
         if not self._closed:
             if self._enabled:
                 self._log.warning('already enabled.')
             else:
+                super().enable()
                 # if we haven't started the thread yet, do so now...
                 if self._thread is None:
                     self._enabled = True

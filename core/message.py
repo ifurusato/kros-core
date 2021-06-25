@@ -21,7 +21,7 @@ init()
 
 from core.logger import Logger, Level
 from core.event import Event
-from core.subscriber import Subscriber
+#rom core.subscriber import Subscriber
 
 # ..............................................................................
 class Message(object):
@@ -182,8 +182,8 @@ class Message(object):
         '''
         To be called by each subscriber, acknowledging receipt of the message.
         '''
-        if not isinstance(subscriber, Subscriber):
-            raise Exception('expected subscriber, not {}.'.format(type(subscriber)))
+#       if not isinstance(subscriber, Subscriber):
+#           raise Exception('expected subscriber, not {}.'.format(type(subscriber)))
         if len(self._subscribers) == 0:
             raise Exception('no subscribers set ({}).'.format(self._instance_name))
         if self._subscribers[subscriber] is True:

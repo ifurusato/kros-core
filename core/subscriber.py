@@ -18,28 +18,34 @@ from colorama import init, Fore, Style
 init()
 
 from core.logger import Logger, Level
-from core.event import Event
+from core.fsm import FiniteStateMachine
+from core.message_bus import MessageBus
 
 # ..............................................................................
-class Subscriber(object):
+class Subscriber(FiniteStateMachine):
     '''
-    A subscriber to messages from the message bus.
-
-    :param name:         the subscriber name (for logging)
-    :param message_bus:  the message bus
-    :param color:        the optional color for log messages
-    :param events:       the list of events used as a filter, None to set as cleanup task
-    :param level:        the logging level
+    Extends FiniteStateMachine as a subscriber to messages from the message bus.
     '''
     LOG_INDENT = ( ' ' * 60 ) + Fore.CYAN + ': ' + Fore.CYAN
 
     def __init__(self, name, message_bus, color=Fore.CYAN, level=Level.INFO):
+        '''
+        :param name:         the subscriber name (for logging)
+        :param message_bus:  the message bus
+        :param color:        the optional color for log messages
+        :param events:       the list of events used as a filter, None to set as cleanup task
+        :param level:        the logging level
+        '''
+        super().__init__(name)
         self._log = Logger('sub-{}'.format(name), level)
         self._name        = name
         self._color       = color
         if message_bus is None:
             raise ValueError('null message bus argument.')
-        self._message_bus = message_bus
+        elif isinstance(message_bus, MessageBus):
+            self._message_bus = message_bus
+        else:
+            raise ValueError('unrecognised message bus argument: {}'.format(type(message_bus)))
         self._events      = None # list of acceptable event types
         self._enabled     = True # by default
         self._brief       = True # brief messages by default
@@ -167,6 +173,9 @@ class Subscriber(object):
             else:
                 self._log.warning(self._color + 'message: {} already sent; event: {}'.format(_message.name, _message.event.description))
 
+            # keep track of timestamp of last message
+            self._message_bus.last_message_timestamp = _message.timestamp
+
             # republish the message
             self._log.debug(self._color + 'awaiting republication of message:' \
                 + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
@@ -261,20 +270,21 @@ class Subscriber(object):
             self._log.info(self._color + Style.BRIGHT + title + Style.NORMAL \
                     + ' id: ' + Style.BRIGHT + '{};'.format(message.name) + Style.NORMAL \
                     + ' event: ' + Style.BRIGHT + ( '{}; '.format(message.event.description) if message.event else 'n/a' ) + Style.NORMAL \
-                    + ' value: ' + Style.BRIGHT + self._get_formatted_value(message.payload.value))
+                    + ' value: ' + Style.BRIGHT + Subscriber.get_formatted_value(message.payload.value))
         else:
             self._log.info(self._color + Style.BRIGHT + title + Style.NORMAL + '\n' \
                     + Subscriber.LOG_INDENT + 'id: ' + Style.BRIGHT + '{};'.format(message.name) + Style.NORMAL \
                     + ' event: ' + Style.BRIGHT + ( '{}; '.format(message.event.description) if message.event else 'n/a: [gc\'d] ' ) + Style.NORMAL \
-                    + ' value: ' + Style.BRIGHT + self._get_formatted_value(message.payload.value) + '\n' + Style.NORMAL \
+                    + ' value: ' + Style.BRIGHT + Subscriber.get_formatted_value(message.payload.value) + '\n' + Style.NORMAL \
                     + Subscriber.LOG_INDENT + '{:d} procd;'.format(message.processed) + ' sent {:d}x;'.format(message.sent) \
                             + ' expired? {}\n'.format(self._message_bus.is_expired(message)) \
                     + Subscriber.LOG_INDENT + 'procd by:\t{}\n'.format(message.print_procd()) \
                     + Subscriber.LOG_INDENT + 'acked by:\t{}\n'.format(message.print_acks()) \
-                    + Subscriber.LOG_INDENT + self._get_formatted_time('msg age: ', message.age) + '; ' + self._get_formatted_time('elapsed: ', elapsed))
+                    + Subscriber.LOG_INDENT + Subscriber.get_formatted_time('msg age: ', message.age) + '; ' + Subscriber.get_formatted_time('elapsed: ', elapsed))
 
     # ..........................................................................
-    def _get_formatted_value(self, value):
+    @staticmethod
+    def get_formatted_value(value):
 #       print('TYPE: {}'.format(type(value)))
         if isinstance(value, float):
             return '{:5.2f}'.format(value)
@@ -282,13 +292,23 @@ class Subscriber(object):
             return '{}'.format(value)
 
     # ..........................................................................
-    def _get_formatted_time(self, label, value):
+    @staticmethod
+    def get_formatted_time(label, value):
        if value is None:
            return ''
        elif value > 1000.0:
-           return Fore.RED + label + ' {:4.3f}s'.format(value/1000.0)
+           return label + ' {:4.3f}s'.format(value/1000.0)
+#          return Fore.RED + label + ' {:4.3f}s'.format(value/1000.0)
        else:
            return label + ' {:4.3f}ms'.format(value)
+
+    # ..........................................................................
+    def start(self):
+        '''
+        The necessary state machine call to start the publisher, which performs
+        any initialisations of active sub-components, etc.
+        '''
+        super().start()
 
     # ..........................................................................
     @property
@@ -301,6 +321,7 @@ class Subscriber(object):
             if self._enabled:
                 self._log.warning('already enabled.')
             else:
+                super().enable()
                 self._enabled = True
                 self._log.info('enabled.')
         else:
@@ -309,6 +330,7 @@ class Subscriber(object):
     # ..........................................................................
     def disable(self):
         if self._enabled:
+            super().disable()
             self._enabled = False
             self._log.info('disabled.')
         else:
@@ -321,6 +343,7 @@ class Subscriber(object):
         '''
         if not self._closed:
             self.disable()
+            super().close()
             self._closed = True
             self._log.info('closed.')
         else:

@@ -31,10 +31,11 @@ from core.controller import Controller
 from core.message_bus import MessageBus
 from core.message_factory import MessageFactory
 from core.publisher import Publisher
-from core.subscriber import Subscriber
+from core.subscriber import Subscriber, GarbageCollector
 from core.event import Event
 
 from mock.event_publisher import EventPublisher
+from mock.action_subscriber import ActionSubscriber
 from mock.motor_subscriber import MotorSubscriber
 #from mock.flood_publisher import FloodPublisher
 #from mock.gamepad_publisher import GamepadPublisher
@@ -50,11 +51,13 @@ def test_pub_sub():
     _message_bus = None
 #   try:
 
-    _log = Logger("test", Level.INFO)
+    _level = Level.INFO
+
+    _log = Logger("test", _level)
     _log.info(Fore.BLUE + 'configuring pub-sub test...')
 
     # read YAML configuration
-    _loader = ConfigLoader(Level.INFO)
+    _loader = ConfigLoader(_level)
     filename = 'config.yaml'
     _config = _loader.configure(filename)
 
@@ -67,7 +70,7 @@ def test_pub_sub():
 #    _gp_controller = GamepadController(Level.WARN)
 #    _message_bus.register_controller(_gp_controller)
 
-    _publisher1  = EventPublisher(_config, _message_bus, _message_factory, level=Level.INFO)
+    _publisher1  = EventPublisher(_config, _message_bus, _message_factory, level=_level)
 #   _publisher2  = FloodPublisher(_message_bus, _message_factory)
 #   _publisher3  = GamepadPublisher(_config, _message_bus, _message_factory)
 
@@ -76,24 +79,18 @@ def test_pub_sub():
     _motors = _motor_configurer.get_motors()
     _publisher1.set_motors(_motors)
 
-    _subscriber0 = MotorSubscriber('motor', _message_bus, _motors, Fore.MAGENTA, Level.INFO)
-#   _subscriber0.events = [ Event.PORT_VELOCITY, Event.STBD_VELOCITY ] # reacts to velocity changes on Gamepad
 
-#   _subscriber1 = Subscriber('action', _message_bus, Fore.BLUE, Level.INFO)
-#   _subscriber1.events = [ Event.PORT_VELOCITY, Event.STBD_VELOCITY ] # reacts to velocity changes on Gamepad
+    _subscriber0 = MotorSubscriber(_message_bus, _motors, Fore.MAGENTA, _level)
 
-    _subscriber2 = Subscriber('infrared', _message_bus, Fore.GREEN, Level.INFO)
+    _subscriber1 = ActionSubscriber(_config, _message_bus, _motors, Fore.BLUE, _level)
+
+    _subscriber2 = Subscriber('infrared', _message_bus, Fore.GREEN, _level)
     _subscriber2.events = [ Event.INFRARED_PORT_SIDE, Event.INFRARED_PORT, Event.INFRARED_CNTR, Event.INFRARED_STBD, Event.INFRARED_STBD_SIDE ] # reacts to IR sensors
 
-    _subscriber3 = Subscriber('bumper', _message_bus, Fore.YELLOW, Level.INFO)
+    _subscriber3 = Subscriber('bumper', _message_bus, Fore.YELLOW, _level)
     _subscriber3.events = [ Event.BUMPER_PORT, Event.BUMPER_CNTR, Event.BUMPER_STBD ] # reacts to bumpers
 
-
-    # ROAM is commonly accepted by all subscribers
-#   _subscriber1.add_event(Event.ROAM)
-    _subscriber2.add_event(Event.ROAM)
-    _subscriber3.add_event(Event.ROAM)
-#   _motors.add_event(Event.ROAM)
+    _garbage_collector = GarbageCollector('gc', _message_bus, Fore.BLUE, _level)
 
 #   _message_bus.print_publishers()
 #   _message_bus.print_subscribers()

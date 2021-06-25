@@ -17,28 +17,22 @@ init()
 
 from core.logger import Logger, Level
 from core.fsm import FiniteStateMachine
-from core.message import Message
-from core.event import Event
 from core.message_bus import MessageBus
 from core.message_factory import MessageFactory
 
 # Publisher ....................................................................
 class Publisher(FiniteStateMachine):
     '''
-    Extends FiniteStateMachine as an event publisher.
-
-    Eventually this will be an abstract class.
+    Extends FiniteStateMachine as a message/event publisher to the message bus.
     '''
     def __init__(self, name, message_bus, message_factory, level=Level.INFO):
-        super().__init__(name)
         '''
-        Simulates a publisher of messages.
-
         :param name:             the unique name for the publisher
         :param message_bus:      the asynchronous message bus
         :param message_factory:  the factory for messages
         :param level:            the logging level
         '''
+        super().__init__(name)
         self._log = Logger('pub-{}'.format(name), level)
         self._name = name
         if message_bus is None:
@@ -101,11 +95,11 @@ class Publisher(FiniteStateMachine):
         '''
         The necessary state machine call to enable the publisher.
         '''
-        super().enable()
         if not self._closed:
             if self._enabled:
                 self._log.warning('already enabled.')
             else:
+                super().enable()
                 self._enabled = True
                 self._log.info('enabled.')
         else:
@@ -135,8 +129,8 @@ class Publisher(FiniteStateMachine):
         '''
         The state machine call to disable the publisher.
         '''
-        super().disable()
         if self._enabled:
+            super().disable()
             self._enabled = False
             self._log.info('disabled.')
         else:

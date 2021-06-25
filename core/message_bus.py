@@ -28,6 +28,7 @@
 
 import sys, traceback, logging
 import asyncio, signal
+from datetime import datetime as dt
 from colorama import init, Fore, Style
 init()
 from asyncio.queues import Queue, QueueEmpty
@@ -36,7 +37,6 @@ from core.logger import Logger, Level
 from core.event import Event
 from core.message import Message
 from core.arbitrator import Arbitrator
-from core.subscriber import GarbageCollector
 
 # ..............................................................................
 class MessageBus(object):
@@ -52,13 +52,26 @@ class MessageBus(object):
         self._publishers  = []
         self._subscribers = []
         self._loop        = None
-        self._garbage_collector = GarbageCollector('gc', self, Fore.BLUE, level)
+        self._last_message_timestamp = None #dt.now() # timestamp of last message
         self._arbitrator  = Arbitrator(level)
         self._max_age_ms  = 20.0
         self._enabled     = True
         self._closed      = False
         self._publish_delay_sec = 0.01
         self._log.info('ready.')
+
+    # ..........................................................................
+    @property
+    def last_message_timestamp(self):
+        '''
+        Return the timestamp of the last message passed through the message bus.
+        If no messages has passed through the bus the initial value is None.
+        '''
+        return self._last_message_timestamp
+
+    @last_message_timestamp.setter
+    def last_message_timestamp(self, timestamp):
+        self._last_message_timestamp = timestamp
 
     # ..........................................................................
     @property
@@ -134,13 +147,11 @@ class MessageBus(object):
         if self._queue.empty():
             self._log.info('message bus queue is empty.')
         else:
-            print('📯 1.')
             _message = await self._queue.get()
             self._queue.task_done()
             self._log.info('popped message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
             if self._queue.empty():
                 self._log.info('message bus queue is now empty.')
-            print('📯 2.')
 
     # ..........................................................................
     async def arbitrate(self, payload):
@@ -294,9 +305,14 @@ class MessageBus(object):
     async def _start_consuming(self):
         '''
         Enable the publishers and then start the subscribers' consume cycle.
-        This remains active until the message bus is disabled.
+
+        This is the main event loop and remains active until the message bus
+        is disabled.
         '''
         self._enable_publishers()
+        self._log.info('starting {:d} subscriber{}...'.format(len(self._subscribers), '' if len(self._subscribers) == 1 else 's'))
+        for subscriber in self._subscribers:
+            subscriber.start()
         self._log.info('starting consume loop with {:d} subscriber{}...'.format(len(self._subscribers), '' if len(self._subscribers) == 1 else 's'))
         while self._enabled:
             for subscriber in self._subscribers:

@@ -20,33 +20,27 @@ from core.logger import Logger, Level
 from core.orient import Orientation
 from core.event import Event, Group
 from core.subscriber import Subscriber
-from mock.motor import Motor
+from mock.roam import Roam
 
 # ..............................................................................
-class MotorSubscriber(Subscriber):
+class ActionSubscriber(Subscriber):
     '''
-    A mocked dual motor controller with encoders.
+    A subscriber for high-level actions (behaviours).
 
     :param name:         the subscriber name (for logging)
     :param message_bus:  the message bus
     :param color:        the color for messages
     :param level:        the logging level 
     '''
-    def __init__(self, message_bus, motors, color=Fore.MAGENTA, level=Level.INFO):
-        super().__init__('motor', message_bus, color, level)
+    def __init__(self, config, message_bus, motors, color=Fore.MAGENTA, level=Level.INFO):
+        super().__init__('action', message_bus, color, level)
+        if config is None:
+            raise ValueError('null configuration argument.')
+        self._config = config
+        self._roam = Roam(config, message_bus, motors, level)
         self._motors = motors
-        self.events = [ Event.VELOCITY, Event.THETA, Event.EVEN,
-                Event.PORT_VELOCITY, Event.PORT_THETA, Event.STBD_VELOCITY, Event.STBD_THETA,
-                Event.INCREASE_PORT_VELOCITY, Event.DECREASE_PORT_VELOCITY,
-                Event.INCREASE_STBD_VELOCITY, Event.DECREASE_STBD_VELOCITY,
-                Event.INCREASE_PORT_THETA, Event.DECREASE_PORT_THETA,
-                Event.INCREASE_STBD_THETA, Event.DECREASE_STBD_THETA,
-                Event.TURN_AHEAD_PORT, Event.TURN_TO_PORT, Event.TURN_ASTERN_PORT, Event.SPIN_PORT,
-                Event.SPIN_STBD, Event.TURN_ASTERN_STBD, Event.TURN_TO_STBD, Event.TURN_AHEAD_STBD,
-                Event.FULL_ASTERN, Event.HALF_ASTERN, Event.SLOW_ASTERN, Event.DEAD_SLOW_ASTERN,
-                Event.DEAD_SLOW_AHEAD, Event.SLOW_AHEAD, Event.HALF_AHEAD, Event.FULL_AHEAD,  
-                Event.DECREASE_VELOCITY, Event.INCREASE_VELOCITY, Event.HALT, Event.STOP, Event.BRAKE ]
-        self._log.info('motor subscriber ready.')
+        self.events = [ Event.ROAM, Event.SNIFF ]
+        self._log.info('action subscriber ready.')
 
     # ..........................................................................
     async def _arbitrate_message(self, message):
@@ -54,13 +48,26 @@ class MotorSubscriber(Subscriber):
         Pass the message on to the Arbitrator and acknowledge that it has been
         sent (by setting a flag in the message).
         '''
-#       if self._message_bus.verbose:
-#           self._log.info(self._color + Style.DIM + 'arbitrating payload for event {}; value: {}'.format(message.payload.event.name, message.payload.value))
         await self._message_bus.arbitrate(message.payload)
         # increment sent acknowledgement count
         message.acknowledge_sent()
 #       if self._message_bus.verbose:
         self._log.info(self._color + Style.NORMAL + 'arbitrated payload for event {}; value: {}'.format(message.payload.event.name, message.payload.value))
+
+    # ..........................................................................
+    def start(self):
+        '''
+        The necessary state machine call to start the publisher, which performs
+        any initialisations of active sub-components, etc.
+        '''
+        self._roam.start()
+        super().start()
+
+    # ..........................................................................
+    def enable(self):
+        super().enable()
+        self._roam.enable()
+        self._log.info('🌞 enabled.')
 
     # ..........................................................................
     async def process_message(self, message):
@@ -73,14 +80,15 @@ class MotorSubscriber(Subscriber):
             raise GarbageCollectedError('cannot process message: message has been garbage collected. [3]')
         _event = message.event
         self._log.info('pre-processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.description) + Style.RESET_ALL)
-        if _event.group is Group.STOP:
-            self._motors.dispatch_stop_event(_event)
-        elif _event.group is Group.VELOCITY:
-            self._motors.dispatch_velocity_event(message.payload)
-        elif _event.group is Group.THETA:
-            self._motors.dispatch_theta_event(_event)
-        elif _event.group is Group.CHADBURN:
-            self._motors.dispatch_chadburn_event(_event)
+        if _event is Event.ROAM:
+            self._log.info(Fore.YELLOW + 'ROAM: message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.description) + Style.RESET_ALL)
+            if self._roam.enabled:
+                self._roam.disable()
+            else:
+                self._roam.enable()
+#           self._behaviour_handler.dispatch_roam_event(_event)
+        elif _event is Event.SNIFF:
+            self._log.info(Fore.YELLOW + 'SNIFF: message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.description) + Style.RESET_ALL)
         else:
             self._log.warning('unrecognised message {}'.format(message.name) + ''.format(message.event.description))
         await super().process_message(message)
