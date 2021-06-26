@@ -34,15 +34,16 @@ from core.publisher import Publisher
 from core.subscriber import Subscriber, GarbageCollector
 from core.event import Event
 
+from mock.motor_configurer import MotorConfigurer
 from mock.event_publisher import EventPublisher
-from mock.action_subscriber import ActionSubscriber
 from mock.motor_subscriber import MotorSubscriber
-#from mock.flood_publisher import FloodPublisher
+from mock.behaviour_manager import BehaviourManager
 #from mock.gamepad_publisher import GamepadPublisher
 #from mock.gamepad_controller import GamepadController
-
-from mock.motor_configurer import MotorConfigurer
-#from mock.motors import Motors
+from mock.roam import Roam
+from mock.moth import Moth
+from mock.sniff import Sniff
+from mock.idle import Idle
 
 # ..............................................................................
 @pytest.mark.unit
@@ -79,10 +80,8 @@ def test_pub_sub():
     _motors = _motor_configurer.get_motors()
     _publisher1.set_motors(_motors)
 
-
-    _subscriber0 = MotorSubscriber(_message_bus, _motors, Fore.MAGENTA, _level)
-
-    _subscriber1 = ActionSubscriber(_config, _message_bus, _motors, Fore.BLUE, _level)
+    # create subscribers
+    _subscriber1 = MotorSubscriber(_message_bus, _motors, Fore.MAGENTA, _level)
 
     _subscriber2 = Subscriber('infrared', _message_bus, Fore.GREEN, _level)
     _subscriber2.events = [ Event.INFRARED_PORT_SIDE, Event.INFRARED_PORT, Event.INFRARED_CNTR, Event.INFRARED_STBD, Event.INFRARED_STBD_SIDE ] # reacts to IR sensors
@@ -91,6 +90,14 @@ def test_pub_sub():
     _subscriber3.events = [ Event.BUMPER_PORT, Event.BUMPER_CNTR, Event.BUMPER_STBD ] # reacts to bumpers
 
     _garbage_collector = GarbageCollector('gc', _message_bus, Fore.BLUE, _level)
+
+    # behaviour manager is a specialised subscriber
+    _behave_manager = BehaviourManager(_config, _message_bus, _motors, Fore.BLUE, _level)
+    # create and register behaviours (these are listed in priority order)
+    _behave_manager.register_behaviour(Roam(_config, _message_bus, _motors, _level))
+    _behave_manager.register_behaviour(Moth(_config, _message_bus, _motors, _level))
+    _behave_manager.register_behaviour(Sniff(_config, _message_bus, _motors, _level))
+    _behave_manager.register_behaviour(Idle(_config, _message_bus, _motors, _level))
 
 #   _message_bus.print_publishers()
 #   _message_bus.print_subscribers()

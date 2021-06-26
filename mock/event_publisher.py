@@ -443,13 +443,13 @@ class EventPublisher(Publisher):
   ┃ FUL AST ┃ HAF AST ┃ SLO AST ┃ DSL AST ┃  STOP   ┃ DSL AHD ┃ SLO AHD ┃ HAF AHD ┃ FUL AHD ┃  HALT   ┃  BRAKE  ┃  EVEN   ┃ SHUTDWN ┃
   ┗━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┛
        ┃    Q    ┃    W    ┃    E    ┃    R    ┃    T    ┃    Y    ┃    U    ┃    I    ┃    O    ┃    P    ┃    [    ┃    ]    ┃
-       ┃  QUIT   ┃  FLOOD  ┃ GAMEPAD ┃  ROAM   ┃  NOOP   ┃  SNIFF  ┃         ┃  INFO   ┃ CLR TSK ┃ POP_MSG ┃ IN_PORT ┃ IN_STBD ┃
+       ┃  QUIT   ┃  FLOOD  ┃ GAMEPAD ┃  ROAM   ┃  MOTH   ┃  SNIFF  ┃  IDLE   ┃  INFO   ┃ CLR TSK ┃ POP_MSG ┃ IN_PORT ┃ IN_STBD ┃
        ┗━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┓
             ┃    A    ┃    S    ┃    D    ┃    F    ┃    G    ┃    H    ┃    J    ┃    K    ┃    L    ┃    :    ┃    "    ┃   RET   ┃
             ┃ IR_PSID ┃ IR_PORT ┃ IR_CNTR ┃ IR_STBD ┃ IR_SSID ┃  HELP   ┃ BM_PORT ┃ BM_CNTR ┃ BM_STBD ┃ DE_PORT ┃ DE_STBD ┃  CLEAR  ┃
             ┗━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┛
                  ┃    Z    ┃    X    ┃    C    ┃    V    ┃    B    ┃    N    ┃    M    ┃    <    ┃    >    ┃    ?    ┃    \    ┃
-                 ┃ MTR_INF ┃ SP_PORT ┃ TN_PORT ┃ VERBOSE ┃ TN_STBD ┃ SP_STBD ┃         ┃ DE_VELO ┃ IN_VELO ┃  HELP   ┃         ┃
+                 ┃ MTR_INF ┃ SP_PORT ┃ TN_PORT ┃ VERBOSE ┃ TN_STBD ┃ SP_STBD ┃  NOOP   ┃ DE_VELO ┃ IN_VELO ┃  HELP   ┃         ┃
                  ┗━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┛
     
   FUL AST:   full astern        QUIT:     quit application              IR_PSID:  port side infrared            MTR_INF:  toggle motor info
@@ -502,8 +502,8 @@ class EventPublisher(Publisher):
            113   q
            114   r *    roam
            115   s *    port infrared
-           116   t      noop (test message)
-           117   u
+           116   t      moth
+           117   u      noop (test message)
            118   v      verbose
            119   w      toggle flood mode with random messages
            120   x *    spin port
@@ -567,16 +567,18 @@ class EventPublisher(Publisher):
             return Event.BUMPER_CNTR
         elif och == 108: # l
             return Event.BUMPER_STBD
-#       elif och == 109: # m
-#           return Event....
+        elif och == 109: # m
+            return Event.NOOP
         elif och == 110: # n
             return Event.SPIN_STBD
         elif och == 114: # r
             return Event.ROAM
         elif och == 115: # s
             return Event.INFRARED_PORT
-        elif och == 116: # s
-            return Event.NOOP
+        elif och == 116: # t
+            return Event.MOTH
+        elif och == 117: # u
+            return Event.IDLE
         elif och == 120: # x
             return Event.SPIN_PORT
         elif och == 121: # y

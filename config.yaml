@@ -21,6 +21,14 @@ kros:
         loop_freq_hz: 50                         # main loop frequency
     roam:
         loop_freq_hz: 1                         # roam loop frequency
+    moth:
+        loop_freq_hz: 1                         # sniff loop frequency
+        anti_moth: False                        # moth or anti-moth
+    sniff:
+        loop_freq_hz: 1                         # sniff loop frequency
+    idle:
+        loop_freq_hz: 0.1                       # idle loop frequency
+        idle_threshold_sec: 20                  # how many seconds before we trigger an idle behaviour
         # GPIO pins configured for A1, B1, A2 and B2
 #       motor_encoder_a1_port:  22               # port A
 #       motor_encoder_b1_port:  23               # port B

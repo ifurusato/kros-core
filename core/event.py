@@ -32,7 +32,9 @@ class Event(Enum):
 
     The specific response for a behaviour is provided by the Controller,
     which receives an Event-laden Message from the Arbitrator, which
-    prioritises the Messages it receives from the MessageQueue.
+    prioritises the Messages it receives from the MessageQueue. Note
+    that priority operates in reverse-order: the smaller the number the
+    higher the priority.
 
     For non-ballistic behaviours the response is generally an ongoing
     setting a pair of motor speeds.
@@ -54,23 +56,23 @@ class Event(Enum):
     GAMEPAD                = ( 40, "gamepad",                  10,   Group.GAMEPAD,    False)
 
     # stopping and halting ..................................................................
-    STOP                   = ( 50, "stop",                     12,   Group.STOP,        True)
+    STOP                   = ( 50, "stop",                     12,   Group.STOP,       False)
     HALT                   = ( 51, "halt",                     13,   Group.STOP,       False)
     BRAKE                  = ( 52, "brake",                    14,   Group.STOP,       False)
     STANDBY                = ( 53, "standby",                  15,   Group.STOP,       False)
     BUTTON                 = ( 54, "button",                   16,   Group.STOP,       False)
 
     # bumper ................................................................................
-    BUMPER_PORT            = ( 110, "bumper port",             40,   Group.SENSOR,      True)
-    BUMPER_CNTR            = ( 111, "bumper center",           40,   Group.SENSOR,      True)
-    BUMPER_STBD            = ( 112, "bumper stbd",             40,   Group.SENSOR,      True)
+    BUMPER_PORT            = ( 110, "bumper port",             40,   Group.SENSOR,     False)
+    BUMPER_CNTR            = ( 111, "bumper center",           40,   Group.SENSOR,     False)
+    BUMPER_STBD            = ( 112, "bumper stbd",             40,   Group.SENSOR,     False)
 
     # infrared ..............................................................................
-    INFRARED_PORT_SIDE     = ( 120, "infrared port side",      50,   Group.SENSOR,      True)
-    INFRARED_PORT          = ( 121, "infrared port",           50,   Group.SENSOR,      True)
-    INFRARED_CNTR          = ( 122, "infrared cntr",           50,   Group.SENSOR,      True)
-    INFRARED_STBD          = ( 123, "infrared stbd",           50,   Group.SENSOR,      True)
-    INFRARED_STBD_SIDE     = ( 124, "infrared stbd side",      50,   Group.SENSOR,      True)
+    INFRARED_PORT_SIDE     = ( 120, "infrared port side",      50,   Group.SENSOR,     False)
+    INFRARED_PORT          = ( 121, "infrared port",           50,   Group.SENSOR,     False)
+    INFRARED_CNTR          = ( 122, "infrared cntr",           50,   Group.SENSOR,     False)
+    INFRARED_STBD          = ( 123, "infrared stbd",           50,   Group.SENSOR,     False)
+    INFRARED_STBD_SIDE     = ( 124, "infrared stbd side",      50,   Group.SENSOR,     False)
 
     # velocity directives ...................................................................
     VELOCITY               = ( 200, "velocity",               100,   Group.VELOCITY,   False) # with value
@@ -118,13 +120,15 @@ class Event(Enum):
     FULL_AHEAD             = ( 414, "full ahead",             100,   Group.CHADBURN,   False)
 
     # high level behaviours .................................................................
-    ROAM                   = ( 500, "roam",                   100,   Group.BEHAVIOUR,  False)
-    SNIFF                  = ( 501, "sniff",                  100,   Group.BEHAVIOUR,   True) # A Button
-    VIDEO                  = ( 502, "video",                  150,   Group.BEHAVIOUR,  False) # L1 Button
-    EVENT_L2               = ( 503, "L2",                     150,   Group.BEHAVIOUR,  False) # L2 Button
-    EVENT_R1               = ( 504, "cruise",                 150,   Group.BEHAVIOUR,  False) # R1 Button
-    LIGHTS                 = ( 505, "lights",                 150,   Group.BEHAVIOUR,  False) # R2 Button
-    MOTION_DETECT          = ( 506, "motion detect",          150,   Group.BEHAVIOUR,  False)
+    ROAM                   = ( 500, "roam",                   150,   Group.BEHAVIOUR,   True)
+    MOTH                   = ( 501, "moth",                   151,   Group.BEHAVIOUR,   True)
+    SNIFF                  = ( 502, "sniff",                  152,   Group.BEHAVIOUR,   True) # A Button
+    VIDEO                  = ( 503, "video",                  153,   Group.BEHAVIOUR,  False) # L1 Button
+    EVENT_L2               = ( 504, "L2",                     154,   Group.BEHAVIOUR,  False) # L2 Button
+    EVENT_R1               = ( 505, "cruise",                 155,   Group.BEHAVIOUR,  False) # R1 Button
+    LIGHTS                 = ( 506, "lights",                 156,   Group.BEHAVIOUR,  False) # R2 Button
+    MOTION_DETECT          = ( 507, "motion detect",          157,   Group.BEHAVIOUR,  False)
+    IDLE                   = ( 508, "idle",                   159,   Group.BEHAVIOUR,   True) # A Button
 
     # other events (> 500) ..................................................................
     NO_ACTION              = ( 600, "no action",              500,   Group.OTHER,      False)
@@ -197,6 +201,20 @@ class Event(Enum):
     @property
     def priority(self):
         return self._priority
+
+    def compare_to_priority_of(self, event):
+        '''
+        Returns 1 if the Event of the argument is a higher priority
+        (lower number) than this Event; a -1 if the Event of the
+        argument is a lower priority (higher number) than this Event;
+        and 0 if they have the same priority.
+        '''
+        if self._priority < event.priority:
+            return 1
+        elif self._priority > event.priority:
+            return -1
+        else:
+            return 0
 
     @property
     def group(self):

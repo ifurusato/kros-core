@@ -196,20 +196,24 @@ class Controller():
            self._log.info('event: turn-ahead-starboard.')
 
         # high level behaviours ............
-        elif _event is Event.ROAM:                  # ( 90, "roam",                    100,   False)
+        elif _event is Event.ROAM:                  # ( 500, "roam",                    150,    True)
            self._log.info('event: roam.')
-        elif _event is Event.SNIFF:                 # ( 91, "A: sniff",                100,    True) # A Button
+        elif _event is Event.MOTH:                  # ( 501, "moth",                    151,    True)
+           self._log.info('event: moth.')
+        elif _event is Event.SNIFF:                 # ( 502, "sniff",                   152,    True)
            self._log.info('event: sniff.')
-        elif _event is Event.VIDEO:                 # ( 92, "L1: video",               150,   False) # L1 Button
+        elif _event is Event.VIDEO:                 # ( 503, "L1: video",               153,   False) # L1 Button
            self._log.info('event: video.')
-        elif _event is Event.EVENT_L2:              # ( 93, "L2",                      150,   False) # L2 Button
+        elif _event is Event.EVENT_L2:              # ( 504, "L2",                      154,   False) # L2 Button
            self._log.info('event: L2.')
-        elif _event is Event.EVENT_R1:              # ( 94, "R1: cruise",              150,   False) # R1 Button
+        elif _event is Event.EVENT_R1:              # ( 505, "R1: cruise",              155,   False) # R1 Button
            self._log.info('event: R1.')
-        elif _event is Event.LIGHTS:                # ( 95, "R2: lights",              150,   False) # R2 Button
+        elif _event is Event.LIGHTS:                # ( 506, "R2: lights",              156,   False) # R2 Button
            self._log.info('event: lights.')
-        elif _event is Event.MOTION_DETECT:         # ( 96, "motion detect",           150,   False)
+        elif _event is Event.MOTION_DETECT:         # ( 507, "motion detect",           157,   False)
            self._log.info('event: motion-detect.')
+        elif _event is Event.IDLE:                  # ( 508, "R2: lights",              159,    True)
+           self._log.info('event: idle.')
         
         # movement directives ..............
         elif _event is Event.VELOCITY:              # ( 101, "forward velocity",       200,   False)

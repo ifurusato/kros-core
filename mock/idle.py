@@ -22,9 +22,9 @@ from core.subscriber import Subscriber
 from core.behaviour import Behaviour
 
 # ...............................................................
-class Roam(Behaviour):
+class Idle(Behaviour):
     '''
-    Implements a roaming behaviour.
+    Implements a idle behaviour.
 
     :param name:           the name of this behaviour
     :param loop_freq_hz:   the loop frequency in Hertz
@@ -34,9 +34,11 @@ class Roam(Behaviour):
     def __init__(self, config, message_bus, motors, level=Level.INFO):
         if config is None:
             raise ValueError('null configuration argument.')
-        cfg = config['kros'].get('roam')
+        cfg = config['kros'].get('idle')
         _loop_freq_hz = cfg.get('loop_freq_hz')
-        super().__init__('roam', _loop_freq_hz, self._roam_callback, level)
+        super().__init__('idle', _loop_freq_hz, self._idle_callback, level)
+        self._idle_threshold_sec = cfg.get('idle_threshold_sec') # int value
+        self._log.info('idle threshold: {:d} sec.'.format(self._idle_threshold_sec))
         self._config      = config
         self._message_bus = message_bus
         self._motors      = motors
@@ -45,11 +47,11 @@ class Roam(Behaviour):
     # ..........................................................................
     @property
     def event(self):
-        return Event.ROAM
+        return Event.IDLE
 
     # ..........................................................................
-    def _roam_callback(self):
-        self._log.info('🌼 roam callback.')
+    def _idle_callback(self):
+        self._log.info('🌜 idle callback.')
 
 #   # ..........................................................................
     def start(self):
@@ -62,7 +64,7 @@ class Roam(Behaviour):
     # ..........................................................................
     @property
     def name(self):
-        return 'roam'
+        return 'idle'
 
     # ..........................................................................
     def execute(self):
@@ -72,10 +74,13 @@ class Roam(Behaviour):
         '''
         _timestamp = self._message_bus.last_message_timestamp
         if _timestamp is None:
-            self._log.info('🌼 roam loop execute; no previous messages.')
+            self._log.info('🌜 idle loop execute; no previous messages.')
         else:
             _elapsed_ms = (dt.now() - _timestamp).total_seconds() * 1000.0
-            self._log.info('🌼 roam loop execute; {}'.format(Subscriber.get_formatted_time('message age:', _elapsed_ms)))
+            if ( _elapsed_ms / 1000.0 ) > self._idle_threshold_sec:
+                self._log.info('🍒 idle loop execute; {}'.format(Subscriber.get_formatted_time('message age:', _elapsed_ms)) + Fore.YELLOW + ' type: {}'.format(type(_elapsed_ms)))
+            else:
+                self._log.info('🌜 idle loop execute; {}'.format(Subscriber.get_formatted_time('message age:', _elapsed_ms)) + Fore.YELLOW + ' type: {}'.format(type(_elapsed_ms)))
 
 #   # ..........................................................................
 #   def suppressed(self):

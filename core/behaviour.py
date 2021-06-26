@@ -39,7 +39,10 @@ class Behaviour(ABC, FiniteStateMachine):
         self._log = Logger('behave-{}'.format(name), level)
         self._loop_freq_hz = loop_freq_hz
         self._rate         = Rate(self._loop_freq_hz)
-        self._log.info('tick frequency: {:d}Hz'.format(self._loop_freq_hz))
+        if isinstance(self._rate, int):
+            self._log.info('loop frequency: {:d}Hz'.format(self._loop_freq_hz))
+        else:
+            self._log.info('loop frequency: {:5.2f}Hz'.format(self._loop_freq_hz))
         self._callbacks    = []
         self._thread       = None
         self._suppressed   = False
@@ -61,6 +64,14 @@ class Behaviour(ABC, FiniteStateMachine):
     # ..........................................................................
     def add_callback(self, callback):
         self._callbacks.append(callback)
+
+    # ..........................................................................
+    @abstractmethod
+    def event(self):
+        '''
+        Should be implemented as a @property.
+        '''
+        raise Exception('required method not implemented.')
 
     # ..........................................................................
     @property
