@@ -19,48 +19,27 @@ init()
 try:
     import numpy
 except ImportError:
-    sys.exit("This script requires the numpy module\nInstall with: pip3 install --user numpy")
+    sys.exit("This script requires the numpy module.\nInstall with: pip3 install --user numpy")
 try:
     import smbus
 except ImportError:
-    sys.exit("This script requires the smbus module\nInstall with: pip3 install --user smbus")
-#try:
+    print(Fore.RED + "This script requires the smbus module. Some features will be disabled.\nInstall with: pip3 install --user smbus" + Style.RESET_ALL)
 try:
     import psutil
 except ImportError:
-    sys.exit("This script requires the psutil module\nInstall with: pip3 install --user psutil")
-#try:
-#    from rgbmatrix5x5 import RGBMatrix5x5
-#except ImportError:
-#    print('This script requires the smbus module\nInstall with: sudo pip3 install smbus')
-#    sys.exit("This script requires the rgbmatrix5x5 module\nInstall with: pip3 install --user rgbmatrix5x5")
-from rgbmatrix5x5 import RGBMatrix5x5
+    print(Fore.RED + "This script requires the psutil module. Some features will be disabled.\nInstall with: pip3 install --user psutil" + Style.RESET_ALL)
+try:
+    from rgbmatrix5x5 import RGBMatrix5x5
+except ImportError:
+    from mock.rgbmatrix5x5 import MockRGBMatrix5x5 as RGBMatrix5x5
+    print(Fore.RED + 'This script requires the rgbmatrix5x5 module. Some features will be disabled.\nInstall with: sudo pip3 install smbus' + Style.RESET_ALL)
 
 from core.logger import Level, Logger
 from core.i2c_scanner import I2CScanner
 from core.orient import Orientation
 
 from mock.color import Color
-
 #from lib.feature import Feature
-
-# ..............................................................................
-class DisplayType(Enum):
-    BLINKY    = 1
-    CPU       = 2
-    DARK      = 3
-    RAINBOW   = 4
-    RANDOM    = 5
-    SCAN      = 6
-    SWORL     = 7
-    SOLID     = 8
-    WIPE_LEFT = 9
-
-class WipeDirection(Enum):
-    LEFT  = 0
-    RIGHT = 1
-    UP    = 2
-    DOWN  = 3
 
 # ..............................................................................
 class RgbMatrix(object): # was (Feature)
@@ -610,5 +589,23 @@ class RgbMatrix(object): # was (Feature)
         self.disable()
         self._closed = True
         self._log.info('closed.')
+
+# ..............................................................................
+class DisplayType(Enum):
+    BLINKY    = 1
+    CPU       = 2
+    DARK      = 3
+    RAINBOW   = 4
+    RANDOM    = 5
+    SCAN      = 6
+    SWORL     = 7
+    SOLID     = 8
+    WIPE_LEFT = 9
+
+class WipeDirection(Enum):
+    LEFT  = 0
+    RIGHT = 1
+    UP    = 2
+    DOWN  = 3
 
 #EOF

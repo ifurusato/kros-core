@@ -28,7 +28,14 @@ from mock.rgbmatrix import RgbMatrix, Color, DisplayType, WipeDirection
 # ...............................................................
 class Roam(Behaviour):
     '''
-    Implements a roaming behaviour.
+    Implements a roaming behaviour. This alters the usage of the center
+    analog IR sensor to no longer function solely for obstacle avoidance,
+    but instead set the robot's target velocity as a proportion to the
+    perceived distance. I.e., if the sensor sees nothing at its maximum
+    range the robot's target velocity will be set to its maximum. As the
+    sensed distance is lessened the target velocity is likewise, until 
+    the robot reaches a minimum distance in which it stops and then goes
+    into an obstacle avoidance behaviour (handled elsewhere).
 
     :param name:           the name of this behaviour
     :param loop_freq_hz:   the loop frequency in Hertz
