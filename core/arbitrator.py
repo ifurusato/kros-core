@@ -84,7 +84,7 @@ class Arbitrator(object):
             self._count = next(self._counter)
             self._log.debug(self._color + '[{:03d}] putting payload: \'{}\' onto queue...'.format(self._count, payload.event.description))
             if len(self._controllers) > 0:
-                await self._queue.put(( payload.priority, payload ))
+                await self._queue.put((payload.priority, payload))
                 self._log.info(self._color + 'payload \'{}\' put onto queue: {} element{}.'.format(
                         payload.event.description, self._queue.qsize(), '' if self._queue.qsize() == 1 else 's'))
                 await self.trigger_callback()

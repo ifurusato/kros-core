@@ -61,6 +61,16 @@ class Message(object):
     def timestamp(self):
         return self._timestamp
 
+    # value         ............................................................
+
+    @property
+    def value(self):
+        return self._payload.value
+
+    @value.setter
+    def value(self, value):
+        self._payload.value = value
+
     # age      .................................................................
 
     @property
@@ -261,10 +271,18 @@ class Payload(object):
     def value(self):
         return self._value
 
+    @value.setter
+    def value(self, value):
+        self._value = value
+
     # equals        ............................................................
     def __eq__(self, other):
         if other is None:
             return False
         return self.event == other.event and self.value == other.value
+
+#   # not equals    ............................................................
+#  def __ne__(self, other):
+#       return not self == other
 
 #EOF

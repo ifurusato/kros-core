@@ -10,6 +10,7 @@
 # modified: 2021-06-26
 #
 
+import time
 from threading import Thread
 from abc import ABC, abstractmethod
 from datetime import datetime as dt
@@ -20,6 +21,9 @@ from core.logger import Logger, Level
 from core.event import Event
 from core.subscriber import Subscriber
 from core.behaviour import Behaviour
+
+#from mock.indicator import Indicator
+from mock.rgbmatrix import RgbMatrix, Color, DisplayType, WipeDirection
 
 # ...............................................................
 class Roam(Behaviour):
@@ -40,7 +44,37 @@ class Roam(Behaviour):
         self._config      = config
         self._message_bus = message_bus
         self._motors      = motors
+        self._rgbmatrix = RgbMatrix(Level.INFO)
+        self._rgbmatrix.set_display_type(DisplayType.RANDOM)
+#       self._indicator = Indicator(Level.INFO)
+#       self._indicator.set_display_type(DisplayType.RANDOM)
         self._log.info('ready.')
+
+    # ..........................................................................
+    def enable(self):
+        '''
+        The necessary state machine call to enable the publisher.
+        '''
+        super().enable()
+#       self._indicator.enable()
+        self._rgbmatrix.enable()
+
+    # ..........................................................................
+    def disable(self):
+        '''
+        The state machine call to disable the publisher.
+        '''
+        self._disable_rgbmatrix()
+        super().disable()
+#       self._indicator.disable()
+
+    # ..........................................................................
+    def _disable_rgbmatrix(self):
+        self._rgbmatrix.set_color(Color.BLACK)
+        time.sleep(0.2)
+        self._rgbmatrix.clear()
+        time.sleep(0.2)
+        self._rgbmatrix.disable()
 
     # ..........................................................................
     @property

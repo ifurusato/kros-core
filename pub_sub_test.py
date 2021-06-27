@@ -32,18 +32,18 @@ from core.message_bus import MessageBus
 from core.message_factory import MessageFactory
 from core.publisher import Publisher
 from core.subscriber import Subscriber, GarbageCollector
+from core.behaviour_manager import BehaviourManager
 from core.event import Event
 
 from mock.motor_configurer import MotorConfigurer
 from mock.event_publisher import EventPublisher
 from mock.motor_subscriber import MotorSubscriber
-from mock.behaviour_manager import BehaviourManager
 #from mock.gamepad_publisher import GamepadPublisher
 #from mock.gamepad_controller import GamepadController
-from mock.roam import Roam
-from mock.moth import Moth
-from mock.sniff import Sniff
-from mock.idle import Idle
+from behave.roam import Roam
+from behave.moth import Moth
+from behave.sniff import Sniff
+from behave.idle import Idle
 
 # ..............................................................................
 @pytest.mark.unit

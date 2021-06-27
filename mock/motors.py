@@ -7,7 +7,7 @@
 #
 # author:   Murray Altheim
 # created:  2021-02-16
-# modified: 2021-04-22
+# modified: 2021-06-26
 #
 
 from threading import Thread
@@ -20,7 +20,8 @@ init()
 from core.logger import Logger, Level
 from core.orient import Orientation, Speed, Direction
 from core.event import Event
-from mock.slew import SlewLimiter
+from core.slew import SlewLimiter
+
 from mock.motor import Motor
 
 # ..............................................................................

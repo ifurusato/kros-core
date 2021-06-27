@@ -76,14 +76,15 @@ class Controller():
             self._log.info(Fore.CYAN + 'no previous payload.')
         elif payload == self._previous_payload:
             self._log.info(Fore.CYAN + 'no state change on event: ' + Style.BRIGHT + ' {}'.format(self._previous_payload.event.description)
-                    + Fore.BLACK + Style.NORMAL + '[{:d}/{:d}]'.format(self._state_change_count, self._event_count))
+                    + Fore.BLACK + Style.NORMAL + ' [{:d}/{:d}]'.format(self._state_change_count, self._event_count))
+            self._log.info(Fore.GREEN + '🥒 payload: {}; previous payload: {}'.format(payload.value, self._previous_payload.value))
         else:
             if payload.event == self._previous_payload.event:
                 self._log.info(Fore.CYAN + 'value {} changed on event: '.format(payload.value) + Style.BRIGHT + ' {}'.format(self._previous_payload.event.description)
-                        + Fore.BLACK + Style.NORMAL + '[{:d}/{:d}]'.format(self._state_change_count, self._event_count))
+                        + Fore.BLACK + Style.NORMAL + ' [{:d}/{:d}]'.format(self._state_change_count, self._event_count))
             else:
                 self._log.info(Fore.CYAN + 'event changed on event: ' + Style.BRIGHT + ' {}'.format(self._previous_payload.event.description)
-                        + Fore.BLACK + Style.NORMAL + '[{:d}/{:d}]'.format(self._state_change_count, self._event_count))
+                        + Fore.BLACK + Style.NORMAL + ' [{:d}/{:d}]'.format(self._state_change_count, self._event_count))
             return
 
         self._previous_payload = payload

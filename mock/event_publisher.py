@@ -15,6 +15,7 @@ import select, tty, termios # used by _Getch
 import select
 import asyncio
 import concurrent.futures
+from datetime import datetime as dt
 from pathlib import Path
 from colorama import init, Fore, Style
 init()
@@ -202,7 +203,11 @@ class EventPublisher(Publisher):
                         if _event is not None:
                             self._log.info('"{}" ({}) pressed; publishing message for event: {}'.format(ch, och, _event))
                             _message = self._message_factory.get_message(_event, True)
-                            _message.value = 0
+                            # FIXME TODO load message value for various event types correctly...
+                            if _event.is_ballistic:
+                                _message.value = dt.now() # we use a timestamp to guarantee each message is different
+                            else:
+                                _message.value = 0
                             self._log.info('key-publishing message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
                             await super().publish(_message)
                             self._log.info('key-published message:' + Fore.WHITE + ' {}.'.format(_message.name))
@@ -613,5 +618,4 @@ class GamepadConnectException(Exception):
     '''
     pass
 
-#EOF
 #EOF

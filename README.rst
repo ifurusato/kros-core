@@ -92,6 +92,11 @@ command line::
 
 This ability will be available once kros-core has been published to PyPI.
 
+While numpy can be installed via pip3 we recommend using the available library
+directly from the Linux repository::
+
+    sudo apt-get install python3-numpy
+
 
 Usage
 *****
