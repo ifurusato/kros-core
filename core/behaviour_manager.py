@@ -40,6 +40,7 @@ class BehaviourManager(Subscriber):
         self._active_behaviour = None
         self.events      = []
         self._behaviours = {}
+        self.add_event(Event.INFRARED_CNTR)
         self._log.info('behaviour manager ready.')
 
     # ..........................................................................
@@ -59,18 +60,6 @@ class BehaviourManager(Subscriber):
         '''
         return self._behaviours.get(event)
 
-#   # ..........................................................................
-#   async def _arbitrate_message(self, message):
-#       '''
-#       Pass the message on to the Arbitrator and acknowledge that it has been
-#       sent (by setting a flag in the message).
-#       '''
-#       await self._message_bus.arbitrate(message.payload)
-#       # increment sent acknowledgement count
-#       message.acknowledge_sent()
-#       if self._message_bus.verbose:
-#       self._log.info(self._color + Style.NORMAL + 'arbitrated payload for event {}; value: {}'.format(message.payload.event.name, message.payload.value))
-
     # ..........................................................................
     def start(self):
         '''
@@ -79,6 +68,7 @@ class BehaviourManager(Subscriber):
         '''
         for _key, _behaviour in self._behaviours.items():
             _behaviour.start()
+            self._log.debug('started behaviour {}'.format(_behaviour.name))
         super().start()
 
     # ..........................................................................
@@ -121,6 +111,7 @@ class BehaviourManager(Subscriber):
         _behaviour = self.get_behavior_for_event(_event)
         if _behaviour is None:
             self._log.info('🥝 0. no behaviour associated with event {}.'.format(_event.description))
+            # FIXME TODO how to associate INFRARED_CNTR to ROAM?
         elif _behaviour.enabled:
             self._log.info('🥝 1. disabling behaviour {}...'.format(_behaviour.name))
             _behaviour.disable()

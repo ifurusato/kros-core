@@ -14,8 +14,6 @@ from enum import Enum
 
 from core.logger import Logger, Level
 
-level = Level.INFO
-
 # ..............................................................................
 class State(Enum):
     NONE     = ( 0, "none")
@@ -46,11 +44,10 @@ class FiniteStateMachine():
     This requires an initial start() followed by repeated transitions
     between enable() and disable(), followed by a terminal close().
     '''
-    def __init__(self, task_name):
-        self.state = State.NONE
-        self.task_name = task_name
-        logger_name = "fsm:" + task_name
-        self._log = Logger(logger_name, level)
+    def __init__(self, task_name, level=Level.INFO):
+        self._log = Logger('fsm:{}'.format(task_name), level)
+        self._state     = State.NONE
+        self._task_name = task_name
         FiniteStateMachine.__transition__(self, State.INITIAL)
         self._log.debug('fsm initialised.')
 
@@ -61,40 +58,45 @@ class FiniteStateMachine():
         exceptions or logging warnings if the transition is either invalid or
         ill-advised (resp.).
         '''
-        self._log.debug('transition in {} from {} to {}.'.format(self.task_name, self.state.name, next_state.name))
+        self._log.debug('transition in {} from {} to {}.'.format(self._task_name, self._state.name, next_state.name))
         # transition table:
-        if self.state is State.NONE:
+        if self._state is State.NONE:
             if next_state is State.INITIAL:
                 pass
             else:
-                raise IllegalStateError('invalid transition in {} from {} to {} (expected INITIAL).'.format(self.task_name, self.state.name, next_state.name))
-        if self.state is State.INITIAL:
+                raise IllegalStateError('invalid transition in {} from {} to {} (expected INITIAL).'.format(self._task_name, self._state.name, next_state.name))
+        if self._state is State.INITIAL:
             if any([ next_state is State.STARTED, next_state is State.CLOSED ]):
                 pass
             else:
-                raise IllegalStateError('invalid transition in {} from {} to {} (expected STARTED).'.format(self.task_name, self.state.name, next_state.name))
-        elif self.state is State.STARTED:
+                raise IllegalStateError('invalid transition in {} from {} to {} (expected STARTED).'.format(self._task_name, self._state.name, next_state.name))
+        elif self._state is State.STARTED:
             if any([ next_state is State.ENABLED, next_state is State.DISABLED, next_state is State.CLOSED ]):
                 pass
             else:
-                raise IllegalStateError('invalid transition in {} from {} to {} (expected ENABLED, DISABLED, or CLOSED).'.format(self.task_name, self.state.name, next_state.name))
-        elif self.state is State.ENABLED:
+                raise IllegalStateError('invalid transition in {} from {} to {} (expected ENABLED, DISABLED, or CLOSED).'.format(self._task_name, self._state.name, next_state.name))
+        elif self._state is State.ENABLED:
             if any([ next_state is State.DISABLED, next_state is State.CLOSED ]):
                 pass
             elif next_state is State.ENABLED:
-                self._log.warning('suspect transition in {} from {} to {}.'.format(self.task_name, self.state.name, next_state.name))
+                self._log.warning('suspect transition in {} from {} to {}.'.format(self._task_name, self._state.name, next_state.name))
             else:
-                raise IllegalStateError('invalid transition in {} from {} to {} (expected DISABLED or CLOSED).'.format(self.task_name, self.state.name, next_state.name))
-        elif self.state is State.DISABLED:
+                raise IllegalStateError('invalid transition in {} from {} to {} (expected DISABLED or CLOSED).'.format(self._task_name, self._state.name, next_state.name))
+        elif self._state is State.DISABLED:
             if any([ next_state is State.ENABLED, next_state is State.CLOSED ]):
                 pass
             elif next_state is State.DISABLED:
-                self._log.warning('suspect transition in {} from {} to {}.'.format(self.task_name, self.state.name, next_state.name))
+                self._log.warning('suspect transition in {} from {} to {}.'.format(self._task_name, self._state.name, next_state.name))
             else:
-                raise IllegalStateError('invalid transition in {} from {} to {} (expected ENABLED or CLOSED).'.format(self.task_name, self.state.name, next_state.name))
-        elif self.state is State.CLOSED:
-            raise IllegalStateError('invalid transition in {} from {} to {} (already CLOSED).'.format(self.task_name, self.state.name, next_state.name))
-        self.state = next_state
+                raise IllegalStateError('invalid transition in {} from {} to {} (expected ENABLED or CLOSED).'.format(self._task_name, self._state.name, next_state.name))
+        elif self._state is State.CLOSED:
+            raise IllegalStateError('invalid transition in {} from {} to {} (already CLOSED).'.format(self._task_name, self._state.name, next_state.name))
+        self._state = next_state
+
+    # ..........................................................................
+    @property
+    def state(self):
+        return self._state
 
     # ..........................................................................
     def start(self):

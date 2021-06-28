@@ -19,42 +19,53 @@ init()
 
 from core.logger import Logger, Level
 from core.event import Event
+from core.fsm import State
 from core.subscriber import Subscriber
 from core.behaviour import Behaviour
+from core.subscriber import Subscriber
 
 #from mock.indicator import Indicator
 from mock.rgbmatrix import RgbMatrix, Color, DisplayType, WipeDirection
 
-# ...............................................................
-class Roam(Behaviour):
+# ..............................................................................
+class Roam(Subscriber, Behaviour):
     '''
-    Implements a roaming behaviour. This alters the usage of the center
-    analog IR sensor to no longer function solely for obstacle avoidance,
-    but instead set the robot's target velocity as a proportion to the
-    perceived distance. I.e., if the sensor sees nothing at its maximum
-    range the robot's target velocity will be set to its maximum. As the
-    sensed distance is lessened the target velocity is likewise, until 
-    the robot reaches a minimum distance in which it stops and then goes
-    into an obstacle avoidance behaviour (handled elsewhere).
+    Implements a roaming behaviour. 
 
-    :param name:           the name of this behaviour
-    :param loop_freq_hz:   the loop frequency in Hertz
-    :param callback:       the optional callback function (can be added later)
+    This is also a Subscriber to INFRARED_CNTR events, altering the usage of
+    the center analog IR sensor to no longer function solely for obstacle 
+    avoidance, but instead set the robot's target velocity as a proportion to 
+    the perceived distance. I.e., if the sensor sees nothing at its maximum 
+    range the robot's forward target velocity will be set to its maximum. As 
+    the sensed distance is lessened the target velocity is likewise, until the 
+    robot reaches a minimum distance in which it stops and then goes into an 
+    obstacle avoidance behaviour (handled elsewhere).
+
+    An option is to set the maximum distance to roam, so that the robot
+    accelerates to roaming speed, varies its speed as described above,
+    then as it nears its target distance, decelerates to a stop at the
+    target.
+
+    :param config:         the application configuration
+    :param message_bus:    the asynchronous message bus
+    :param motors:         the motor controller
     :param level:          the optional log level
     '''
     def __init__(self, config, message_bus, motors, level=Level.INFO):
         if config is None:
             raise ValueError('null configuration argument.')
+        self._config      = config
         cfg = config['kros'].get('roam')
         _loop_freq_hz = cfg.get('loop_freq_hz')
-        super().__init__('roam', _loop_freq_hz, self._roam_callback, level)
-        self._config      = config
+        Behaviour.__init__(self, 'roam', _loop_freq_hz, self._roam_callback, level)
         self._message_bus = message_bus
         self._motors      = motors
+        Subscriber.__init__(self, 'roam', self._message_bus, Fore.GREEN, level)
         self._rgbmatrix = RgbMatrix(Level.INFO)
         self._rgbmatrix.set_display_type(DisplayType.RANDOM)
 #       self._indicator = Indicator(Level.INFO)
 #       self._indicator.set_display_type(DisplayType.RANDOM)
+        self.events = [ Event.INFRARED_CNTR ]
         self._log.info('ready.')
 
     # ..........................................................................
@@ -76,6 +87,20 @@ class Roam(Behaviour):
 #       self._indicator.disable()
 
     # ..........................................................................
+    async def process_message(self, message):
+        '''
+        We expect only INFRARED_CNTR messages and extract the distance value.
+        '''
+        if message.gcd:
+            raise GarbageCollectedError('cannot process message: message has been garbage collected.')
+        _event = message.event
+        self._log.info('processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.description))
+        if _event is Event.INFRARED_CNTR:
+            self._log.info('🆎 processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.description))
+        else:
+            raise ValueError('expected INFRARED_CNTER event not: {}'.format(_event.description))
+
+    # ..........................................................................
     def _disable_rgbmatrix(self):
         self._rgbmatrix.set_color(Color.BLACK)
         time.sleep(0.2)
@@ -95,10 +120,11 @@ class Roam(Behaviour):
 #   # ..........................................................................
     def start(self):
         '''
-        The necessary state machine call to start the publisher, which performs
-        any initialisations of active sub-components, etc.
+        The state machine call to start the roam behaviour. Because this method
+        is part of both superclasses we need to only call it once.
         '''
-        super().start()
+        if self.state is not State.STARTED:
+            super().start()
 
     # ..........................................................................
     @property

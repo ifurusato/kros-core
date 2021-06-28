@@ -32,11 +32,13 @@ class EventPublisher(Publisher):
     _PUBLISH_LOOP_NAME = '__publish-loop__'
 
     _RANDOM_EVENTS = [
-            Event.DECREASE_VELOCITY, Event.INCREASE_VELOCITY, Event.INFRARED_PORT_SIDE, Event.BRAKE,
-            Event.BUMPER_STBD, Event.INFRARED_CNTR, Event.SNIFF, Event.INFRARED_STBD,
-            Event.INFRARED_STBD_SIDE, Event.HALT, Event.STOP, Event.ROAM,
-            Event.INFRARED_PORT, Event.NOOP, Event.BUMPER_CNTR, Event.BUMPER_PORT,
-            Event.SHUTDOWN, Event.AHEAD, Event.ASTERN, Event.ROAM, Event.SNIFF
+            Event.INFRARED_PORT_SIDE, Event.INFRARED_PORT, Event.INFRARED_CNTR, Event.INFRARED_STBD, Event.INFRARED_STBD_SIDE, 
+            Event.BUMPER_PORT, Event.BUMPER_CNTR, Event.BUMPER_STBD, 
+            Event.INCREASE_VELOCITY, Event.DECREASE_VELOCITY, 
+            Event.BRAKE, Event.HALT, Event.STOP, 
+            Event.AHEAD, Event.ASTERN, 
+            Event.ROAM, Event.SNIFF, Event.MOTH, Event.IDLE,
+            Event.NOOP, Event.SHUTDOWN, 
         ]
 
     '''
@@ -68,6 +70,12 @@ class EventPublisher(Publisher):
         self._triggered_ir_stbd_side = self._triggered_bmp_port = self._triggered_bmp_cntr = self._triggered_bmp_stbd = 0
         self._getch           = _Getch()
         self._flood_enable    = False
+        # value setter for INFRARED_CNTR
+        self._irc_value       = 100 
+        self._irc_min         = 50
+        self._irc_max         = 200
+        self._irc_incr        = 20
+        self._clamp = lambda n: self._irc_min if n <= self._irc_min else self._irc_max if n >= self._irc_max else n
         # TODO configuration
         self._gamepad_publish_delay_sec = 0.01 # delay after Gamepad event
         self._publish_delay_sec = 0.01         # delay after IFS event
@@ -204,7 +212,9 @@ class EventPublisher(Publisher):
                             self._log.info('"{}" ({}) pressed; publishing message for event: {}'.format(ch, och, _event))
                             _message = self._message_factory.get_message(_event, True)
                             # FIXME TODO load message value for various event types correctly...
-                            if _event.is_ballistic:
+                            if _event is Event.INFRARED_CNTR:
+                                _message.value = self._get_infrared_center_value() # we use a rising and falling value
+                            elif _event.is_ballistic:
                                 _message.value = dt.now() # we use a timestamp to guarantee each message is different
                             else:
                                 _message.value = 0
@@ -239,6 +249,22 @@ class EventPublisher(Publisher):
         finally:
             if self._getch:
                 self._getch.close()
+
+    # ..........................................................................
+    def _get_infrared_center_value(self):
+        '''
+        Returns a continuually rising and falling value.
+        This goes from a minimum of 50 to a maximum of 250,
+        stepping by an increment of 10.
+        '''
+        self._irc_value += self._irc_incr
+        if self._irc_value <= self._irc_min:
+            self._irc_incr = 10
+        elif self._irc_value >= self._irc_max:
+            self._irc_incr = -10
+        self._irc_value = self._clamp(self._irc_value)
+        self._log.info('💓 infrared center: {:d}'.format(self._irc_value))
+        return self._irc_value
 
     # ..........................................................................
     def _get_random_event(self):

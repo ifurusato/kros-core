@@ -7,7 +7,7 @@
 #
 # author:   Murray Altheim
 # created:  2021-03-10
-# modified: 2021-06-11
+# modified: 2021-06-28
 #
 
 import asyncio
@@ -36,7 +36,7 @@ class Subscriber(FiniteStateMachine):
         :param events:       the list of events used as a filter, None to set as cleanup task
         :param level:        the logging level
         '''
-        super().__init__(name)
+        FiniteStateMachine.__init__(self, name)
         self._log = Logger('sub-{}'.format(name), level)
         self._name        = name
         self._color       = color

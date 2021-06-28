@@ -34,9 +34,9 @@ class Behaviour(ABC, FiniteStateMachine):
     :param level:          the optional log level
     '''
     def __init__(self, name, loop_freq_hz, callback, level=Level.INFO):
-        super().__init__(name)
-        self._name = name
         self._log = Logger('behave-{}'.format(name), level)
+        FiniteStateMachine.__init__(self, name)
+        self._name         = name
         self._loop_freq_hz = loop_freq_hz
         self._rate         = Rate(self._loop_freq_hz)
         if isinstance(self._rate, int):
