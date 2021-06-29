@@ -61,7 +61,8 @@ class Roam(Subscriber, Behaviour):
         self._message_bus = message_bus
         self._motors      = motors
         Subscriber.__init__(self, 'roam', self._message_bus, Fore.GREEN, level)
-        self._rgbmatrix = RgbMatrix(Level.INFO)
+        self._distance    = None
+        self._rgbmatrix   = RgbMatrix(Level.INFO)
         self._rgbmatrix.set_display_type(DisplayType.RANDOM)
 #       self._indicator = Indicator(Level.INFO)
 #       self._indicator.set_display_type(DisplayType.RANDOM)
@@ -69,11 +70,23 @@ class Roam(Subscriber, Behaviour):
         self._log.info('ready.')
 
     # ..........................................................................
+    @property
+    def distance(self):
+        return self._distance
+
+    @distance.setter
+    def distance(self, distance):
+        self._log.info('🍆 setting distance to: {}'.format(distance))
+        self._distance = distance
+
+    # ..........................................................................
     def enable(self):
         '''
         The necessary state machine call to enable the publisher.
         '''
+        self._log.info(Fore.YELLOW + '🎾 1. enabled: {}'.format(self.enabled))
         super().enable()
+        self._log.info(Fore.YELLOW + '🎾 2. enabled: {}'.format(self.enabled))
 #       self._indicator.enable()
         self._rgbmatrix.enable()
 
@@ -91,14 +104,19 @@ class Roam(Subscriber, Behaviour):
         '''
         We expect only INFRARED_CNTR messages and extract the distance value.
         '''
+        # TODO only pay attention to messages if roam active and not suppressed 
         if message.gcd:
             raise GarbageCollectedError('cannot process message: message has been garbage collected.')
-        _event = message.event
-        self._log.info('processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.description))
+        # indicate that this subscriber has processed the message
+        message.process(self)
+        _payload = message.payload
+        _event   = _payload.event
         if _event is Event.INFRARED_CNTR:
-            self._log.info('🆎 processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.description))
+            self.distance = _payload.value
+            self._log.info('🆎 processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.description) 
+                    + Fore.GREEN + ' distance: {}'.format(self.distance))
         else:
-            raise ValueError('expected INFRARED_CNTER event not: {}'.format(_event.description))
+            raise ValueError('expected INFRARED_CNTER event not: {}'.format(message.event.description))
 
     # ..........................................................................
     def _disable_rgbmatrix(self):
@@ -115,7 +133,7 @@ class Roam(Subscriber, Behaviour):
 
     # ..........................................................................
     def _roam_callback(self):
-        self._log.info('🌼 roam callback.')
+        self._log.info('🌼 roam callback; distance: {}'.format(self.distance))
 
 #   # ..........................................................................
     def start(self):
@@ -142,7 +160,8 @@ class Roam(Subscriber, Behaviour):
             self._log.info('🌼 roam loop execute; no previous messages.')
         else:
             _elapsed_ms = (dt.now() - _timestamp).total_seconds() * 1000.0
-            self._log.info('🌼 roam loop execute; {}'.format(Subscriber.get_formatted_time('message age:', _elapsed_ms)))
+            self._log.info('🌼 roam loop execute; {};\t'.format(Subscriber.get_formatted_time('message age:', _elapsed_ms)) 
+                    + 'distance: {}'.format(self.distance))
 
 #   # ..........................................................................
 #   def suppressed(self):

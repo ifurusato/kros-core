@@ -16,12 +16,13 @@ from colorama import init, Fore, Style
 init()
 
 from core.logger import Logger, Level
+from core.component import Component
 from core.fsm import FiniteStateMachine
 from core.message_bus import MessageBus
 from core.message_factory import MessageFactory
 
 # Publisher ....................................................................
-class Publisher(FiniteStateMachine):
+class Publisher(Component, FiniteStateMachine):
     '''
     Extends FiniteStateMachine as a message/event publisher to the message bus.
     '''
@@ -33,8 +34,6 @@ class Publisher(FiniteStateMachine):
         :param level:            the logging level
         '''
         super().__init__(name)
-        self._log = Logger('pub-{}'.format(name), level)
-        self._name = name
         if message_bus is None:
             raise ValueError('null message bus argument.')
         elif isinstance(message_bus, MessageBus):
@@ -47,9 +46,11 @@ class Publisher(FiniteStateMachine):
             self._message_factory = message_factory
         else:
             raise ValueError('unrecognised message factory argument: {}'.format(type(message_bus)))
-        self._enabled    = False # by default
+        self._log = Logger('pub-{}'.format(name), level)
+        Component.__init__(self, self._log)
+        FiniteStateMachine.__init__(self, name)
+        self._name       = name
         self._suppressed = False # by default
-        self._closed     = False
         self._message_bus.register_publisher(self)
         self._log.info('ready.')
 
@@ -88,25 +89,6 @@ class Publisher(FiniteStateMachine):
 
     # ..........................................................................
     @property
-    def enabled(self):
-        return self._enabled
-
-    def enable(self):
-        '''
-        The necessary state machine call to enable the publisher.
-        '''
-        if not self._closed:
-            if self._enabled:
-                self._log.warning('already enabled.')
-            else:
-                super().enable()
-                self._enabled = True
-                self._log.info('enabled.')
-        else:
-            self._log.warning('cannot enable: already closed.')
-
-    # ..........................................................................
-    @property
     def suppressed(self):
         '''
         Return True if the publisher is suppressed.
@@ -123,32 +105,6 @@ class Publisher(FiniteStateMachine):
             self._log.info('publishing suppressed.')
         else:
             self._log.info('publishing unsuppressed.')
-
-    # ..........................................................................
-    def disable(self):
-        '''
-        The state machine call to disable the publisher.
-        '''
-        if self._enabled:
-            super().disable()
-            self._enabled = False
-            self._log.info('disabled.')
-        else:
-            self._log.warning('already disabled.')
-
-    # ..........................................................................
-    def close(self):
-        '''
-        The state machine call to permanently disable and close
-        the publisher.
-        '''
-        if not self._closed:
-            self.disable()
-            super().close()
-            self._closed = True
-            self._log.info('closed.')
-        else:
-            self._log.debug('already closed.')
 
     # ..........................................................................
     def __eq__(self, obj):

@@ -7,7 +7,7 @@
 #
 # author:   Murray Altheim
 # created:  2021-03-10
-# modified: 2021-06-28
+# modified: 2021-06-29
 #
 
 import asyncio
@@ -18,11 +18,12 @@ from colorama import init, Fore, Style
 init()
 
 from core.logger import Logger, Level
+from core.component import Component
 from core.fsm import FiniteStateMachine
 from core.message_bus import MessageBus
 
 # ..............................................................................
-class Subscriber(FiniteStateMachine):
+class Subscriber(Component, FiniteStateMachine):
     '''
     Extends FiniteStateMachine as a subscriber to messages from the message bus.
     '''
@@ -36,8 +37,9 @@ class Subscriber(FiniteStateMachine):
         :param events:       the list of events used as a filter, None to set as cleanup task
         :param level:        the logging level
         '''
-        FiniteStateMachine.__init__(self, name)
         self._log = Logger('sub-{}'.format(name), level)
+        Component.__init__(self, self._log, True)
+        FiniteStateMachine.__init__(self, name)
         self._name        = name
         self._color       = color
         if message_bus is None:
@@ -47,7 +49,6 @@ class Subscriber(FiniteStateMachine):
         else:
             raise ValueError('unrecognised message bus argument: {}'.format(type(message_bus)))
         self._events      = None # list of acceptable event types
-        self._enabled     = True # by default
         self._brief       = True # brief messages by default
         self._message_bus.register_subscriber(self)
         self._log.info(self._color + 'ready.')
@@ -152,7 +153,7 @@ class Subscriber(FiniteStateMachine):
             # handle acceptable message
             if self._message_bus.verbose:
                 _elapsed_ms = (dt.now() - _message.timestamp).total_seconds() * 1000.0
-                self._print_message_info('process message:', _message, _elapsed_ms)
+                self._print_message_info('❕ process message:', _message, _elapsed_ms)
             self._log.debug(self._color + Style.DIM + 'creating task for processing message:' \
                     + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
             # create message processing task
@@ -311,43 +312,14 @@ class Subscriber(FiniteStateMachine):
         super().start()
 
     # ..........................................................................
-    @property
-    def enabled(self):
-        return self._enabled
-
-    # ..........................................................................
-    def enable(self):
-        if not self._closed:
-            if self._enabled:
-                self._log.warning('already enabled.')
-            else:
-                super().enable()
-                self._enabled = True
-                self._log.info('enabled.')
-        else:
-            self._log.warning('cannot enable: already closed.')
-
-    # ..........................................................................
     def disable(self):
-        if self._enabled:
-            super().disable()
-            self._enabled = False
-            self._log.info('disabled.')
-        else:
-            self._log.warning('already disabled.')
+        super().disable()
+        FiniteStateMachine.disable(self)
 
     # ..........................................................................
     def close(self):
-        '''
-        Permanently close and disable the message bus.
-        '''
-        if not self._closed:
-            self.disable()
-            super().close()
-            self._closed = True
-            self._log.info('closed.')
-        else:
-            self._log.info('already closed.')
+        super().close()
+        FiniteStateMachine.close(self)
 
     # ..........................................................................
     def __key(self):

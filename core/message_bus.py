@@ -34,17 +34,19 @@ init()
 from asyncio.queues import Queue, QueueEmpty
 
 from core.logger import Logger, Level
+from core.component import Component
 from core.event import Event
 from core.message import Message
 from core.arbitrator import Arbitrator
 
 # ..............................................................................
-class MessageBus(object):
+class MessageBus(Component):
     '''
     An asyncio-based asynchronous message bus.
     '''
     def __init__(self, level):
         self._log = Logger("bus", level)
+        Component.__init__(self, self._log, True)
         if level is Level.DEBUG:
             self._log.debug('logging message bus set to debug level.')
             logging.basicConfig(level=logging.DEBUG)
@@ -55,8 +57,6 @@ class MessageBus(object):
         self._last_message_timestamp = None #dt.now() # timestamp of last message
         self._arbitrator  = Arbitrator(level)
         self._max_age_ms  = 20.0
-        self._enabled     = True
-        self._closed      = False
         self._publish_delay_sec = 0.01
         self._log.info('ready.')
 
@@ -314,7 +314,7 @@ class MessageBus(object):
         for subscriber in self._subscribers:
             subscriber.start()
         self._log.info('starting consume loop with {:d} subscriber{}...'.format(len(self._subscribers), '' if len(self._subscribers) == 1 else 's'))
-        while self._enabled:
+        while self.enabled:
             for subscriber in self._subscribers:
                 self._log.debug('publishing to subscriber {}...'.format(subscriber.name))
                 await subscriber.consume()
@@ -439,19 +439,12 @@ class MessageBus(object):
         return None
 
     # ..........................................................................
-    @property
-    def enabled(self):
-        return self._enabled
-
-    # ..........................................................................
     def enable(self):
-        if not self._closed:
-            self._enabled = True
-            self._log.info('enabled.')
+        if not self.closed:
+            super().enable()
+            # this call will block
             self._get_event_loop()
             self._log.info('exited forever loop.')
-        else:
-            self._log.warning('cannot enable: already closed.')
 
     # ..........................................................................
     def _get_event_loop(self):
@@ -482,8 +475,8 @@ class MessageBus(object):
         the enabled state of the publisher, and subscribing with the
         enabled state of the subscriber. This may not be desired.
         '''
-        if self._enabled:
-            self._enabled = False
+        if self.enabled:
+            super().disable()
             self._log.info('disabling {:d} publishers...'.format(len(self._publishers)))
             for publisher in self._publishers:
                 publisher.disable()
@@ -498,18 +491,6 @@ class MessageBus(object):
             self._log.info('disabled.')
         else:
             self._log.warning('already disabled.')
-
-    # ..........................................................................
-    def close(self):
-        '''
-        Permanently close and disable the message bus.
-        '''
-        if not self._closed:
-            self.disable()
-            self._closed = True
-            self._log.info('closed.')
-        else:
-            self._log.debug('already closed.')
 
 # ..............................................................................
 class PeekableQueue(Queue):

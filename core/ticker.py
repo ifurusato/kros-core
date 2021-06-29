@@ -18,10 +18,11 @@ from colorama import init, Fore, Style
 init()
 
 from core.logger import Logger, Level
+from core.component import Component
 from core.rate import Rate
 
 # ...............................................................
-class Ticker(object):
+class Ticker(Component):
     '''
     A simple threaded clock that executes a callback every loop.
     One or more subscribers can be added to the callback list.
@@ -31,15 +32,13 @@ class Ticker(object):
     :param level:          the optional log level
     '''
     def __init__(self, loop_freq_hz, callback, level=Level.INFO):
-        super().__init__()
         self._log = Logger("clock", level)
+        Component.__init__(self, self._log)
         self._loop_freq_hz = loop_freq_hz
         self._rate         = Rate(self._loop_freq_hz)
         self._log.info('tick frequency: {:d}Hz'.format(self._loop_freq_hz))
         self._callbacks    = []
         self._thread       = None
-        self._enabled      = False
-        self._closed       = False
         if callback:
             self.add_callback(callback)
         self._log.info('ready.')
@@ -70,45 +69,26 @@ class Ticker(object):
         self._log.info('exited clock loop.')
 
     # ..........................................................................
-    @property
-    def enabled(self):
-        return self._enabled
-
-    # ..........................................................................
     def enable(self):
+        '''
+        The necessary state machine call to enable the clock.
+        '''
         self._log.info('enabling clock...')
-        if not self._closed:
-            if self._enabled:
-                self._log.warning('clock already enabled.')
-            else:
+        if not self.closed:
+            if not self.enabled:
                 # if we haven't started the thread yet, do so now...
                 if self._thread is None:
-                    self._enabled = True
+                    super().enable()
                     self._thread = Thread(name='clock', target=Ticker._loop, args=[self, lambda: self.enabled], daemon=True)
                     self._thread.start()
                     self._log.info('clock enabled.')
                 else:
                     self._log.warning('cannot enable clock: thread already exists.')
-        else:
-            self._log.warning('cannot enable clock: already closed.')
 
     # ..........................................................................
     def disable(self):
-        if self._enabled:
-            self._enabled = False
+        if self.enabled:
+            super().disable()
             self._thread = None
-            self._log.info('clock disabled.')
-        else:
-            self._log.warning('already disabled.')
-
-    # ..........................................................................
-    def close(self):
-        if not self._closed:
-            if self._enabled:
-                self.disable()
-            self._closed = True
-            self._log.info('closed.')
-        else:
-            self._log.warning('already closed.')
 
 #EOF

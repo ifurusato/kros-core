@@ -55,20 +55,56 @@ class Message(object):
         for subscriber in subscribers:
             self._subscribers[subscriber] = False
 
+    # instance_name ............................................................
+
+    @property
+    def name(self):
+        '''
+        Return the instance name of the message.
+        '''
+        return self._instance_name
+
+    # message_id    ............................................................
+
+    @property
+    def message_id(self):
+        return self._message_id
+
     # timestamp     ............................................................
 
     @property
     def timestamp(self):
         return self._timestamp
 
+    # payload       ............................................................
+
+    @property
+    def payload(self):
+        return self._payload
+
+    # event         ............................................................
+
+    @property
+    def event(self):
+        '''
+        A convenience method providing access to the Payload event.
+        '''
+        return self._payload.event
+
     # value         ............................................................
 
     @property
     def value(self):
+        '''
+        A convenience method providing access to the Payload value.
+        '''
         return self._payload.value
 
     @value.setter
     def value(self, value):
+        '''
+        A convenience method setting the Payload value.
+        '''
         self._payload.value = value
 
     # age      .................................................................
@@ -78,11 +114,31 @@ class Message(object):
         _age_ms = (dt.now() - self._timestamp).total_seconds() * 1000.0
         return int(_age_ms)
 
-    # message_id    ............................................................
+    # expired       ............................................................
 
     @property
-    def message_id(self):
-        return self._message_id
+    def expired(self):
+        return self._expired
+
+    def expire(self):
+#       print(Fore.CYAN + 'expire: {}'.format(self.name) + Style.RESET_ALL)
+        self._expired = True
+
+    # sent         .............................................................
+
+    @property
+    def sent(self):
+        '''
+        Returns the number of times this message's payload has been sent to
+        the Arbitrator.
+        '''
+        return self._sent
+
+    def acknowledge_sent(self):
+        '''
+        To be called when the message's payload has been sent the Arbitrator.
+        '''
+        self._sent += 1
 
     # processed     ............................................................
 
@@ -110,16 +166,6 @@ class Message(object):
             raise Exception('message {} already processed by {}.'.format(self.name, processor.name))
         else:
             self._processors[processor] = True
-
-    # expired       ............................................................
-
-    @property
-    def expired(self):
-        return self._expired
-
-    def expire(self):
-#       print(Fore.CYAN + 'expire: {}'.format(self.name) + Style.RESET_ALL)
-        self._expired = True
 
     # garbage collection   .....................................................
 
@@ -205,44 +251,6 @@ class Message(object):
             self._subscribers[subscriber] = True
 #           print(Fore.GREEN + Style.BRIGHT + 'message {} acknowledged by subscriber {}; still unacknowledged by {:d}.'.format(\
 #                   self.name, subscriber.name, self.unacknowledged_count) + Style.RESET_ALL)
-
-    # instance_name ............................................................
-
-    @property
-    def name(self):
-        '''
-        Return the instance name of the message.
-        '''
-        return self._instance_name
-
-    # event         ............................................................
-
-    @property
-    def event(self):
-        return self._payload.event
-
-    # payload       ............................................................
-
-    @property
-    def payload(self):
-        return self._payload
-
-    # sent         .............................................................
-
-    @property
-    def sent(self):
-        '''
-        Returns the number of times this message's payload has been sent to
-        the Arbitrator.
-        '''
-        return self._sent
-
-    def acknowledge_sent(self):
-        '''
-        To be called when the message's payload has been sent the Arbitrator.
-        '''
-        self._sent += 1
-#       print(Fore.CYAN + 'payload {} sent {:d} times.'.format(self._payload.event.description, self._sent) + Style.RESET_ALL)
 
 # ..............................................................................
 class Payload(object):

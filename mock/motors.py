@@ -18,6 +18,7 @@ from colorama import init, Fore, Style
 init()
 
 from core.logger import Logger, Level
+from core.component import Component
 from core.orient import Orientation, Speed, Direction
 from core.event import Event
 from core.slew import SlewLimiter
@@ -25,7 +26,7 @@ from core.slew import SlewLimiter
 from mock.motor import Motor
 
 # ..............................................................................
-class Motors(object):
+class Motors(Component):
     '''
     A mocked dual motor controller with encoders. 
 
@@ -41,6 +42,7 @@ class Motors(object):
     '''
     def __init__(self, config, tb, level=Level.INFO):
         self._log = Logger('motors', level)
+        Component.__init__(self, self._log)
         self._log.info('initialising motors...')
         if config is None:
             raise Exception('no config argument provided.')
@@ -52,8 +54,6 @@ class Motors(object):
         self._stbd_motor = Motor(self._config, _tb, Orientation.STBD, level)
         self._port_slew_limiter = SlewLimiter(self._config, Orientation.PORT, level)
         self._stbd_slew_limiter = SlewLimiter(self._config, Orientation.STBD, level)
-        self._closed  = False
-        self._enabled = False # used to be enabled by default
         # temporary until we move functionality to motors
         self._color                = Fore.MAGENTA
         self._loop_thread          = None
@@ -83,7 +83,7 @@ class Motors(object):
         '''
         Start the loop.
         '''
-        if not self._enabled:
+        if not self.enabled:
             self._log.warning('not enabled.')
             raise Exception('not enabled.')
         if self._loop_thread is None:
@@ -132,7 +132,7 @@ class Motors(object):
             if self._stbd_motor.velocity != self._stbd_target_velocity:
                 self._set_motor_velocity(Orientation.STBD, self._stbd_target_velocity)
             # print stats...
-            if self.is_stopped():
+            if self.stopped:
 #               self._log.info('[{:04d}] velocity: '.format(_event_count) + Fore.BLUE + 'stopped.')
                 self._log.info('[{:04d}] velocity: '.format(_event_count) 
                         + Fore.RED   + 'port: {:5.2f} / {:<5.2f}'.format(_current_port_velocity, self._port_target_velocity)
@@ -397,7 +397,7 @@ class Motors(object):
         '''
         Quickly (but not immediately) stops both motors.
         '''
-        if not self.is_stopped():
+        if not self.stopped:
             if self._loop_enabled:
                 self._log.info('halting with ratio: {:5.2f}...'.format(self._decelerate_ratio))
                 self._decelerate_ratio = self._halt_ratio
@@ -415,7 +415,7 @@ class Motors(object):
         '''
         Slowly coasts both motors to a stop.
         '''
-        if not self.is_stopped():
+        if not self.stopped:
             if self.loop_is_running():
                 self._log.info('braking with ratio: {:5.2f}...'.format(self._decelerate_ratio))
                 self._decelerate_ratio = self._brake_ratio
@@ -481,7 +481,7 @@ class Motors(object):
         Stops both motors immediately, with no slewing.
         '''
         self._log.info('stopping...')
-        if not self.is_stopped():
+        if not self.stopped:
             self._port_target_velocity = 0.0
             self._stbd_target_velocity = 0.0
             self._port_motor.velocity  = 0.0
@@ -494,9 +494,10 @@ class Motors(object):
         return True
 
     # ..........................................................................
-    def is_stopped(self):
+    @property
+    def stopped(self):
         return self._port_motor.velocity == 0 and self._stbd_motor.velocity == 0
-#       return self._port_motor.is_stopped() and self._stbd_motor.is_stopped()
+#       return self._port_motor.stopped and self._stbd_motor.stopped
 
     # ..........................................................................
     def is_in_motion(self):
@@ -511,7 +512,7 @@ class Motors(object):
         Enables the motors. This issues a warning if already enabled, but no
         harm is done in calling it repeatedly.
         '''
-        if self._enabled:
+        if self.enabled:
             self._log.warning('already enabled.')
         if not self._port_motor.enabled:
             self._port_motor.enable()
@@ -519,7 +520,7 @@ class Motors(object):
         if not self._stbd_motor.enabled:
             self._stbd_motor.enable()
         self._stbd_slew_limiter.enable()
-        self._enabled = True
+        super().enable()
         self._log.info('enabled.')
 
     # ..........................................................................
@@ -527,9 +528,9 @@ class Motors(object):
         '''
         Disable the motors, halting first if in motion.
         '''
-        if self._enabled:
+        if self.enabled:
             self._log.info('disabling...')
-            self._enabled = False
+            super().disable()
             if self.is_in_motion(): # if we're moving then halt
                 self._log.warning('event: motors are in motion (halting).')
                 self._halt()
@@ -547,16 +548,10 @@ class Motors(object):
         '''
         Halts, turn everything off and stop doing anything.
         '''
-        if not self._closed:
-            if self._enabled:
-                self.disable()
-            self._log.info('closing...')
+        if not self.closed:
+            super().close()
             self._port_motor.close()
             self._stbd_motor.close()
-            self._closed = True
-            self._log.info('closed.')
-        else:
-            self._log.debug('already closed.')
 
     # ..........................................................................
     @staticmethod

@@ -73,14 +73,14 @@ class BehaviourManager(Subscriber):
 
     # ..........................................................................
     def enable(self):
-        if not self._enabled:
+        if not self.enabled:
             for _key, _behaviour in self._behaviours.items():
                 _behaviour.enable()
             super().enable()
 
     # ..........................................................................
     def disable(self):
-        if self._enabled:
+        if self.enabled:
             for _key, _behaviour in self._behaviours.items():
                 _behaviour.disable()
             super().disable()
@@ -90,7 +90,7 @@ class BehaviourManager(Subscriber):
         '''
         Permanently close and disable the message bus.
         '''
-        if not self._closed:
+        if not self.closed:
             for _key, _behaviour in self._behaviours.items():
                 _behaviour.close()
             super().close()

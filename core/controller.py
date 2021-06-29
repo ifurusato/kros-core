@@ -15,19 +15,20 @@ import datetime as dt
 from colorama import init, Fore, Style
 init()
 
-from core.event import Event
 from core.logger import Logger, Level
+from core.component import Component
+from core.event import Event
 
 # ..............................................................................
-class Controller():
+class Controller(Component):
     '''
     A default controller class that receives callbacks (to the 'callback'
     method) when Events appear on the MessageBus' Arbitratror.
     '''
     def __init__(self, level):
         self._log = Logger('controller', level)
+        Component.__init__(self, self._log, True)
         self._previous_payload     = None
-        self._enabled              = True
         self._event_counter        = itertools.count()
         self._event_count          = next(self._event_counter)
         self._state_change_counter = itertools.count()
@@ -42,16 +43,6 @@ class Controller():
     @property
     def name(self):
         return 'def-controller'
-
-    # ................................................................
-    def enable(self):
-        self._enabled = True
-        self._log.info('enabled.')
-
-    # ................................................................
-    def disable(self):
-        self._enabled = False
-        self._log.info('disabled.')
 
     # ..........................................................................
     def get_current_message(self):
@@ -68,7 +59,7 @@ class Controller():
         Responds to the Event contained within the Payload.
         '''
         self._log.debug('callback with payload {}'.format(payload.event.name))
-        if not self._enabled:
+        if not self.enabled:
             self._log.warning('action ignored: controller disabled.')
             return
         self._event_count = next(self._event_counter)
@@ -93,7 +84,7 @@ class Controller():
         _start_time = dt.datetime.now()
         _event = payload.event
         self._log.info(Fore.CYAN + 'act on event: ' + Style.BRIGHT + ' {}'.format(_event.description)
-                + Fore.BLACK + Style.NORMAL + '[{:d}/{:d}]'.format(self._state_change_count, self._event_count))
+                + Fore.BLACK + Style.NORMAL + ' [{:d}/{:d}]'.format(self._state_change_count, self._event_count))
 
         # name                                          n   description             priority  ballistic?
         # system events ....................

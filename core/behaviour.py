@@ -19,11 +19,12 @@ from colorama import init, Fore, Style
 init()
 
 from core.logger import Logger, Level
+from core.component import Component
 from core.fsm import FiniteStateMachine
 from core.rate import Rate
 
 # ...............................................................
-class Behaviour(ABC, FiniteStateMachine):
+class Behaviour(ABC, Component, FiniteStateMachine):
     '''
     An abstract class providing the basis for a looped behaviour
     that executes a callback every loop.
@@ -35,6 +36,7 @@ class Behaviour(ABC, FiniteStateMachine):
     '''
     def __init__(self, name, loop_freq_hz, callback, level=Level.INFO):
         self._log = Logger('behave-{}'.format(name), level)
+        Component.__init__(self, self._log)
         FiniteStateMachine.__init__(self, name)
         self._name         = name
         self._loop_freq_hz = loop_freq_hz
@@ -46,8 +48,6 @@ class Behaviour(ABC, FiniteStateMachine):
         self._callbacks    = []
         self._thread       = None
         self._suppressed   = False
-        self._enabled      = False
-        self._closed       = False
         if callback:
             self.add_callback(callback)
         self._log.info('ready.')
@@ -56,7 +56,7 @@ class Behaviour(ABC, FiniteStateMachine):
     @abstractmethod
     def start(self):
         '''
-        The necessary state machine call to start the publisher, which performs
+        The necessary state machine call to start the behaviour, which performs
         any initialisations of active sub-components, etc.
         '''
         super().start()
@@ -110,7 +110,7 @@ class Behaviour(ABC, FiniteStateMachine):
     @property
     def suppressed(self):
         '''
-        Return True if the publisher is suppressed.
+        Return True if the behaviour is suppressed.
         '''
         return self._suppressed
 
@@ -126,54 +126,29 @@ class Behaviour(ABC, FiniteStateMachine):
             self._log.info('publishing unsuppressed.')
 
     # ..........................................................................
-    @property
-    def enabled(self):
-        return self._enabled
-
-    # ..........................................................................
     def enable(self):
         '''
-        The necessary state machine call to enable the publisher.
+        The necessary state machine call to enable the behaviour.
         '''
         self._log.info('enabling loop...')
-        if not self._closed:
-            if self._enabled:
-                self._log.warning('already enabled.')
-            else:
-                super().enable()
+        if not self.closed:
+            if not self.enabled:
                 # if we haven't started the thread yet, do so now...
                 if self._thread is None:
-                    self._enabled = True
+                    super().enable()
                     self._thread = Thread(name=self.name + '_loop', target=Behaviour._loop, args=[self, lambda: self.enabled], daemon=True)
                     self._thread.start()
                     self._log.info('loop enabled.')
                 else:
                     self._log.warning('cannot enable loop: thread already exists.')
-        else:
-            self._log.warning('cannot enable loop: already closed.')
 
     # ..........................................................................
     def disable(self):
         '''
-        The state machine call to disable the publisher.
+        The state machine call to disable the behaviour.
         '''
-        if self._enabled:
+        if self.enabled:
             super().disable()
-            self._enabled = False
             self._thread = None
-            self._log.info('loop disabled.')
-        else:
-            self._log.warning('already disabled.')
-
-    # ..........................................................................
-    def close(self):
-        if not self._closed:
-            if self._enabled:
-                self.disable()
-            super().close()
-            self._closed = True
-            self._log.info('closed.')
-        else:
-            self._log.warning('already closed.')
 
 #EOF

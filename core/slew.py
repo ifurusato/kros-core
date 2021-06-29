@@ -20,9 +20,10 @@ from colorama import init, Fore, Style
 init()
 
 from core.logger import Level, Logger
+from core.component import Component
 
 # ..............................................................................
-class SlewLimiter():
+class SlewLimiter(Component):
     '''
     A general purpose slew limiter that limits the rate of change of a value.
 
@@ -35,6 +36,7 @@ class SlewLimiter():
     '''
     def __init__(self, config, orientation, level=Level.INFO):
         self._log = Logger('slew:{}'.format(orientation.label), level)
+        Component.__init__(self, self._log)
         self._millis  = lambda: int(round(time.time() * 1000))
         self._seconds = lambda: int(round(time.time()))
         self._clamp   = lambda n: self._minimum_output if n <= self._minimum_output else self._maximum_output if n >= self._maximum_output else n
@@ -51,7 +53,6 @@ class SlewLimiter():
         self._log.info('hysteresis: {:5.2f}'.format(self._slew_hysteresis))
         self._stats_queue      = None
         self._start_time       = None
-        self._enabled          = False
         self._log.info('ready.')
 
     # ..........................................................................
@@ -66,20 +67,10 @@ class SlewLimiter():
         self._log.info('slew rate limit set to {}; {:>6.4f}/cycle.'.format(slew_rate.label, self._slew_rate.limit))
 
     # ..........................................................................
-    def is_enabled(self):
-        return self._enabled
-
-    # ..........................................................................
     def enable(self):
         self._log.info('starting slew limiter with rate limit of {:5.3f}/cycle.'.format(self._slew_rate.limit))
-        self._enabled = True
         self._start_time = self._millis()
-        self._log.info('enabled.')
-
-    # ..........................................................................
-    def disable(self):
-        self._log.info(Fore.MAGENTA + 'slew disabled.')
-        self._enabled = False
+        super().enable()
 
     # ..........................................................................
     def reset(self, value):
@@ -98,7 +89,7 @@ class SlewLimiter():
 
         If not enabled this returns the passed target value argument.
         '''
-        if not self._enabled:
+        if not self.enabled:
             self._log.warning('disabled; returning original target value {:+06.2f}.'.format(target_value))
             return target_value
         self._log.debug('slew from current {:+06.2f} to target value {:+06.2f}.'.format(current_value, target_value))

@@ -6,7 +6,7 @@
 #
 # author:   Murray Altheim
 # created:  2020-01-18
-# modified: 2021-04-22
+# modified: 2021-06-29
 #
 
 import sys, itertools, time
@@ -14,10 +14,11 @@ from colorama import init, Fore, Style
 init()
 
 from core.logger import Level, Logger
+from core.component import Component
 from core.orient import Orientation
 
 # ..............................................................................
-class Motor(object):
+class Motor(Component):
     '''
     Mocks control over a motor that uses a Hall Effect encoder
     to determine the robot's velocity and distance traveled.
@@ -34,18 +35,18 @@ class Motor(object):
             raise ValueError('null config argument.')
         if tb is None:
             raise ValueError('null thunderborg argument.')
-        self._tb = tb
         # get motors configuration section (we don't actually use this in the mock)
         cfg = config['kros'].get('motors')
         self._orientation = orientation
         self._log = Logger('motor:{}'.format(orientation.label), level)
+        Component.__init__(self, self._log)
+        self._tb = tb
         self._log.info('initialising {} motor...'.format(orientation))
         self._motor_power_limit = cfg.get('motor_power_limit')  # power limit to motor
         self._log.info('motor power limit: {:5.2f}'.format(self._motor_power_limit))
         self._steps = 0                      # step counter
         self._max_power = 0.0                # capture maximum power applied
         self._max_driving_power = 0.0        # capture maximum adjusted power applied
-        self._enabled = False                # was by default enabled
         self._velocity = 0                   # currently a proxy for actual velocity
         self._log.info('ready.')
 
@@ -66,11 +67,6 @@ class Motor(object):
     @velocity.setter
     def velocity(self, velocity):
         self._velocity = velocity
-
-    # ..........................................................................
-    @property
-    def enabled(self):
-        return self._enabled
 
     # ..............................................................................
     @property
@@ -100,24 +96,13 @@ class Motor(object):
             self._steps = self._steps + pulse
 
     # ..........................................................................
-    def enable(self):
-        if self._enabled:
-            self._log.warning('already enabled.')
-        else:
-            self._enabled = True
-            self._log.info('enabled.')
-
-    # ..........................................................................
     def disable(self):
-        if not self._enabled:
-            self._log.warning('already disabled.')
-        else:
-            self._enabled = False
+        if self.enabled:
+            super().disable()
             if self._orientation is Orientation.PORT:
                 self._tb.SetMotor1(0.0)
             else:
                 self._tb.SetMotor2(0.0)
-            self._log.info('disabled.')
 
     # ..........................................................................
     def close(self):
@@ -179,13 +164,6 @@ class Motor(object):
         else:
             self._tb.SetMotor2(_driving_power)
 
-    # ..........................................................................
-    def is_stopped(self):
-        '''
-         Returns true if the motor is entirely stopped.
-        '''
-        return ( self.get_current_power_level() == 0.0 )
-
     # ................................
     def get_current_power_level(self):
         '''
@@ -209,6 +187,13 @@ class Motor(object):
             return value
 
     # ..........................................................................
+    @property
+    def stopped(self):
+        '''
+         Returns True if the motor is entirely stopped.
+        '''
+        return ( self.get_current_power_level() == 0.0 )
+
     def stop(self):
         '''
         Stops the motor immediately.
