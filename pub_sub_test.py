@@ -31,6 +31,8 @@ from core.controller import Controller
 from core.message_bus import MessageBus
 from core.message_factory import MessageFactory
 from core.publisher import Publisher
+#from core.system_clock import SystemClock
+from core.clock import Clock
 from core.subscriber import Subscriber, GarbageCollector
 from core.behaviour_manager import BehaviourManager
 from core.event import Event
@@ -71,6 +73,7 @@ def test_pub_sub():
 #    _gp_controller = GamepadController(Level.WARN)
 #    _message_bus.register_controller(_gp_controller)
 
+    _publisher0  = Clock(_config, _message_bus, _message_factory, level=_level)
     _publisher1  = EventPublisher(_config, _message_bus, _message_factory, level=_level)
 #   _publisher2  = FloodPublisher(_message_bus, _message_factory)
 #   _publisher3  = GamepadPublisher(_config, _message_bus, _message_factory)

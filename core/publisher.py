@@ -46,9 +46,9 @@ class Publisher(Component, FiniteStateMachine):
             self._message_factory = message_factory
         else:
             raise ValueError('unrecognised message factory argument: {}'.format(type(message_bus)))
-        self._log = Logger('pub-{}'.format(name), level)
+        self._log = Logger('pub:{}'.format(name), level)
         Component.__init__(self, self._log)
-        FiniteStateMachine.__init__(self, name)
+        FiniteStateMachine.__init__(self, self._log, name)
         self._name       = name
         self._suppressed = False # by default
         self._message_bus.register_publisher(self)

@@ -121,7 +121,6 @@ class Message(object):
         return self._expired
 
     def expire(self):
-#       print(Fore.CYAN + 'expire: {}'.format(self.name) + Style.RESET_ALL)
         self._expired = True
 
     # sent         .............................................................

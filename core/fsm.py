@@ -44,8 +44,8 @@ class FiniteStateMachine():
     This requires an initial start() followed by repeated transitions
     between enable() and disable(), followed by a terminal close().
     '''
-    def __init__(self, task_name, level=Level.INFO):
-        self._log = Logger('fsm:{}'.format(task_name), level)
+    def __init__(self, logger, task_name, level=Level.INFO):
+        self._log = logger #Logger('fsm:{}'.format(task_name), level)
         self._state     = State.NONE
         self._task_name = task_name
         FiniteStateMachine.__transition__(self, State.INITIAL)

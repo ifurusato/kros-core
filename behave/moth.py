@@ -10,7 +10,6 @@
 # modified: 2021-06-26
 #
 
-from threading import Thread
 from abc import ABC, abstractmethod
 from datetime import datetime as dt
 from colorama import init, Fore, Style

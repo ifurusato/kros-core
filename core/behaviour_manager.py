@@ -32,11 +32,11 @@ class BehaviourManager(Subscriber):
     :param level:        the logging level 
     '''
     def __init__(self, config, message_bus, motors, color=Fore.MAGENTA, level=Level.INFO):
-        super().__init__('bhv-mgr', message_bus, color, level)
+        super().__init__('beh-mgr', message_bus, color, level)
         if config is None:
             raise ValueError('null configuration argument.')
-        self._config = config
-        self._motors = motors
+#       self._config = config
+#       self._motors = motors
         self._active_behaviour = None
         self.events      = []
         self._behaviours = {}
@@ -74,9 +74,9 @@ class BehaviourManager(Subscriber):
     # ..........................................................................
     def enable(self):
         if not self.enabled:
-            for _key, _behaviour in self._behaviours.items():
-                _behaviour.enable()
             super().enable()
+#           for _key, _behaviour in self._behaviours.items():
+#               _behaviour.enable()
 
     # ..........................................................................
     def disable(self):

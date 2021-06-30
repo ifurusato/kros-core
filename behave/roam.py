@@ -11,7 +11,6 @@
 #
 
 import time
-from threading import Thread
 from abc import ABC, abstractmethod
 from datetime import datetime as dt
 from colorama import init, Fore, Style
@@ -24,8 +23,7 @@ from core.subscriber import Subscriber
 from core.behaviour import Behaviour
 from core.subscriber import Subscriber
 
-#from mock.indicator import Indicator
-from mock.rgbmatrix import RgbMatrix, Color, DisplayType, WipeDirection
+#from mock.rgbmatrix import RgbMatrix, Color, DisplayType, WipeDirection
 
 # ..............................................................................
 class Roam(Subscriber, Behaviour):
@@ -62,11 +60,9 @@ class Roam(Subscriber, Behaviour):
         self._motors      = motors
         Subscriber.__init__(self, 'roam', self._message_bus, Fore.GREEN, level)
         self._distance    = None
-        self._rgbmatrix   = RgbMatrix(Level.INFO)
-        self._rgbmatrix.set_display_type(DisplayType.RANDOM)
-#       self._indicator = Indicator(Level.INFO)
-#       self._indicator.set_display_type(DisplayType.RANDOM)
-        self.events = [ Event.INFRARED_CNTR ]
+#       self._rgbmatrix   = RgbMatrix(Level.INFO)
+#       self._rgbmatrix.set_display_type(DisplayType.RANDOM)
+        self.events = [ Event.INFRARED_CNTR, Event.CLOCK_TICK, Event.CLOCK_TOCK ]
         self._log.info('ready.')
 
     # ..........................................................................
@@ -84,20 +80,16 @@ class Roam(Subscriber, Behaviour):
         '''
         The necessary state machine call to enable the publisher.
         '''
-        self._log.info(Fore.YELLOW + '🎾 1. enabled: {}'.format(self.enabled))
-        super().enable()
-        self._log.info(Fore.YELLOW + '🎾 2. enabled: {}'.format(self.enabled))
-#       self._indicator.enable()
-        self._rgbmatrix.enable()
+        Behaviour.enable(self)
+#       self._rgbmatrix.enable()
 
     # ..........................................................................
     def disable(self):
         '''
         The state machine call to disable the publisher.
         '''
-        self._disable_rgbmatrix()
+#       self._disable_rgbmatrix()
         super().disable()
-#       self._indicator.disable()
 
     # ..........................................................................
     async def process_message(self, message):
@@ -111,20 +103,31 @@ class Roam(Subscriber, Behaviour):
         message.process(self)
         _payload = message.payload
         _event   = _payload.event
-        if _event is Event.INFRARED_CNTR:
+        if _event is Event.CLOCK_TICK:
+            self._log.info('🕒 processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.description)) 
+        elif _event is Event.CLOCK_TOCK:
+            self._log.info(Fore.BLUE + '🕝 processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.description)) 
+        elif _event is Event.INFRARED_CNTR:
             self.distance = _payload.value
-            self._log.info('🆎 processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.description) 
-                    + Fore.GREEN + ' distance: {}'.format(self.distance))
+            if self.enabled:
+                self._log.info('🈯 processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.description) 
+                        + Fore.GREEN + ' distance: {}'.format(self.distance)
+                        + Fore.MAGENTA + ' enabled? {}'.format(self.enabled))
+            else:
+                self._log.info('🆎 processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.description) 
+                        + Fore.GREEN + ' distance: {}'.format(self.distance)
+                        + Fore.MAGENTA + ' enabled? {}'.format(self.enabled))
+
         else:
             raise ValueError('expected INFRARED_CNTER event not: {}'.format(message.event.description))
 
     # ..........................................................................
-    def _disable_rgbmatrix(self):
-        self._rgbmatrix.set_color(Color.BLACK)
-        time.sleep(0.2)
-        self._rgbmatrix.clear()
-        time.sleep(0.2)
-        self._rgbmatrix.disable()
+#   def _disable_rgbmatrix(self):
+#       self._rgbmatrix.set_color(Color.BLACK)
+#       time.sleep(0.2)
+#       self._rgbmatrix.clear()
+#       time.sleep(0.2)
+#       self._rgbmatrix.disable()
 
     # ..........................................................................
     @property
@@ -142,7 +145,8 @@ class Roam(Subscriber, Behaviour):
         is part of both superclasses we need to only call it once.
         '''
         if self.state is not State.STARTED:
-            super().start()
+#           super().start()
+            Behaviour.start(self)
 
     # ..........................................................................
     @property

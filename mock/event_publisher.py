@@ -29,7 +29,7 @@ from mock.mock_gamepad import MockGamepad
 # ...............................................................
 class EventPublisher(Publisher):
 
-    _PUBLISH_LOOP_NAME = '__publish-loop__'
+    _PUBLISH_LOOP_NAME = '__key_listener_loop'
 
     _RANDOM_EVENTS = [
             Event.INFRARED_PORT_SIDE, Event.INFRARED_PORT, Event.INFRARED_CNTR, Event.INFRARED_STBD, Event.INFRARED_STBD_SIDE, 
@@ -58,13 +58,12 @@ class EventPublisher(Publisher):
     Finally, there is also has a "flood" mode that auto-generates random
       event-bearing messages at a random interval.
     '''
-    def __init__(self, config, message_bus, message_factory, exit_on_complete=True, level=Level.INFO):
-        super().__init__('event', message_bus, message_factory, level)
+    def __init__(self, config, message_bus, message_factory, level=Level.INFO):
+        Publisher.__init__(self, 'event', message_bus, message_factory, level)
         if config is None:
             raise ValueError('no configuration provided.')
         self._config = config
         self._level   = level
-#       self._exit_on_complete = exit_on_complete
         self._counter  = itertools.count()
         self._triggered_ir_port_side = self._triggered_ir_port  = self._triggered_ir_cntr  = self._triggered_ir_stbd  = \
         self._triggered_ir_stbd_side = self._triggered_bmp_port = self._triggered_bmp_cntr = self._triggered_bmp_stbd = 0
@@ -151,7 +150,7 @@ class EventPublisher(Publisher):
                 self._log.warning('already enabled.')
             else:
                 self._log.info('creating task for key listener loop...')
-                self._message_bus.loop.create_task(self._key_listener_loop(lambda: self.enabled), name='__key_listener_loop')
+                self._message_bus.loop.create_task(self._key_listener_loop(lambda: self.enabled), name=EventPublisher._PUBLISH_LOOP_NAME)
                 self._log.info('enabled.')
         else:
             self._log.warning('failed to enable publisher.')
@@ -193,6 +192,9 @@ class EventPublisher(Publisher):
                             continue
                         elif och == 47 or och == 63: # '/' or '?' for help
                             self.print_help()
+                            continue
+                        elif och == 92: # '\' toggle system clock
+                            self._toggle_clock()
                             continue
                         elif och == 118: # 'v' toggle verbose
                             self._toggle_verbosity()
@@ -277,6 +279,19 @@ class EventPublisher(Publisher):
     async def _gamepad_callback(self, message):
         self._log.info('gamepad callback for message:\t' + Fore.YELLOW + '{}'.format(message.event.description))
         await super().publish(message)
+
+    # ..........................................................................
+    def _toggle_clock(self):
+        _clock = self._message_bus.get_publisher('clock')
+        if _clock:
+            if _clock.enabled:
+                self._log.info(Fore.YELLOW + 'system clock found; DISABLING...')
+                _clock.disable() 
+            else:
+                self._log.info(Fore.YELLOW + 'system clock found; ENABLING...')
+                _clock.enable() 
+        else:
+            self._log.info(Fore.YELLOW + 'system clock not found.')
 
     # ..........................................................................
     def _toggle_verbosity(self):
@@ -480,7 +495,7 @@ class EventPublisher(Publisher):
             ┃ IR_PSID ┃ IR_PORT ┃ IR_CNTR ┃ IR_STBD ┃ IR_SSID ┃  HELP   ┃ BM_PORT ┃ BM_CNTR ┃ BM_STBD ┃ DE_PORT ┃ DE_STBD ┃  CLEAR  ┃
             ┗━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┛
                  ┃    Z    ┃    X    ┃    C    ┃    V    ┃    B    ┃    N    ┃    M    ┃    <    ┃    >    ┃    ?    ┃    \    ┃
-                 ┃ MTR_INF ┃ SP_PORT ┃ TN_PORT ┃ VERBOSE ┃ TN_STBD ┃ SP_STBD ┃  NOOP   ┃ DE_VELO ┃ IN_VELO ┃  HELP   ┃         ┃
+                 ┃ MTR_INF ┃ SP_PORT ┃ TN_PORT ┃ VERBOSE ┃ TN_STBD ┃ SP_STBD ┃  NOOP   ┃ DE_VELO ┃ IN_VELO ┃  HELP   ┃  CLOCK  ┃
                  ┗━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┛
     
   FUL AST:   full astern        QUIT:     quit application              IR_PSID:  port side infrared            MTR_INF:  toggle motor info
@@ -493,7 +508,7 @@ class EventPublisher(Publisher):
   HAF AHD:   half ahead         POP_MSG:  pop messages from queue       BM_CNTR:  center bumper                 DE_VELO:  decrease velocity
   FUL AHD:   full ahead         IN_PORT:  increase port velocity        BM_STBD:  starboard bumper              IN_VELO:  increase velocity
   HALT:      halt               IN_STBD:  increase starboard velocity   DE_PORT:  decrease port velocity        HELP:     print help
-  BRAKE:     brake                                                      DE_STBD:  decrease starboard velocity
+  BRAKE:     brake                                                      DE_STBD:  decrease starboard velocity   CLOCK:    toggle system clock
   EVEN:      even velocity, port and stbd motors
   SHUTDOWN:  shut down robot
         ''')
@@ -512,6 +527,7 @@ class EventPublisher(Publisher):
             47   /      help
             61   + *    even velocity
             91   [ *    increase port velocity
+            92   \      toggle system clock
             93   ] *    increase stbd velocity
 
             97   a *    port side infrared

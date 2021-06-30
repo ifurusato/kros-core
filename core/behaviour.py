@@ -35,9 +35,9 @@ class Behaviour(ABC, Component, FiniteStateMachine):
     :param level:          the optional log level
     '''
     def __init__(self, name, loop_freq_hz, callback, level=Level.INFO):
-        self._log = Logger('behave-{}'.format(name), level)
+        self._log = Logger('beh:{}'.format(name), level)
         Component.__init__(self, self._log)
-        FiniteStateMachine.__init__(self, name)
+        FiniteStateMachine.__init__(self, self._log, name)
         self._name         = name
         self._loop_freq_hz = loop_freq_hz
         self._rate         = Rate(self._loop_freq_hz)
@@ -58,8 +58,10 @@ class Behaviour(ABC, Component, FiniteStateMachine):
         '''
         The necessary state machine call to start the behaviour, which performs
         any initialisations of active sub-components, etc.
+        Whereas Subscribers are enabled upon starting, Behaviours are not.
         '''
         super().start()
+        #self.enable()
 
     # ..........................................................................
     def add_callback(self, callback):
@@ -86,14 +88,19 @@ class Behaviour(ABC, Component, FiniteStateMachine):
     # ..........................................................................
     def _loop(self, f_is_enabled):
         '''
-        The behaviour loop, which executes while the f_is_enabled flag is True.
+        The behaviour loop, which loops while the f_is_enabled flag is True.
+        calling the execute() and _callback methods while the behaviour is
+        not suppressed. 
         '''
         while f_is_enabled():
             for _callback in self._callbacks:
-                self._log.info('executing loop method...')
-                self.execute()
-                self._log.info('executing callback...')
-                _callback()
+                if not self.suppressed:
+                    self._log.info('executing loop method...')
+                    self.execute()
+                    self._log.info('executing callback...')
+                    _callback()
+                else:
+                    self._log.info('{} behaviour suppressed.'.format(self.name))
             self._rate.wait()
         self._log.info('exited loop.')
 

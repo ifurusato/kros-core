@@ -6,6 +6,9 @@
 
 kros:
     use_external_clock: True                     # if True use external clock
+    clock:
+        loop_freq_hz: 1                          # main loop frequency
+        tock_modulo:  10                         # modulo value for tock frequency
     motors:
         motor_power_limit: 0.85                  # limit set on power sent to motors
     slew:

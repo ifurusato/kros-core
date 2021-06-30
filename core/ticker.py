@@ -36,7 +36,10 @@ class Ticker(Component):
         Component.__init__(self, self._log)
         self._loop_freq_hz = loop_freq_hz
         self._rate         = Rate(self._loop_freq_hz)
-        self._log.info('tick frequency: {:d}Hz'.format(self._loop_freq_hz))
+        if isinstance(self._loop_freq_hz, int):
+            self._log.info('tick frequency: {:d}Hz'.format(self._loop_freq_hz))
+        else:
+            self._log.info('tick frequency: {:5.2f}Hz'.format(self._loop_freq_hz))
         self._callbacks    = []
         self._thread       = None
         if callback:

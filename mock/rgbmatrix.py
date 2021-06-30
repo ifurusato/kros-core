@@ -39,6 +39,7 @@ from core.i2c_scanner import I2CScanner
 from core.orient import Orientation
 
 from mock.color import Color
+from mock.rgbmatrix5x5 import MockRGBMatrix5x5
 #from lib.feature import Feature
 
 # ..............................................................................
@@ -58,20 +59,25 @@ class RgbMatrix(object): # was (Feature)
         _i2c_scanner = I2CScanner(Level.WARN)
         _addresses = _i2c_scanner.get_int_addresses()
         self._rgbmatrix5x5_PORT = RGBMatrix5x5(address=0x77) if (0x77 in _addresses) else None
-#       self._rgbmatrix5x5_PORT = RGBMatrix5x5(address=0x77)
         if self._rgbmatrix5x5_PORT:
             self._log.info('port rgbmatrix at 0x77.')
             self._rgbmatrix5x5_PORT.set_brightness(0.8)
             self._rgbmatrix5x5_PORT.set_clear_on_exit()
         else:
-            self._log.info('no port rgbmatrix found.')
-        self._rgbmatrix5x5_STBD = RGBMatrix5x5(address=0x74)
-        self._log.info('starboard rgbmatrix at 0x74.')
-        self._rgbmatrix5x5_STBD.set_brightness(0.8)
-        self._rgbmatrix5x5_STBD.set_clear_on_exit()
-
-        self._height = self._rgbmatrix5x5_STBD.height
-        self._width  = self._rgbmatrix5x5_STBD.width
+            self._log.info('no port rgbmatrix found, using mock.')
+            self._rgbmatrix5x5_PORT = MockRGBMatrix5x5(address=0x77)
+        self._rgbmatrix5x5_STBD = RGBMatrix5x5(address=0x74) if (0x74 in _addresses) else None
+        if self._rgbmatrix5x5_STBD:
+            self._log.info('starboard rgbmatrix at 0x74.')
+            self._rgbmatrix5x5_STBD.set_brightness(0.8)
+            self._rgbmatrix5x5_STBD.set_clear_on_exit()
+            self._height = self._rgbmatrix5x5_STBD.height
+            self._width  = self._rgbmatrix5x5_STBD.width
+        else:
+            self._log.info('no starboard rgbmatrix found.')
+            self._rgbmatrix5x5_STBD = MockRGBMatrix5x5(address=0x74)
+            self._height = 5
+            self._width  = 5
         self._log.info('rgbmatrix width,height: {},{}'.format(self._width, self._height))
         self._thread_PORT = None
         self._thread_STBD = None
@@ -84,7 +90,7 @@ class RgbMatrix(object): # was (Feature)
         self._wipe_color = Color.WHITE # default
         # used by _cpu:
         self._max_value = 0.0 # TEMP
-        self._buf = numpy.zeros((self._rgbmatrix5x5_STBD._width, self._rgbmatrix5x5_STBD._height))
+        self._buf = numpy.zeros((self._rgbmatrix5x5_STBD.width, self._rgbmatrix5x5_STBD.width))
         self._colors = [ Color.GREEN, Color.YELLOW_GREEN, Color.YELLOW, Color.ORANGE, Color.RED ]
         self._log.info('ready.')
 
@@ -123,8 +129,9 @@ class RgbMatrix(object): # was (Feature)
                 if self._rgbmatrix5x5_PORT:
                     self._thread_PORT = Thread(name='rgb-port', target=_target[0], args=[self, self._rgbmatrix5x5_PORT, _target[1]])
                     self._thread_PORT.start()
-                self._thread_STBD = Thread(name='rgb-stbd',     target=_target[0], args=[self, self._rgbmatrix5x5_STBD, _target[1]])
-                self._thread_STBD.start()
+                if self._rgbmatrix5x5_STBD:
+                    self._thread_STBD = Thread(name='rgb-stbd', target=_target[0], args=[self, self._rgbmatrix5x5_STBD, _target[1]])
+                    self._thread_STBD.start()
                 self._log.debug('enabled.')
             else:
                 self._log.warning('cannot enable: process already running.')

@@ -37,9 +37,9 @@ class Subscriber(Component, FiniteStateMachine):
         :param events:       the list of events used as a filter, None to set as cleanup task
         :param level:        the logging level
         '''
-        self._log = Logger('sub-{}'.format(name), level)
-        Component.__init__(self, self._log, True)
-        FiniteStateMachine.__init__(self, name)
+        self._log = Logger('sub:{}'.format(name), level)
+        Component.__init__(self, self._log, False)
+        FiniteStateMachine.__init__(self, self._log, name)
         self._name        = name
         self._color       = color
         if message_bus is None:
@@ -253,6 +253,7 @@ class Subscriber(Component, FiniteStateMachine):
             self._log.warning('cannot cleanup message: message has been garbage collected. [4]')
             return
         # set message flag as expired
+        self._log.info('message {} expired by subscriber: {}.'.format(message.name, self._name))
         message.expire()
         # clear any tasks related to the message
         self._message_bus.clear_tasks()
@@ -308,8 +309,11 @@ class Subscriber(Component, FiniteStateMachine):
         '''
         The necessary state machine call to start the publisher, which performs
         any initialisations of active sub-components, etc.
+        This also enables the Subscriber, which is upon initialisation disabled.
         '''
+        self._log.debug('subscriber {} started.'.format(self.name))
         super().start()
+        self.enable()
 
     # ..........................................................................
     def disable(self):
@@ -343,7 +347,8 @@ class GarbageCollector(Subscriber):
     :param level:        the logging level
     '''
     def __init__(self, name, message_bus, color=Fore.BLUE, level=Level.INFO):
-        super().__init__(name, message_bus, color, level)
+        Subscriber.__init__(self, name, message_bus, color, level)
+#       super().__init__(name, message_bus, color, level)
 
     # ..........................................................................
     @property
