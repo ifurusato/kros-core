@@ -74,10 +74,10 @@ class Publisher(Component, FiniteStateMachine):
         Asynchronously publishes the message to the message bus.
         This is preferred to calling the message bus directly.
         '''
-        self._log.info(Fore.WHITE + '{} publishing message: {} (event: {})'.format(self.name, message.name, message.event.description))
+#       self._log.debug(Fore.WHITE + '{} publishing message: {} (event: {})'.format(self.name, message.name, message.event.description))
         await self._message_bus.publish_message(message)
         await asyncio.sleep(0.05)
-        self._log.info(Fore.WHITE + '{} published message: {} (event: {})'.format(self.name, message.name, message.event.description))
+        self._log.debug(Fore.WHITE + '{} published message: {} (event: {})'.format(self.name, message.name, message.event.description))
 
     # ..........................................................................
     def start(self):

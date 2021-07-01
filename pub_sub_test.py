@@ -106,6 +106,7 @@ def test_pub_sub():
 #   _message_bus.print_subscribers()
 
 #   sys.exit(0)
+
     if _motors:
         _motors.enable()
     _message_bus.enable()

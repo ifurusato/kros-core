@@ -80,7 +80,6 @@ class Clock(Publisher):
         '''
         The clock loop, which executes while the f_is_enabled flag is True. 
         '''
-        self._log.info('🌎 _clock_loop called.')
         while f_is_enabled():
             _now = dt.now()
             _count = next(self._counter)
@@ -88,7 +87,7 @@ class Clock(Publisher):
                 _message = self._message_factory.get_message(Event.CLOCK_TOCK, _count)
             else:
                 _message = self._message_factory.get_message(Event.CLOCK_TICK, _count)
-            self._log.info('key-publishing message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
+            self._log.debug('publishing message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
             await super().publish(_message)
             # TODO may need an asyncio-based Rate here
             self._rate.wait()

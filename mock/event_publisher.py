@@ -285,11 +285,11 @@ class EventPublisher(Publisher):
         _clock = self._message_bus.get_publisher('clock')
         if _clock:
             if _clock.enabled:
-                self._log.info(Fore.YELLOW + 'system clock found; DISABLING...')
                 _clock.disable() 
+                self._log.info('system clock disabled.')
             else:
-                self._log.info(Fore.YELLOW + 'system clock found; ENABLING...')
                 _clock.enable() 
+                self._log.info('system clock enabled.')
         else:
             self._log.info(Fore.YELLOW + 'system clock not found.')
 

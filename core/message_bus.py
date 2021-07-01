@@ -38,6 +38,7 @@ from core.component import Component
 from core.event import Event
 from core.message import Message
 from core.arbitrator import Arbitrator
+from core.numbers import Numbers
 
 # ..............................................................................
 class MessageBus(Component):
@@ -99,9 +100,9 @@ class MessageBus(Component):
         '''
         _tasks = self.get_all_tasks()
         if len(_tasks) == 0:
-            self._log.info('no outstanding tasks.')
+            self._log.debug('no outstanding tasks.')
         else:
-            self._log.info('clearing {:d} task{}...'.format(len(_tasks), ('' if len(_tasks) == 1 else 's')))
+            self._log.debug('clearing {:d} task{}...'.format(len(_tasks), ('' if len(_tasks) == 1 else 's')))
             for _task in _tasks:
                 if not _task.cancelled():
                     _task.cancel()
@@ -226,7 +227,7 @@ class MessageBus(Component):
         if not self._publishers:
             self._log.info('no registered publishers.')
             return
-        self._log.info('{:d} publisher{}:'.format(len(self._publishers), 's' if len(self._publishers) > 1 else ''))
+        self._log.info('{} publisher{}:'.format(Numbers.from_number(len(self._publishers)), 's' if len(self._publishers) > 1 else ''))
         for publisher in self._publishers:
             self._log.info(Fore.YELLOW + '\t{}'.format(publisher.name) \
                     + Fore.CYAN + ' {}enabled: '.format((' ' * max(0, (10 - len(publisher.name)))))
@@ -270,7 +271,7 @@ class MessageBus(Component):
         if not self._subscribers:
             self._log.info('no registered subscribers.')
             return
-        self._log.info('{:d} subscriber{}:'.format(len(self._subscribers), 's' if len(self._subscribers) > 1 else ''))
+        self._log.info('{} subscriber{}:'.format(Numbers.from_number(len(self._subscribers)), 's' if len(self._subscribers) > 1 else ''))
         for subscriber in self._subscribers:
             self._log.info(Fore.YELLOW + '\t{}'.format(subscriber.name)
                     + Fore.CYAN + ' {}enabled: '.format((' ' * max(0, (10 - len(subscriber.name)))))
@@ -379,10 +380,10 @@ class MessageBus(Component):
         NOTE: calls to this function should be await'd.
         '''
         if ( message.event is not Event.CLOCK_TICK and message.event is not Event.CLOCK_TOCK ):
-            self._log.info('rx request to publish message: {}'.format(message.name)
+            self._log.debug('rx request to publish message: {}'.format(message.name)
                     + ' (event: {}; age: {:d}ms);'.format(message.event.description, message.age))
         _put_task = asyncio.create_task(self._queue.put(message), name='publish-message-{}'.format(message.name))
-        self._log.info(Style.DIM + 'created task: {}'.format(_put_task.get_name()))
+        self._log.debug(Style.DIM + 'created task: {}'.format(_put_task.get_name()))
         await asyncio.sleep(self._publish_delay_sec)
 
     # ..........................................................................
@@ -393,9 +394,9 @@ class MessageBus(Component):
 
         NOTE: calls to this function should be await'd.
         '''
-        self._log.debug('republishing message: {} (event: {}; age: {:d}ms);'.format(message.name, message.event.description, message.age))
+#       self._log.debug('republishing message: {} (event: {}; age: {:d}ms);'.format(message.name, message.event.description, message.age))
         asyncio.create_task(self._queue.put(message), name='republish-message-{}'.format(message.name))
-        self._log.info('republished message: {} (event: {}; age: {:d}ms);'.format(message.name, message.event.description, message.age))
+        self._log.debug('republished message: {} (event: {}; age: {:d}ms);'.format(message.name, message.event.description, message.age))
 
     # exception handling .......................................................
     def handle_exception(self, loop, context):

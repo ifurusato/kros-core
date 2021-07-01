@@ -156,11 +156,6 @@ class Event(Enum):
         self._group        = group
         self._is_ballistic = is_ballistic
 
-#   SENSOR    = 4
-#   VELOCITY  = 5
-#   THETA     = 6
-#   CHADBURN  = 7
-
     # ................................................................
     @staticmethod
     def is_motor_event(event):

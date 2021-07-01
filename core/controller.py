@@ -64,11 +64,13 @@ class Controller(Component):
             return
         self._event_count = next(self._event_counter)
         if self._previous_payload == None:
-            self._log.info(Fore.CYAN + 'no previous payload.')
+            self._log.debug(Fore.CYAN + 'no previous payload.')
+        elif payload.event is Event.CLOCK_TICK or payload.event is Event.CLOCK_TICK:
+            pass
         elif payload == self._previous_payload:
             self._log.info(Fore.CYAN + 'no state change on event: ' + Style.BRIGHT + ' {}'.format(self._previous_payload.event.description)
                     + Fore.BLACK + Style.NORMAL + ' [{:d}/{:d}]'.format(self._state_change_count, self._event_count))
-            self._log.info(Fore.GREEN + '🥒 payload: {}; previous payload: {}'.format(payload.value, self._previous_payload.value))
+            self._log.info(Fore.GREEN + 'payload: {}; previous payload: {}'.format(payload.value, self._previous_payload.value))
         else:
             if payload.event == self._previous_payload.event:
                 self._log.info(Fore.CYAN + 'value {} changed on event: '.format(payload.value) + Style.BRIGHT + ' {}'.format(self._previous_payload.event.description)
@@ -83,7 +85,7 @@ class Controller(Component):
 
         _start_time = dt.datetime.now()
         _event = payload.event
-        self._log.info(Fore.CYAN + 'act on event: ' + Style.BRIGHT + ' {}'.format(_event.description)
+        self._log.debug(Fore.CYAN + 'act on event: ' + Style.BRIGHT + ' {}'.format(_event.description)
                 + Fore.BLACK + Style.NORMAL + ' [{:d}/{:d}]'.format(self._state_change_count, self._event_count))
 
         # name                                          n   description             priority  ballistic?
@@ -225,9 +227,9 @@ class Controller(Component):
         elif _event is Event.NO_ACTION:             # ( 500, "no action",              500,   False)
            self._log.info('event: no action.')
         elif _event is Event.CLOCK_TICK:            # ( 501, "tick",                   500,   False)
-           self._log.info('event: tick.')
+           self._log.debug('event: tick.')
         elif _event is Event.CLOCK_TOCK:            # ( 502, "tock",                   500,   False)
-           self._log.info('event: tock.')
+           self._log.debug('event: tock.')
 
         # unrecognised event  ..................................................
         else:

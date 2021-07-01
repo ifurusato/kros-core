@@ -39,7 +39,6 @@ class Orientation(Enum):
     def label(self):
         return self._label
 
-
 # ..............................................................................
 class Direction(Enum):
 #   FORWARD = 0
@@ -51,7 +50,6 @@ class Direction(Enum):
 class Rotation(Enum):
     COUNTER_CLOCKWISE = 0
     CLOCKWISE         = 1
-
 
 # ..............................................................................
 class Speed(Enum):
@@ -97,7 +95,6 @@ class Speed(Enum):
             return Speed.THREE_QUARTER
         else:
             return Speed.FULL
-
 
 # ..............................................................................
 class Cardinal(Enum):
