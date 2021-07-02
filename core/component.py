@@ -16,21 +16,28 @@ from core.logger import Logger
 # ..............................................................................
 class Component(object): # ABC
     '''
-    A basic component providing support for enable, disable and close states.
+    A basic component providing support for enable or disable, suppress or
+    release, and close flags. The enable/disable and suppress/release differ
+    in that in a disabled state a component does not operate at all, whereas
+    in a suppressed state it operates as normal but cannot send or receive
+    messages. This functionality is provided solely as flags, not enforced by
+    this class.
+
     The Logger is passed in as an argument on the constructor. This is only
     implicitly an abstract class, (not explicitly) because while we expect it
     to be subclassed, but there is no reason to enforce and API or reimplment
     methods unless to hook additional functionality to them.
 
-    The Component is disabled by default, though an optional argument can
-    set it True.
+    The Component is suppressed and disabled by default, though via optional
+    constructor arguments either can set be set to True.
 
     :param logger:  the Logger used for the component
     '''
-    def __init__(self, logger, enabled=False):
-        self._log     = logger
-        self._enabled = enabled
-        self._closed  = False
+    def __init__(self, logger, suppressed=True, enabled=False):
+        self._log        = logger
+        self._suppressed = suppressed
+        self._enabled    = enabled
+        self._closed     = False
 
     # ..........................................................................
     @property
@@ -58,6 +65,28 @@ class Component(object): # ABC
             self._log.info('disabled.')
         else:
             self._log.warning('already disabled.')
+
+    # ..........................................................................
+    @property
+    def suppressed(self):
+        '''
+        Return True if the behaviour is suppressed.
+        '''
+        return self._suppressed
+
+    def release(self):
+        '''
+        Releases (un-suppresses) the component.
+        '''
+        self._suppressed = False
+        self._log.info('released.')
+
+    def suppress(self):
+        '''
+        Suppresses the component.
+        '''
+        self._suppressed = True
+        self._log.info('suppressed.')
 
     # ..........................................................................
     @property

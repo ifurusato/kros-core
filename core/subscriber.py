@@ -19,17 +19,19 @@ init()
 
 from core.logger import Logger, Level
 from core.component import Component
+from core.event import Event
 from core.fsm import FiniteStateMachine
 from core.message_bus import MessageBus
 
 # ..............................................................................
 class Subscriber(Component, FiniteStateMachine):
     '''
-    Extends FiniteStateMachine as a subscriber to messages from the message bus.
+    Extends Component and FiniteStateMachine as a subscriber to messages
+    from the message bus.
     '''
     LOG_INDENT = ( ' ' * 60 ) + Fore.CYAN + ': ' + Fore.CYAN
 
-    def __init__(self, name, message_bus, color=Fore.CYAN, level=Level.INFO):
+    def __init__(self, name, message_bus, color=Fore.CYAN, suppressed=False, enabled=False, level=Level.INFO):
         '''
         :param name:         the subscriber name (for logging)
         :param message_bus:  the message bus
@@ -38,20 +40,24 @@ class Subscriber(Component, FiniteStateMachine):
         :param level:        the logging level
         '''
         self._log = Logger('sub:{}'.format(name), level)
-        Component.__init__(self, self._log, False)
+        if not isinstance(suppressed, bool):
+            raise ValueError('unrecognised suppressed argument: {}'.format(type(suppressed)))
+        if not isinstance(enabled, bool):
+            raise ValueError('unrecognised enabled argument: {}'.format(type(enabled)))
+        Component.__init__(self, self._log, suppressed, enabled)
         FiniteStateMachine.__init__(self, self._log, name)
-        self._name        = name
-        self._color       = color
+        self._name   = name
+        self._color  = color
         if message_bus is None:
             raise ValueError('null message bus argument.')
         elif isinstance(message_bus, MessageBus):
             self._message_bus = message_bus
         else:
             raise ValueError('unrecognised message bus argument: {}'.format(type(message_bus)))
-        self._events      = None # list of acceptable event types
-        self._brief       = True # brief messages by default
+        self._events = [] # list of acceptable event types
+        self._brief  = True # brief messages by default
         self._message_bus.register_subscriber(self)
-        self._log.info(self._color + 'ready.')
+        self._log.info(self._color + '🔯 ready.')
 
     # ..........................................................................
     def set_log_level(self, level):
@@ -76,26 +82,26 @@ class Subscriber(Component, FiniteStateMachine):
         '''
         return self._events
 
+    def add_events(self, events):
+        '''
+        Adds the list of events to the list that this subscriber accepts.
+        '''
+        if not isinstance(events, list):
+            raise ValueError('expected list argument, not: {}'.format(type(events)))
+        for _event in events:
+            if isinstance(_event, Event):
+                self.add_event(_event)
+            elif isinstance(_event, list):
+                self.add_events(_event)
+            else:
+                raise ValueError('unrecognised event value: {}'.format(type(_event)))
+
     def add_event(self, event):
         '''
-        Adds another event to the list that this subscriber accepts.
+        Adds an event to the list that this subscriber accepts.
         '''
         self._events.append(event)
-        self._log.info('configured {:d} events for subscriber: {}.'.format(len(self._events), self._name))
-
-    @events.setter
-    def events(self, events):
-        '''
-        Sets the list of events that this subscriber accepts.
-        '''
-        self._events = events
-
-    def acceptable(self, message):
-        '''
-        A filter that returns True if the message's event type is acceptable
-        to this subcriber.
-        '''
-        return message.event in self._events
+        self._log.debug('added \'{}\' event to subscriber {} ({:d} events).'.format(event.description, self._name, len(self._events)))
 
     def print_events(self):
         if self._events:
@@ -106,6 +112,14 @@ class Subscriber(Component, FiniteStateMachine):
             return ''.join(_events)
         else:
             return '[ANY]'
+
+    # ..........................................................................
+    def acceptable(self, message):
+        '''
+        A filter that returns True if the message's event type is acceptable
+        to this subcriber.
+        '''
+        return message.event in self._events
 
     # ..........................................................................
     @final
@@ -228,8 +242,6 @@ class Subscriber(Component, FiniteStateMachine):
         Pass the message on to the Arbitrator and acknowledge that it has been
         sent (by setting a flag in the message).
         '''
-#       if self._message_bus.verbose:
-#           self._log.info(self._color + Style.DIM + 'arbitrating payload for event {}; value: {}'.format(message.payload.event.name, message.payload.value))
         await self._message_bus.arbitrate(message.payload)
         # increment sent acknowledgement count
         message.acknowledge_sent()
@@ -253,7 +265,7 @@ class Subscriber(Component, FiniteStateMachine):
             self._log.warning('cannot cleanup message: message has been garbage collected. [4]')
             return
         # set message flag as expired
-        self._log.info('message {} expired by subscriber: {}.'.format(message.name, self._name))
+        self._log.debug('message {} expired by subscriber: {}.'.format(message.name, self._name))
         message.expire()
         # clear any tasks related to the message
         self._message_bus.clear_tasks()
@@ -347,7 +359,7 @@ class GarbageCollector(Subscriber):
     :param level:        the logging level
     '''
     def __init__(self, name, message_bus, color=Fore.BLUE, level=Level.INFO):
-        Subscriber.__init__(self, name, message_bus, color, level)
+        Subscriber.__init__(self, name, message_bus, color=color, suppressed=False, enabled=False, level=level)
 
     # ..........................................................................
     @property
@@ -398,10 +410,11 @@ class GarbageCollector(Subscriber):
             _message = await self._message_bus.consume_message()
             self._message_bus.consumed()
             _message.gc() # mark as garbage collected and don't republish
-            if not _message.sent:
-                self._log.warning('garbage collected undelivered message: {}; event: {}'.format(_message.name, _message.event.name))
-            if self._message_bus.verbose:
-                self._log.info(self._color + 'garbage collected message:' + Fore.WHITE + ' {}; gcd: {}'.format(_message.name, _message.gcd))
+            if not Event.is_clock_event(_message.event): # we ignore messages about clock events
+                if not _message.sent:
+                    self._log.warning('garbage collected undelivered message: {}; event: {}'.format(_message.name, _message.event.name))
+                elif self._message_bus.verbose:
+                    self._log.debug(self._color + 'garbage collected message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
         else:
             # acknowledge we've seen the message
             _peeked_message.acknowledge(self)

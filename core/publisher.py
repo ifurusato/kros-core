@@ -47,10 +47,9 @@ class Publisher(Component, FiniteStateMachine):
         else:
             raise ValueError('unrecognised message factory argument: {}'.format(type(message_bus)))
         self._log = Logger('pub:{}'.format(name), level)
-        Component.__init__(self, self._log)
+        Component.__init__(self, self._log, suppressed=False, enabled=False)
         FiniteStateMachine.__init__(self, self._log, name)
         self._name       = name
-        self._suppressed = False # by default
         self._message_bus.register_publisher(self)
         self._log.info('ready.')
 
@@ -86,25 +85,6 @@ class Publisher(Component, FiniteStateMachine):
         any initialisations of active sub-components, etc.
         '''
         super().start()
-
-    # ..........................................................................
-    @property
-    def suppressed(self):
-        '''
-        Return True if the publisher is suppressed.
-        '''
-        return self._suppressed
-
-    def suppress(self, mode):
-        '''
-        Initially the suppress flag is set False, but can be enabled
-        or disabled as necessary without halting the thread.
-        '''
-        self._suppressed = mode
-        if self.suppressed:
-            self._log.info('publishing suppressed.')
-        else:
-            self._log.info('publishing unsuppressed.')
 
     # ..........................................................................
     def __eq__(self, obj):

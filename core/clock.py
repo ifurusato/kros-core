@@ -14,7 +14,6 @@
 
 import sys, time, itertools
 from datetime import datetime as dt
-from threading import Thread
 from colorama import init, Fore, Style
 init()
 
@@ -102,7 +101,7 @@ class Clock(Publisher):
             if self._message_bus.get_task_by_name(Clock._PUBLISH_LOOP_NAME):
                 self._log.warning('already enabled.')
             else:
-                self._log.info('🌎 creating task for clock loop...')
+                self._log.info('creating task for clock loop...')
                 self._message_bus.loop.create_task(self._clock_loop(lambda: self.enabled), name=Clock._PUBLISH_LOOP_NAME)
                 self._log.info('enabled.')
         else:

@@ -17,12 +17,15 @@ class Group(Enum):
     SYSTEM    = 1
     GAMEPAD   = 2
     STOP      = 3
-    SENSOR    = 4
-    VELOCITY  = 5
-    THETA     = 6
-    CHADBURN  = 7
-    BEHAVIOUR = 8
-    OTHER     = 9
+    BUMPER    = 4
+    INFRARED  = 5
+#   SENSOR    = 6
+    VELOCITY  = 7
+    THETA     = 8
+    CHADBURN  = 9
+    BEHAVIOUR = 10
+    CLOCK     = 11
+    OTHER     = 12
 
 # ..............................................................................
 class Event(Enum):
@@ -63,16 +66,16 @@ class Event(Enum):
     BUTTON                 = ( 54, "button",                   16,   Group.STOP,       False)
 
     # bumper ................................................................................
-    BUMPER_PORT            = ( 110, "bumper port",             40,   Group.SENSOR,     False)
-    BUMPER_CNTR            = ( 111, "bumper center",           40,   Group.SENSOR,     False)
-    BUMPER_STBD            = ( 112, "bumper stbd",             40,   Group.SENSOR,     False)
+    BUMPER_PORT            = ( 110, "bumper port",             40,   Group.BUMPER,     False)
+    BUMPER_CNTR            = ( 111, "bumper center",           40,   Group.BUMPER,     False)
+    BUMPER_STBD            = ( 112, "bumper stbd",             40,   Group.BUMPER,     False)
 
     # infrared ..............................................................................
-    INFRARED_PORT_SIDE     = ( 120, "infrared port side",      50,   Group.SENSOR,     False)
-    INFRARED_PORT          = ( 121, "infrared port",           50,   Group.SENSOR,     False)
-    INFRARED_CNTR          = ( 122, "infrared cntr",           50,   Group.SENSOR,     False)
-    INFRARED_STBD          = ( 123, "infrared stbd",           50,   Group.SENSOR,     False)
-    INFRARED_STBD_SIDE     = ( 124, "infrared stbd side",      50,   Group.SENSOR,     False)
+    INFRARED_PORT_SIDE     = ( 120, "infrared port side",      50,   Group.INFRARED,   False)
+    INFRARED_PORT          = ( 121, "infrared port",           50,   Group.INFRARED,   False)
+    INFRARED_CNTR          = ( 122, "infrared cntr",           50,   Group.INFRARED,   False)
+    INFRARED_STBD          = ( 123, "infrared stbd",           50,   Group.INFRARED,   False)
+    INFRARED_STBD_SIDE     = ( 124, "infrared stbd side",      50,   Group.INFRARED,   False)
 
     # velocity directives ...................................................................
     VELOCITY               = ( 200, "velocity",               100,   Group.VELOCITY,   False) # with value
@@ -130,10 +133,12 @@ class Event(Enum):
     MOTION_DETECT          = ( 507, "motion detect",          157,   Group.BEHAVIOUR,  False)
     IDLE                   = ( 508, "idle",                   159,   Group.BEHAVIOUR,   True) # A Button
 
+    CLOCK_TICK             = ( 601, "tick",                   400,   Group.CLOCK,      False)
+    CLOCK_TOCK             = ( 602, "tock",                   400,   Group.CLOCK,      False)
+
     # other events (> 500) ..................................................................
-    NO_ACTION              = ( 600, "no action",              500,   Group.OTHER,      False)
-    CLOCK_TICK             = ( 601, "tick",                   500,   Group.OTHER,      False)
-    CLOCK_TOCK             = ( 602, "tock",                   500,   Group.OTHER,      False)
+    NO_ACTION              = ( 999, "no action",              999,   Group.OTHER,      False)
+
 
     @property
     def is_ignoreable(self):
@@ -158,6 +163,11 @@ class Event(Enum):
 
     # ................................................................
     @staticmethod
+    def is_clock_event(event):
+        return ( event.group is Group.CLOCK )
+
+    # ................................................................
+    @staticmethod
     def is_motor_event(event):
         '''
         A convenience method to determine if the event is directly
@@ -172,12 +182,12 @@ class Event(Enum):
     # ..................................
     @staticmethod
     def is_bumper_event(event):
-        return event.value >= 110 and event.value <= 112
+        return event.group is Group.BUMPER
 
     # ..................................
     @staticmethod
     def is_infrared_event(event):
-        return event.value >= 120 and event.value <= 124
+        return event.group is Group.INFRARED
 
     # ................................................................
     @staticmethod
@@ -214,6 +224,28 @@ class Event(Enum):
     @property
     def group(self):
         return self._group
+
+    @staticmethod
+    def by_group(gid):
+        '''
+        Return all Events belonging to the requested Group.
+        '''
+        _list = []
+        for _event in Event:
+            if _event.group is gid:
+                _list.append(_event)
+        return _list
+
+    @staticmethod
+    def by_groups(gids):
+        '''
+        Return the accumulated Events belonging to all the requested Groups.
+        '''
+        _list = []
+        for _gid in gids:
+            _events = Event.by_group(_gid)
+            _list.append(_events)
+        return _list
 
     @property
     def is_ballistic(self):

@@ -16,21 +16,21 @@ from colorama import init, Fore, Style
 init()
 
 from core.logger import Logger 
+from core.component import Component
 from core.controller import Controller 
 
 # ..............................................................................
-class Arbitrator(object):
+class Arbitrator(Component):
     '''
     Arbitrates a stream of events from a MessageBus according to priority,
     returning to a Controller when polled the highest priority of them.
     '''
     def __init__(self, level):
-        super().__init__()
         self._log = Logger('arbitrator', level)
+        Component.__init__(self, self._log, suppressed=False, enabled=True)
         self._counter     = itertools.count()
         self._count       = 0
         self._queue       = PriorityQueue()
-        self._suppressed  = False
         self._controllers = []
         self._color       = Fore.MAGENTA + Style.NORMAL
         self._log.info(self._color + 'ready.')
@@ -52,14 +52,6 @@ class Arbitrator(object):
         '''
         self._controllers.append(controller)
         self._log.info(self._color + 'registered controller: \'{}\''.format(controller.name))
-
-    # ..........................................................................
-    def suppress(self, suppressed):
-        '''
-        When set True incoming events are suppressed.
-        '''
-        self._suppressed = suppressed
-        self._log.info(self._color + 'suppressed: {}'.format(suppressed))
 
     # ..........................................................................
     @property

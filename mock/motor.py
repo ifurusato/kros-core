@@ -39,7 +39,7 @@ class Motor(Component):
         cfg = config['kros'].get('motors')
         self._orientation = orientation
         self._log = Logger('motor:{}'.format(orientation.label), level)
-        Component.__init__(self, self._log)
+        Component.__init__(self, self._log, suppressed=False, enabled=False)
         self._tb = tb
         self._log.info('initialising {} motor...'.format(orientation))
         self._motor_power_limit = cfg.get('motor_power_limit')  # power limit to motor

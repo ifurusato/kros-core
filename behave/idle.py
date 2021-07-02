@@ -81,8 +81,4 @@ class Idle(Behaviour):
             else:
                 self._log.info('🌜 idle loop execute; {}'.format(Subscriber.get_formatted_time('message age:', _elapsed_ms)) + Fore.YELLOW + ' type: {}'.format(type(_elapsed_ms)))
 
-#   # ..........................................................................
-#   def suppressed(self):
-#   def suppress(self, mode):
-
 #EOF

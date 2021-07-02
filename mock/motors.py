@@ -42,7 +42,7 @@ class Motors(Component):
     '''
     def __init__(self, config, tb, level=Level.INFO):
         self._log = Logger('motors', level)
-        Component.__init__(self, self._log)
+        Component.__init__(self, self._log, suppressed=False, enabled=False)
         self._log.info('initialising motors...')
         if config is None:
             raise Exception('no config argument provided.')
@@ -163,88 +163,90 @@ class Motors(Component):
 
     # ..........................................................................
     def dispatch_velocity_event(self, payload):
-        event = payload.event
-        value = payload.value
         self._reset_deceleration()
+        _event = payload.event
+        _value = payload.value
         if not self.loop_is_running():
             self.start_loop()
-        if event is Event.INCREASE_PORT_VELOCITY:
+        if _event is Event.INCREASE_PORT_VELOCITY:
             self._increment_motor_velocity(Orientation.PORT, self._accel_increment)
             self._log.info(self._color + Style.BRIGHT + 'increase PORT velocity; velocity: {:5.2f}'.format(self._port_motor.velocity))
             pass
-        elif event is Event.DECREASE_PORT_VELOCITY:
+        elif _event is Event.DECREASE_PORT_VELOCITY:
             self._increment_motor_velocity(Orientation.PORT, -1 * self._decel_increment)
             self._log.info(self._color + Style.BRIGHT + 'decrease PORT velocity; velocity: {:5.2f}'.format(self._port_motor.velocity))
             pass
-        elif event is Event.INCREASE_STBD_VELOCITY:
+        elif _event is Event.INCREASE_STBD_VELOCITY:
             self._increment_motor_velocity(Orientation.STBD, self._accel_increment)
             self._log.info(self._color + Style.BRIGHT + 'increase STBD velocity; velocity: {:5.2f}'.format(self._stbd_motor.velocity))
             pass
-        elif event is Event.DECREASE_STBD_VELOCITY:
+        elif _event is Event.DECREASE_STBD_VELOCITY:
             self._increment_motor_velocity(Orientation.STBD, -1 * self._decel_increment)
             self._log.info(self._color + Style.BRIGHT + 'decrease STBD velocity; velocity: {:5.2f}'.format(self._stbd_motor.velocity))
             pass
-        elif event is Event.INCREASE_VELOCITY:
+        elif _event is Event.INCREASE_VELOCITY:
             self._increment_motor_velocity(Orientation.PORT, self._accel_increment)
             self._increment_motor_velocity(Orientation.STBD, self._accel_increment)
             self._log.info(self._color + Style.BRIGHT + 'increase velocity;\t'
                     + Fore.RED + 'port: {:5.2f};\t'.format(self._port_motor.velocity)
                     + Fore.GREEN + 'stbd: {:5.2f}'.format(self._stbd_motor.velocity))
-        elif event is Event.DECREASE_VELOCITY:
+        elif _event is Event.DECREASE_VELOCITY:
             self._increment_motor_velocity(Orientation.PORT, -1 * self._decel_increment)
             self._increment_motor_velocity(Orientation.STBD, -1 * self._decel_increment)
             self._log.info(self._color + Style.BRIGHT + 'decrease velocity;\t'
                     + Fore.RED + 'port: {:5.2f};\t'.format(self._port_motor.velocity)
                     + Fore.GREEN + 'stbd: {:5.2f}'.format(self._stbd_motor.velocity))
         else:
-            raise ValueError('unrecognised velocity event {}'.format(event.description))
+            raise ValueError('unrecognised velocity event {}'.format(_event.description))
 
     # ..........................................................................
-    def dispatch_chadburn_event(self, event):
+    def dispatch_chadburn_event(self, payload):
         '''
         A dispatcher for chadburn events: full, half, slow and dead slow
         for both ahead and astern.
         '''
         self._reset_deceleration()
+        _event = payload.event
+        _value = payload.value
         _speed = None
         _direction = None
-        if event is Event.STOP:
+        if _event is Event.STOP:
             _speed = Speed.STOP
             self._log.info(self._color + 'STOP.')
-        elif event is Event.FULL_ASTERN:
+        elif _event is Event.FULL_ASTERN:
             _direction = Direction.ASTERN
             _speed = Speed.FULL
             self._log.info(self._color + 'FULL ASTERN.')
-        elif event is Event.HALF_ASTERN:
+        elif _event is Event.HALF_ASTERN:
             _direction = Direction.ASTERN
             _speed = Speed.HALF
             self._log.info(self._color + 'HALF ASTERN.')
-        elif event is Event.SLOW_ASTERN:
+        elif _event is Event.SLOW_ASTERN:
             _direction = Direction.ASTERN
             _speed = Speed.SLOW
             self._log.info(self._color + 'SLOW ASTERN.')
-        elif event is Event.DEAD_SLOW_ASTERN:
+        elif _event is Event.DEAD_SLOW_ASTERN:
             _direction = Direction.ASTERN
             _speed = Speed.DEAD_SLOW
             self._log.info(self._color + 'DEAD SLOW ASTERN.')
-        elif event is Event.DEAD_SLOW_AHEAD:
+        elif _event is Event.DEAD_SLOW_AHEAD:
             _direction = Direction.AHEAD
             _speed = Speed.DEAD_SLOW
             self._log.info(self._color + 'DEAD SLOW AHEAD.')
-        elif event is Event.SLOW_AHEAD:
+        elif _event is Event.SLOW_AHEAD:
             _direction = Direction.AHEAD
             _speed = Speed.SLOW
             self._log.info(self._color + 'SLOW AHEAD.')
-        elif event is Event.HALF_AHEAD:
+        elif _event is Event.HALF_AHEAD:
             _direction = Direction.AHEAD
             _speed = Speed.HALF
             self._log.info(self._color + 'HALF AHEAD.')
-        elif event is Event.FULL_AHEAD:
+        elif _event is Event.FULL_AHEAD:
             _direction = Direction.AHEAD
             _speed = Speed.FULL
             self._log.info(self._color + 'FULL AHEAD.')
         else:
-            raise ValueError('unrecognised chadburn event {}'.format(event.description))
+            raise ValueError('unrecognised chadburn event {}'.format(_event.description))
         if _speed is not Speed.STOP and not self.loop_is_running():
             self.start_loop()
         # ........
@@ -254,66 +256,90 @@ class Motors(Component):
         self._set_motor_velocity(Orientation.STBD, _value)
 
     # ..........................................................................
-    def dispatch_theta_event(self, event):
+    def dispatch_theta_event(self, payload):
         '''
         A dispatcher for theta (rotation/turning) events: turn ahead, turn to, 
         and turn astern for port and starboard; spin port and spin starboard.
         '''
-        self._log.info('theta event: {}'.format(event.description))
         self._reset_deceleration()
+        _event = payload.event
+        _value = payload.value
+        self._log.info('theta event: {}'.format(_event.description))
         if not self.loop_is_running():
             self.start_loop()
         # ........
-        if event is Event.THETA:
+        if _event is Event.THETA:
             pass
-        elif event is Event.PORT_THETA:
+        elif _event is Event.PORT_THETA:
             pass
-        elif event is Event.STBD_THETA:
+        elif _event is Event.STBD_THETA:
             pass
-        elif event is Event.EVEN:
+        elif _event is Event.EVEN:
             self._even()
-        elif event is Event.INCREASE_PORT_THETA:
+        elif _event is Event.INCREASE_PORT_THETA:
             pass
-        elif event is Event.DECREASE_PORT_THETA:
+        elif _event is Event.DECREASE_PORT_THETA:
             pass
-        elif event is Event.INCREASE_STBD_THETA:
+        elif _event is Event.INCREASE_STBD_THETA:
             pass
-        elif event is Event.DECREASE_STBD_THETA:
+        elif _event is Event.DECREASE_STBD_THETA:
             pass
-        elif event is Event.TURN_AHEAD_PORT:
+        elif _event is Event.TURN_AHEAD_PORT:
             pass
-        elif event is Event.TURN_TO_PORT:
+        elif _event is Event.TURN_TO_PORT:
             self._log.info('theta TURN_TO_PORT event.')
             pass
-        elif event is Event.TURN_ASTERN_PORT:
+        elif _event is Event.TURN_ASTERN_PORT:
             pass
-        elif event is Event.SPIN_PORT:
+        elif _event is Event.SPIN_PORT:
             self._spin(Orientation.PORT)
-        elif event is Event.SPIN_STBD:
+        elif _event is Event.SPIN_STBD:
             self._spin(Orientation.STBD)
-        elif event is Event.TURN_ASTERN_STBD:
+        elif _event is Event.TURN_ASTERN_STBD:
             pass
-        elif event is Event.TURN_TO_STBD:
+        elif _event is Event.TURN_TO_STBD:
             self._log.info('theta TURN_TO_STBD event.')
             pass
-        elif event is Event.TURN_AHEAD_STBD:
+        elif _event is Event.TURN_AHEAD_STBD:
             pass
         else:
-            raise ValueError('unrecognised theta event {}'.format(event.description))
+            raise ValueError('unrecognised theta event {}'.format(_event.description))
 
     # ..........................................................................
-    def dispatch_stop_event(self, event):
+    def dispatch_stop_event(self, payload):
         '''
         A dispatcher for deceleration events: halt, _brake and stop.
         '''
-        if event is Event.HALT:
+        self._reset_deceleration()
+        _event = payload.event
+        _value = payload.value
+        if _event is Event.HALT:
             self._halt()
-        elif event is Event.BRAKE: 
+        elif _event is Event.BRAKE: 
             self._brake()
-        elif event is Event.STOP:
+        elif _event is Event.STOP:
             self._stop()
         else:
-            raise ValueError('unrecognised stop event {}'.format(event.description))
+            raise ValueError('unrecognised stop event {}'.format(_event.description))
+
+    # ..........................................................................
+    def dispatch_bumper_event(self, payload):
+        '''
+        A dispatcher for bumper events from port, center or starboard.
+        '''
+        _event = payload.event
+        _value = payload.value
+        if _event is Event.BUMPER_PORT:
+            self._log.info('BUMPER PORT.')
+            self._stop()
+        elif _event is Event.BUMPER_CNTR: 
+            self._log.info('BUMPER CNTR.')
+            self._stop()
+        elif _event is Event.BUMPER_STBD:
+            self._log.info('BUMPER STBD.')
+            self._stop()
+        else:
+            raise ValueError('unrecognised bumper event {}'.format(_event.description))
 
     # ..........................................................................
     def _spin(self, orientation):

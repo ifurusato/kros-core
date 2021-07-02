@@ -23,6 +23,8 @@ from core.subscriber import Subscriber
 
 # ..............................................................................
 class BehaviourManager(Subscriber):
+  
+    CLASS_NAME='beh-mgr'
     '''
     Extends Subscriber as a manager of high-level ballistic behaviours.
 
@@ -31,16 +33,11 @@ class BehaviourManager(Subscriber):
     :param color:        the color for messages
     :param level:        the logging level 
     '''
-    def __init__(self, config, message_bus, motors, color=Fore.MAGENTA, level=Level.INFO):
-        super().__init__('beh-mgr', message_bus, color, level)
-        if config is None:
-            raise ValueError('null configuration argument.')
-#       self._config = config
-#       self._motors = motors
+    def __init__(self, message_bus, color=Fore.RED, level=Level.INFO):
+        Subscriber.__init__(self, BehaviourManager.CLASS_NAME, message_bus, color, level=Level.INFO)
         self._active_behaviour = None
-        self.events      = []
         self._behaviours = {}
-        self.add_event(Event.INFRARED_CNTR)
+        self.enable() # override default disabled state
         self._log.info('behaviour manager ready.')
 
     # ..........................................................................
@@ -49,7 +46,7 @@ class BehaviourManager(Subscriber):
         Register a Behaviour with the manager, referenced by its Event type.
         '''
         self._behaviours[behaviour.event] = behaviour
-        self.events.append(behaviour.event)
+        self.add_event(behaviour.event)
         self._log.info('added behaviour {} linked to event {} to manager.'.format(behaviour.name, behaviour.event))
 
     # ..........................................................................
@@ -75,8 +72,8 @@ class BehaviourManager(Subscriber):
     def enable(self):
         if not self.enabled:
             super().enable()
-#           for _key, _behaviour in self._behaviours.items():
-#               _behaviour.enable()
+            for _key, _behaviour in self._behaviours.items():
+                _behaviour.enable()
 
     # ..........................................................................
     def disable(self):
@@ -104,63 +101,45 @@ class BehaviourManager(Subscriber):
         '''
         if message.gcd:
             raise GarbageCollectedError('cannot process message: message has been garbage collected. [3]')
+
         _event = message.event
         self._log.info('🥝 pre-processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.description) + Style.RESET_ALL)
-
         # get behaviour for event type
         _behaviour = self.get_behavior_for_event(_event)
         if _behaviour is None:
             self._log.info('🥝 0. no behaviour associated with event {}.'.format(_event.description))
             # FIXME TODO how to associate INFRARED_CNTR to ROAM?
-        elif _behaviour.enabled:
-            self._log.info('🥝 1. disabling behaviour {}...'.format(_behaviour.name))
-            _behaviour.disable()
+        elif not _behaviour.suppressed:
+            self._log.info('🥝 1. suppressing behaviour {}...'.format(_behaviour.name))
+            _behaviour.suppress()
             if self._active_behaviour is _behaviour:
                 # then clear the active behavior
                 self._active_behaviour = None
-        elif self._active_behaviour is None: # no current active behaviour so just enable this one
-            self._log.info('🥝 2. enabling behaviour {}...'.format(_behaviour.name))
+        elif self._active_behaviour is None: # no current active behaviour so just release this one
+            self._log.info('🥝 2. releasing behaviour {}...'.format(_behaviour.name))
             self._active_behaviour = _behaviour
-            _behaviour.enable()
+            _behaviour.release()
         elif self._active_behaviour is _behaviour: # if the current active behaviour is already this one, we ignore the message
-            self._log.info('🥝 3. behaviour {} already running.'.format(_behaviour.name))
+            self._log.info('🥝 3. behaviour {} already released.'.format(_behaviour.name))
         else:
             self._log.info('🥝 4. there is a behaviour {} already running.'.format(self._active_behaviour.name))
             _compare = _event.compare_to_priority_of(self._active_behaviour.event)
             if _compare == 1:
                 self._log.info('🥝 5. new behaviour {} is HIGHER priority than existing behaviour {}.'.format(_event.name, self._active_behaviour.name))
-                # the current active behaviour is a lower priority so we disable the existing and enable the new one
-                self._log.info('🥝 5a. disabling old behaviour {}...'.format(self._active_behaviour.name))
-                self._active_behaviour.disable()
+                # the current active behaviour is a lower priority so we suppress the existing and release the new one
+                self._log.info('🥝 5a. suppressing old behaviour {}...'.format(self._active_behaviour.name))
+                self._active_behaviour.suppress()
                 self._log.info('🥝 5b. setting new behaviour as active {}...'.format(_behaviour.name))
                 self._active_behaviour = _behaviour
-                self._log.info('🥝 5c. enabling new behaviour {}...'.format(self._active_behaviour.name))
-                self._active_behaviour.enable()
+                self._log.info('🥝 5c. releasing new behaviour {}...'.format(self._active_behaviour.name))
+                self._active_behaviour.release()
                 self._log.info('🥝 5d. done.')
             elif _compare == -1:
                 self._log.info('🥝 6. new behaviour {} is LOWER priority than existing behaviour {}.'.format(_event.name, self._active_behaviour.name))
                 # the current active behaviour is a higher priority so we ignore the request to alter it
             else: # _compare == 0: 
-                self._log.info('🥝 7. new behaviour {} has SAME priority as existing behaviour {}.'.format(_event.name, self._active_behaviour.name))
                 # same priority, no change
-
-#           self._active_behaviour = None
-
-#       if _event is Event.ROAM:
-#           self._log.info(Fore.YELLOW + 'ROAM: message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.description) + Style.RESET_ALL)
-#           if self._roam.enabled:
-#               self._roam.disable()
-#           else:
-#               self._roam.enable()
-#           self._behaviour_handler.dispatch_roam_event(_event)
-#       elif _event is Event.SNIFF:
-#           self._log.info(Fore.YELLOW + 'SNIFF: message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.description) + Style.RESET_ALL)
-#           if self._sniff.enabled:
-#               self._sniff.disable()
-#           else:
-#               self._sniff.enable()
-#       else:
-#           self._log.warning('unrecognised message {} ({})'.format(message.name, message.event.description))
+                self._log.info('🥝 7. new behaviour {} has SAME priority as existing behaviour {}.'.format(_event.name, self._active_behaviour.name))
 
         await super().process_message(message)
         self._log.debug('post-processing message {}'.format(message.name))

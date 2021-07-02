@@ -26,7 +26,7 @@ from core.subscriber import Subscriber
 #from mock.rgbmatrix import RgbMatrix, Color, DisplayType, WipeDirection
 
 # ..............................................................................
-class Roam(Subscriber, Behaviour):
+class Roam(Behaviour):
     '''
     Implements a roaming behaviour. 
 
@@ -49,20 +49,17 @@ class Roam(Subscriber, Behaviour):
     :param motors:         the motor controller
     :param level:          the optional log level
     '''
-    def __init__(self, config, message_bus, motors, level=Level.INFO):
+    def __init__(self, config, message_bus, message_factory, motors, level=Level.INFO):
         if config is None:
             raise ValueError('null configuration argument.')
-        self._config      = config
-        cfg = config['kros'].get('roam')
-        _loop_freq_hz = cfg.get('loop_freq_hz')
-        Behaviour.__init__(self, 'roam', _loop_freq_hz, self._roam_callback, level)
-        self._message_bus = message_bus
+#       cfg = config['kros'].get('roam')
+#       _loop_freq_hz = cfg.get('loop_freq_hz')
+        Behaviour.__init__(self, 'roam', config, message_bus, message_factory, self._roam_callback, level)
         self._motors      = motors
-        Subscriber.__init__(self, 'roam', self._message_bus, Fore.GREEN, level)
         self._distance    = None
 #       self._rgbmatrix   = RgbMatrix(Level.INFO)
 #       self._rgbmatrix.set_display_type(DisplayType.RANDOM)
-        self.events = [ Event.INFRARED_CNTR, Event.CLOCK_TICK, Event.CLOCK_TOCK ]
+        self.add_event(Event.INFRARED_CNTR)
         self._log.info('ready.')
 
     # ..........................................................................
@@ -91,35 +88,35 @@ class Roam(Subscriber, Behaviour):
 #       self._disable_rgbmatrix()
         super().disable()
 
-    # ..........................................................................
-    async def process_message(self, message):
-        '''
-        We expect only INFRARED_CNTR messages and extract the distance value.
-        '''
-        # TODO only pay attention to messages if roam active and not suppressed 
-        if message.gcd:
-            raise GarbageCollectedError('cannot process message: message has been garbage collected.')
-        # indicate that this subscriber has processed the message
-        message.process(self)
-        _payload = message.payload
-        _event   = _payload.event
-        if _event is Event.CLOCK_TICK:
-            self._log.info('🕒 processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.description)) 
-        elif _event is Event.CLOCK_TOCK:
-            self._log.info(Fore.BLUE + '🕝 processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.description)) 
-        elif _event is Event.INFRARED_CNTR:
-            self.distance = _payload.value
-            if self.enabled:
-                self._log.info('🈯 processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.description) 
-                        + Fore.GREEN + ' distance: {}'.format(self.distance)
-                        + Fore.MAGENTA + ' enabled? {}'.format(self.enabled))
-            else:
-                self._log.info('🆎 processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.description) 
-                        + Fore.GREEN + ' distance: {}'.format(self.distance)
-                        + Fore.MAGENTA + ' enabled? {}'.format(self.enabled))
-
-        else:
-            raise ValueError('expected INFRARED_CNTER event not: {}'.format(message.event.description))
+#   # ..........................................................................
+#   async def process_message(self, message):
+#       '''
+#       We expect only INFRARED_CNTR messages and extract the distance value.
+#       '''
+#       # TODO only pay attention to messages if roam active and not suppressed 
+#       if message.gcd:
+#           raise GarbageCollectedError('cannot process message: message has been garbage collected.')
+#       # indicate that this subscriber has processed the message
+#       message.process(self)
+#       _payload = message.payload
+#       _event   = _payload.event
+#       if _event is Event.CLOCK_TICK:
+#           self._log.info('🕒 processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.description)) 
+#       elif _event is Event.CLOCK_TOCK:
+#           self._log.info(Fore.BLUE + '🕝 processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.description)) 
+#       elif _event is Event.INFRARED_CNTR:
+#           self.distance = _payload.value
+#           if self.enabled:
+#               self._log.info('🈯 processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.description) 
+#                       + Fore.GREEN + ' distance: {}'.format(self.distance)
+#                       + Fore.MAGENTA + ' enabled? {}'.format(self.enabled))
+#           else:
+#               self._log.info('🆎 processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.description) 
+#                       + Fore.GREEN + ' distance: {}'.format(self.distance)
+#                       + Fore.MAGENTA + ' enabled? {}'.format(self.enabled))
+#
+#       else:
+#           raise ValueError('expected INFRARED_CNTER event not: {}'.format(message.event.description))
 
     # ..........................................................................
 #   def _disable_rgbmatrix(self):
@@ -154,18 +151,20 @@ class Roam(Subscriber, Behaviour):
         return 'roam'
 
     # ..........................................................................
-    def execute(self):
+    def execute(self, message):
         '''
-        The method called upon each loop iteration. This does nothing in this
-        abstract class and is meant to be extended by subclasses.
+        The method called upon each loop iteration. 
+
+        :param message:  an optional Message passed along by the message bus
         '''
-        _timestamp = self._message_bus.last_message_timestamp
-        if _timestamp is None:
-            self._log.info('🌼 roam loop execute; no previous messages.')
-        else:
-            _elapsed_ms = (dt.now() - _timestamp).total_seconds() * 1000.0
-            self._log.info('🌼 roam loop execute; {};\t'.format(Subscriber.get_formatted_time('message age:', _elapsed_ms)) 
-                    + 'distance: {}'.format(self.distance))
+        self._log.info('🌼 roam loop execute.')
+#       _timestamp = self.message_bus.last_message_timestamp
+#       if _timestamp is None:
+#           self._log.info('🌼 roam loop execute; no previous messages.')
+#       else:
+#           _elapsed_ms = (dt.now() - _timestamp).total_seconds() * 1000.0
+#           self._log.info('🌼 roam loop execute; {};\t'.format(Subscriber.get_formatted_time('message age:', _elapsed_ms)) 
+#                   + 'distance: {}'.format(self.distance))
 
 #   # ..........................................................................
 #   def suppressed(self):

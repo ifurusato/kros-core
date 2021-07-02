@@ -81,12 +81,19 @@ class Logger:
         self.level = level
 
     # ..........................................................................
-    def set_suppress(self, suppress):
+    def suppress(self):
         '''
-        If set True, suppresses all log messages except critical errors
+        Suppresses all log messages except critical errors and log-to-file
+        messages. This is global across all Loggers.
+        '''
+        type(self)._suppress = True
+
+    def release(self):
+        '''
+        Releases (un-suppresses) all log messages except critical errors
         and log-to-file messages. This is global across all Loggers.
         '''
-        type(self)._suppress = suppress
+        type(self)._suppress = False
 
     # ..........................................................................
     @property

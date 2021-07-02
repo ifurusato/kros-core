@@ -36,7 +36,7 @@ class SlewLimiter(Component):
     '''
     def __init__(self, config, orientation, level=Level.INFO):
         self._log = Logger('slew:{}'.format(orientation.label), level)
-        Component.__init__(self, self._log)
+        Component.__init__(self, self._log, suppressed=False, enabled=True)
         self._millis  = lambda: int(round(time.time() * 1000))
         self._seconds = lambda: int(round(time.time()))
         self._clamp   = lambda n: self._minimum_output if n <= self._minimum_output else self._maximum_output if n >= self._maximum_output else n

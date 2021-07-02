@@ -15,7 +15,6 @@
 #
 
 import os, sys, time, asyncio
-from threading import Thread
 import datetime as dt
 from enum import Enum
 from evdev import InputDevice, ecodes

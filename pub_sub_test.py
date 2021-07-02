@@ -40,12 +40,14 @@ from core.event import Event
 from mock.motor_configurer import MotorConfigurer
 from mock.event_publisher import EventPublisher
 from mock.motor_subscriber import MotorSubscriber
+from mock.bumper_subscriber import BumperSubscriber
 #from mock.gamepad_publisher import GamepadPublisher
 #from mock.gamepad_controller import GamepadController
+
 from behave.roam import Roam
-from behave.moth import Moth
-from behave.sniff import Sniff
-from behave.idle import Idle
+#from behave.moth import Moth
+#from behave.sniff import Sniff
+#from behave.idle import Idle
 
 # ..............................................................................
 @pytest.mark.unit
@@ -84,23 +86,25 @@ def test_pub_sub():
     _publisher1.set_motors(_motors)
 
     # create subscribers
-    _subscriber1 = MotorSubscriber(_message_bus, _motors, Fore.MAGENTA, _level)
+    _subscriber1 = MotorSubscriber(_message_bus, _motors, color=Fore.MAGENTA, level=_level)
 
-    _subscriber2 = Subscriber('infrared', _message_bus, Fore.GREEN, _level)
-    _subscriber2.events = [ Event.INFRARED_PORT_SIDE, Event.INFRARED_PORT, Event.INFRARED_CNTR, Event.INFRARED_STBD, Event.INFRARED_STBD_SIDE ] # reacts to IR sensors
+    _subscriber2 = Subscriber('infrared', _message_bus, color=Fore.GREEN, level=_level)
+    _subscriber2.add_events([ Event.INFRARED_PORT_SIDE, Event.INFRARED_PORT, Event.INFRARED_CNTR, Event.INFRARED_STBD, Event.INFRARED_STBD_SIDE ]) # reacts to IR sensors
 
-    _subscriber3 = Subscriber('bumper', _message_bus, Fore.YELLOW, _level)
-    _subscriber3.events = [ Event.BUMPER_PORT, Event.BUMPER_CNTR, Event.BUMPER_STBD ] # reacts to bumpers
+#   _subscriber3 = Subscriber('bumper', _message_bus, color=Fore.YELLOW, level=_level)
+    _subscriber3 = BumperSubscriber(_message_bus, _motors, level=_level)
+#   _subscriber3.add_events([ Event.BUMPER_PORT, Event.BUMPER_CNTR, Event.BUMPER_STBD ]) # reacts to bumpers
 
-    _garbage_collector = GarbageCollector('gc', _message_bus, Fore.BLUE, _level)
+    _garbage_collector = GarbageCollector('gc', _message_bus, color=Fore.BLUE, level=_level)
 
     # behaviour manager is a specialised subscriber
-    _behave_manager = BehaviourManager(_config, _message_bus, _motors, Fore.BLUE, _level)
+    _behave_manager = BehaviourManager(_message_bus, color=Fore.RED, level=_level)
+
     # create and register behaviours (these are listed in priority order)
-    _behave_manager.register_behaviour(Roam(_config, _message_bus, _motors, _level))
-    _behave_manager.register_behaviour(Moth(_config, _message_bus, _motors, _level))
-    _behave_manager.register_behaviour(Sniff(_config, _message_bus, _motors, _level))
-    _behave_manager.register_behaviour(Idle(_config, _message_bus, _motors, _level))
+    _roam  = Roam(_config, _message_bus, _message_factory, _motors, _level)
+#   _moth  = Moth(_config, _message_bus, _motors, _level)
+#   _sniff = Sniff(_config, _message_bus, _motors, _level)
+#   _idle  = Idle(_config, _message_bus, _motors, _level)
 
 #   _message_bus.print_publishers()
 #   _message_bus.print_subscribers()

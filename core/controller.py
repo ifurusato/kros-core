@@ -27,7 +27,7 @@ class Controller(Component):
     '''
     def __init__(self, level):
         self._log = Logger('controller', level)
-        Component.__init__(self, self._log, True)
+        Component.__init__(self, self._log, suppressed=False, enabled=True)
         self._previous_payload     = None
         self._event_counter        = itertools.count()
         self._event_count          = next(self._event_counter)
@@ -65,7 +65,8 @@ class Controller(Component):
         self._event_count = next(self._event_counter)
         if self._previous_payload == None:
             self._log.debug(Fore.CYAN + 'no previous payload.')
-        elif payload.event is Event.CLOCK_TICK or payload.event is Event.CLOCK_TICK:
+        elif Event.is_clock_event(payload.event):
+#           self._log.info(Fore.BLACK + 'clock event callback.')
             pass
         elif payload == self._previous_payload:
             self._log.info(Fore.CYAN + 'no state change on event: ' + Style.BRIGHT + ' {}'.format(self._previous_payload.event.description)
@@ -76,7 +77,8 @@ class Controller(Component):
                 self._log.info(Fore.CYAN + 'value {} changed on event: '.format(payload.value) + Style.BRIGHT + ' {}'.format(self._previous_payload.event.description)
                         + Fore.BLACK + Style.NORMAL + ' [{:d}/{:d}]'.format(self._state_change_count, self._event_count))
             else:
-                self._log.info(Fore.CYAN + 'event changed on event: ' + Style.BRIGHT + ' {}'.format(self._previous_payload.event.description)
+                self._log.info(Fore.CYAN + 'state change from event: ' + Style.BRIGHT + ' {}'.format(self._previous_payload.event.description)
+                        + Style.NORMAL + ' to event: {} ' + Style.BRIGHT + ' {}'.format(payload.event.description)
                         + Fore.BLACK + Style.NORMAL + ' [{:d}/{:d}]'.format(self._state_change_count, self._event_count))
             return
 

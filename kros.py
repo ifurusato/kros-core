@@ -97,7 +97,7 @@ class KROS(Component, FiniteStateMachine):
         _name = 'kros'
         self._level = level
         self._log = Logger(_name, self._level)
-        Component.__init__(self, self._log)
+        Component.__init__(self, self._log, suppressed=False, enabled=False)
         FiniteStateMachine.__init__(self, self._log, _name)
         self._mutex = mutex if mutex is not None else threading.Lock() 
         self._log.info('setting process as high priority...')
@@ -106,7 +106,7 @@ class KROS(Component, FiniteStateMachine):
         proc.nice(10)
         # configuration...
         self._config       = None
-        self._active       = False
+        self._active       = False # FIXME use suppressed flag!
         self._closing      = False
         self._disable_leds = False
         self._arbitrator   = None
@@ -183,12 +183,12 @@ class KROS(Component, FiniteStateMachine):
         self._garbage_collector = GarbageCollector('gc', self._message_bus, Fore.BLUE, self._level)
     
         # behaviour manager is a specialised subscriber
-        self._behave_manager = BehaviourManager(self._config, self._message_bus, self._motors, Fore.BLUE, self._level)
+        self._behave_manager = BehaviourManager(self._message_bus, self._level)
         # create and register behaviours (these are listed in priority order)
         self._behave_manager.register_behaviour(Roam(self._config, self._message_bus, self._motors, self._level))
-        self._behave_manager.register_behaviour(Moth(self._config, self._message_bus, self._motors, self._level))
-        self._behave_manager.register_behaviour(Sniff(self._config, self._message_bus, self._motors, self._level))
-        self._behave_manager.register_behaviour(Idle(self._config, self._message_bus, self._motors, self._level))
+#       self._behave_manager.register_behaviour(Moth(self._config, self._message_bus, self._motors, self._level))
+#       self._behave_manager.register_behaviour(Sniff(self._config, self._message_bus, self._motors, self._level))
+#       self._behave_manager.register_behaviour(Idle(self._config, self._message_bus, self._motors, self._level))
     
     #   _message_bus.print_publishers()
     #   _message_bus.print_subscribers()

@@ -228,17 +228,13 @@ class Message(object):
         '''
         for subscr in self._subscribers:
             if subscr == subscriber and self._subscribers[subscriber] == True:
-#               print(Fore.GREEN + 'message {} acknowledged_by subscriber {}; return True.'.format(self.name, subscriber.name) + Style.RESET_ALL)
                 return True
-#       print(Fore.RED + 'message {} has not been acknowledged by subscriber {}; return False.'.format(self.name, subscriber.name) + Style.RESET_ALL)
         return False
 
     def acknowledge(self, subscriber):
         '''
         To be called by each subscriber, acknowledging receipt of the message.
         '''
-#       if not isinstance(subscriber, Subscriber):
-#           raise Exception('expected subscriber, not {}.'.format(type(subscriber)))
         if len(self._subscribers) == 0:
             raise Exception('no subscribers set ({}).'.format(self._instance_name))
         if self._subscribers[subscriber] is True:
@@ -248,8 +244,6 @@ class Message(object):
                 raise Exception('message {} already acknowledged by subscriber: {}'.format(self.name, subscriber.name))
         else:
             self._subscribers[subscriber] = True
-#           print(Fore.GREEN + Style.BRIGHT + 'message {} acknowledged by subscriber {}; still unacknowledged by {:d}.'.format(\
-#                   self.name, subscriber.name, self.unacknowledged_count) + Style.RESET_ALL)
 
 # ..............................................................................
 class Payload(object):

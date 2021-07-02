@@ -76,8 +76,4 @@ class Sniff(Behaviour):
             _elapsed_ms = (dt.now() - _timestamp).total_seconds() * 1000.0
             self._log.info('🌺 sniff loop execute; {}'.format(Subscriber.get_formatted_time('message age:', _elapsed_ms)))
 
-#   # ..........................................................................
-#   def suppressed(self):
-#   def suppress(self, mode):
-
 #EOF

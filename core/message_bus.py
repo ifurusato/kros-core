@@ -47,7 +47,7 @@ class MessageBus(Component):
     '''
     def __init__(self, level):
         self._log = Logger("bus", level)
-        Component.__init__(self, self._log, True)
+        Component.__init__(self, self._log, suppressed=False, enabled=True)
         if level is Level.DEBUG:
             self._log.debug('logging message bus set to debug level.')
             logging.basicConfig(level=logging.DEBUG)
@@ -264,6 +264,15 @@ class MessageBus(Component):
         self._log.info('registered subscriber: \'{}\'; {:d} subscriber{} in list.'.format( \
                 subscriber.name, len(self._subscribers), 's' if len(self._subscribers) > 1 else ''))
 
+    def get_subscriber(self, name):
+        '''
+        Return a registered subscriber by name, None if not found.
+        '''
+        for subscriber in self._subscribers:
+            if subscriber.name == name:
+                return subscriber
+        return None
+
     def print_subscribers(self):
         '''
         Print the message subscribers that have been registered with the message bus.
@@ -276,8 +285,11 @@ class MessageBus(Component):
             self._log.info(Fore.YELLOW + '\t{}'.format(subscriber.name)
                     + Fore.CYAN + ' {}enabled: '.format((' ' * max(0, (10 - len(subscriber.name)))))
                     + Fore.YELLOW + '{}\t'.format(subscriber.enabled)
+                    + Fore.CYAN + 'suppressed: '
+                    + Fore.YELLOW + '{}\t'.format(subscriber.suppressed)
                     + Fore.CYAN + 'listening for: '
                     + Fore.YELLOW + '{}'.format(subscriber.print_events()))
+
     @property
     def subscribers(self):
         return self._subscribers
