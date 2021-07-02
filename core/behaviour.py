@@ -24,27 +24,28 @@ from core.fsm import FiniteStateMachine
 from core.rate import Rate
 
 # ...............................................................
-class Behaviour(ABC, Component, FiniteStateMachine):
+class Behaviour(ABC, Subscriber):
     '''
     An abstract class providing the basis for a looped behaviour
     that executes a callback every loop.
 
-    :param name:           the name of this behaviour
-    :param loop_freq_hz:   the loop frequency in Hertz
-    :param callback:       the optional callback function (can be added later)
-    :param level:          the optional log level
+    :param name:             the name of this behaviour
+    :param config:           the application configuration
+    :param message_bus:      the message bus
+    :param message_factory:  the message factory
+    :param loop_freq_hz:     the loop frequency in Hertz
+    :param callback:         the optional callback function (can be added later)
+    :param level:            the optional log level
     '''
-    def __init__(self, name, loop_freq_hz, callback, level=Level.INFO):
+    def __init__(self, name, config, message_bus, message_factory, loop_freq_hz, callback, level=Level.INFO):
         self._log = Logger('beh:{}'.format(name), level)
-        Component.__init__(self, self._log)
-        FiniteStateMachine.__init__(self, self._log, name)
+        Subscriber.__init__(self, name, message_bus, level=Level.INFO):
         self._name         = name
-        self._loop_freq_hz = loop_freq_hz
-        self._rate         = Rate(self._loop_freq_hz)
-        if isinstance(self._rate, int):
-            self._log.info('loop frequency: {:d}Hz'.format(self._loop_freq_hz))
+        self._rate         = Rate(loop_freq_hz)
+        if isinstance(loop_freq_hz, int):
+            self._log.info('loop frequency: {:d}Hz'.format(loop_freq_hz))
         else:
-            self._log.info('loop frequency: {:5.2f}Hz'.format(self._loop_freq_hz))
+            self._log.info('loop frequency: {:5.2f}Hz'.format(loop_freq_hz))
         self._callbacks    = []
         self._thread       = None
         self._suppressed   = False
@@ -79,11 +80,6 @@ class Behaviour(ABC, Component, FiniteStateMachine):
     @property
     def name(self):
         return self._name
-
-    # ..........................................................................
-    @property
-    def freq_hz(self):
-        return self._loop_freq_hz
 
     # ..........................................................................
     def _loop(self, f_is_enabled):
