@@ -40,24 +40,27 @@ class Subscriber(Component, FiniteStateMachine):
         :param level:        the logging level
         '''
         self._log = Logger('sub:{}'.format(name), level)
-        if not isinstance(suppressed, bool):
-            raise ValueError('unrecognised suppressed argument: {}'.format(type(suppressed)))
-        if not isinstance(enabled, bool):
-            raise ValueError('unrecognised enabled argument: {}'.format(type(enabled)))
-        Component.__init__(self, self._log, suppressed, enabled)
-        FiniteStateMachine.__init__(self, self._log, name)
-        self._name   = name
-        self._color  = color
+        if isinstance(name, str):
+            self._name = name
+        else:
+            raise ValueError('wrong type for name argument: {}'.format(type(name)))
         if message_bus is None:
             raise ValueError('null message bus argument.')
         elif isinstance(message_bus, MessageBus):
             self._message_bus = message_bus
         else:
-            raise ValueError('unrecognised message bus argument: {}'.format(type(message_bus)))
+            raise ValueError('wrong type for message bus argument: {}'.format(type(message_bus)))
+        if not isinstance(suppressed, bool):
+            raise ValueError('wrong type for suppressed argument: {}'.format(type(suppressed)))
+        if not isinstance(enabled, bool):
+            raise ValueError('wrong type for enabled argument: {}'.format(type(enabled)))
+        Component.__init__(self, self._log, suppressed, enabled)
+        FiniteStateMachine.__init__(self, self._log, name)
+        self._color  = color
         self._events = [] # list of acceptable event types
         self._brief  = True # brief messages by default
         self._message_bus.register_subscriber(self)
-        self._log.info(self._color + '🔯 ready.')
+        self._log.info(self._color + 'ready.')
 
     # ..........................................................................
     def set_log_level(self, level):
@@ -349,6 +352,7 @@ class Subscriber(Component, FiniteStateMachine):
 
 # GarbageCollector .............................................................
 class GarbageCollector(Subscriber):
+    CLASS_NAME = 'gc'
     '''
     Extends subscriber as a garbage collector that eliminates messages after
     they've passed the publish cycle.
@@ -358,8 +362,8 @@ class GarbageCollector(Subscriber):
     :param message_bus:  the message bus
     :param level:        the logging level
     '''
-    def __init__(self, name, message_bus, color=Fore.BLUE, level=Level.INFO):
-        Subscriber.__init__(self, name, message_bus, color=color, suppressed=False, enabled=False, level=level)
+    def __init__(self, message_bus, color=Fore.BLUE, level=Level.INFO):
+        Subscriber.__init__(self, GarbageCollector.CLASS_NAME, message_bus=message_bus, color=color, suppressed=False, enabled=False, level=level)
 
     # ..........................................................................
     @property

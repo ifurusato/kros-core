@@ -80,7 +80,6 @@ class GamepadController(Controller):
         self._log.info(Fore.CYAN + '🍔 act on event: ' + Style.BRIGHT + ' {}'.format(_event.description)
                 + Fore.BLACK + Style.NORMAL + '[{:d}/{:d}]'.format(self._state_change_count, self._event_count))
 
-        # name                                          n   description             priority  ballistic?
         # system events ....................
         if _event is Event.GAMEPAD:                 
            self._log.info('event: gamepad.')

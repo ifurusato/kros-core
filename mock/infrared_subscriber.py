@@ -23,20 +23,20 @@ from core.subscriber import Subscriber
 from mock.motor import Motor
 
 # ..............................................................................
-class BumperSubscriber(Subscriber):
-    CLASS_NAME = 'bumper'
+class InfraredSubscriber(Subscriber):
+    CLASS_NAME = 'infrared'
     '''
-    A subscriber to bumper events.
+    A subscriber to infrared events.
 
     :param name:         the subscriber name (for logging)
     :param message_bus:  the message bus
     :param color:        the color for messages
     :param level:        the logging level 
     '''
-    def __init__(self, message_bus, motors, color=Fore.YELLOW, level=Level.INFO):
-        Subscriber.__init__(self, BumperSubscriber.CLASS_NAME, message_bus=message_bus, color=color, suppressed=False, enabled=False, level=level)
+    def __init__(self, message_bus, motors, color=Fore.GREEN, level=Level.INFO):
+        Subscriber.__init__(self, InfraredSubscriber.CLASS_NAME, message_bus=message_bus, color=color, suppressed=False, enabled=False, level=level)
         self._motors = motors
-        self.add_events(Event.by_group(Group.BUMPER))
+        self.add_events(Event.by_group(Group.INFRARED))
         self._log.info('ready.')
 
     # ..........................................................................
@@ -48,7 +48,7 @@ class BumperSubscriber(Subscriber):
         await self._message_bus.arbitrate(message.payload)
         # increment sent acknowledgement count
         message.acknowledge_sent()
-        self._log.info(self._color + Style.NORMAL + '🐻 arbitrated payload for event {}; value: {}'.format(message.payload.event.name, message.payload.value))
+        self._log.info(self._color + Style.NORMAL + '🐱 arbitrated payload for event {}; value: {}'.format(message.payload.event.name, message.payload.value))
 
     # ..........................................................................
     async def process_message(self, message):
@@ -60,12 +60,12 @@ class BumperSubscriber(Subscriber):
         if message.gcd:
             raise GarbageCollectedError('cannot process message: message has been garbage collected. [3]')
         _event = message.event
-        self._log.info('🐻 pre-processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.description) + Style.RESET_ALL)
+        self._log.info('🐱 pre-processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.description) + Style.RESET_ALL)
         if Event.is_bumper_event(_event):
             self._motors.dispatch_bumper_event(message.payload)
         else:
             self._log.warning('unrecognised message {}'.format(message.name) + ''.format(message.event.description))
         await super().process_message(message)
-        self._log.debug('🐻 post-processing message {}'.format(message.name))
+        self._log.debug('🐱 post-processing message {}'.format(message.name))
 
 #EOF

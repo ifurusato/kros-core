@@ -34,16 +34,17 @@ from core.publisher import Publisher
 #from core.system_clock import SystemClock
 from core.clock import Clock
 from core.subscriber import Subscriber, GarbageCollector
-from core.behaviour_manager import BehaviourManager
 from core.event import Event
 
 from mock.motor_configurer import MotorConfigurer
 from mock.event_publisher import EventPublisher
 from mock.motor_subscriber import MotorSubscriber
 from mock.bumper_subscriber import BumperSubscriber
+from mock.infrared_subscriber import InfraredSubscriber
 #from mock.gamepad_publisher import GamepadPublisher
 #from mock.gamepad_controller import GamepadController
 
+from behave.behaviour_manager import BehaviourManager
 from behave.roam import Roam
 #from behave.moth import Moth
 #from behave.sniff import Sniff
@@ -69,36 +70,31 @@ def test_pub_sub():
     _message_bus = MessageBus(Level.INFO)
     _message_factory = MessageFactory(_message_bus, Level.INFO)
 
-    _controller = Controller(Level.INFO)
-    _message_bus.register_controller(_controller)
+    _controller = Controller(_message_bus, Level.INFO)
 
 #    _gp_controller = GamepadController(Level.WARN)
 #    _message_bus.register_controller(_gp_controller)
 
+    # add motor controller
+    _motor_configurer = MotorConfigurer(_config, _message_bus, enable_mock=True, level=Level.WARN)
+    _motors = _motor_configurer.get_motors()
+#   _publisher1.set_motors(_motors)
+
     _publisher0  = Clock(_config, _message_bus, _message_factory, level=_level)
-    _publisher1  = EventPublisher(_config, _message_bus, _message_factory, level=_level)
+    _publisher1  = EventPublisher(_config, _message_bus, _message_factory, _motors, level=_level)
 #   _publisher2  = FloodPublisher(_message_bus, _message_factory)
 #   _publisher3  = GamepadPublisher(_config, _message_bus, _message_factory)
 
-    # add motor controller, reacts to STOP, HALT, BRAKE, INCREASE_VELOCITY and DECREASE_VELOCITY
-    _motor_configurer = MotorConfigurer(_config, _message_bus, enable_mock=True, level=Level.WARN)
-    _motors = _motor_configurer.get_motors()
-    _publisher1.set_motors(_motors)
-
     # create subscribers
-    _subscriber1 = MotorSubscriber(_message_bus, _motors, color=Fore.MAGENTA, level=_level)
-
-    _subscriber2 = Subscriber('infrared', _message_bus, color=Fore.GREEN, level=_level)
-    _subscriber2.add_events([ Event.INFRARED_PORT_SIDE, Event.INFRARED_PORT, Event.INFRARED_CNTR, Event.INFRARED_STBD, Event.INFRARED_STBD_SIDE ]) # reacts to IR sensors
-
-#   _subscriber3 = Subscriber('bumper', _message_bus, color=Fore.YELLOW, level=_level)
-    _subscriber3 = BumperSubscriber(_message_bus, _motors, level=_level)
-#   _subscriber3.add_events([ Event.BUMPER_PORT, Event.BUMPER_CNTR, Event.BUMPER_STBD ]) # reacts to bumpers
-
-    _garbage_collector = GarbageCollector('gc', _message_bus, color=Fore.BLUE, level=_level)
+    _mtr_subscriber = MotorSubscriber(_message_bus, _motors, level=_level)
+    _bmp_subscriber = BumperSubscriber(_message_bus, _motors, level=_level) # reacts to bumpers
+    _ir_subscriber  = InfraredSubscriber(_message_bus, _motors, level=_level)
+    _garbage_collector = GarbageCollector(_message_bus, level=_level)
+#   _subscriber2 = Subscriber('infrared', _message_bus, color=Fore.GREEN, level=_level)
+#   _subscriber2.add_events([ Event.INFRARED_PORT_SIDE, Event.INFRARED_PORT, Event.INFRARED_CNTR, Event.INFRARED_STBD, Event.INFRARED_STBD_SIDE ]) # reacts to IR sensors
 
     # behaviour manager is a specialised subscriber
-    _behave_manager = BehaviourManager(_message_bus, color=Fore.RED, level=_level)
+    _behave_manager = BehaviourManager(_message_bus, level=_level)
 
     # create and register behaviours (these are listed in priority order)
     _roam  = Roam(_config, _message_bus, _message_factory, _motors, _level)

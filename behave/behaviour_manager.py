@@ -23,27 +23,30 @@ from core.subscriber import Subscriber
 
 # ..............................................................................
 class BehaviourManager(Subscriber):
-  
     CLASS_NAME='beh-mgr'
     '''
-    Extends Subscriber as a manager of high-level ballistic behaviours.
+    Extends Subscriber as a manager of high-level, low-priority behaviours.
+    This subscribes to all events grouped as a Event.BEHAVIOUR.
 
     :param name:         the subscriber name (for logging)
     :param message_bus:  the message bus
     :param color:        the color for messages
     :param level:        the logging level 
     '''
-    def __init__(self, message_bus, color=Fore.RED, level=Level.INFO):
-        Subscriber.__init__(self, BehaviourManager.CLASS_NAME, message_bus, color, level=Level.INFO)
+    def __init__(self, message_bus, level=Level.INFO):
+        Subscriber.__init__(self, BehaviourManager.CLASS_NAME, message_bus=message_bus, color=Fore.RED, suppressed=False, enabled=True, level=Level.INFO)
         self._active_behaviour = None
-        self._behaviours = {}
-        self.enable() # override default disabled state
-        self._log.info('behaviour manager ready.')
+        self._behaviours       = {}
+        self._log.info(Fore.RED+ 'BERH_MGR: suppressed={}, enabled={}'.format(self.suppressed, self.enabled))
+        self._log.info('ready.')
 
     # ..........................................................................
-    def register_behaviour(self, behaviour):
+    def _register_behaviour(self, behaviour):
         '''
         Register a Behaviour with the manager, referenced by its Event type.
+
+        This is performed by the Behaviour's constructor and should not be
+        called directly.
         '''
         self._behaviours[behaviour.event] = behaviour
         self.add_event(behaviour.event)
@@ -70,6 +73,7 @@ class BehaviourManager(Subscriber):
 
     # ..........................................................................
     def enable(self):
+        self._log.debug('🍉 enable behaviours...')
         if not self.enabled:
             super().enable()
             for _key, _behaviour in self._behaviours.items():
@@ -77,6 +81,7 @@ class BehaviourManager(Subscriber):
 
     # ..........................................................................
     def disable(self):
+        self._log.debug('🍉 disable behaviours...')
         if self.enabled:
             for _key, _behaviour in self._behaviours.items():
                 _behaviour.disable()
@@ -99,10 +104,10 @@ class BehaviourManager(Subscriber):
 
         :param message:  the message to process.
         '''
+        _event = message.event
+        self._log.info('🥝 PRE-pre-processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.description) + Style.RESET_ALL)
         if message.gcd:
             raise GarbageCollectedError('cannot process message: message has been garbage collected. [3]')
-
-        _event = message.event
         self._log.info('🥝 pre-processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.description) + Style.RESET_ALL)
         # get behaviour for event type
         _behaviour = self.get_behavior_for_event(_event)
@@ -142,6 +147,6 @@ class BehaviourManager(Subscriber):
                 self._log.info('🥝 7. new behaviour {} has SAME priority as existing behaviour {}.'.format(_event.name, self._active_behaviour.name))
 
         await super().process_message(message)
-        self._log.debug('post-processing message {}'.format(message.name))
+        self._log.info('post-processing message {}'.format(message.name))
 
 #EOF

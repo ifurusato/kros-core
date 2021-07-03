@@ -19,9 +19,7 @@ init()
 from core.logger import Logger, Level
 from core.event import Event
 from core.fsm import State
-from core.subscriber import Subscriber
-from core.behaviour import Behaviour
-from core.subscriber import Subscriber
+from behave.behaviour import Behaviour
 
 #from mock.rgbmatrix import RgbMatrix, Color, DisplayType, WipeDirection
 
@@ -86,7 +84,8 @@ class Roam(Behaviour):
         The state machine call to disable the publisher.
         '''
 #       self._disable_rgbmatrix()
-        super().disable()
+#       super().disable()
+        Behaviour.disable(self)
 
 #   # ..........................................................................
 #   async def process_message(self, message):

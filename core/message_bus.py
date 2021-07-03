@@ -7,7 +7,7 @@
 #
 # author:   Murray Altheim
 # created:  2021-03-10
-# modified: 2021-04-28
+# modified: 2021-07-03
 #
 # An asyncio-based publish/subscribe-style message bus guaranteeing exactly-once
 # delivery for each message. This is done by populating each message with the
@@ -55,7 +55,7 @@ class MessageBus(Component):
         self._publishers  = []
         self._subscribers = []
         self._loop        = None
-        self._last_message_timestamp = None #dt.now() # timestamp of last message
+        self._last_msg_ts = None #dt.now() # timestamp of last message
         self._arbitrator  = Arbitrator(level)
         self._max_age_ms  = 20.0
         self._publish_delay_sec = 0.01
@@ -68,11 +68,11 @@ class MessageBus(Component):
         Return the timestamp of the last message passed through the message bus.
         If no messages has passed through the bus the initial value is None.
         '''
-        return self._last_message_timestamp
+        return self._last_msg_ts
 
     @last_message_timestamp.setter
     def last_message_timestamp(self, timestamp):
-        self._last_message_timestamp = timestamp
+        self._last_msg_ts = timestamp
 
     # ..........................................................................
     @property
@@ -392,10 +392,10 @@ class MessageBus(Component):
         NOTE: calls to this function should be await'd.
         '''
         if ( message.event is not Event.CLOCK_TICK and message.event is not Event.CLOCK_TOCK ):
-            self._log.debug('rx request to publish message: {}'.format(message.name)
+            self._log.info('rx request to publish message: {}'.format(message.name)
                     + ' (event: {}; age: {:d}ms);'.format(message.event.description, message.age))
         _put_task = asyncio.create_task(self._queue.put(message), name='publish-message-{}'.format(message.name))
-        self._log.debug(Style.DIM + 'created task: {}'.format(_put_task.get_name()))
+        self._log.info(Style.DIM + 'created task: {}'.format(_put_task.get_name()))
         await asyncio.sleep(self._publish_delay_sec)
 
     # ..........................................................................
@@ -408,7 +408,7 @@ class MessageBus(Component):
         '''
 #       self._log.debug('republishing message: {} (event: {}; age: {:d}ms);'.format(message.name, message.event.description, message.age))
         asyncio.create_task(self._queue.put(message), name='republish-message-{}'.format(message.name))
-        self._log.debug('republished message: {} (event: {}; age: {:d}ms);'.format(message.name, message.event.description, message.age))
+        self._log.info('republished message: {} (event: {}; age: {:d}ms);'.format(message.name, message.event.description, message.age))
 
     # exception handling .......................................................
     def handle_exception(self, loop, context):

@@ -23,47 +23,31 @@ from colorama import init, Fore, Style
 init()
 
 from core.logger import Logger, Level
+from core.event import Event
 from core.component import Component
 from core.fsm import FiniteStateMachine
-from core.config_loader import ConfigLoader
-from core.i2c_scanner import I2CScanner
-from core.controller import Controller
+from core.clock import Clock
 from core.message_bus import MessageBus
 from core.message_factory import MessageFactory
+from core.config_loader import ConfigLoader
+from core.i2c_scanner import I2CScanner
+
+from core.controller import Controller
 from core.publisher import Publisher
-from core.clock import Clock
 from core.subscriber import Subscriber, GarbageCollector
-from core.behaviour_manager import BehaviourManager
-from core.event import Event
 
 from mock.motor_configurer import MotorConfigurer
 from mock.event_publisher import EventPublisher
+from mock.bumper_subscriber import BumperSubscriber
+from mock.infrared_subscriber import InfraredSubscriber
 from mock.motor_subscriber import MotorSubscriber
 #from mock.gamepad_publisher import GamepadPublisher
 #from mock.gamepad_controller import GamepadController
+from behave.behaviour_manager import BehaviourManager
 from behave.roam import Roam
 from behave.moth import Moth
 from behave.sniff import Sniff
 from behave.idle import Idle
-
-
-#from core.logger import Level, Logger
-##from lib.devnull import DevNull
-#from core.config_loader import ConfigLoader
-#from core.rate import Rate
-#from core.event import Event
-#from core.message import Message
-#from core.message import Message
-#from core.message_bus import MessageBus
-#from core.message_factory import MessageFactory
-#from core.clock import Clock
-#from core.arbitrator import Arbitrator
-#from core.controller import Controller
-
-# standard features:
-#from lib.motors import Motors
-#from lib.ifs import IntegratedFrontSensor
-#from lib.temperature import Temperature
 
 led_0_path = '/sys/class/leds/led0/brightness'
 led_1_path = '/sys/class/leds/led1/brightness'
@@ -88,11 +72,9 @@ class KROS(Component, FiniteStateMachine):
 
     :param mutex:   the optional logging mutex, passed on from krosd
     '''
-
-    # ..........................................................................
     def __init__(self, mutex=None, level=Level.INFO):
         '''
-        This initialises the KROS and calls the YAML configurer.
+        This initialises KROS and calls the YAML configurer.
         '''
         _name = 'kros'
         self._level = level
@@ -106,14 +88,13 @@ class KROS(Component, FiniteStateMachine):
         proc.nice(10)
         # configuration...
         self._config       = None
-        self._active       = False # FIXME use suppressed flag!
-        self._closing      = False
         self._disable_leds = False
         self._arbitrator   = None
         self._controller   = None
         self._gamepad      = None
         self._motors       = None
         self._ifs          = None
+        self._closing      = False
         self._log.info('🍈 initialised.')
 
     # ..........................................................................
@@ -155,37 +136,33 @@ class KROS(Component, FiniteStateMachine):
         self._message_bus = MessageBus(Level.INFO)
         self._message_factory = MessageFactory(self._message_bus, Level.INFO)
     
-        self._controller = Controller(Level.INFO)
-        self._message_bus.register_controller(self._controller)
+        self._controller = Controller(self._message_bus, Level.INFO)
     
     #    _gp_controller = GamepadController(Level.WARN)
     #    _message_bus.register_controller(_gp_controller)
+
+        # add motor controller
+        self._motor_configurer = MotorConfigurer(self._config, self._message_bus, enable_mock=True, level=Level.WARN)
+        self._motors = self._motor_configurer.get_motors()
+#       self._publisher1.set_motors(self._motors)
     
-        self._publisher0  = Clock(self._config, self._message_bus, self._message_factory, level=self._level)
-        self._publisher1  = EventPublisher(self._config, self._message_bus, self._message_factory, level=self._level)
+        # create publishers ....................................................
+
+        self._clock  = Clock(self._config, self._message_bus, self._message_factory, level=self._level)
+        self._publisher1  = EventPublisher(self._config, self._message_bus, self._message_factory, self._motors, level=self._level)
     #   self._publisher2  = FloodPublisher(self._message_bus, self._message_factory)
     #   self._publisher3  = GamepadPublisher(self._config, self._message_bus, self._message_factory)
     
-        # add motor controller, reacts to STOP, HALT, BRAKE, INCREASE_VELOCITY and DECREASE_VELOCITY
-        self._motor_configurer = MotorConfigurer(self._config, self._message_bus, enable_mock=True, level=Level.WARN)
-        self._motors = self._motor_configurer.get_motors()
-        self._publisher1.set_motors(self._motors)
+        # create subscribers ...................................................
+        self._motor_subscriber    = MotorSubscriber(self._message_bus, self._motors, level=self._level)
+        self._bumper_subscriber   = BumperSubscriber(self._message_bus, self._motors, level=self._level)
+        self._infrared_subscriber = InfraredSubscriber(self._message_bus, self._motors, level=self._level) # reacts to IR sensors
+        self._garbage_collector   = GarbageCollector(self._message_bus, level=self._level)
     
-        # create subscribers
-        self._subscriber1 = MotorSubscriber(self._message_bus, self._motors, Fore.MAGENTA, self._level)
-    
-        self._subscriber2 = Subscriber('infrared', self._message_bus, Fore.GREEN, self._level)
-        self._subscriber2.events = [ Event.INFRARED_PORT_SIDE, Event.INFRARED_PORT, Event.INFRARED_CNTR, Event.INFRARED_STBD, Event.INFRARED_STBD_SIDE ] # reacts to IR sensors
-    
-        self._subscriber3 = Subscriber('bumper', self._message_bus, Fore.YELLOW, self._level)
-        self._subscriber3.events = [ Event.BUMPER_PORT, Event.BUMPER_CNTR, Event.BUMPER_STBD ] # reacts to bumpers
-    
-        self._garbage_collector = GarbageCollector('gc', self._message_bus, Fore.BLUE, self._level)
-    
-        # behaviour manager is a specialised subscriber
-        self._behave_manager = BehaviourManager(self._message_bus, self._level)
-        # create and register behaviours (these are listed in priority order)
-        self._behave_manager.register_behaviour(Roam(self._config, self._message_bus, self._motors, self._level))
+        # create behaviours ....................................................
+        self._behave_manager = BehaviourManager(self._message_bus, self._level) # a specialised subscriber
+        # create and register behaviours (listed in priority order)
+#       self._behave_manager.register_behaviour(Roam(self._config, self._message_bus, self._motors, self._level))
 #       self._behave_manager.register_behaviour(Moth(self._config, self._message_bus, self._motors, self._level))
 #       self._behave_manager.register_behaviour(Sniff(self._config, self._message_bus, self._motors, self._level))
 #       self._behave_manager.register_behaviour(Idle(self._config, self._message_bus, self._motors, self._level))
@@ -193,7 +170,7 @@ class KROS(Component, FiniteStateMachine):
     #   _message_bus.print_publishers()
     #   _message_bus.print_subscribers()
 
-        self._log.info('🍅 configured.')
+        self._log.info('configured.')
 
     # ..........................................................................
     def _set_feature_available(self, name, value):
@@ -293,11 +270,11 @@ class KROS(Component, FiniteStateMachine):
         Display banner on console.
         '''
         self._log.info('…')
-        self._log.info('…    █▒    █▒   █▒▒▒▒▒▒▒     █▒▒▒▒▒▒     █▒▒▒▒▒▒    █▒▒ ')
-        self._log.info('…    █▒   █▒    █▒▒   █▒▒   █▒▒   █▒▒   █▒▒         █▒▒ ')
-        self._log.info('…    █▒▒▒▒▒     █▒▒▒▒▒▒     █▒▒   █▒▒    █▒▒▒▒▒▒    █▒▒ ')
-        self._log.info('…    █▒   █▒    █▒▒  █▒▒    █▒▒   █▒▒         █▒▒       ')
-        self._log.info('…    █▒    █▒   █▒▒   █▒▒    █▒▒▒▒▒▒     █▒▒▒▒▒▒    █▒▒ ')
+        self._log.info('…    █▒▒   █▒▒   █▒▒▒▒▒▒▒     █▒▒▒▒▒▒     █▒▒▒▒▒▒    █▒▒ ')
+        self._log.info('…    █▒▒  █▒▒    █▒▒   █▒▒   █▒▒   █▒▒   █▒▒         █▒▒ ')
+        self._log.info('…    █▒▒▒▒▒▒     █▒▒▒▒▒▒     █▒▒   █▒▒    █▒▒▒▒▒▒    █▒▒ ')
+        self._log.info('…    █▒▒  █▒▒    █▒▒  █▒▒    █▒▒   █▒▒         █▒▒       ')
+        self._log.info('…    █▒▒   █▒▒   █▒▒   █▒▒    █▒▒▒▒▒▒     █▒▒▒▒▒▒    █▒▒ ')
         self._log.info('…')
 
     # ..........................................................................
@@ -307,7 +284,7 @@ class KROS(Component, FiniteStateMachine):
         arbitrator, controller, enables the set of features, then starts the main
         OS loop.
         '''
-        self._log.info('🍑 starting...')
+        self._log.info('starting...')
         super().start()
         self._print_banner()
 
@@ -332,7 +309,7 @@ class KROS(Component, FiniteStateMachine):
         # enable arbitrator tasks (normal functioning of robot)
 #       self._arbitrator.start()
 
-        self._log.info('🍑 started.')
+        self._log.info('started.')
 
         # end main ...................................
 
@@ -342,25 +319,24 @@ class KROS(Component, FiniteStateMachine):
         This sets the KROS back to normal following a session.
         '''
         if self._closing:
-            # this also gets called by the arbitrator so we ignore that
             self._log.info('already closing.')
             return
         else:
-            self._active = False
             self._closing = True
             self._log.info(Style.BRIGHT + 'closing...')
+            Component.disable(self)
             if self._gamepad:
                 self._gamepad.close() 
             if self._motors:
                 self._motors.close()
             if self._ifs:
                 self._ifs.close() 
-
             if self._disable_leds:
-                # restore LEDs
+                # restore normal function of LEDs
                 self._set_pi_leds(True)
-         
-            self._log.info('os closed.')
+            Component.close(self)
+            self._closing = False
+            self._log.info('closed.')
             sys.exit(0)
 
 # ==============================================================================

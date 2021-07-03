@@ -34,7 +34,7 @@ kros:
         idle_threshold_sec: 20                  # how many seconds before we trigger an idle behaviour
 
 pi:
-    disable_leds: True                           # disable and re-enable Pi LEDs during operation?
+    disable_leds: False                         # disable and re-enable Pi LEDs during operation?
     led_0_path:   '/sys/class/leds/led0/brightness'
     led_1_path:   '/sys/class/leds/led1/brightness'
     sudo_name:    'sudo'

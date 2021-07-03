@@ -18,7 +18,7 @@ init()
 from core.logger import Logger, Level
 from core.event import Event
 from core.subscriber import Subscriber
-from core.behaviour import Behaviour
+from behave.behaviour import Behaviour
 
 # ...............................................................
 class Sniff(Behaviour):

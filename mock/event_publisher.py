@@ -58,7 +58,7 @@ class EventPublisher(Publisher):
     Finally, there is also has a "flood" mode that auto-generates random
       event-bearing messages at a random interval.
     '''
-    def __init__(self, config, message_bus, message_factory, level=Level.INFO):
+    def __init__(self, config, message_bus, message_factory, motors, level=Level.INFO):
         Publisher.__init__(self, 'event', message_bus, message_factory, level)
         if config is None:
             raise ValueError('no configuration provided.')
@@ -80,7 +80,7 @@ class EventPublisher(Publisher):
         self._publish_delay_sec = 0.01         # delay after IFS event
         self._loop_delay_sec  = 0.01           # delay on noop loop
         self._limit           = 3
-        self._motors          = None
+        self._motors          = motors
         # attempt to find the gamepad ......................
         self._gamepad = None
         self._log.info('connecting gamepad...')
@@ -88,8 +88,8 @@ class EventPublisher(Publisher):
         self._log.info('ready.')
 
     # ..........................................................................
-    def set_motors(self, motors):
-        self._motors = motors
+#   def set_motors(self, motors):
+#       self._motors = motors
 
     # ..........................................................................
     def _connect_gamepad(self):
@@ -216,14 +216,13 @@ class EventPublisher(Publisher):
                             # FIXME TODO load message value for various event types correctly...
                             if _event is Event.INFRARED_CNTR:
                                 _message.value = self._get_infrared_center_value() # we use a rising and falling value
-                            elif _event.is_ballistic:
+#                               _message.value = 0
                                 _message.value = dt.now() # we use a timestamp to guarantee each message is different
-                            else:
-                                _message.value = 0
                             self._log.info('key-publishing message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
                             await super().publish(_message)
-                            self._log.info('key-published message:' + Fore.WHITE + ' {}.'.format(_message.name))
+                            self._log.info('key-published message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
                             self._accumulate_message(_message)
+                            # special case: check if all IFS sensors have been triggered 3 times; if so exit
                             if Event.is_ifs_event(_event):
                                 self._waiting_for_message()
                                 if self.all_triggered:

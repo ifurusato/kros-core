@@ -22,7 +22,7 @@ from core.event import Event
 from core.message_bus import MessageBus
 from core.message_factory import MessageFactory
 from core.subscriber import Subscriber
-from core.behaviour_manager import BehaviourManager
+from behave.behaviour_manager import BehaviourManager
 
 # ...............................................................
 class Behaviour(ABC, Subscriber):
@@ -61,7 +61,7 @@ class Behaviour(ABC, Subscriber):
         self.add_event(Event.CLOCK_TOCK)
         # register this behaviour with behaviour manager
         _beh_mgr = message_bus.get_subscriber(BehaviourManager.CLASS_NAME)
-        _beh_mgr.register_behaviour(self)
+        _beh_mgr._register_behaviour(self)
         self._log.info('🔘 ready.')
 
     # ..........................................................................
@@ -92,7 +92,8 @@ class Behaviour(ABC, Subscriber):
         any initialisations of active sub-components, etc.
         Whereas Subscribers are enabled upon starting, Behaviours are not.
         '''
-        super().start()
+        self._log.info('👿 start.')
+        Subscriber.start(self)
         #self.enable()
 
     # ..........................................................................
@@ -128,7 +129,7 @@ class Behaviour(ABC, Subscriber):
             else:
                 self._log.info('👿 processed other message {}'.format(message.name))
         else:
-            self._log.debug('{} behaviour suppressed.'.format(self.name))
+            self._log.info(Style.DIM + '{} behaviour suppressed.'.format(self.name))
         self._log.debug('👿 processed message {}'.format(message.name))
 
     # ..........................................................................
@@ -141,7 +142,7 @@ class Behaviour(ABC, Subscriber):
 
         :param message:  an optional Message passed along by the message bus
         '''
-        self._log.info('loop execute.')
+        self._log.info('👿 execute.')
 
     # ..........................................................................
     def enable(self):
@@ -150,7 +151,7 @@ class Behaviour(ABC, Subscriber):
         '''
         if not self.closed:
             if not self.enabled:
-                super().enable()
+                Subscriber.enable(self)
                 self._log.info('enabled behaviour {}'.format(self.name))
 
     # ..........................................................................
@@ -159,7 +160,7 @@ class Behaviour(ABC, Subscriber):
         The state machine call to disable the behaviour.
         '''
         if self.enabled:
-            super().disable()
+            Subscriber.disable(self)
             self._log.info('disabled behaviour {}'.format(self.name))
 
 #EOF
