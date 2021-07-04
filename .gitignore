@@ -7,7 +7,7 @@ __pycache__/
 *.so
 
 # archived files
-build/
+archive/
 
 # Distribution / packaging
 .Python
