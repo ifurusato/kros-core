@@ -23,7 +23,7 @@ class ConfigLoader():
     '''
         Has just one method: configure() reads a YAML file.
     '''
-    def __init__(self, level):
+    def __init__(self, level=Level.INFO):
         self._log = Logger('configloader', level)
         self._log.info('ready.')
 

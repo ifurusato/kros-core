@@ -37,7 +37,6 @@ class InfraredSubscriber(Subscriber):
         Subscriber.__init__(self, InfraredSubscriber.CLASS_NAME, message_bus=message_bus, color=color, suppressed=False, enabled=False, level=level)
         self._motors = motors
         self.add_events(Event.by_group(Group.INFRARED))
-        self._log.info('ready.')
 
     # ..........................................................................
     async def _arbitrate_message(self, message):

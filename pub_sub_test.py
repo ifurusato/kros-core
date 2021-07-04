@@ -55,7 +55,6 @@ from behave.roam import Roam
 def test_pub_sub():
 
     _message_bus = None
-#   try:
 
     _level = Level.INFO
 
@@ -63,9 +62,7 @@ def test_pub_sub():
     _log.info(Fore.BLUE + 'configuring pub-sub test...')
 
     # read YAML configuration
-    _loader = ConfigLoader(_level)
-    filename = 'config.yaml'
-    _config = _loader.configure(filename)
+    _config = ConfigLoader().configure()
 
     _message_bus = MessageBus(Level.INFO)
     _message_factory = MessageFactory(_message_bus, Level.INFO)
@@ -78,11 +75,9 @@ def test_pub_sub():
     # add motor controller
     _motor_configurer = MotorConfigurer(_config, _message_bus, enable_mock=True, level=Level.WARN)
     _motors = _motor_configurer.get_motors()
-#   _publisher1.set_motors(_motors)
 
     _publisher0  = Clock(_config, _message_bus, _message_factory, level=_level)
     _publisher1  = EventPublisher(_config, _message_bus, _message_factory, _motors, level=_level)
-#   _publisher2  = FloodPublisher(_message_bus, _message_factory)
 #   _publisher3  = GamepadPublisher(_config, _message_bus, _message_factory)
 
     # create subscribers
@@ -90,11 +85,7 @@ def test_pub_sub():
     _bmp_subscriber = BumperSubscriber(_message_bus, _motors, level=_level) # reacts to bumpers
     _ir_subscriber  = InfraredSubscriber(_message_bus, _motors, level=_level)
     _garbage_collector = GarbageCollector(_message_bus, level=_level)
-#   _subscriber2 = Subscriber('infrared', _message_bus, color=Fore.GREEN, level=_level)
-#   _subscriber2.add_events([ Event.INFRARED_PORT_SIDE, Event.INFRARED_PORT, Event.INFRARED_CNTR, Event.INFRARED_STBD, Event.INFRARED_STBD_SIDE ]) # reacts to IR sensors
-
-    # behaviour manager is a specialised subscriber
-    _behave_manager = BehaviourManager(_message_bus, level=_level)
+    _behave_manager = BehaviourManager(_message_bus, level=_level) # a specialised subscriber
 
     # create and register behaviours (these are listed in priority order)
     _roam  = Roam(_config, _message_bus, _message_factory, _motors, _level)
@@ -105,30 +96,16 @@ def test_pub_sub():
 #   _message_bus.print_publishers()
 #   _message_bus.print_subscribers()
 
-#   sys.exit(0)
-
     if _motors:
         _motors.enable()
     _message_bus.enable()
 
-#   except Exception as e:
-#       _log.error('error in pub-sub: {} / {}'.format(e, traceback.print_stack()))
-#   finally:
     if _message_bus:
         _message_bus.close()
-#       _log.info('successfully shutdown the message bus service.')
 
 # main .........................................................................
 def main():
-    _log = Logger("main", Level.INFO)
-#   try:
     test_pub_sub()
-#   except KeyboardInterrupt:
-#       _log.info('publish-subscribe interrupted')
-#   except Exception as e:
-#       _log.error('error in pub-sub: {} / {}'.format(e, traceback.print_stack()))
-#   finally:
-#       pass
 
 # ........................
 if __name__ == "__main__":

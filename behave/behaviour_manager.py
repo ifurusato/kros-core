@@ -37,8 +37,6 @@ class BehaviourManager(Subscriber):
         Subscriber.__init__(self, BehaviourManager.CLASS_NAME, message_bus=message_bus, color=Fore.RED, suppressed=False, enabled=True, level=Level.INFO)
         self._active_behaviour = None
         self._behaviours       = {}
-        self._log.info(Fore.RED+ 'BERH_MGR: suppressed={}, enabled={}'.format(self.suppressed, self.enabled))
-        self._log.info('ready.')
 
     # ..........................................................................
     def _register_behaviour(self, behaviour):

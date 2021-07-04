@@ -39,6 +39,17 @@ pi:
     led_1_path:   '/sys/class/leds/led1/brightness'
     sudo_name:    'sudo'
 
+# device registry ..............................................................
+devices:
+    0x0E: 'RGB Potentiometer'
+    0x0F: 'RGB Encoder' # default, moved to 0x16
+    0x15: 'ThunderBorg'
+    0x16: 'RGB Encoder'
+    0x18: 'IO Expander'
+    0x48: 'ADS1015'
+    0x4A: 'Unknown'
+    0x74: '5x5 RGB Matrix'
+    0x77: '5x5 RGB Matrix (or 11x7 LED Matrix)'
 
         # GPIO pins configured for A1, B1, A2 and B2
 #       motor_encoder_a1_port:  22               # port A

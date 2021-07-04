@@ -36,7 +36,6 @@ class MotorSubscriber(Subscriber):
         Subscriber.__init__(self, 'motor', message_bus, color=color, suppressed=False, enabled=False, level=level)
         self._motors = motors
         self.add_events(Event.by_groups([Group.STOP, Group.VELOCITY, Group.THETA, Group.CHADBURN]))
-        self._log.info('ready.')
 
     # ..........................................................................
     async def _arbitrate_message(self, message):

@@ -106,7 +106,7 @@ class KROS(Component, FiniteStateMachine):
         devices are only enabled at startup time via registration of their feature
         availability.
         '''
-        self._log.heading('configuration', 'configuring ros...', 
+        self._log.heading('configuration', 'configuring kros...', 
             '[1/2]' if arguments.start else '[1/1]')
         self._log.info('application log level: {}'.format(self._log.level.name))
 
@@ -124,10 +124,10 @@ class KROS(Component, FiniteStateMachine):
         _hex_addresses = scanner.get_hex_addresses()
         self._addrDict = dict(list(map(lambda x, y:(x,y), self._addresses, _hex_addresses)))
 #       for i in range(len(self._addresses)):
+        cfg = self._config['devices']
         for _address in self._addresses:
             _device_name = self.get_device_for_address(_address)
-            self._log.info('found device at I²C address 0x{:02X}: {}'.format(_address, _device_name) + Style.RESET_ALL)
-            # TODO look up address and make assumption about what the device is
+            self._log.info('found device at I²C address 0x{:02X}: '.format(_address) + Fore.YELLOW + '{}'.format(_device_name))
 
         # establish basic subsumption components ...............................
 
@@ -185,26 +185,12 @@ class KROS(Component, FiniteStateMachine):
 
     # ..........................................................................
     def get_device_for_address(self, address):
-        if address == 0x0E:
-            return 'RGB Potentiometer'
-        elif address == 0x0F:
-            return 'RGB Encoder' # default, moved to 0x16
-        elif address == 0x15:
-            return 'ThunderBorg'
-        elif address == 0x16:
-            return 'RGB Encoder'
-        elif address == 0x18:
-            return 'IO Expander'
-        elif address == 0x48:
-            return 'ADS1015'
-        elif address == 0x4A:
-            return 'Unknown'
-        elif address == 0x74:
-            return '5x5 RGB Matrix'
-        elif address == 0x77:
-            return '5x5 RGB Matrix (or 11x7 LED Matrix)'
-        else:
-            return 'Unknown'
+        '''
+        Returns the lookup device name from the device registry found in
+        the YAML configuration.
+        '''
+        _device = self._config['devices'].get(address)
+        return 'Unknown' if _device is None else _device
 
     # ..........................................................................
     @property
@@ -273,11 +259,11 @@ class KROS(Component, FiniteStateMachine):
         Display banner on console.
         '''
         self._log.info('…')
-        self._log.info('…    █▒▒   █▒▒   █▒▒▒▒▒▒▒     █▒▒▒▒▒▒     █▒▒▒▒▒▒    █▒▒ ')
-        self._log.info('…    █▒▒  █▒▒    █▒▒   █▒▒   █▒▒   █▒▒   █▒▒         █▒▒ ')
-        self._log.info('…    █▒▒▒▒▒▒     █▒▒▒▒▒▒     █▒▒   █▒▒    █▒▒▒▒▒▒    █▒▒ ')
-        self._log.info('…    █▒▒  █▒▒    █▒▒  █▒▒    █▒▒   █▒▒         █▒▒       ')
-        self._log.info('…    █▒▒   █▒▒   █▒▒   █▒▒    █▒▒▒▒▒▒     █▒▒▒▒▒▒    █▒▒ ')
+        self._log.info('…    █▒▒   █▒▒  █▒▒▒▒▒▒▒    █▒▒▒▒▒▒    █▒▒▒▒▒▒   █▒▒ ')
+        self._log.info('…    █▒▒  █▒▒   █▒▒   █▒▒  █▒▒   █▒▒  █▒▒        █▒▒ ')
+        self._log.info('…    █▒▒▒▒▒▒    █▒▒▒▒▒▒    █▒▒   █▒▒   █▒▒▒▒▒▒   █▒▒ ')
+        self._log.info('…    █▒▒  █▒▒   █▒▒  █▒▒   █▒▒   █▒▒        █▒▒      ')
+        self._log.info('…    █▒▒   █▒▒  █▒▒   █▒▒   █▒▒▒▒▒▒    █▒▒▒▒▒▒   █▒▒ ')
         self._log.info('…')
 
     # ..........................................................................
@@ -303,9 +289,12 @@ class KROS(Component, FiniteStateMachine):
 
         if self._motors:
             self._motors.enable()
+        self._log.info(Fore.YELLOW + 'enabling message bus...')
+        self._log.heading('start', 'starting k-series robot operating system (kros)...', '[2/2]' )
         self._message_bus.enable()
-    
-        if self._message_bus:
+        # now in main application loop until quit or Ctrl-C...
+
+        if self._message_bus and self._message_bus.enabled:
             self._message_bus.close()
         self._log.info('closed.')
 
@@ -358,8 +347,8 @@ def parse_args():
             description='Provides command line control of the KROS application.', \
             epilog='This script may be executed by krosd (kros daemon) or run directly from the command line.')
     parser.add_argument('--configure',      '-c', action='store_true', help='run configuration (included by -s)')
-    parser.add_argument('--start',          '-s', action='store_true', help='start ros')
-    parser.add_argument('--no-motors',      '-n', action='store_true', help='disable motors')
+    parser.add_argument('--start',          '-s', action='store_true', help='start kros')
+    parser.add_argument('--no-motors',      '-n', action='store_true', help='disable motors (uses mock)')
     parser.add_argument('--gamepad',        '-g', action='store_true', help='enable bluetooth gamepad control')
     parser.add_argument('--camera',         '-C', action='store_true', help='enable camera if installed')
     parser.add_argument('--mock',           '-m', action='store_true', help='permit mocked libraries (when not on a Pi)')
@@ -422,14 +411,14 @@ def main(argv):
             if _args.configure or _args.start:
                 _kros.configure(_args)
                 if not _args.start:
-                    _log.info('configure only: ' + Fore.YELLOW + 'specify the -s argument to start ros.')
+                    _log.info('configure only: ' + Fore.YELLOW + 'specify the -s argument to start kros.')
             if _args.start:
                 _kros.start()
 
     except KeyboardInterrupt:
         print(Fore.CYAN + Style.BRIGHT + 'caught Ctrl-C; exiting...')
     except Exception:
-        print(Fore.RED + Style.BRIGHT + 'error starting ros: {}'.format(traceback.format_exc()) + Style.RESET_ALL)
+        print(Fore.RED + Style.BRIGHT + 'error starting kros: {}'.format(traceback.format_exc()) + Style.RESET_ALL)
         if _kros:
             _kros.close()
     finally:
