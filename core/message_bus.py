@@ -395,7 +395,7 @@ class MessageBus(Component):
             self._log.info('rx request to publish message: {}'.format(message.name)
                     + ' (event: {}; age: {:d}ms);'.format(message.event.description, message.age))
         _put_task = asyncio.create_task(self._queue.put(message), name='publish-message-{}'.format(message.name))
-        self._log.info(Style.DIM + 'created task: {}'.format(_put_task.get_name()))
+        self._log.debug(Style.DIM + 'created task: {}'.format(_put_task.get_name()))
         await asyncio.sleep(self._publish_delay_sec)
 
     # ..........................................................................
@@ -408,7 +408,7 @@ class MessageBus(Component):
         '''
 #       self._log.debug('republishing message: {} (event: {}; age: {:d}ms);'.format(message.name, message.event.description, message.age))
         asyncio.create_task(self._queue.put(message), name='republish-message-{}'.format(message.name))
-        self._log.info('republished message: {} (event: {}; age: {:d}ms);'.format(message.name, message.event.description, message.age))
+        self._log.debug('republished message: {} (event: {}; age: {:d}ms);'.format(message.name, message.event.description, message.age))
 
     # exception handling .......................................................
     def handle_exception(self, loop, context):

@@ -217,6 +217,7 @@ class EventPublisher(Publisher):
                             if _event is Event.INFRARED_CNTR:
                                 _message.value = self._get_infrared_center_value() # we use a rising and falling value
 #                               _message.value = 0
+                            else:
                                 _message.value = dt.now() # we use a timestamp to guarantee each message is different
                             self._log.info('key-publishing message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
                             await super().publish(_message)

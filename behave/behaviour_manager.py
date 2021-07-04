@@ -92,6 +92,8 @@ class BehaviourManager(Subscriber):
         '''
         Permanently close and disable the message bus.
         '''
+        if self.enabled:
+            self.disable()
         if not self.closed:
             for _key, _behaviour in self._behaviours.items():
                 _behaviour.close()

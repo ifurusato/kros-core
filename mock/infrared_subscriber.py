@@ -61,10 +61,10 @@ class InfraredSubscriber(Subscriber):
             raise GarbageCollectedError('cannot process message: message has been garbage collected. [3]')
         _event = message.event
         self._log.info('🐱 pre-processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.description) + Style.RESET_ALL)
-        if Event.is_bumper_event(_event):
-            self._motors.dispatch_bumper_event(message.payload)
+        if Event.is_infrared_event(_event):
+            self._motors.dispatch_infrared_event(message.payload)
         else:
-            self._log.warning('unrecognised message {}'.format(message.name) + ''.format(message.event.description))
+            self._log.warning('unrecognised infrared event on message {}'.format(message.name) + ''.format(message.event.description))
         await super().process_message(message)
         self._log.debug('🐱 post-processing message {}'.format(message.name))
 

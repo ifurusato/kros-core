@@ -129,7 +129,6 @@ class Event(Enum):
     # other events (> 900) ..................................................................
     NO_ACTION              = ( 999, "no action",              999,   Group.OTHER )
 
-
     @property
     def is_ignoreable(self):
         '''

@@ -323,6 +323,32 @@ class Motors(Component):
             raise ValueError('unrecognised stop event {}'.format(_event.description))
 
     # ..........................................................................
+    def dispatch_infrared_event(self, payload):
+        '''
+        A dispatcher for infrared events from port side, port, center, starboard, or starboard side.
+        '''
+        _event = payload.event
+        _value = payload.value
+
+        if _event is Event.INFRARED_PORT_SIDE:
+            self._log.info('INFRARED PORT SIDE.')
+#           self._stop()
+        elif _event is Event.INFRARED_PORT:
+            self._log.info('INFRARED PORT.')
+#           self._stop()
+        elif _event is Event.INFRARED_CNTR: 
+            self._log.info('INFRARED CNTR.')
+#           self._stop()
+        elif _event is Event.INFRARED_STBD:
+            self._log.info('INFRARED STBD.')
+#           self._stop()
+        elif _event is Event.INFRARED_STBD_SIDE:
+            self._log.info('INFRARED STBD SIDE.')
+#           self._stop()
+        else:
+            raise ValueError('unrecognised bumper event {}'.format(_event.description))
+
+    # ..........................................................................
     def dispatch_bumper_event(self, payload):
         '''
         A dispatcher for bumper events from port, center or starboard.

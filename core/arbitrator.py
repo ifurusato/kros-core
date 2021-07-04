@@ -15,9 +15,10 @@ from asyncio.queues import PriorityQueue
 from colorama import init, Fore, Style
 init()
 
-from core.logger import Logger 
+from core.logger import Logger
+from core.event import Event
 from core.component import Component
-from core.controller import Controller 
+from core.controller import Controller
 
 # ..............................................................................
 class Arbitrator(Component):
@@ -67,6 +68,9 @@ class Arbitrator(Component):
         '''
         Arbitrates the addition of the payload into the priority queue.
         If suppressed the queue is cleared so that events don't accumulate.
+
+        If the Event Group is CLOCK this will trigger the callback without
+        arbitration.
         '''
         self._log.debug(self._color + 'arbitrating payload: {}'.format(payload.event.description))
         if self._suppressed:
@@ -76,12 +80,15 @@ class Arbitrator(Component):
             self._count = next(self._counter)
             self._log.debug(self._color + '[{:03d}] putting payload: \'{}\' onto queue...'.format(self._count, payload.event.description))
             if len(self._controllers) > 0:
-                await self._queue.put((payload.priority, payload))
-                self._log.debug(self._color + 'payload \'{}\' put onto queue: {} element{}.'.format(
-                        payload.event.description, self._queue.qsize(), '' if self._queue.qsize() == 1 else 's'))
-                await self.trigger_callback()
-                _delta = dt.datetime.now() - _start_time
-                _elapsed_ms = int(_delta.total_seconds() * 1000)
+                if Event.is_clock_event(payload.event):
+                    self._log.info(self._color + '🐙 payload \'{}\' bypassed queue.'.format(payload.event.description))
+                    await self.trigger_callback()
+                else:
+                    await self._queue.put((payload.priority, payload))
+                    self._log.debug(self._color + 'payload \'{}\' put onto queue: {} element{}.'.format(
+                            payload.event.description, self._queue.qsize(), '' if self._queue.qsize() == 1 else 's'))
+                    await self.trigger_callback()
+                _elapsed_ms = int((dt.datetime.now() - _start_time).total_seconds() * 1000)
                 self._log.debug('{:4.2f}ms elapsed.'.format(_elapsed_ms))
             else:
                 self._log.warning('no registered controllers: payload ignored.')

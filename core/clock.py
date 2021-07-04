@@ -96,8 +96,8 @@ class Clock(Publisher):
 
     # ................................................................
     def enable(self):
-        super().enable()
-        if self.enabled:
+        if not self.enabled:
+            super().enable()
             if self._message_bus.get_task_by_name(Clock._PUBLISH_LOOP_NAME):
                 self._log.warning('already enabled.')
             else:
@@ -105,6 +105,6 @@ class Clock(Publisher):
                 self._message_bus.loop.create_task(self._clock_loop(lambda: self.enabled), name=Clock._PUBLISH_LOOP_NAME)
                 self._log.info('enabled.')
         else:
-            self._log.warning('failed to enable publisher.')
+            self._log.warning('clock already enabled.')
 
 #EOF

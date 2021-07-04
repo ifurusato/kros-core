@@ -64,7 +64,7 @@ class BumperSubscriber(Subscriber):
         if Event.is_bumper_event(_event):
             self._motors.dispatch_bumper_event(message.payload)
         else:
-            self._log.warning('unrecognised message {}'.format(message.name) + ''.format(message.event.description))
+            self._log.warning('unrecognised bumper event on message {}'.format(message.name) + ''.format(message.event.description))
         await super().process_message(message)
         self._log.debug('🐻 post-processing message {}'.format(message.name))
 

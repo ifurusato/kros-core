@@ -62,7 +62,7 @@ class Behaviour(ABC, Subscriber):
         # register this behaviour with behaviour manager
         _beh_mgr = message_bus.get_subscriber(BehaviourManager.CLASS_NAME)
         _beh_mgr._register_behaviour(self)
-        self._log.info('🔘 ready.')
+        self._log.info('ready.')
 
     # ..........................................................................
     @property
@@ -129,7 +129,7 @@ class Behaviour(ABC, Subscriber):
             else:
                 self._log.info('👿 processed other message {}'.format(message.name))
         else:
-            self._log.info(Style.DIM + '{} behaviour suppressed.'.format(self.name))
+            self._log.debug(Style.DIM + '{} behaviour suppressed.'.format(self.name))
         self._log.debug('👿 processed message {}'.format(message.name))
 
     # ..........................................................................
