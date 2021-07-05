@@ -29,12 +29,13 @@ class BumperSubscriber(Subscriber):
     A subscriber to bumper events.
 
     :param name:         the subscriber name (for logging)
+    :param config:       the application configuration
     :param message_bus:  the message bus
     :param color:        the color for messages
     :param level:        the logging level 
     '''
-    def __init__(self, message_bus, motors, color=Fore.YELLOW, level=Level.INFO):
-        Subscriber.__init__(self, BumperSubscriber.CLASS_NAME, message_bus=message_bus, color=color, suppressed=False, enabled=False, level=level)
+    def __init__(self, config, message_bus, motors, color=Fore.YELLOW, level=Level.INFO):
+        Subscriber.__init__(self, BumperSubscriber.CLASS_NAME, config, message_bus=message_bus, color=color, suppressed=False, enabled=False, level=level)
         self._motors = motors
         self.add_events(Event.by_group(Group.BUMPER))
 

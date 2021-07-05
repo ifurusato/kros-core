@@ -24,7 +24,7 @@ class Group(Enum):
     THETA     = 8
     CHADBURN  = 9
     BEHAVIOUR = 10
-    CLOCK     = 11
+#   CLOCK     = 11
     OTHER     = 12
 
 # ..............................................................................
@@ -123,19 +123,11 @@ class Event(Enum):
     MOTION_DETECT          = ( 507, "motion detect",          157,   Group.BEHAVIOUR )
     IDLE                   = ( 508, "idle",                   159,   Group.BEHAVIOUR ) # A Button
 
-    CLOCK_TICK             = ( 601, "tick",                   400,   Group.CLOCK )
-    CLOCK_TOCK             = ( 602, "tock",                   400,   Group.CLOCK )
+#   CLOCK_TICK             = ( 601, "tick",                   400,   Group.CLOCK )
+#   CLOCK_TOCK             = ( 602, "tock",                   400,   Group.CLOCK )
 
     # other events (> 900) ..................................................................
     NO_ACTION              = ( 999, "no action",              999,   Group.OTHER )
-
-    @property
-    def is_ignoreable(self):
-        '''
-        Returns true if the priority of this event is 500 or greater.
-        By definition this includes NO_ACTION, CLOCK_TICK and CLOCK_TOCK.
-        '''
-        return self._priority >= 500
 
     # ..................................
     def __new__(cls, *args, **kwds):
@@ -149,10 +141,10 @@ class Event(Enum):
         self._priority     = priority
         self._group        = group
 
-    # ................................................................
-    @staticmethod
-    def is_clock_event(event):
-        return ( event.group is Group.CLOCK )
+#   # ................................................................
+#   @staticmethod
+#   def is_clock_event(event):
+#       return ( event.group is Group.CLOCK )
 
     # ................................................................
     @staticmethod
@@ -381,10 +373,10 @@ class Event(Enum):
         # other behaviours (> 500) .........
         elif label.upper() == 'NO_ACTION':
             return Event.NO_ACTION
-        elif label.upper() == 'CLOCK_TICK':
-            return Event.CLOCK_TICK
-        elif label.upper() == 'CLOCK_TOCK':
-            return Event.CLOCK_TOCK
+#       elif label.upper() == 'CLOCK_TICK':
+#           return Event.CLOCK_TICK
+#       elif label.upper() == 'CLOCK_TOCK':
+#           return Event.CLOCK_TOCK
         else:
             raise NotImplementedError
 

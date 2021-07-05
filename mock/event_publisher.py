@@ -219,16 +219,16 @@ class EventPublisher(Publisher):
 #                               _message.value = 0
                             else:
                                 _message.value = dt.now() # we use a timestamp to guarantee each message is different
-                            self._log.info('key-publishing message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
+                            self._log.info('🐹 key-publishing message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
                             await super().publish(_message)
-                            self._log.info('key-published message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
-                            self._accumulate_message(_message)
+                            self._log.info('🐹 key-published message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
                             # special case: check if all IFS sensors have been triggered 3 times; if so exit
                             if Event.is_ifs_event(_event):
-                                self._waiting_for_message()
+                                self._accumulate_message(_message)
+                                self._print_waiting_for_message()
                                 if self.all_triggered:
+                                    self._log.info(Fore.YELLOW + 'exit having triggered all sensors...')
                                     self.disable()
-                                    self._log.info(Fore.YELLOW + 'exit having triggered all sensors.')
                         else:
                             self._log.warning('unmapped key "{}" ({}) pressed.'.format(ch, och))
                         await asyncio.sleep(self._publish_delay_sec)
@@ -388,7 +388,7 @@ class EventPublisher(Publisher):
             return None
 
     # ..........................................................................
-    def _waiting_for_message(self):
+    def _print_waiting_for_message(self):
         _div = Fore.CYAN + Style.NORMAL + ' | '
         self._log.info('waiting for: | ' \
                 + self._get_output(Fore.RED, 'PSID', self._triggered_ir_port_side) \

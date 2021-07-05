@@ -25,22 +25,20 @@ class Idle(Behaviour):
     '''
     Implements a idle behaviour.
 
-    :param name:           the name of this behaviour
-    :param loop_freq_hz:   the loop frequency in Hertz
-    :param callback:       the optional callback function (can be added later)
-    :param level:          the optional log level
+    :param name:            the name of this behaviour
+    :param config:          the application configuration
+    :param message_bus:     the asynchronous message bus
+    :param message_factory: the factory for messages
+    :param motors:          the motor controller
+    :param level:           the optional log level
     '''
-    def __init__(self, config, message_bus, motors, level=Level.INFO):
-        if config is None:
-            raise ValueError('null configuration argument.')
-        cfg = config['kros'].get('idle')
-        _loop_freq_hz = cfg.get('loop_freq_hz')
-        super().__init__('idle', _loop_freq_hz, self._idle_callback, level)
+    def __init__(self, config, message_bus, message_factory, motors, level=Level.INFO):
+        Behaviour.__init__(self, 'idle', config, message_bus, message_factory, self._idle_callback, level)
+        cfg = self._config['kros'].get('idle')
         self._idle_threshold_sec = cfg.get('idle_threshold_sec') # int value
         self._log.info('idle threshold: {:d} sec.'.format(self._idle_threshold_sec))
-        self._config      = config
-        self._message_bus = message_bus
-        self._motors      = motors
+        self._motors = motors
+        self.add_event(Event.IDLE)
         self._log.info('ready.')
 
     # ..........................................................................
@@ -77,8 +75,10 @@ class Idle(Behaviour):
         else:
             _elapsed_ms = (dt.now() - _timestamp).total_seconds() * 1000.0
             if ( _elapsed_ms / 1000.0 ) > self._idle_threshold_sec:
-                self._log.info('🍒 idle loop execute; {}'.format(Subscriber.get_formatted_time('message age:', _elapsed_ms)) + Fore.YELLOW + ' type: {}'.format(type(_elapsed_ms)))
+                self._log.info('🍒 idle loop execute; {}'.format(Subscriber.get_formatted_time('message age:', _elapsed_ms)) 
+                        + Fore.YELLOW + ' type: {}'.format(type(_elapsed_ms)))
             else:
-                self._log.info('🌜 idle loop execute; {}'.format(Subscriber.get_formatted_time('message age:', _elapsed_ms)) + Fore.YELLOW + ' type: {}'.format(type(_elapsed_ms)))
+                self._log.info('🌜 idle loop execute; {}'.format(Subscriber.get_formatted_time('message age:', _elapsed_ms)) 
+                        + Fore.YELLOW + ' type: {}'.format(type(_elapsed_ms)))
 
 #EOF

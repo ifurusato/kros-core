@@ -28,12 +28,13 @@ class MotorSubscriber(Subscriber):
     A mocked dual motor controller with encoders.
 
     :param name:         the subscriber name (for logging)
+    :param config:       the application configuration
     :param message_bus:  the message bus
     :param color:        the color for messages
     :param level:        the logging level 
     '''
-    def __init__(self, message_bus, motors, color=Fore.MAGENTA, level=Level.INFO):
-        Subscriber.__init__(self, 'motor', message_bus, color=color, suppressed=False, enabled=False, level=level)
+    def __init__(self, config, message_bus, motors, color=Fore.MAGENTA, level=Level.INFO):
+        Subscriber.__init__(self, 'motor', config, message_bus, color=color, suppressed=False, enabled=False, level=level)
         self._motors = motors
         self.add_events(Event.by_groups([Group.STOP, Group.VELOCITY, Group.THETA, Group.CHADBURN]))
 

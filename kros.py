@@ -86,6 +86,7 @@ class KROS(Component, FiniteStateMachine):
         # set KROS as high priority
         proc = psutil.Process(os.getpid())
         proc.nice(10)
+        self._behaviour_manager = None
         # configuration...
         self._config       = None
         self._disable_leds = False
@@ -154,24 +155,29 @@ class KROS(Component, FiniteStateMachine):
     #   self._publisher3  = GamepadPublisher(self._config, self._message_bus, self._message_factory)
     
         # create subscribers ...................................................
-        self._motor_subscriber    = MotorSubscriber(self._message_bus, self._motors, level=self._level)
-        self._bumper_subscriber   = BumperSubscriber(self._message_bus, self._motors, level=self._level)
-        self._infrared_subscriber = InfraredSubscriber(self._message_bus, self._motors, level=self._level) # reacts to IR sensors
-        self._garbage_collector   = GarbageCollector(self._message_bus, level=self._level)
+        self._motor_subscriber    = MotorSubscriber(self._config, self._message_bus, self._motors, level=self._level)
+        self._bumper_subscriber   = BumperSubscriber(self._config, self._message_bus, self._motors, level=self._level)
+        self._infrared_subscriber = InfraredSubscriber(self._config, self._message_bus, self._motors, level=self._level) # reacts to IR sensors
+        self._garbage_collector   = GarbageCollector(self._config, self._message_bus, level=self._level)
     
-        _subscriberX = Subscriber('x', self._message_bus, color=Fore.MAGENTA, suppressed=False, enabled=True, level=self._level)
-        _subscriberX.add_events([ Event.ROAM, ]) 
+        _subscriberX = Subscriber('x', self._config, self._message_bus, color=Fore.MAGENTA, suppressed=False, enabled=True, level=self._level)
+        _subscriberX.add_events([ Event.ROAM, Event.FULL_AHEAD ]) 
 
         # create behaviours ....................................................
-        self._behave_manager = BehaviourManager(self._message_bus, self._level) # a specialised subscriber
+        self._behaviour_manager = BehaviourManager(self._message_bus, self._level) # a specialised subscriber
+#       self._behaviour_manager = None
         # create and register behaviours (listed in priority order)
-        self._roam = Roam(self._config, self._message_bus, self._message_factory, self._motors, self._level)
+#       self._roam = Roam(self._config, self._message_bus, self._message_factory, self._motors, self._level)
 #       _moth = Moth(self._config, self._message_bus, self._message_factory, self._motors, self._level)
 #       _sniff = Sniff(self._config, self._message_bus, self._message_factory, self._motors, self._level)
-#       _idle = Idle(self._config, self._message_bus, self._message_factory, self._motors, self._level)
+        _idle = Idle(self._config, self._message_bus, self._message_factory, self._motors, self._level)
     
     #   _message_bus.print_publishers()
     #   _message_bus.print_subscribers()
+
+        _callback = None
+        _loop_freq_hz = 1
+        self._ticker = Ticker(_loop_freq_hz, self._level):
 
         self._log.info('configured.')
 
@@ -317,7 +323,8 @@ class KROS(Component, FiniteStateMachine):
             self._closing = True
             self._log.info(Style.BRIGHT + 'closing...')
             Component.disable(self)
-            self._behave_manager.close()
+            if self._behaviour_manager:
+                self._behaviour_manager.close()
             if self._gamepad:
                 self._gamepad.close() 
             if self._motors:

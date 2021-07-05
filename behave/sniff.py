@@ -25,20 +25,16 @@ class Sniff(Behaviour):
     '''
     Implements a sniffing behaviour.
 
-    :param name:           the name of this behaviour
-    :param loop_freq_hz:   the loop frequency in Hertz
-    :param callback:       the optional callback function (can be added later)
-    :param level:          the optional log level
+    :param name:            the name of this behaviour
+    :param config:          the application configuration
+    :param message_bus:     the asynchronous message bus
+    :param message_factory: the factory for messages
+    :param motors:          the motor controller
+    :param level:           the optional log level
     '''
-    def __init__(self, config, message_bus, motors, level=Level.INFO):
-        if config is None:
-            raise ValueError('null configuration argument.')
-        cfg = config['kros'].get('sniff')
-        _loop_freq_hz = cfg.get('loop_freq_hz')
-        super().__init__('sniff', _loop_freq_hz, self._sniff_callback, level)
-        self._config      = config
-        self._message_bus = message_bus
-        self._motors      = motors
+    def __init__(self, config, message_bus, message_factory, motors, level=Level.INFO):
+        Behaviour.__init__(self, 'sniff', config, message_bus, message_factory, self._sniff_callback, level)
+        self._motors = motors
         self._log.info('ready.')
 
     # ..........................................................................

@@ -44,18 +44,15 @@ class Roam(Behaviour):
 
     :param config:         the application configuration
     :param message_bus:    the asynchronous message bus
+    :param message_factory: the factory for messages
     :param motors:         the motor controller
     :param level:          the optional log level
     '''
     def __init__(self, config, message_bus, message_factory, motors, level=Level.INFO):
-        if config is None:
-            raise ValueError('null configuration argument.')
-#       cfg = config['kros'].get('roam')
-#       _loop_freq_hz = cfg.get('loop_freq_hz')
         Behaviour.__init__(self, 'roam', config, message_bus, message_factory, self._roam_callback, level)
-        self._motors      = motors
-        self._distance    = None
-#       self._rgbmatrix   = RgbMatrix(Level.INFO)
+        self._motors    = motors
+        self._distance  = None
+#       self._rgbmatrix = RgbMatrix(Level.INFO)
 #       self._rgbmatrix.set_display_type(DisplayType.RANDOM)
         self.add_event(Event.INFRARED_CNTR)
         self._log.info('ready.')

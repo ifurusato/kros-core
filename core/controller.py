@@ -229,10 +229,10 @@ class Controller(Component):
         # other behaviours (> 500) .........
         elif _event is Event.NO_ACTION:             # ( 500, "no action"
            self._log.info('event: no action.')
-        elif _event is Event.CLOCK_TICK:            # ( 501, "tick"
-           self._log.debug('event: tick.')
-        elif _event is Event.CLOCK_TOCK:            # ( 502, "tock"
-           self._log.debug('event: tock.')
+#       elif _event is Event.CLOCK_TICK:            # ( 501, "tick"
+#          self._log.debug('event: tick.')
+#       elif _event is Event.CLOCK_TOCK:            # ( 502, "tock"
+#          self._log.debug('event: tock.')
 
         # unrecognised event  ..................................................
         else:

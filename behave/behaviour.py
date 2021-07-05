@@ -7,10 +7,7 @@
 #
 # author:   Murray Altheim
 # created:  2020-05-19
-# modified: 2020-11-06
-#
-# A simple thread-based loop that calls a callback on a regular basis. The loop
-# frequency and callback function are passed as constructor arguments.
+# modified: 2021-07-06
 #
 
 from abc import ABC, abstractmethod
@@ -27,11 +24,10 @@ from behave.behaviour_manager import BehaviourManager
 # ...............................................................
 class Behaviour(ABC, Subscriber):
     '''
-    An abstract class providing the basis for a looped behaviour
-    that executes a callback every loop. This is implemented as a
-    Subscriber to the two clock events, CLOCK_TICK and CLOCK_TOCK,
-    and execution relies upon reception of these events from the
-    message bus.
+    An abstract class providing the basis for a behaviour which
+    executes a method every loop, implemented using a system
+    clock implemented using the Ticker class, which occurs when
+    the behaviour is registered with the BehaviourManager.
 
     :param name:             the name of this behaviour
     :param config:           the application configuration
@@ -42,42 +38,21 @@ class Behaviour(ABC, Subscriber):
     '''
     def __init__(self, name, config, message_bus, message_factory, callback, level=Level.INFO):
         self._log = Logger('beh:{}'.format(name), level)
-        Subscriber.__init__(self, name, message_bus, suppressed=True, enabled=False, level=Level.INFO)
-        self._name            = name
-        self._config          = config
-        if isinstance(message_bus, MessageBus):
-            self._message_bus = message_bus
-        else:
-            raise ValueError('expected MessageBus, not {}.'.format(type(message_bus)))
+        Subscriber.__init__(self, name, config, message_bus, suppressed=True, enabled=False, level=Level.INFO)
         if isinstance(message_factory, MessageFactory):
             self._message_factory = message_factory
         else:
             raise ValueError('expected MessageFactory, not {}.'.format(type(message_factory)))
-        self._callbacks       = []
+        self._callbacks = []
         if callback:
             self.add_callback(callback)
-        # add default subscriptions for a Behaviour
-        self.add_event(Event.CLOCK_TICK)
-        self.add_event(Event.CLOCK_TOCK)
         # register this behaviour with behaviour manager
-        _beh_mgr = message_bus.get_subscriber(BehaviourManager.CLASS_NAME)
-        _beh_mgr._register_behaviour(self)
+        _behaviour_manager = message_bus.get_subscriber(BehaviourManager.CLASS_NAME)
+        if _behaviour_manager:
+            _behaviour_manager._register_behaviour(self, callback)
+        else:
+            self._log.warning('no behaviour manager found: {} operating as subscriber only.'.format(self.name))
         self._log.info('ready.')
-
-    # ..........................................................................
-    @property
-    def name(self):
-        return self._name
-
-    # ..........................................................................
-    @property
-    def config(self):
-        return self._config
-
-    # ..........................................................................
-    @property
-    def message_bus(self):
-        return self._message_bus
 
     # ..........................................................................
     @property
@@ -90,11 +65,9 @@ class Behaviour(ABC, Subscriber):
         '''
         The necessary state machine call to start the behaviour, which performs
         any initialisations of active sub-components, etc.
-        Whereas Subscribers are enabled upon starting, Behaviours are not.
         '''
-        self._log.info('👿 start.')
+        self._log.info('start.')
         Subscriber.start(self)
-        #self.enable()
 
     # ..........................................................................
     def add_callback(self, callback):

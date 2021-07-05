@@ -9,6 +9,8 @@ kros:
     clock:
         loop_freq_hz: 1                          # main loop frequency
         tock_modulo:  10                         # modulo value for tock frequency
+    ticker:
+        loop_freq_hz: 1                          # main loop frequency
     motors:
         motor_power_limit: 0.85                  # limit set on power sent to motors
     slew:
@@ -21,20 +23,18 @@ kros:
         enabled: False
         device_path: '/dev/input/event5'         # the path to the bluetooth gamepad on the pi (see find_gamepad.py)
         loop_delay: 0.01                         # main loop delay
-        loop_freq_hz: 50                         # main loop frequency
     roam:
-        loop_freq_hz: 1                         # roam loop frequency
+        nada: False                              # nada
     moth:
-        loop_freq_hz: 1                         # sniff loop frequency
-        anti_moth: False                        # moth or anti-moth
+        anti_moth: False                         # moth or anti-moth
     sniff:
-        loop_freq_hz: 1                         # sniff loop frequency
+        nada: False                              # nada
     idle:
-        loop_freq_hz: 0.1                       # idle loop frequency
-        idle_threshold_sec: 20                  # how many seconds before we trigger an idle behaviour
+        nada: False                              # nada
+        idle_threshold_sec: 20                   # how many seconds before we trigger an idle behaviour
 
 pi:
-    disable_leds: False                         # disable and re-enable Pi LEDs during operation?
+    disable_leds: False                          # disable and re-enable Pi LEDs during operation?
     led_0_path:   '/sys/class/leds/led0/brightness'
     led_1_path:   '/sys/class/leds/led1/brightness'
     sudo_name:    'sudo'

@@ -39,16 +39,18 @@ class BehaviourManager(Subscriber):
         self._behaviours       = {}
 
     # ..........................................................................
-    def _register_behaviour(self, behaviour):
+    def _register_behaviour(self, behaviour, callback):
         '''
         Register a Behaviour with the manager, referenced by its Event type.
 
         This is performed by the Behaviour's constructor and should not be
         called directly.
         '''
+        # TODO attach callback to Ticker
+
         self._behaviours[behaviour.event] = behaviour
         self.add_event(behaviour.event)
-        self._log.info('added behaviour {} linked to event {} to manager.'.format(behaviour.name, behaviour.event))
+        self._log.info('🈸 added behaviour \'{}\' linked to event \'{}\' to manager.'.format(behaviour.name, behaviour.event))
 
     # ..........................................................................
     def get_behavior_for_event(self, event):

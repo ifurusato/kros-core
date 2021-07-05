@@ -25,25 +25,30 @@ from core.message_bus import MessageBus
 
 # ..............................................................................
 class Subscriber(Component, FiniteStateMachine):
+
+    LOG_INDENT = ( ' ' * 60 ) + Fore.CYAN + ': ' + Fore.CYAN
+
     '''
     Extends Component and FiniteStateMachine as a subscriber to messages
     from the message bus.
-    '''
-    LOG_INDENT = ( ' ' * 60 ) + Fore.CYAN + ': ' + Fore.CYAN
 
-    def __init__(self, name, message_bus, color=Fore.CYAN, suppressed=False, enabled=False, level=Level.INFO):
-        '''
-        :param name:         the subscriber name (for logging)
-        :param message_bus:  the message bus
-        :param color:        the optional color for log messages
-        :param events:       the list of events used as a filter, None to set as cleanup task
-        :param level:        the logging level
-        '''
+    :param name:         the subscriber name (for logging)
+    :param config:       the application configuration
+    :param message_bus:  the message bus
+    :param color:        the optional color for log messages
+    :param suppressed:   the initial state of the suppressed flag
+    :param enabled:      the initial state of the enabled flag
+    :param level:        the logging level
+    '''
+    def __init__(self, name, config, message_bus, color=Fore.CYAN, suppressed=False, enabled=False, level=Level.INFO):
         self._log = Logger('sub:{}'.format(name), level)
         if isinstance(name, str):
             self._name = name
         else:
             raise ValueError('wrong type for name argument: {}'.format(type(name)))
+        if config is None:
+            raise ValueError('null configuration argument.')
+        self._config   = config
         if message_bus is None:
             raise ValueError('null message bus argument.')
         elif isinstance(message_bus, MessageBus):
@@ -70,6 +75,16 @@ class Subscriber(Component, FiniteStateMachine):
     @property
     def name(self):
         return self._name
+
+    # ..........................................................................
+    @property
+    def config(self):
+        return self._config
+
+    # ..........................................................................
+    @property
+    def message_bus(self):
+        return self._message_bus
 
     # ..........................................................................
     @property
@@ -141,6 +156,7 @@ class Subscriber(Component, FiniteStateMachine):
         This method is not meant to be overridden, except by the garbage
         collector. The process_message() method can be overridden.
         '''
+        self._log.info(self._color + Style.DIM + '🍕 consume() called on {}.'.format(self.name))
         _peeked_message = await self._message_bus.peek_message()
         if not _peeked_message:
             raise QueueEmptyOnPeekError('peek returned none.')
@@ -151,27 +167,27 @@ class Subscriber(Component, FiniteStateMachine):
         if not _ackd and self.acceptable(_peeked_message):
 
             _event = asyncio.Event()
-            self._log.debug(Fore.RED + 'begin event tracking for message:' + Fore.WHITE 
+            self._log.info(Fore.RED + 'begin event tracking for message:' + Fore.WHITE 
                     + ' {}; event: {}'.format(_peeked_message.name, _peeked_message.event.description))
 
             # acknowledge we've seen the message
             _peeked_message.acknowledge(self)
 
             # this subscriber accepts this message and hasn't seen it before so consume and handle the message
-            self._log.debug(self._color + Style.DIM + 'waiting to consume acceptable message:'
+            self._log.info(self._color + Style.DIM + 'waiting to consume acceptable message:'
                     + Fore.WHITE + ' {}; event: {}'.format(_peeked_message.name, _peeked_message.event.description))
 
             _message = await self._message_bus.consume_message()
             self._message_bus.consumed()
             if self._message_bus.verbose:
-                self._log.debug(self._color + Style.DIM + 'consumed acceptable message:' \
+                self._log.info(self._color + Style.DIM + 'consumed acceptable message:' \
                     + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
 
             # handle acceptable message
             if self._message_bus.verbose:
                 _elapsed_ms = (dt.now() - _message.timestamp).total_seconds() * 1000.0
                 self._print_message_info('process message:', _message, _elapsed_ms)
-            self._log.debug(self._color + Style.DIM + 'creating task for processing message:' \
+            self._log.info(self._color + Style.DIM + 'creating task for processing message:' \
                     + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
             # create message processing task
             asyncio.create_task(self.process_message(_message), name='{}:process-message-{}'.format(self.name, _message.name))
@@ -180,14 +196,14 @@ class Subscriber(Component, FiniteStateMachine):
             _cleanup_task = asyncio.create_task(self._cleanup_message(_message), name='{}:cleanup-message-{}'.format(self.name, _message.name))
             _cleanup_task.add_done_callback(self._done_callback)
 
-            self._log.debug('end event tracking for message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
+            self._log.info('end event tracking for message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
             _event.set()
 
             # we've handled message so pass along to arbitrator
             if not _message.sent:
-                self._log.debug(self._color + 'sending message: {}; event: {} to arbitrator...'.format(_message.name, _message.event.description))
+                self._log.info(self._color + 'sending message: {}; event: {} to arbitrator...'.format(_message.name, _message.event.description))
                 await self._arbitrate_message(_message)
-                self._log.debug(self._color + 'sent message:' + Fore.WHITE + ' {}; event: {} to arbitrator.'.format(_message.name, _message.event.description))
+                self._log.info(self._color + 'sent message:' + Fore.WHITE + ' {}; event: {} to arbitrator.'.format(_message.name, _message.event.description))
             else:
                 self._log.warning(self._color + 'message: {} already sent; event: {}'.format(_message.name, _message.event.description))
 
@@ -195,15 +211,15 @@ class Subscriber(Component, FiniteStateMachine):
             self._message_bus.last_message_timestamp = _message.timestamp
 
             # republish the message
-            self._log.debug(self._color + 'awaiting republication of message:' \
+            self._log.info(self._color + 'awaiting republication of message:' \
                 + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
             await self._message_bus.republish_message(_message)
-            self._log.debug(self._color + 'message:' \
+            self._log.info(self._color + 'message:' \
                 + Fore.WHITE + ' {} with event: {}'.format(_message.name, _message.event.description) + self._color + ' has been republished.')
 
         elif not _ackd:
             # if not already ack'd, acknowledge we've seen the message
-            self._log.debug(self._color + Style.DIM + 'acknowledging unacceptable message:' \
+            self._log.info(self._color + Style.DIM + 'acknowledging unacceptable message:' \
                     + Fore.WHITE + ' {}; event: {} (queue: {:d} elements)'.format(
                     _peeked_message.name, _peeked_message.event.description, self._message_bus.queue_size))
             _peeked_message.acknowledge(self)
@@ -214,7 +230,7 @@ class Subscriber(Component, FiniteStateMachine):
         Has the message bus clear any completed tasks.
         '''
         self._message_bus.clear_tasks()
-        self._log.debug('callback on message consume complete; {}'.format(task.get_name()))
+        self._log.info('callback on message consume complete; {}'.format(task.get_name()))
 
 #   # ..........................................................................
 #   def _get_timestamp(self):
@@ -358,12 +374,13 @@ class GarbageCollector(Subscriber):
     they've passed the publish cycle.
 
     :param name:         the subscriber name (for logging)
-    :param color:        the color to use for printing
+    :param config:       the application configuration
     :param message_bus:  the message bus
+    :param color:        the optional color for log messages
     :param level:        the logging level
     '''
-    def __init__(self, message_bus, color=Fore.BLUE, level=Level.INFO):
-        Subscriber.__init__(self, GarbageCollector.CLASS_NAME, message_bus=message_bus, color=color, suppressed=False, enabled=False, level=level)
+    def __init__(self, config, message_bus, color=Fore.BLUE, level=Level.INFO):
+        Subscriber.__init__(self, GarbageCollector.CLASS_NAME, config, message_bus=message_bus, color=color, suppressed=False, enabled=False, level=level)
 
     # ..........................................................................
     @property

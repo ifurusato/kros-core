@@ -25,21 +25,19 @@ class Moth(Behaviour):
     '''
     Implements a moth or anti-moth behaviour.
 
-    :param name:           the name of this behaviour
-    :param loop_freq_hz:   the loop frequency in Hertz
-    :param callback:       the optional callback function (can be added later)
-    :param level:          the optional log level
+    :param name:            the name of this behaviour
+    :param config:          the application configuration
+    :param message_bus:     the asynchronous message bus
+    :param message_factory: the factory for messages
+    :param motors:          the motor controller
+    :param level:           the optional log level
     '''
-    def __init__(self, config, message_bus, motors, level=Level.INFO):
-        if config is None:
-            raise ValueError('null configuration argument.')
-        cfg = config['kros'].get('moth')
+    def __init__(self, config, message_bus, message_factory, motors, level=Level.INFO):
+        Behaviour.__init__(self, 'moth', config, message_bus, message_factory, self._moth_callback, level)
+        cfg = self._config['kros'].get('moth')
         self._anti_moth = cfg.get('anti_moth')
-        _loop_freq_hz = cfg.get('loop_freq_hz')
-        super().__init__('moth', _loop_freq_hz, self._moth_callback, level)
-        self._config      = config
-        self._message_bus = message_bus
-        self._motors      = motors
+        self._log.info('anti-moth: {}'.format(self._anti_moth))
+        self._motors = motors
         self._log.info('ready.')
 
     # ..........................................................................

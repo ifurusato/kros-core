@@ -169,9 +169,9 @@ class MessageBus(Component):
         '''
         Clear the message bus of any messages.
         '''
-        self._log.info(Fore.GREEN + 'clearing queue of {:d} message{}.'.format(self._queue.qsize(), '' if self._queue.qsize() == 1 else 's'))
+        self._log.info('clearing queue of {:d} message{}.'.format(self._queue.qsize(), '' if self._queue.qsize() == 1 else 's'))
         self._queue.clear()
-        self._log.info(Fore.GREEN + 'queue contains {:d} message{} after clearing.'.format(self._queue.qsize(), '' if self._queue.qsize() == 1 else 's'))
+        self._log.info('queue contains {:d} message{} after clearing.'.format(self._queue.qsize(), '' if self._queue.qsize() == 1 else 's'))
 
     # ..........................................................................
     @property
@@ -391,9 +391,9 @@ class MessageBus(Component):
 
         NOTE: calls to this function should be await'd.
         '''
-        if ( message.event is not Event.CLOCK_TICK and message.event is not Event.CLOCK_TOCK ):
-            self._log.info('rx request to publish message: {}'.format(message.name)
-                    + ' (event: {}; age: {:d}ms);'.format(message.event.description, message.age))
+#       if ( message.event is not Event.CLOCK_TICK and message.event is not Event.CLOCK_TOCK ):
+        self._log.info('rx request to publish message: {}'.format(message.name)
+                + ' (event: {}; age: {:d}ms);'.format(message.event.description, message.age))
         _put_task = asyncio.create_task(self._queue.put(message), name='publish-message-{}'.format(message.name))
         self._log.debug(Style.DIM + 'created task: {}'.format(_put_task.get_name()))
         await asyncio.sleep(self._publish_delay_sec)
