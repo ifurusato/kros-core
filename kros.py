@@ -202,6 +202,11 @@ class KROS(Component, FiniteStateMachine):
     @property
     def configuration(self):
         return self._config
+    
+    # ..........................................................................
+    @property
+    def ticker(self):
+        return self._ticker
 
     # ..........................................................................
     def get_property(self, section, property_name):
