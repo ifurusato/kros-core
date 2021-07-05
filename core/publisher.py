@@ -25,31 +25,34 @@ from core.message_factory import MessageFactory
 class Publisher(Component, FiniteStateMachine):
     '''
     Extends FiniteStateMachine as a message/event publisher to the message bus.
+
+    :param name:             the unique name for the publisher
+    :param config:       the application configuration
+    :param message_bus:      the asynchronous message bus
+    :param message_factory:  the factory for messages
+    :param level:            the logging level
     '''
-    def __init__(self, name, message_bus, message_factory, level=Level.INFO):
-        '''
-        :param name:             the unique name for the publisher
-        :param message_bus:      the asynchronous message bus
-        :param message_factory:  the factory for messages
-        :param level:            the logging level
-        '''
-        super().__init__(name)
-        if message_bus is None:
-            raise ValueError('null message bus argument.')
-        elif isinstance(message_bus, MessageBus):
+    def __init__(self, name, config, message_bus, message_factory, level=Level.INFO):
+        self._log = Logger('pub:{}'.format(name), level)
+        if isinstance(name, str):
+            self._name = name
+        else:
+            raise ValueError('wrong type for name argument: {}'.format(type(name)))
+        if isinstance(config, dict):
+            self._config = config
+        else:
+            raise ValueError('wrong type for config argument: {}'.format(type(name)))
+        if isinstance(message_bus, MessageBus):
             self._message_bus = message_bus
         else:
             raise ValueError('unrecognised message bus argument: {}'.format(type(message_bus)))
-        if message_factory is None:
-            raise ValueError('null message factory argument.')
-        elif isinstance(message_factory, MessageFactory):
+        if isinstance(message_factory, MessageFactory):
             self._message_factory = message_factory
         else:
             raise ValueError('unrecognised message factory argument: {}'.format(type(message_bus)))
-        self._log = Logger('pub:{}'.format(name), level)
         Component.__init__(self, self._log, suppressed=False, enabled=False)
         FiniteStateMachine.__init__(self, self._log, name)
-        self._name       = name
+        self._name = name
         self._message_bus.register_publisher(self)
         self._log.info('ready.')
 

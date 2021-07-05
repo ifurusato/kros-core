@@ -6,9 +6,6 @@
 
 kros:
     use_external_clock: True                     # if True use external clock
-    clock:
-        loop_freq_hz: 1                          # main loop frequency
-        tock_modulo:  10                         # modulo value for tock frequency
     ticker:
         loop_freq_hz: 1                          # main loop frequency
     motors:

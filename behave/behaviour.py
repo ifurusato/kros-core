@@ -92,15 +92,15 @@ class Behaviour(ABC, Subscriber):
         if not self.suppressed:
             self._log.info('👿 not suppressed.')
             _event = message.payload.event
-            if Event.is_clock_event(_event):
-                self._log.info('👿 executing loop method on event {}...'.format(_event.description))
-                self.execute(message)
-                self._log.info('👿 executing callbacks...')
-                for _callback in self._callbacks:
-                    self._log.info('👿 executing callback...')
-                    _callback()
-            else:
-                self._log.info('👿 processed other message {}'.format(message.name))
+
+            # is this still valid for a Behaviour?
+            self._log.info('👿 executing loop method on event {}...'.format(_event.description))
+            self.execute(message)
+            self._log.info('👿 executing callbacks...')
+            for _callback in self._callbacks:
+                self._log.info('👿 executing callback...')
+                _callback()
+
         else:
             self._log.debug(Style.DIM + '{} behaviour suppressed.'.format(self.name))
         self._log.debug('👿 processed message {}'.format(message.name))

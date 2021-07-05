@@ -17,6 +17,7 @@ init()
 
 from core.logger import Logger, Level
 from core.event import Event
+from core.fsm import State
 from core.subscriber import Subscriber
 from behave.behaviour import Behaviour
 
@@ -56,7 +57,8 @@ class Idle(Behaviour):
         The necessary state machine call to start the publisher, which performs
         any initialisations of active sub-components, etc.
         '''
-        super().start()
+        if self.state is not State.STARTED:
+            super().start()
 
     # ..........................................................................
     @property

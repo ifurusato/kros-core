@@ -59,10 +59,7 @@ class EventPublisher(Publisher):
       event-bearing messages at a random interval.
     '''
     def __init__(self, config, message_bus, message_factory, motors, level=Level.INFO):
-        Publisher.__init__(self, 'event', message_bus, message_factory, level)
-        if config is None:
-            raise ValueError('no configuration provided.')
-        self._config = config
+        Publisher.__init__(self, 'event', config, message_bus, message_factory, level)
         self._level   = level
         self._counter  = itertools.count()
         self._triggered_ir_port_side = self._triggered_ir_port  = self._triggered_ir_cntr  = self._triggered_ir_stbd  = \

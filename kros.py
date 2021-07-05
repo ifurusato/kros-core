@@ -26,7 +26,7 @@ from core.logger import Logger, Level
 from core.event import Event
 from core.component import Component
 from core.fsm import FiniteStateMachine
-from core.clock import Clock
+from core.ticker import Ticker
 from core.message_bus import MessageBus
 from core.message_factory import MessageFactory
 from core.config_loader import ConfigLoader
@@ -149,10 +149,10 @@ class KROS(Component, FiniteStateMachine):
     
         # create publishers ....................................................
 
-        self._clock  = Clock(self._config, self._message_bus, self._message_factory, level=self._level)
+#       self._clock  = Clock(self._config, self._message_bus, self._message_factory, level=self._level)
         self._publisher1  = EventPublisher(self._config, self._message_bus, self._message_factory, self._motors, level=self._level)
-    #   self._publisher2  = FloodPublisher(self._message_bus, self._message_factory)
-    #   self._publisher3  = GamepadPublisher(self._config, self._message_bus, self._message_factory)
+#       self._publisher2  = FloodPublisher(self._message_bus, self._message_factory)
+#       self._publisher3  = GamepadPublisher(self._config, self._message_bus, self._message_factory)
     
         # create subscribers ...................................................
         self._motor_subscriber    = MotorSubscriber(self._config, self._message_bus, self._motors, level=self._level)
@@ -164,7 +164,7 @@ class KROS(Component, FiniteStateMachine):
         _subscriberX.add_events([ Event.ROAM, Event.FULL_AHEAD ]) 
 
         # create behaviours ....................................................
-        self._behaviour_manager = BehaviourManager(self._message_bus, self._level) # a specialised subscriber
+        self._behaviour_manager = BehaviourManager(self._config, self._message_bus, self._level) # a specialised subscriber
 #       self._behaviour_manager = None
         # create and register behaviours (listed in priority order)
 #       self._roam = Roam(self._config, self._message_bus, self._message_factory, self._motors, self._level)
@@ -177,7 +177,7 @@ class KROS(Component, FiniteStateMachine):
 
         _callback = None
         _loop_freq_hz = 1
-        self._ticker = Ticker(_loop_freq_hz, self._level):
+        self._ticker = Ticker(self._config, self._level)
 
         self._log.info('configured.')
 

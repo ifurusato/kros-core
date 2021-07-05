@@ -35,24 +35,8 @@ class GamepadPublisher(Publisher):
     A Publisher that connects with a bluetooth-based gamepad.
     '''
     def __init__(self, config, message_bus, message_factory, exit_on_complete=True, level=Level.INFO):
-        super().__init__('gp', message_bus, message_factory, level)
-        if config is None:
-            raise ValueError('no configuration provided.')
-        self._config = config
-        if message_bus is None:
-            raise ValueError('null message bus argument.')
-        elif isinstance(message_bus, MessageBus):
-            self._message_bus = message_bus
-        else:
-            raise ValueError('unrecognised message bus argument: {}'.format(type(message_bus)))
-        if message_factory is None:
-            raise ValueError('null message factory argument.')
-        elif isinstance(message_factory, MessageFactory):
-            self._message_factory = message_factory
-        else:
-            raise ValueError('unrecognised message factory argument: {}'.format(type(message_bus)))
+        Publisher.__init__(self, 'gamepad', config, message_bus, message_factory, level)
         self._level = level
-
         self._counter  = itertools.count()
         self._gamepad_enable    = False # TODO
         self._publish_delay_sec = 0.05  # delay after IFS event

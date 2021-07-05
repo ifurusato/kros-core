@@ -14,11 +14,12 @@ from threading import Thread
 from colorama import init, Fore, Style
 init()
 
-from lib.logger import Logger, Level
-from lib.rate import Rate
+from core.logger import Logger, Level
+from core.component import Component
+from core.rate import Rate
 
 # ...............................................................
-class Ticker(object):
+class Ticker(Component):
     '''
     A simple threaded clock that executes callbacks every loop.
     One or more subscribers can be added to the callback list.
@@ -26,10 +27,14 @@ class Ticker(object):
     :param loop_freq_hz:   the loop frequency in Hertz
     :param level:          the optional log level
     '''
-    def __init__(self, loop_freq_hz, level=Level.INFO):
-        super().__init__()
+    def __init__(self, config, level=Level.INFO):
         self._log = Logger("clock", level)
-        self._loop_freq_hz = loop_freq_hz
+        Component.__init__(self, self._log, suppressed=False, enabled=False)
+        if config is None:
+            raise ValueError('no configuration provided.')
+        self._config = config
+        cfg = self._config['kros'].get('ticker')
+        self._loop_freq_hz = cfg.get('loop_freq_hz')
         self._rate         = Rate(self._loop_freq_hz)
         self._log.info('tick frequency: {:d}Hz'.format(self._loop_freq_hz))
         self._callbacks    = []

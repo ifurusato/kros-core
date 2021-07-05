@@ -46,12 +46,11 @@ class Subscriber(Component, FiniteStateMachine):
             self._name = name
         else:
             raise ValueError('wrong type for name argument: {}'.format(type(name)))
-        if config is None:
-            raise ValueError('null configuration argument.')
-        self._config   = config
-        if message_bus is None:
-            raise ValueError('null message bus argument.')
-        elif isinstance(message_bus, MessageBus):
+        if isinstance(config, dict):
+            self._config = config
+        else:
+            raise ValueError('wrong type for config argument: {}'.format(type(name)))
+        if isinstance(message_bus, MessageBus):
             self._message_bus = message_bus
         else:
             raise ValueError('wrong type for message bus argument: {}'.format(type(message_bus)))
@@ -431,11 +430,10 @@ class GarbageCollector(Subscriber):
             _message = await self._message_bus.consume_message()
             self._message_bus.consumed()
             _message.gc() # mark as garbage collected and don't republish
-            if not Event.is_clock_event(_message.event): # we ignore messages about clock events
-                if not _message.sent:
-                    self._log.warning('garbage collected undelivered message: {}; event: {}'.format(_message.name, _message.event.name))
-                elif self._message_bus.verbose:
-                    self._log.debug(self._color + 'garbage collected message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
+            if not _message.sent:
+                self._log.warning('garbage collected undelivered message: {}; event: {}'.format(_message.name, _message.event.name))
+            elif self._message_bus.verbose:
+                self._log.debug(self._color + 'garbage collected message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
         else:
             # acknowledge we've seen the message
             _peeked_message.acknowledge(self)

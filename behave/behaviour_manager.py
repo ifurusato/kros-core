@@ -29,12 +29,13 @@ class BehaviourManager(Subscriber):
     This subscribes to all events grouped as a Event.BEHAVIOUR.
 
     :param name:         the subscriber name (for logging)
+    :param config:       the application configuration
     :param message_bus:  the message bus
     :param color:        the color for messages
     :param level:        the logging level 
     '''
-    def __init__(self, message_bus, level=Level.INFO):
-        Subscriber.__init__(self, BehaviourManager.CLASS_NAME, message_bus=message_bus, color=Fore.RED, suppressed=False, enabled=True, level=Level.INFO)
+    def __init__(self, config, message_bus, level=Level.INFO):
+        Subscriber.__init__(self, BehaviourManager.CLASS_NAME, config, message_bus=message_bus, color=Fore.RED, suppressed=False, enabled=True, level=Level.INFO)
         self._active_behaviour = None
         self._behaviours       = {}
 

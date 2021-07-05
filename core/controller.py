@@ -67,9 +67,6 @@ class Controller(Component):
         self._event_count = next(self._event_counter)
         if self._previous_payload == None:
             self._log.debug(Fore.CYAN + 'no previous payload.')
-        elif Event.is_clock_event(payload.event):
-#           self._log.info(Fore.BLACK + 'clock event callback.')
-            pass
         elif payload == self._previous_payload:
             self._log.info(Fore.CYAN + '🐁 no state change on event: ' + Style.BRIGHT + ' {}'.format(self._previous_payload.event.description)
                     + Fore.BLACK + Style.NORMAL + ' [{:d}/{:d}]'.format(self._state_change_count, self._event_count))
