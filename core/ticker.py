@@ -39,9 +39,7 @@ class Ticker(Component):
         self._log.info('tick frequency: {:d}Hz'.format(self._loop_freq_hz))
         self._callbacks    = []
         self._thread       = None
-        self._enabled      = False
-        self._closed       = False
-        self._log.info('ready.')
+        self._log.info('ticker ready.')
 
     # ..........................................................................
     def add_callback(self, callback):
@@ -49,7 +47,7 @@ class Ticker(Component):
 
     # ..........................................................................
     def name(self):
-        return 'clock'
+        return 'ticker'
 
     # ..........................................................................
     @property
@@ -69,19 +67,14 @@ class Ticker(Component):
         self._log.info('exited clock loop.')
 
     # ..........................................................................
-    @property
-    def enabled(self):
-        return self._enabled
-
-    # ..........................................................................
     def enable(self):
-        if not self._closed:
-            if self._enabled:
+        if not self.closed:
+            if self.enabled:
                 self._log.warning('clock already enabled.')
             else:
                 # if we haven't started the thread yet, do so now...
                 if self._thread is None:
-                    self._enabled = True
+                    Component.enable(self)
                     self._thread = Thread(name='clock', target=Ticker._loop, args=[self, lambda: self.enabled], daemon=True)
                     self._thread.start()
                     self._log.info('clock enabled.')
@@ -92,21 +85,11 @@ class Ticker(Component):
 
     # ..........................................................................
     def disable(self):
-        if self._enabled:
-            self._enabled = False
+        if self.enabled:
+            Component.disable(self)
             self._thread = None
             self._log.info('clock disabled.')
         else:
             self._log.warning('already disabled.')
-
-    # ..........................................................................
-    def close(self):
-        if not self._closed:
-            if self._enabled:
-                self.disable()
-            self._closed = True
-            self._log.info('closed.')
-        else:
-            self._log.warning('already closed.')
 
 #EOF

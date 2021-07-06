@@ -23,7 +23,9 @@ from core.subscriber import Subscriber
 
 # ..............................................................................
 class BehaviourManager(Subscriber):
+
     CLASS_NAME='beh-mgr'
+
     '''
     Extends Subscriber as a manager of high-level, low-priority behaviours.
     This subscribes to all events grouped as a Event.BEHAVIOUR.
@@ -34,8 +36,10 @@ class BehaviourManager(Subscriber):
     :param color:        the color for messages
     :param level:        the logging level 
     '''
-    def __init__(self, config, message_bus, level=Level.INFO):
-        Subscriber.__init__(self, BehaviourManager.CLASS_NAME, config, message_bus=message_bus, color=Fore.RED, suppressed=False, enabled=True, level=Level.INFO)
+    def __init__(self, config, message_bus, ticker, level=Level.INFO):
+        Subscriber.__init__(self, BehaviourManager.CLASS_NAME, config, message_bus=message_bus, color=Fore.RED,
+                suppressed=False, enabled=True, level=Level.INFO)
+        self._ticker           = ticker
         self._active_behaviour = None
         self._behaviours       = {}
 
@@ -47,10 +51,10 @@ class BehaviourManager(Subscriber):
         This is performed by the Behaviour's constructor and should not be
         called directly.
         '''
-        # TODO attach callback to Ticker
-
         self._behaviours[behaviour.event] = behaviour
         self.add_event(behaviour.event)
+        # attach callback to Ticker
+        self._ticker.add_callback(callback)
         self._log.info('🈸 added behaviour \'{}\' linked to event \'{}\' to manager.'.format(behaviour.name, behaviour.event))
 
     # ..........................................................................

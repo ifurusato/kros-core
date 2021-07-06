@@ -136,7 +136,8 @@ class KROS(Component, FiniteStateMachine):
        
         self._message_bus = MessageBus(self._level)
         self._message_factory = MessageFactory(self._message_bus, self._level)
-    
+        self._ticker = Ticker(self._config, self._level)
+
         self._controller = Controller(self._message_bus, self._level)
     
     #    _gp_controller = GamepadController(self._level)
@@ -164,20 +165,16 @@ class KROS(Component, FiniteStateMachine):
         _subscriberX.add_events([ Event.ROAM, Event.FULL_AHEAD ]) 
 
         # create behaviours ....................................................
-        self._behaviour_manager = BehaviourManager(self._config, self._message_bus, self._level) # a specialised subscriber
+        self._behaviour_manager = BehaviourManager(self._config, self._message_bus, self._ticker, self._level) # a specialised subscriber
 #       self._behaviour_manager = None
         # create and register behaviours (listed in priority order)
-#       self._roam = Roam(self._config, self._message_bus, self._message_factory, self._motors, self._level)
+        self._roam = Roam(self._config, self._message_bus, self._message_factory, self._motors, self._level)
 #       _moth = Moth(self._config, self._message_bus, self._message_factory, self._motors, self._level)
 #       _sniff = Sniff(self._config, self._message_bus, self._message_factory, self._motors, self._level)
-        _idle = Idle(self._config, self._message_bus, self._message_factory, self._motors, self._level)
+#       _idle = Idle(self._config, self._message_bus, self._message_factory, self._motors, self._level)
     
     #   _message_bus.print_publishers()
     #   _message_bus.print_subscribers()
-
-        _callback = None
-        _loop_freq_hz = 1
-        self._ticker = Ticker(self._config, self._level)
 
         self._log.info('configured.')
 
@@ -293,6 +290,8 @@ class KROS(Component, FiniteStateMachine):
             # disable Pi LEDs since they may be distracting
             self._set_pi_leds(False)
 
+        self._ticker.enable()
+
         # begin main loop ..............................
 
         self._log.notice('Press Ctrl-C to exit.')
@@ -328,6 +327,8 @@ class KROS(Component, FiniteStateMachine):
             self._closing = True
             self._log.info(Style.BRIGHT + 'closing...')
             Component.disable(self)
+            if self._ticker:
+                self._ticker.close()
             if self._behaviour_manager:
                 self._behaviour_manager.close()
             if self._gamepad:

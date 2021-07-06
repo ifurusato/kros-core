@@ -18,6 +18,7 @@ init()
 
 from core.logger import Logger, Level
 from core.event import Event
+from core.orient import Orientation
 from core.fsm import State
 from behave.behaviour import Behaviour
 
@@ -49,12 +50,18 @@ class Roam(Behaviour):
     :param level:          the optional log level
     '''
     def __init__(self, config, message_bus, message_factory, motors, level=Level.INFO):
-        Behaviour.__init__(self, 'roam', config, message_bus, message_factory, self._roam_callback, level)
-        self._motors    = motors
-        self._distance  = None
-#       self._rgbmatrix = RgbMatrix(Level.INFO)
+        Behaviour.__init__(self, 'roam', config, message_bus, message_factory, self.execute, level)
+        self._motors       = motors
+        self._distance     = None
+        self._speed_limit  = None
+        self._min_distance = 20.0 # cm
+        self._max_distance = 200.0 # cm
+        self._min_speed    = 0.0
+        self._max_speed    = 100.0
+#       self._rgbmatrix    = RgbMatrix(Level.INFO)
 #       self._rgbmatrix.set_display_type(DisplayType.RANDOM)
         self.add_event(Event.INFRARED_CNTR)
+        self._last_dt   = None
         self._log.info('ready.')
 
     # ..........................................................................
@@ -66,6 +73,44 @@ class Roam(Behaviour):
     def distance(self, distance):
         self._log.info('🍆 setting distance to: {}'.format(distance))
         self._distance = distance
+
+    # ..........................................................................
+    @property
+    def speed_limit(self):
+        return self._speed_limit
+
+    @speed_limit.setter
+    def speed_limit(self, speed_limit):
+        self._log.info('setting speed_limit to: {:5.2f}'.format(speed_limit))
+        self._speed_limit = speed_limit
+
+    # ..........................................................................
+    def _convert_to_max_speed(self, distance):
+        '''
+        Converts a range of distances to a range of speeds. 
+        When the distance is greater than or equal to max_distance, returns max_speed.
+        When the distance is less than min_distance, returns min_speed.
+        Otherwise returns a ratio of distance to speed.
+        '''
+#       self._min_distance = 20.0 # cm
+#       self._max_distance = 200.0 # cm
+#       self._min_speed   = 0.0
+#       self._max_speed   = 100.0
+        _distance_range = self._max_distance - self._min_distance # (180)
+        _speed_range    = self._max_speed - self._min_speed # (100)
+        _ratio = _speed_range / _distance_range
+        if distance >= self._max_distance:
+            return self._max_speed
+        elif distance < self._min_distance:
+            return self._min_speed
+        else: # otherwise return a ratio of distance to speed
+            # at 200cm return 100.0
+            # at 100cm return 50.0
+            # at 20cm return 0.0
+            # distance range = 200 - 20 (180)
+            # speed range = 100 - 0 (100)
+            # ratio = 180:100 or 100:180
+            return distance * _ratio
 
     # ..........................................................................
     def enable(self):
@@ -84,35 +129,64 @@ class Roam(Behaviour):
 #       super().disable()
         Behaviour.disable(self)
 
-#   # ..........................................................................
-#   async def process_message(self, message):
-#       '''
-#       We expect only INFRARED_CNTR messages and extract the distance value.
-#       '''
-#       # TODO only pay attention to messages if roam active and not suppressed 
-#       if message.gcd:
-#           raise GarbageCollectedError('cannot process message: message has been garbage collected.')
-#       # indicate that this subscriber has processed the message
-#       message.process(self)
-#       _payload = message.payload
-#       _event   = _payload.event
-#       if _event is Event.CLOCK_TICK:
-#           self._log.info('🕒 processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.description)) 
-#       elif _event is Event.CLOCK_TOCK:
-#           self._log.info(Fore.BLUE + '🕝 processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.description)) 
-#       elif _event is Event.INFRARED_CNTR:
-#           self.distance = _payload.value
-#           if self.enabled:
-#               self._log.info('🈯 processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.description) 
-#                       + Fore.GREEN + ' distance: {}'.format(self.distance)
-#                       + Fore.MAGENTA + ' enabled? {}'.format(self.enabled))
-#           else:
-#               self._log.info('🆎 processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.description) 
-#                       + Fore.GREEN + ' distance: {}'.format(self.distance)
-#                       + Fore.MAGENTA + ' enabled? {}'.format(self.enabled))
-#
-#       else:
-#           raise ValueError('expected INFRARED_CNTER event not: {}'.format(message.event.description))
+    # ..........................................................................
+    async def process_message(self, message):
+        '''
+        We expect only INFRARED_CNTR messages and extract the distance value.
+        '''
+        self._log.info('🚧 Roam: process_message {}; '.format(message.name) )
+        # TODO only pay attention to messages if roam active and not suppressed 
+        if message.gcd:
+            raise GarbageCollectedError('cannot process message: message has been garbage collected.')
+        # indicate that this subscriber has processed the message
+        message.process(self)
+        _payload = message.payload
+        _event   = _payload.event
+        if _event is Event.INFRARED_CNTR:
+            self.distance = _payload.value
+            if self.enabled:
+                # TODO get current motor speed
+                self.speed_limit = self._convert_to_max_speed(self.distance)
+                self._set_motor_speed_limit(Orientation.PORT)
+                self._set_motor_speed_limit(Orientation.STBD)
+                self._log.info('🈯 processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {};'.format(_event.description) 
+                        + Fore.BLUE + ' distance: {:5.2f};'.format(self.distance)
+                        + Fore.GREEN + ' max speed: {:5.2f};'.format(self.speed_limit)
+                        + Fore.MAGENTA + ' enabled? {}'.format(self.enabled))
+
+            else:
+                self.speed_limit = None
+                self._log.info('🆎 processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {};'.format(_event.description) 
+                        + Fore.BLUE + ' distance: {:5.2f};'.format(self.distance)
+                        + Fore.GREEN + ' max speed: NONE;'
+                        + Fore.MAGENTA + ' enabled? {}'.format(self.enabled))
+        else:
+            raise ValueError('expected INFRARED_CNTER event not: {}'.format(message.event.description))
+
+    # ..........................................................................
+    def _set_motor_speed_limit(self, orientation):
+        '''
+        This sets the motor speed limit based on the speed limit, if not None.
+        The current speed cannot be less than zero as Roam should limit only
+        speed ahead never astern (reversing).
+        '''
+        if self.speed_limit is None:
+            self._log.info('😀 no speed limit.')
+            # do nothing
+        else:
+            self._log.info('😡 setting speed limit for {} motor to: {:5.2f}'.format(orientation.name, self.speed_limit))
+            _velocity = self._motors.get_motor_velocity(orientation)
+            _target_velocity = self._clip(_velocity, self._min_speed, self.speed_limit)
+            self._motors.set_motor_velocity(orientation, _target_velocity)
+
+    # ..........................................................................
+    def _clip(self, value, min_value, max_value):
+        '''
+        A replacement for numpy's clip():
+
+            _value = numpy.clip(target_value, _min, _max)
+        '''
+        return min_value if value <= min_value else max_value if value >= max_value else value
 
     # ..........................................................................
 #   def _disable_rgbmatrix(self):
@@ -127,9 +201,9 @@ class Roam(Behaviour):
     def event(self):
         return Event.ROAM
 
-    # ..........................................................................
-    def _roam_callback(self):
-        self._log.info('🌼 roam callback; distance: {}'.format(self.distance))
+#   # ..........................................................................
+#   def _roam_callback(self):
+#       self._log.info('🌼 roam callback; distance: {}'.format(self.distance))
 
 #   # ..........................................................................
     def start(self):
@@ -147,20 +221,20 @@ class Roam(Behaviour):
         return 'roam'
 
     # ..........................................................................
-    def execute(self, message):
+    def execute(self):
         '''
         The method called upon each loop iteration. 
 
         :param message:  an optional Message passed along by the message bus
         '''
-        self._log.info('🌼 roam loop execute.')
-#       _timestamp = self.message_bus.last_message_timestamp
-#       if _timestamp is None:
-#           self._log.info('🌼 roam loop execute; no previous messages.')
-#       else:
-#           _elapsed_ms = (dt.now() - _timestamp).total_seconds() * 1000.0
-#           self._log.info('🌼 roam loop execute; {};\t'.format(Subscriber.get_formatted_time('message age:', _elapsed_ms)) 
-#                   + 'distance: {}'.format(self.distance))
+#       self._log.info('🌼 roam loop execute.')
+        _dt_now = dt.now()
+        if self._last_dt:
+            _elapsed_ms = (_dt_now - self._last_dt).total_seconds() * 1000.0
+            self._log.info('🌼 roam loop execute; {};\t'.format(self.get_formatted_time('message age:', _elapsed_ms)) 
+                    + Fore.BLUE + ' distance: {};'.format(self.distance)
+                    + Fore.GREEN + ' max speed: {};'.format(self.speed_limit))
+        self._last_dt = _dt_now
 
 #   # ..........................................................................
 #   def suppressed(self):

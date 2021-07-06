@@ -128,9 +128,9 @@ class Motors(Component):
                 # if decelerating then apply that to target velocities first
                 self._decelerate(_event_count)
             if self._port_motor.velocity != self._port_target_velocity:
-                self._set_motor_velocity(Orientation.PORT, self._port_target_velocity)
+                self.set_motor_velocity(Orientation.PORT, self._port_target_velocity)
             if self._stbd_motor.velocity != self._stbd_target_velocity:
-                self._set_motor_velocity(Orientation.STBD, self._stbd_target_velocity)
+                self.set_motor_velocity(Orientation.STBD, self._stbd_target_velocity)
             # print stats...
             if self.stopped:
 #               self._log.info('[{:04d}] velocity: '.format(_event_count) + Fore.BLUE + 'stopped.')
@@ -252,8 +252,8 @@ class Motors(Component):
         # ........
         self._log.debug('set chadburn velocity: {}  {}.'.format(_speed.label, _direction))
         _value = _speed.value if _direction is Direction.AHEAD else -1 * _speed.value
-        self._set_motor_velocity(Orientation.PORT, _value)
-        self._set_motor_velocity(Orientation.STBD, _value)
+        self.set_motor_velocity(Orientation.PORT, _value)
+        self.set_motor_velocity(Orientation.STBD, _value)
 
     # ..........................................................................
     def dispatch_theta_event(self, payload):
@@ -383,8 +383,8 @@ class Motors(Component):
             _stbd_velocity = -1.0 * self._spin_speed.value
         else:
             raise Exception('unrecognised spin direction: {}'.format(orientation))
-        self._set_motor_velocity(Orientation.PORT, _port_velocity)
-        self._set_motor_velocity(Orientation.STBD, _stbd_velocity)
+        self.set_motor_velocity(Orientation.PORT, _port_velocity)
+        self.set_motor_velocity(Orientation.STBD, _stbd_velocity)
 
     # ..........................................................................
     def _even(self):
@@ -399,8 +399,8 @@ class Motors(Component):
             self._log.info('even velocity from: ' + Fore.RED + 'port: {:5.2f}; '.format(self._port_target_velocity) 
                     + Fore.GREEN + 'stbd: {:5.2f}; '.format(self._stbd_target_velocity)
                     + Fore.YELLOW + 'average: {:5.2f}.'.format(_average_velocity))
-            self._set_motor_velocity(Orientation.PORT, _average_velocity)
-            self._set_motor_velocity(Orientation.STBD, _average_velocity)
+            self.set_motor_velocity(Orientation.PORT, _average_velocity)
+            self.set_motor_velocity(Orientation.STBD, _average_velocity)
 
     # ..........................................................................
     def _increment_motor_velocity(self, orientation, increment):
@@ -416,7 +416,7 @@ class Motors(Component):
             _updated_target_velocity = self._update_value(self._stbd_target_velocity, increment)
             self._log.info('increment stbd motor velocity:' + Fore.GREEN + ' {:5.2f} + {:5.2f} ➔ {:<5.2f}'.format(\
                     self._stbd_motor.velocity, increment, _updated_target_velocity))
-        self._set_motor_velocity(orientation, _updated_target_velocity)
+        self.set_motor_velocity(orientation, _updated_target_velocity)
 
     # ..........................................................................
     def _update_value(self, value, increment):
@@ -429,7 +429,16 @@ class Motors(Component):
         return value
 
     # ..........................................................................
-    def _set_motor_velocity(self, orientation, target_velocity):
+    def get_motor_velocity(self, orientation):
+        '''
+        Return the target velocity of the specified motor.
+        '''
+        if orientation is Orientation.PORT:
+            return self._port_motor.velocity
+        else:
+            return self._stbd_motor.velocity
+
+    def set_motor_velocity(self, orientation, target_velocity):
         '''
         Set the target velocity of the specified motor.
         '''
