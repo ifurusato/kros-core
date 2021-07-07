@@ -111,12 +111,24 @@ class KROS(Component, FiniteStateMachine):
             '[1/2]' if arguments.start else '[1/1]')
         self._log.info('application log level: {}'.format(self._log.level.name))
 
+        # print arguments ......................................................
+
+        self._log.info('argument no-motors:   {}'.format(arguments.no_motors))
+        self._log.info('argument gamepad:     {}'.format(arguments.gamepad))
+        self._log.info('argument video:       {}'.format(arguments.video))
+        self._log.info('argument mock:        {}'.format(arguments.mock))
+        self._log.info('argument config-file: {}'.format(arguments.config_file))
+        self._log.info('argument level:       {}'.format(arguments.level))
+
         # configuration from command line arguments ............................
 
         # read YAML configuration
         _loader = ConfigLoader(self._level)
-        filename = 'config.yaml'
-        self._config = _loader.configure(filename)
+        _config_filename = arguments.config_file
+        _filename = _config_filename if _config_filename is not None else 'config.yaml' 
+        self._config = _loader.configure(_filename)
+
+#       sys.exit(0) # ===========================================================
 
         # scan I2C bus
         self._log.info('scanning I²C address bus...')
@@ -158,11 +170,11 @@ class KROS(Component, FiniteStateMachine):
         # create subscribers ...................................................
         self._motor_subscriber    = MotorSubscriber(self._config, self._message_bus, self._motors, level=self._level)
         self._bumper_subscriber   = BumperSubscriber(self._config, self._message_bus, self._motors, level=self._level)
-        self._infrared_subscriber = InfraredSubscriber(self._config, self._message_bus, self._motors, level=self._level) # reacts to IR sensors
+#       self._infrared_subscriber = InfraredSubscriber(self._config, self._message_bus, self._motors, level=self._level) # reacts to IR sensors
         self._garbage_collector   = GarbageCollector(self._config, self._message_bus, level=self._level)
     
-        _subscriberX = Subscriber('x', self._config, self._message_bus, color=Fore.MAGENTA, suppressed=False, enabled=True, level=self._level)
-        _subscriberX.add_events([ Event.ROAM, Event.FULL_AHEAD ]) 
+#       _subscriberX = Subscriber('x', self._config, self._message_bus, color=Fore.MAGENTA, suppressed=False, enabled=True, level=self._level)
+#       _subscriberX.add_events([ Event.ROAM, Event.FULL_AHEAD ]) 
 
         # create behaviours ....................................................
         self._behaviour_manager = BehaviourManager(self._config, self._message_bus, self._ticker, self._level) # a specialised subscriber
@@ -363,13 +375,13 @@ def parse_args():
     parser.add_argument('--start',          '-s', action='store_true', help='start kros')
     parser.add_argument('--no-motors',      '-n', action='store_true', help='disable motors (uses mock)')
     parser.add_argument('--gamepad',        '-g', action='store_true', help='enable bluetooth gamepad control')
-    parser.add_argument('--camera',         '-C', action='store_true', help='enable camera if installed')
+    parser.add_argument('--video',          '-v', action='store_true', help='enable video if installed')
     parser.add_argument('--mock',           '-m', action='store_true', help='permit mocked libraries (when not on a Pi)')
     parser.add_argument('--config-file',    '-f', help='use alternative configuration file')
     parser.add_argument('--level',          '-l', help='specify logging level \'DEBUG\'|\'INFO\'|\'WARN\'|\'ERROR\' (default: \'INFO\')')
     try:
         args = parser.parse_args()
-        _log.debug('parsed arguments: {}\n'.format(args))
+        _log.info('parsed arguments: {}\n'.format(args))
 #       print_banner()
         if not args.configure and not args.start:
             print(Fore.CYAN)
@@ -417,7 +429,7 @@ def main(argv):
             print('')
             _log.info(Fore.CYAN + 'arguments: no action.')
         else:
-            _level = Level.from_str(_args.level) if _args.level != None else Level.INFO
+            _level = Level.from_string(_args.level) if _args.level != None else Level.INFO
             _log.level = _level
             _log.info('arguments: {}'.format(_args))
             _kros = KROS(level=_level)

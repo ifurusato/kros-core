@@ -100,7 +100,7 @@ class GamepadPublisher(Publisher):
 
     # ................................................................
     def enable(self):
-        super().enable()
+        Publisher.enable(self)
         if self.enabled:
             if self._message_bus.get_task_by_name(GamepadPublisher._PUBLISH_LOOP_NAME):
                 self._log.warning('already enabled.')
@@ -121,12 +121,12 @@ class GamepadPublisher(Publisher):
 #       call to the superclass' method.
 #       '''
 #       self._log.info('🎲 gamepad callback for message:\t' + Fore.YELLOW + '{}'.format(message.event.description))
-#       await super().publish(message)
+#       await Publisher.publish(self, message)
 
     # ................................................................
     async def _gamepad_callback(self, message):
         self._log.info('🎲 gamepad callback for message:\t' + Fore.YELLOW + '{}'.format(message.event.description))
-        await super().publish(message)
+        await Publisher.publish(self, message)
         await asyncio.sleep(self._publish_delay_sec)
 
     # ................................................................
@@ -142,7 +142,7 @@ class GamepadPublisher(Publisher):
 #                   _message = self._message_factory.get_message(_event, True)
 #                   _message.value = 0
 #                   self._log.info('key-publishing message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
-#                   await super().publish(_message)
+#                   await Publisher.publish(self, _message)
 #                   self._log.info('key-published message:' + Fore.WHITE + ' {}.'.format(_message.name))
 #                   await asyncio.sleep(self._publish_delay_sec)
 #               else:
@@ -163,7 +163,7 @@ class GamepadPublisher(Publisher):
         if self._gamepad:
             self._gamepad.disable()
         self._message_bus.disable()
-        super().disable()
+        Publisher.disable(self)
         self._log.info(Fore.YELLOW + 'disabled publisher.')
 
     # ................................................................

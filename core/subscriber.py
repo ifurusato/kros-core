@@ -155,16 +155,16 @@ class Subscriber(Component, FiniteStateMachine):
         This method is not meant to be overridden, except by the garbage
         collector. The process_message() method can be overridden.
         '''
-        self._log.info(self._color + Style.DIM + '🍕 consume() called on {}.'.format(self.name))
+        self._log.info(self._color + Style.DIM + '🦊 consume() called on {}.'.format(self.name))
         _peeked_message = await self._message_bus.peek_message()
         if not _peeked_message:
             raise QueueEmptyOnPeekError('peek returned none.')
         elif _peeked_message.gcd:
             raise GarbageCollectedError('{} cannot consume: message has been garbage collected. [1]'.format(self.name))
 
+        self._log.info(self._color + Style.DIM + '🦊 consume() continuing for {}...'.format(self.name))
         _ackd = _peeked_message.acknowledged_by(self)
         if not _ackd and self.acceptable(_peeked_message):
-
             _event = asyncio.Event()
             self._log.info(Fore.RED + 'begin event tracking for message:' + Fore.WHITE 
                     + ' {}; event: {}'.format(_peeked_message.name, _peeked_message.event.description))
@@ -247,7 +247,7 @@ class Subscriber(Component, FiniteStateMachine):
 
         :param message:  the message to process.
         '''
-        self._log.debug(self._color + Style.DIM + 'processing message {}'.format(message.name))
+        self._log.debug(self._color + Style.DIM + '🦊 processing message {}'.format(message.name))
         if message.gcd:
             raise GarbageCollectedError('cannot process message: message has been garbage collected. [3]')
         # indicate that this subscriber has processed the message
@@ -317,7 +317,6 @@ class Subscriber(Component, FiniteStateMachine):
     # ..........................................................................
     @staticmethod
     def get_formatted_value(value):
-#       print('TYPE: {}'.format(type(value)))
         if isinstance(value, float):
             return '{:5.2f}'.format(value)
         else:
@@ -330,7 +329,6 @@ class Subscriber(Component, FiniteStateMachine):
            return ''
        elif value > 1000.0:
            return label + ' {:4.3f}s'.format(value/1000.0)
-#          return Fore.RED + label + ' {:4.3f}s'.format(value/1000.0)
        else:
            return label + ' {:4.3f}ms'.format(value)
 
@@ -342,17 +340,17 @@ class Subscriber(Component, FiniteStateMachine):
         This also enables the Subscriber, which is upon initialisation disabled.
         '''
         self._log.debug('subscriber {} started.'.format(self.name))
-        super().start()
+        FiniteStateMachine.start(self)
         self.enable()
 
     # ..........................................................................
     def disable(self):
-        super().disable()
+        Component.disable(self)
         FiniteStateMachine.disable(self)
 
     # ..........................................................................
     def close(self):
-        super().close()
+        Component.close(self)
         FiniteStateMachine.close(self)
 
     # ..........................................................................
@@ -394,20 +392,16 @@ class GarbageCollector(Subscriber):
         '''
         _elapsed_ms = (dt.now() - message.timestamp).total_seconds() * 1000.0
         if self._message_bus.is_expired(message) and message.fully_acknowledged:
-#           if self._message_bus.verbose:
-#               self._print_message_info('garbage collecting expired, fully-acknowledged message:', message, _elapsed_ms)
+#           self._print_message_info('garbage collecting expired, fully-acknowledged message:', message, _elapsed_ms)
             return True
         elif self._message_bus.is_expired(message):
-#           if self._message_bus.verbose:
-#               self._print_message_info('garbage collecting expired message:', message, _elapsed_ms)
+#           self._print_message_info('garbage collecting expired message:', message, _elapsed_ms)
             return True
         elif message.fully_acknowledged:
-#           if self._message_bus.verbose:
-#               self._print_message_info('garbage collecting fully-acknowledged message:', message, _elapsed_ms)
+#           self._print_message_info('garbage collecting fully-acknowledged message:', message, _elapsed_ms)
             return True
         else:
-#           if self._message_bus.verbose:
-#               self._print_message_info('garbage collector ignoring unprocessed message:', message, _elapsed_ms)
+#           self._print_message_info('garbage collector ignoring unprocessed message:', message, _elapsed_ms)
             return False
 
     # ..........................................................................

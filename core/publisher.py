@@ -87,7 +87,7 @@ class Publisher(Component, FiniteStateMachine):
         The necessary state machine call to start the publisher, which performs
         any initialisations of active sub-components, etc.
         '''
-        super().start()
+        FiniteStateMachine.start(self)
 
     # ..........................................................................
     def __eq__(self, obj):

@@ -28,7 +28,7 @@ class BehaviourManager(Subscriber):
 
     '''
     Extends Subscriber as a manager of high-level, low-priority behaviours.
-    This subscribes to all events grouped as a Event.BEHAVIOUR.
+    This subscribes to all events grouped as an Event.BEHAVIOUR.
 
     :param name:         the subscriber name (for logging)
     :param config:       the application configuration
@@ -37,31 +37,32 @@ class BehaviourManager(Subscriber):
     :param level:        the logging level 
     '''
     def __init__(self, config, message_bus, ticker, level=Level.INFO):
-        Subscriber.__init__(self, BehaviourManager.CLASS_NAME, config, message_bus=message_bus, color=Fore.RED,
-                suppressed=False, enabled=True, level=Level.INFO)
+        Subscriber.__init__(self, BehaviourManager.CLASS_NAME,
+                config, message_bus=message_bus, color=Fore.RED, suppressed=False, enabled=True, level=Level.INFO)
         self._ticker           = ticker
         self._active_behaviour = None
         self._behaviours       = {}
 
     # ..........................................................................
-    def _register_behaviour(self, behaviour, callback):
+    def _register_behaviour(self, behaviour):
         '''
-        Register a Behaviour with the manager, referenced by its Event type.
+        Register a Behaviour with the manager, referenced by its trigger
+        Event type.
 
-        This is performed by the Behaviour's constructor and should not be
+        This is called by the Behaviour's constructor and should not be
         called directly.
         '''
-        self._behaviours[behaviour.event] = behaviour
-        self.add_event(behaviour.event)
+        self._behaviours[behaviour.trigger_event] = behaviour
+        self.add_event(behaviour.trigger_event)
         # attach callback to Ticker
-        self._ticker.add_callback(callback)
-        self._log.info('🈸 added behaviour \'{}\' linked to event \'{}\' to manager.'.format(behaviour.name, behaviour.event))
+        self._ticker.add_callback(behaviour.callback)
+        self._log.info('🥝 added behaviour \'{}\' linked to trigger event \'{}\' to manager.'.format(behaviour.name, behaviour.trigger_event))
 
     # ..........................................................................
-    def get_behavior_for_event(self, event):
+    def get_behavior_for_trigger_event(self, event):
         '''
-        Return the behaviour corresponding to the event type, null if
-        no such behaviour has been registered with the manager.
+        Return the behaviour corresponding to the (trigger) event type, null
+        if no such behaviour has been registered with the manager.
         '''
         return self._behaviours.get(event)
 
@@ -74,23 +75,23 @@ class BehaviourManager(Subscriber):
         for _key, _behaviour in self._behaviours.items():
             _behaviour.start()
             self._log.debug('started behaviour {}'.format(_behaviour.name))
-        super().start()
+        Subscriber.start(self)
 
     # ..........................................................................
     def enable(self):
-        self._log.debug('🍉 enable behaviours...')
+        self._log.debug('🥝 enable behaviours...')
         if not self.enabled:
-            super().enable()
+            Subscriber.enable(self)
             for _key, _behaviour in self._behaviours.items():
                 _behaviour.enable()
 
     # ..........................................................................
     def disable(self):
-        self._log.debug('🍉 disable behaviours...')
+        self._log.debug('🥝 disable behaviours...')
         if self.enabled:
             for _key, _behaviour in self._behaviours.items():
                 _behaviour.disable()
-            super().disable()
+            Subscriber.disable(self)
 
     # ..........................................................................
     def close(self):
@@ -102,7 +103,7 @@ class BehaviourManager(Subscriber):
         if not self.closed:
             for _key, _behaviour in self._behaviours.items():
                 _behaviour.close()
-            super().close()
+            Subscriber.close(self)
 
     # ..........................................................................
     async def process_message(self, message):
@@ -117,7 +118,7 @@ class BehaviourManager(Subscriber):
             raise GarbageCollectedError('cannot process message: message has been garbage collected. [3]')
         self._log.info('🥝 pre-processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.description) + Style.RESET_ALL)
         # get behaviour for event type
-        _behaviour = self.get_behavior_for_event(_event)
+        _behaviour = self.get_behavior_for_trigger_event(_event)
         if _behaviour is None:
             self._log.info('🥝 0. no behaviour associated with event {}.'.format(_event.description))
             # FIXME TODO how to associate INFRARED_CNTR to ROAM?
@@ -153,7 +154,7 @@ class BehaviourManager(Subscriber):
                 # same priority, no change
                 self._log.info('🥝 7. new behaviour {} has SAME priority as existing behaviour {}.'.format(_event.name, self._active_behaviour.name))
 
-        await super().process_message(message)
+        await Subscriber.process_message(self, message)
         self._log.info('post-processing message {}'.format(message.name))
 
 #EOF

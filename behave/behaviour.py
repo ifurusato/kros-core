@@ -25,31 +25,27 @@ from behave.behaviour_manager import BehaviourManager
 class Behaviour(ABC, Subscriber):
     '''
     An abstract class providing the basis for a behaviour which
-    executes a method every loop, implemented using a system
-    clock implemented using the Ticker class, which occurs when
-    the behaviour is registered with the BehaviourManager.
+    executes a callback method every loop, implemented using the
+    Ticker class, which is managed from the BehaviourManager.
+    The loop callback is registered during class construction.
 
     :param name:             the name of this behaviour
     :param config:           the application configuration
     :param message_bus:      the message bus
     :param message_factory:  the message factory
-    :param callback:         the optional callback function (can be added later)
     :param level:            the optional log level
     '''
-    def __init__(self, name, config, message_bus, message_factory, callback, level=Level.INFO):
+    def __init__(self, name, config, message_bus, message_factory, level=Level.INFO):
         self._log = Logger('beh:{}'.format(name), level)
         Subscriber.__init__(self, name, config, message_bus, suppressed=True, enabled=False, level=Level.INFO)
         if isinstance(message_factory, MessageFactory):
             self._message_factory = message_factory
         else:
             raise ValueError('expected MessageFactory, not {}.'.format(type(message_factory)))
-        self._callbacks = []
-        if callback:
-            self.add_callback(callback)
         # register this behaviour with behaviour manager
         _behaviour_manager = message_bus.get_subscriber(BehaviourManager.CLASS_NAME)
         if _behaviour_manager:
-            _behaviour_manager._register_behaviour(self, callback)
+            _behaviour_manager._register_behaviour(self)
         else:
             self._log.warning('no behaviour manager found: {} operating as subscriber only.'.format(self.name))
         self._log.info('ready.')
@@ -70,52 +66,61 @@ class Behaviour(ABC, Subscriber):
         Subscriber.start(self)
 
     # ..........................................................................
-    def add_callback(self, callback):
-        self._callbacks.append(callback)
-
-    # ..........................................................................
-    @abstractmethod
-    def event(self):
-        '''
-        Should be implemented as a @property.
-        '''
-        raise Exception('required method not implemented.')
-
-    # ..........................................................................
     async def process_message(self, message):
-        self._log.debug(self._color + Style.DIM + 'processing message {}'.format(message.name))
+        '''
+        Overrides the method in Subscriber.
+        '''
         if message.gcd:
             raise GarbageCollectedError('cannot process message: message has been garbage collected. [3]')
+        _event = message.payload.event
+        self._log.info(self._color + Style.NORMAL + '👿 processing message {}; with event '.format(message.name) + Fore.YELLOW + ' {}'.format(_event.description))
         # indicate that this subscriber has processed the message
         message.process(self)
         # now process message...
         if not self.suppressed:
-            self._log.info('👿 not suppressed.')
-            _event = message.payload.event
-
             # is this still valid for a Behaviour?
-            self._log.info('👿 executing loop method on event {}...'.format(_event.description))
+            self._log.info('👿 calling execute() method on event {}...'.format(_event.description))
             self.execute(message)
-            self._log.info('👿 executing callbacks...')
-            for _callback in self._callbacks:
-                self._log.info('👿 executing callback...')
-                _callback()
-
+            self._log.info('👿 called execute() method on event {}...'.format(_event.description))
         else:
-            self._log.debug(Style.DIM + '{} behaviour suppressed.'.format(self.name))
-        self._log.debug('👿 processed message {}'.format(message.name))
+            self._log.info(Style.DIM + '👿 {} behaviour suppressed.'.format(self.name))
+        self._log.info('👿 processed message {}'.format(message.name))
+
+    # ..........................................................................
+    @abstractmethod
+    def trigger_event(self):
+        '''
+        This returns the event used to trigger (toggle enable/disable) the
+        behaviour manually; it may be enabled or disabled through other 
+        means. The method should be implemented as a @property.
+        '''
+        raise NotImplementedError('trigger_event() must be implemented in subclasses.')
+
+    # ..........................................................................
+    @abstractmethod
+    def callback(self):
+        '''
+        The method called upon each loop iteration. This does nothing in this
+        abstract class and is meant to be extended by subclasses. It is up to
+        subclasses to suppress the results of this method when the behaviour
+        is suppressed as the Ticker will faithfully call it upon each loop
+        iteration.
+
+        :param message:  an optional Message passed along by the message bus
+        '''
+        raise NotImplementedError('callback() must be implemented in subclasses.')
 
     # ..........................................................................
     @abstractmethod
     def execute(self, message):
         '''
-        The method called upon each loop iteration. This does nothing in this
+        The method called by process_message(). This does nothing in this
         abstract class and is meant to be extended by subclasses. It is not
         called when the behaviour is suppressed.
 
-        :param message:  an optional Message passed along by the message bus
+        :param message:  the Message passed along by the message bus
         '''
-        self._log.info('👿 execute.')
+        raise NotImplementedError('execute() must be implemented in subclasses.')
 
     # ..........................................................................
     def enable(self):

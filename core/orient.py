@@ -96,6 +96,13 @@ class Speed(Enum):
         else:
             return Speed.FULL
 
+    @staticmethod
+    def from_string(value):
+        for s in Speed:
+            if value.upper() == s.name:
+                return s
+        raise NotImplementedError
+
 # ..............................................................................
 class Cardinal(Enum):
     NORTH     = ( 0, 'north' )

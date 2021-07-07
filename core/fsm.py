@@ -37,7 +37,7 @@ class IllegalStateError(RuntimeError):
     pass
 
 # ..............................................................................
-class FiniteStateMachine():
+class FiniteStateMachine(object):
     '''
     Implementation of a Finite State Machine (FSM).
 

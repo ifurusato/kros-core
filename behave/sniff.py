@@ -39,7 +39,10 @@ class Sniff(Behaviour):
 
     # ..........................................................................
     @property
-    def event(self):
+    def trigger_event(self):
+        '''
+        This returns the event used to enable/disable the behaviour manually.
+        '''
         return Event.SNIFF
 
     # ..........................................................................
@@ -52,7 +55,7 @@ class Sniff(Behaviour):
         The necessary state machine call to start the publisher, which performs
         any initialisations of active sub-components, etc.
         '''
-        super().start()
+        Behaviour.start(self)
 
     # ..........................................................................
     @property

@@ -39,7 +39,6 @@ class SlewLimiter(Component):
         Component.__init__(self, self._log, suppressed=False, enabled=True)
         self._millis  = lambda: int(round(time.time() * 1000))
         self._seconds = lambda: int(round(time.time()))
-        self._clamp   = lambda n: self._minimum_output if n <= self._minimum_output else self._maximum_output if n >= self._maximum_output else n
         # Slew configuration .........................................
         cfg = config['kros'].get('slew')
         self._minimum_output = cfg.get('minimum_output')
@@ -53,6 +52,8 @@ class SlewLimiter(Component):
         self._log.info('hysteresis: {:5.2f}'.format(self._slew_hysteresis))
         self._stats_queue      = None
         self._start_time       = None
+        # lambdas
+        self._clamp = lambda n: self._minimum_output if n <= self._minimum_output else self._maximum_output if n >= self._maximum_output else n
         self._log.info('ready.')
 
     # ..........................................................................
@@ -70,7 +71,7 @@ class SlewLimiter(Component):
     def enable(self):
         self._log.info('starting slew limiter with rate limit of {:5.3f}/cycle.'.format(self._slew_rate.limit))
         self._start_time = self._millis()
-        super().enable()
+        Component.enable(self)
 
     # ..........................................................................
     def reset(self, value):
@@ -137,22 +138,14 @@ class SlewLimiter(Component):
         if ( _value > target_value - self._slew_hysteresis and _value < target_value + self._slew_hysteresis ):
             self._log.debug('value: {:+06.2f}; target_value: {:+06.2f}'.format(_value, target_value))
             return target_value
-        # clip the output between min and max set in config (if negative we fix it before and after)
-        return -1.0 * self._clamp(-1.0 * _value) if _value < 0 else self._clamp(_value)
-#       if _value < 0:
-#           _clamped_value = -1.0 * self._clamp(-1.0 * _value)
-#       else:
-#           _clamped_value = self._clamp(_value)
-#       self._log.debug('slew from current {:>6.2f} to target {:>6.2f} returns:'.format(current_value, target_value) \
-#               + Fore.MAGENTA + '\t{:>6.2f}'.format(_clamped_value) + Fore.BLACK + ' (clamped from {:>6.2f})'.format(_value))
-#       return _clamped_value
+        # clamp the output between min and max set in config (if negative we fix it before and after)
+        return -1.0 * self._clamp(-1.0 * _value) if _value < 0.0 else self._clamp(_value)
 
     # ..........................................................................
     def _clip(self, value, min_value, max_value):
         '''
-        A replacement for numpy's clip():
-
-            _value = numpy.clip(target_value, _min, _max)
+        Like the existing _clamp lambda except the limits are passed
+        into the method.
         '''
         return min_value if value <= min_value else max_value if value >= max_value else value
 

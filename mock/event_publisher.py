@@ -60,24 +60,24 @@ class EventPublisher(Publisher):
     '''
     def __init__(self, config, message_bus, message_factory, motors, level=Level.INFO):
         Publisher.__init__(self, 'event', config, message_bus, message_factory, level)
-        self._level   = level
+        self._motors   = motors
+        self._level    = level
         self._counter  = itertools.count()
         self._triggered_ir_port_side = self._triggered_ir_port  = self._triggered_ir_cntr  = self._triggered_ir_stbd  = \
         self._triggered_ir_stbd_side = self._triggered_bmp_port = self._triggered_bmp_cntr = self._triggered_bmp_stbd = 0
         self._getch           = _Getch()
         self._flood_enable    = False
-        # value setter for INFRARED_CNTR
-        self._irc_value       = 100 
-        self._irc_min         = 50
-        self._irc_max         = 200
-        self._irc_incr        = 20
+        self._message_limit   = 3 # fixed message limit (testing only)
         self._clamp = lambda n: self._irc_min if n <= self._irc_min else self._irc_max if n >= self._irc_max else n
-        # TODO configuration
-        self._gamepad_publish_delay_sec = 0.01 # delay after Gamepad event
-        self._publish_delay_sec = 0.01         # delay after IFS event
-        self._loop_delay_sec  = 0.01           # delay on noop loop
-        self._limit           = 3
-        self._motors          = motors
+        # configuration ....................................
+        cfg = config['kros'].get('mock').get('event_publisher')
+        self._irc_value       = cfg.get('irc_init_value') # initial value of mocked center IR
+        self._irc_min         = cfg.get('irc_min')        # minimum center IR value
+        self._irc_max         = cfg.get('irc_max')        # maximum center IR value
+        self._irc_incr        = cfg.get('irc_incr')       # initially decreasing increment
+        self._gamepad_publish_delay_sec = cfg.get('gamepad_publish_delay_sec') # delay after Gamepad event
+        self._publish_delay_sec = cfg.get('publish_delay_sec') # delay after IFS event
+        self._loop_delay_sec  = cfg.get('noop_loop_delay_sec') # delay on noop loop
         # attempt to find the gamepad ......................
         self._gamepad = None
         self._log.info('connecting gamepad...')
@@ -141,7 +141,7 @@ class EventPublisher(Publisher):
 
     # ................................................................
     def enable(self):
-        super().enable()
+        Publisher.enable(self)
         if self.enabled:
             if self._message_bus.get_task_by_name(EventPublisher._PUBLISH_LOOP_NAME):
                 self._log.warning('already enabled.')
@@ -217,7 +217,7 @@ class EventPublisher(Publisher):
                             else:
                                 _message.value = dt.now() # we use a timestamp to guarantee each message is different
                             self._log.info('🐹 key-publishing message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
-                            await super().publish(_message)
+                            await Publisher.publish(self, _message)
                             self._log.info('🐹 key-published message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
                             # special case: check if all IFS sensors have been triggered 3 times; if so exit
                             if Event.is_ifs_event(_event):
@@ -235,7 +235,7 @@ class EventPublisher(Publisher):
                     _event = self._get_random_event()
                     _message = self._message_factory.get_message(_event, True)
                     self._log.info('flood-publishing message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
-                    await super().publish(_message)
+                    await Publisher.publish(self, _message)
                     self._log.info('flood-published message:' + Fore.WHITE + ' {}.'.format(_message.name))
                     await asyncio.sleep(random.triangular(0.2, 5.0, 2.0))
                 else:
@@ -275,7 +275,7 @@ class EventPublisher(Publisher):
     # ................................................................
     async def _gamepad_callback(self, message):
         self._log.info('gamepad callback for message:\t' + Fore.YELLOW + '{}'.format(message.event.description))
-        await super().publish(message)
+        await Publisher.publish(self, message)
 
     # ..........................................................................
     def _toggle_clock(self):
@@ -355,7 +355,7 @@ class EventPublisher(Publisher):
         Disable this publisher as well as shut down the message bus.
         '''
         self._message_bus.disable()
-        super().disable()
+        Publisher.disable(self)
         self._log.info('disabled publisher.')
 
     # ................................................................
@@ -414,35 +414,35 @@ class EventPublisher(Publisher):
         _event = message.event
         if _event is Event.BUMPER_PORT:
             self._print_event(Fore.RED, _event, message.value)
-            if self._triggered_bmp_port < self._limit:
+            if self._triggered_bmp_port < self._message_limit:
                 self._triggered_bmp_port += 1
         elif _event is Event.BUMPER_CNTR:
             self._print_event(Fore.BLUE, _event, message.value)
-            if self._triggered_bmp_cntr < self._limit:
+            if self._triggered_bmp_cntr < self._message_limit:
                 self._triggered_bmp_cntr += 1
         elif _event is Event.BUMPER_STBD:
             self._print_event(Fore.GREEN, _event, message.value)
-            if self._triggered_bmp_stbd < self._limit:
+            if self._triggered_bmp_stbd < self._message_limit:
                 self._triggered_bmp_stbd += 1
         elif _event is Event.INFRARED_PORT_SIDE:
             self._print_event(Fore.RED, _event, message.value)
-            if self._triggered_ir_port_side < self._limit:
+            if self._triggered_ir_port_side < self._message_limit:
                 self._triggered_ir_port_side += 1
         elif _event is Event.INFRARED_PORT:
             self._print_event(Fore.RED, _event, message.value)
-            if self._triggered_ir_port < self._limit:
+            if self._triggered_ir_port < self._message_limit:
                 self._triggered_ir_port += 1
         elif _event is Event.INFRARED_CNTR:
             self._print_event(Fore.BLUE, _event, message.value)
-            if self._triggered_ir_cntr < self._limit:
+            if self._triggered_ir_cntr < self._message_limit:
                 self._triggered_ir_cntr += 1
         elif _event is Event.INFRARED_STBD:
             self._print_event(Fore.GREEN, _event, message.value)
-            if self._triggered_ir_stbd < self._limit:
+            if self._triggered_ir_stbd < self._message_limit:
                 self._triggered_ir_stbd += 1
         elif _event is Event.INFRARED_STBD_SIDE:
             self._print_event(Fore.GREEN, _event, message.value)
-            if self._triggered_ir_stbd_side < self._limit:
+            if self._triggered_ir_stbd_side < self._message_limit:
                 self._triggered_ir_stbd_side += 1
         else:
             self._log.debug(Fore.BLACK + Style.BRIGHT + 'other event: {}'.format(_event.description))
@@ -461,19 +461,19 @@ class EventPublisher(Publisher):
             _style = color + Style.DIM
         else:
             _style = Fore.BLACK + Style.DIM
-        return _style + '{0:>9}'.format( label if ( value < self._limit ) else '' )
+        return _style + '{0:>9}'.format( label if ( value < self._message_limit ) else '' )
 
     # ......................................................
     @property
     def all_triggered(self):
-        return self._triggered_ir_port_side  >= self._limit \
-            and self._triggered_ir_port      >= self._limit \
-            and self._triggered_ir_cntr      >= self._limit \
-            and self._triggered_ir_stbd      >= self._limit \
-            and self._triggered_ir_stbd_side >= self._limit \
-            and self._triggered_bmp_port     >= self._limit \
-            and self._triggered_bmp_cntr     >= self._limit \
-            and self._triggered_bmp_stbd     >= self._limit
+        return self._triggered_ir_port_side  >= self._message_limit \
+            and self._triggered_ir_port      >= self._message_limit \
+            and self._triggered_ir_cntr      >= self._message_limit \
+            and self._triggered_ir_stbd      >= self._message_limit \
+            and self._triggered_ir_stbd_side >= self._message_limit \
+            and self._triggered_bmp_port     >= self._message_limit \
+            and self._triggered_bmp_cntr     >= self._message_limit \
+            and self._triggered_bmp_stbd     >= self._message_limit
 
     # ..........................................................................
     def print_help(self):

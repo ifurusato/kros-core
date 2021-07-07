@@ -281,7 +281,7 @@ class Level(Enum):
         self._label = label
 
     @staticmethod
-    def from_str(label):
+    def from_string(label):
         if label.upper()   == 'DEBUG':
             return Level.DEBUG
         elif label.upper() == 'INFO':

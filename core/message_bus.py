@@ -454,7 +454,7 @@ class MessageBus(Component):
     # ..........................................................................
     def enable(self):
         if not self.closed:
-            super().enable()
+            Component.enable(self)
             # this call will block
             self._get_event_loop()
             self._log.info('exited forever loop.')
@@ -489,7 +489,7 @@ class MessageBus(Component):
         enabled state of the subscriber. This may not be desired.
         '''
         if self.enabled:
-            super().disable()
+            Component.disable(self)
             self._log.info('disabling {:d} publishers...'.format(len(self._publishers)))
             for publisher in self._publishers:
                 publisher.disable()
@@ -511,8 +511,7 @@ class PeekableQueue(Queue):
     Extends the asyncio Queue to add peek() and clear() methods.
     '''
     def __init__(self, level=Level.INFO):
-#       super().__init__(maxsize=0, loop=None)
-        super().__init__(maxsize=0)
+        Queue.__init__(self, maxsize=0)
         self._log = Logger("queue", level)
         self._log.info('ready.')
 
@@ -526,12 +525,9 @@ class PeekableQueue(Queue):
         back onto the queue.
         '''
         _message = await self.get()
-#       if _message:
         self.task_done()
         self.put_nowait(_message)
         return _message
-#       else:
-#           return None
 
     # ..........................................................................
     def clear(self):

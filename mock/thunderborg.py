@@ -18,7 +18,7 @@ It only provides for setting and getting the power setting of motors 1 and 2.
 from core.logger import Level, Logger
 
 # Class used to control ThunderBorg
-class ThunderBorg:
+class ThunderBorg(object):
     """
 This module is designed to communicate with the ThunderBorg
     """

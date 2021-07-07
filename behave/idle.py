@@ -44,7 +44,10 @@ class Idle(Behaviour):
 
     # ..........................................................................
     @property
-    def event(self):
+    def trigger_event(self):
+        '''
+        This returns the event used to enable/disable the behaviour manually.
+        '''
         return Event.IDLE
 
     # ..........................................................................
@@ -58,7 +61,7 @@ class Idle(Behaviour):
         any initialisations of active sub-components, etc.
         '''
         if self.state is not State.STARTED:
-            super().start()
+            Behaviour.start(self)
 
     # ..........................................................................
     @property

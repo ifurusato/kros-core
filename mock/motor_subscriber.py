@@ -71,7 +71,7 @@ class MotorSubscriber(Subscriber):
             self._motors.dispatch_chadburn_event(message.payload)
         else:
             self._log.warning('unrecognised message {}'.format(message.name) + ''.format(message.event.description))
-        await super().process_message(message)
+        await Subscriber.process_message(self, message)
         self._log.debug('post-processing message {}'.format(message.name))
 
 #EOF

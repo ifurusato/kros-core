@@ -35,19 +35,20 @@ class Motor(Component):
             raise ValueError('null config argument.')
         if tb is None:
             raise ValueError('null thunderborg argument.')
-        # get motors configuration section (we don't actually use this in the mock)
-        cfg = config['kros'].get('motors')
+        self._tb = tb
         self._orientation = orientation
         self._log = Logger('motor:{}'.format(orientation.label), level)
         Component.__init__(self, self._log, suppressed=False, enabled=False)
-        self._tb = tb
         self._log.info('initialising {} motor...'.format(orientation))
+        # configuration
+        # get motors configuration section (we don't actually use this in the mock)
+        cfg = config['kros'].get('motors')
         self._motor_power_limit = cfg.get('motor_power_limit')  # power limit to motor
         self._log.info('motor power limit: {:5.2f}'.format(self._motor_power_limit))
-        self._steps = 0                      # step counter
-        self._max_power = 0.0                # capture maximum power applied
-        self._max_driving_power = 0.0        # capture maximum adjusted power applied
-        self._velocity = 0                   # currently a proxy for actual velocity
+        self._steps             = 0     # step counter
+        self._max_power         = 0.0   # capture maximum power applied
+        self._max_driving_power = 0.0   # capture maximum adjusted power applied
+        self._velocity          = 0     # currently a proxy for actual velocity
         self._log.info('ready.')
 
     # ..........................................................................
@@ -98,7 +99,7 @@ class Motor(Component):
     # ..........................................................................
     def disable(self):
         if self.enabled:
-            super().disable()
+            Component.disable(self)
             if self._orientation is Orientation.PORT:
                 self._tb.SetMotor1(0.0)
             else:

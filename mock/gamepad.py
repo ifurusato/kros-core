@@ -381,10 +381,8 @@ class GamepadControl(Enum):
     def get_by_code(self, code):
         for ctrl in GamepadControl:
             if ctrl.code == code:
-#               print(Fore.WHITE + Style.BRIGHT + 'ctrl code: {}'.format(code) + Style.RESET_ALL)
                 return ctrl
         return None
-
 
 # ..............................................................................
 class GamepadScan(object):

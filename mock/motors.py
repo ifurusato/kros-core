@@ -59,24 +59,36 @@ class Motors(Component):
         self._loop_thread          = None
         self._loop_enabled         = False
         self._event_counter        = itertools.count()
-        # constants
-        self._loop_delay_sec       = 0.5
-        self._max_velocity         = 100
-        self._accel_increment      = 5.0 # normal incremental acceleration 
-        self._decel_increment      = 5.0 # normal incremental deceleration
-        self._halt_ratio           = 0.4 # ratio used for quick _halt behaviour
-        self._brake_ratio          = 0.7 # ratio used for slower braking behaviour
-        self._spin_speed           = Speed.HALF # target velocity of spin
+        # configured constants
+        cfg = config['kros'].get('motors')
+        self._loop_delay_sec       = cfg.get('loop_delay_sec')    # main loop delay
+        self._max_velocity         = cfg.get('max_velocity')      # limit to motor velocity
+        self._accel_increment      = cfg.get('accel_increment')   # normal incremental acceleration 
+        self._decel_increment      = cfg.get('decel_increment')   # normal incremental deceleration
+        self._halt_ratio           = cfg.get('halt_ratio')        # ratio for quick _halt behaviour
+        self._brake_ratio          = cfg.get('brake_ratio')       # ratio for slower braking behaviour
+        self._spin_speed           = Speed.from_string(cfg.get('spin_speed')) # motor speed when spinning
         # variables
         self._port_target_velocity = 0.0 # the port motor target velocity for slewing
         self._stbd_target_velocity = 0.0 # the starboard motor target velocity for slewing
         self._decelerate_ratio     = 0.0 # variable used in loop
+        # lambdas
+        self._clamp = lambda n: ( -1.0 * self._max_velocity ) if n <= ( -1.0 * self._max_velocity ) else self._max_velocity if n >= self._max_velocity else n
         self._log.info('motors ready.')
 
     # ..........................................................................
     @property
     def name(self):
         return 'motors'
+
+    # ..........................................................................
+    @property
+    def max_velocity(self):
+        return self._max_velocity
+
+    @max_velocity.setter
+    def max_velocity(self, max_velocity):
+        self._max_velocity = max_velocity
 
     # ..........................................................................
     def start_loop(self):
@@ -409,24 +421,23 @@ class Motors(Component):
         (which can be a positive or negative value).
         '''
         if orientation is Orientation.PORT:
-            _updated_target_velocity = self._update_value(self._port_target_velocity, increment)
+            _updated_target_velocity = self._update_target_velocity(self._port_target_velocity, increment)
             self._log.info('increment port motor velocity:' + Fore.RED + ' {:5.2f} + {:5.2f} ➔ {:<5.2f}'.format(\
                     self._port_motor.velocity, increment, _updated_target_velocity))
         else:
-            _updated_target_velocity = self._update_value(self._stbd_target_velocity, increment)
+            _updated_target_velocity = self._update_target_velocity(self._stbd_target_velocity, increment)
             self._log.info('increment stbd motor velocity:' + Fore.GREEN + ' {:5.2f} + {:5.2f} ➔ {:<5.2f}'.format(\
                     self._stbd_motor.velocity, increment, _updated_target_velocity))
         self.set_motor_velocity(orientation, _updated_target_velocity)
 
     # ..........................................................................
-    def _update_value(self, value, increment):
-        # FIXME this overshoots the value
-        value += increment
-        if value > self._max_velocity:
-            value = self._max_velocity
-        elif value < -1.0 * self._max_velocity:
-            value = -1.0 * self._max_velocity
-        return value
+    def _update_target_velocity(self, value, increment):
+        '''
+        Updates the value by the increment, clamping the result based on
+        the maximum velocity limit.
+        '''
+        _value += increment
+        return -1.0 * self._clamp(-1.0 * _value) if _value < 0 else self._clamp(_value)
 
     # ..........................................................................
     def get_motor_velocity(self, orientation):
@@ -581,7 +592,7 @@ class Motors(Component):
         if not self._stbd_motor.enabled:
             self._stbd_motor.enable()
         self._stbd_slew_limiter.enable()
-        super().enable()
+        Component.enable(self)
         self._log.info('enabled.')
 
     # ..........................................................................
@@ -591,7 +602,7 @@ class Motors(Component):
         '''
         if self.enabled:
             self._log.info('disabling...')
-            super().disable()
+            Component.disable(self)
             if self.is_in_motion(): # if we're moving then halt
                 self._log.warning('event: motors are in motion (halting).')
                 self._halt()
@@ -610,7 +621,7 @@ class Motors(Component):
         Halts, turn everything off and stop doing anything.
         '''
         if not self.closed:
-            super().close()
+            Component.close(self)
             self._port_motor.close()
             self._stbd_motor.close()
 
