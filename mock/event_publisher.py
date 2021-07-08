@@ -20,16 +20,17 @@ from pathlib import Path
 from colorama import init, Fore, Style
 init()
 
-from core.event import Event
 from core.message_factory import MessageFactory
 from core.logger import Logger, Level
+from core.event import Event
+from core.util import Util
 from core.publisher import Publisher
 from mock.mock_gamepad import MockGamepad
 
 # ...............................................................
 class EventPublisher(Publisher):
 
-    _PUBLISH_LOOP_NAME = '__key_listener_loop'
+    _PUBLISH_LOOP_NAME = '_key_listener_loop'
 
     _RANDOM_EVENTS = [
             Event.INFRARED_PORT_SIDE, Event.INFRARED_PORT, Event.INFRARED_CNTR, Event.INFRARED_STBD, Event.INFRARED_STBD_SIDE, 
@@ -166,7 +167,7 @@ class EventPublisher(Publisher):
                         och = ord(ch)
                         self._log.debug('key "{}" ({}) pressed, processing...'.format(ch, och))
                         if och == 10 or och == 13: # LF or CR to print 48 newlines
-                            print(Logger._repeat('\n',48))
+                            print(Util.repeat('\n',48))
                             continue
                         elif och == 104: # 'h' help
                             self.print_help()
@@ -296,7 +297,7 @@ class EventPublisher(Publisher):
         if self._message_bus.verbose:
             self._log.info('setting verbosity to: ' + Fore.YELLOW + '{}'.format(self._message_bus.verbose))
         else:
-            print(Fore.CYAN + Logger._repeat(' ',60) + ': setting verbosity to: ' + Fore.YELLOW + '{}'.format(self._message_bus.verbose))
+            print(Fore.CYAN + Util.repeat(' ',60) + ': setting verbosity to: ' + Fore.YELLOW + '{}'.format(self._message_bus.verbose))
 
     # ..........................................................................
     def _toggle_gamepad(self):

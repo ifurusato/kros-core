@@ -180,10 +180,10 @@ class KROS(Component, FiniteStateMachine):
         self._behaviour_manager = BehaviourManager(self._config, self._message_bus, self._ticker, self._level) # a specialised subscriber
 #       self._behaviour_manager = None
         # create and register behaviours (listed in priority order)
-        self._roam = Roam(self._config, self._message_bus, self._message_factory, self._motors, self._level)
+#       self._roam = Roam(self._config, self._message_bus, self._message_factory, self._motors, self._level)
 #       _moth = Moth(self._config, self._message_bus, self._message_factory, self._motors, self._level)
 #       _sniff = Sniff(self._config, self._message_bus, self._message_factory, self._motors, self._level)
-#       _idle = Idle(self._config, self._message_bus, self._message_factory, self._motors, self._level)
+        _idle = Idle(self._config, self._message_bus, self._message_factory, self._level)
     
     #   _message_bus.print_publishers()
     #   _message_bus.print_subscribers()

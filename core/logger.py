@@ -7,7 +7,7 @@
 #
 # author:   Murray Altheim
 # created:  2020-01-14
-# modified: 2021-04-21
+# modified: 2021-07-08
 #
 
 import logging, math, traceback, threading
@@ -16,6 +16,8 @@ from datetime import datetime as dt
 from enum import Enum
 from colorama import init, Fore, Style
 init()
+
+from core.util import Util
 
 # ..............................................................................
 class Logger:
@@ -119,8 +121,9 @@ class Logger:
     # ..........................................................................
     def is_at_least(self, level):
         '''
-        Returns True if the current log level is less than or equals the argument.
-        E.g., 
+        Returns True if the current log level is less than or equals the
+        argument. E.g.,
+
             if self._log.is_at_least(Level.WARN):
                 # returns True for WARN or ERROR or CRITICAL
         '''
@@ -242,7 +245,7 @@ class Logger:
                 _message_2_right = info.rjust(_available_width - len(message) - 2)
                 self.info(Fore.WHITE + Style.BRIGHT + '{} {}'.format(message, _message_2_right))
             # print footer
-            self.info(Fore.WHITE + Style.BRIGHT + Logger._repeat('-', _available_width-1))
+            self.info(Fore.WHITE + Style.BRIGHT + Util.repeat('-', _available_width-1))
         # print spacer
         self.info('')
 
@@ -252,15 +255,11 @@ class Logger:
         if _hyphen_width <= 0:
             return message
         elif len(message) % 2 == 0: # message is even length
-            return Fore.WHITE + Style.BRIGHT + Logger._repeat('-', _hyphen_width) + '< ' + Fore.CYAN + Style.NORMAL\
-                    + message + Fore.WHITE + Style.BRIGHT + ' >' + Logger._repeat('-', _hyphen_width)
+            return Fore.WHITE + Style.BRIGHT + Util.repeat('-', _hyphen_width) + '< ' + Fore.CYAN + Style.NORMAL\
+                    + message + Fore.WHITE + Style.BRIGHT + ' >' + Util.repeat('-', _hyphen_width)
         else:
-            return Fore.WHITE + Style.BRIGHT + Logger._repeat('-', _hyphen_width) + '< ' + Fore.CYAN + Style.NORMAL\
-                    + message + Fore.WHITE + Style.BRIGHT + ' >' + Logger._repeat('-', _hyphen_width-1)
-
-    @staticmethod
-    def _repeat(s, wanted):
-        return (s * (wanted//len(s) + 1))[:wanted]
+            return Fore.WHITE + Style.BRIGHT + Util.repeat('-', _hyphen_width) + '< ' + Fore.CYAN + Style.NORMAL\
+                    + message + Fore.WHITE + Style.BRIGHT + ' >' + Util.repeat('-', _hyphen_width-1)
 
 # ..............................................................................
 class Level(Enum):

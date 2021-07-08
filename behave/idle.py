@@ -11,79 +11,162 @@
 #
 
 from abc import ABC, abstractmethod
+import itertools
+import asyncio
 from datetime import datetime as dt
 from colorama import init, Fore, Style
 init()
 
 from core.logger import Logger, Level
-from core.event import Event
+from core.util import Util
+from core.event import Event, Group
 from core.fsm import State
-from core.subscriber import Subscriber
-from behave.behaviour import Behaviour
+from core.publisher import Publisher
 
 # ...............................................................
-class Idle(Behaviour):
+class Idle(Publisher):
+
+    _PUBLISH_LOOP_NAME = '_idle_listener_loop'
+
     '''
-    Implements a idle behaviour.
+    Extends Publisher to implement a idle behaviour. This polls
+    the MessageBus' value for last message timestamp, and after
+    a certain amount of time has passed with no sensor events it
+    then triggers publication of an IDLE event message.
 
     :param name:            the name of this behaviour
     :param config:          the application configuration
     :param message_bus:     the asynchronous message bus
     :param message_factory: the factory for messages
-    :param motors:          the motor controller
     :param level:           the optional log level
     '''
-    def __init__(self, config, message_bus, message_factory, motors, level=Level.INFO):
-        Behaviour.__init__(self, 'idle', config, message_bus, message_factory, self._idle_callback, level)
+    def __init__(self, config, message_bus, message_factory, level=Level.INFO):
+        Publisher.__init__(self, 'idle', config, message_bus, message_factory, level)
         cfg = self._config['kros'].get('idle')
         self._idle_threshold_sec = cfg.get('idle_threshold_sec') # int value
         self._log.info('idle threshold: {:d} sec.'.format(self._idle_threshold_sec))
-        self._motors = motors
-        self.add_event(Event.IDLE)
+        self._publish_delay_sec = 1.0
+        self._counter = itertools.count()
+#       self.add_events([ Group.INFRARED, Group.BUMPER ])
         self._log.info('ready.')
 
     # ..........................................................................
-    @property
-    def trigger_event(self):
-        '''
-        This returns the event used to enable/disable the behaviour manually.
-        '''
-        return Event.IDLE
+#   @property
+#   def trigger_event(self):
+#       '''
+#       This returns the event used to enable/disable the behaviour manually.
+#       '''
+#       return Event.IDLE
 
     # ..........................................................................
-    def _idle_callback(self):
-        self._log.info('🌜 idle callback.')
-
-#   # ..........................................................................
     def start(self):
         '''
         The necessary state machine call to start the publisher, which performs
         any initialisations of active sub-components, etc.
         '''
         if self.state is not State.STARTED:
-            Behaviour.start(self)
+            Publisher.start(self)
 
-    # ..........................................................................
-    @property
-    def name(self):
-        return 'idle'
-
-    # ..........................................................................
-    def execute(self):
-        '''
-        The method called upon each loop iteration. This does nothing in this
-        abstract class and is meant to be extended by subclasses.
-        '''
-        _timestamp = self._message_bus.last_message_timestamp
-        if _timestamp is None:
-            self._log.info('🌜 idle loop execute; no previous messages.')
-        else:
-            _elapsed_ms = (dt.now() - _timestamp).total_seconds() * 1000.0
-            if ( _elapsed_ms / 1000.0 ) > self._idle_threshold_sec:
-                self._log.info('🍒 idle loop execute; {}'.format(Subscriber.get_formatted_time('message age:', _elapsed_ms)) 
-                        + Fore.YELLOW + ' type: {}'.format(type(_elapsed_ms)))
+    # ................................................................
+    def enable(self):
+        Publisher.enable(self)
+        if self.enabled:
+            if self._message_bus.get_task_by_name(Idle._PUBLISH_LOOP_NAME):
+                self._log.warning('already enabled.')
             else:
-                self._log.info('🌜 idle loop execute; {}'.format(Subscriber.get_formatted_time('message age:', _elapsed_ms)) 
-                        + Fore.YELLOW + ' type: {}'.format(type(_elapsed_ms)))
+                self._log.info('creating task for idle listener loop...')
+                self._message_bus.loop.create_task(self._idle_listener_loop(lambda: self.enabled), name=Idle._PUBLISH_LOOP_NAME)
+                self._log.info('enabled.')
+        else:
+            self._log.warning('failed to enable idle publisher.')
+
+    # ................................................................
+    async def _idle_listener_loop(self, f_is_enabled):
+        self._log.info('starting key listener loop: ' + Fore.YELLOW + 'type \'?\' for help, \'q\' or Ctrl-C to exit.')
+        while f_is_enabled():
+            _count = next(self._counter)
+            self._log.debug('🍥 [{:03d}] BEGIN loop...'.format(_count))
+            if not self.suppressed:
+                # check for last message's timestamp
+                _timestamp = self._message_bus.last_message_timestamp
+                if _timestamp is None:
+                    self._log.info('🐹 idle loop execute; no previous messages.')
+                else:
+                    _elapsed_ms = (dt.now() - _timestamp).total_seconds() * 1000.0
+                    if ( _elapsed_ms / 1000.0 ) > self._idle_threshold_sec:
+                        self._log.info('🐹 idle loop execute; {}'.format(Util.get_formatted_time('message age:', _elapsed_ms)) 
+                                + Fore.YELLOW + ' type: {}'.format(type(_elapsed_ms)))
+    
+                        self._log.info('"{}" ({}) pressed; publishing message for event: {}'.format(ch, och, _event))
+                        _message = self._message_factory.get_message(Event.ROAM, True)
+                        _message.value = dt.now()
+                        self._log.info('🐹 key-publishing message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
+                        await Publisher.publish(self, _message)
+                        self._log.info('🐹 key-published message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
+    
+                    else:
+                        self._log.info('🐹 idle loop execute; {}'.format(Util.get_formatted_time('message age:', _elapsed_ms)) 
+                                + Fore.BLUE + ' type: {}'.format(type(_elapsed_ms)))
+            else:
+                self._log.info('🐹 [{:03d}] SUPPRESSED.'.format(_count))
+
+            await asyncio.sleep(self._publish_delay_sec)
+            self._log.debug('🍥 [{:03d}] END loop.'.format(_count))
+
+        self._log.info('publish loop complete.')
+
+#   # ..........................................................................
+#   def callback(self):
+#       '''
+#       This is the loop that's going to be called at 1Hz. Create a modulo
+#       variable such that even nth call we'd check for the last message,
+#       and if none have occurred recently we'd trigger an IDLE message, or
+#       we'd call ROAM or something. The current trigger_even of IDLE is 
+#       probably wrong. This should be running all the time unless suppressed,
+#       as it is an idle behaviour.
+#       '''
+#       self._log.info('❄️  idle callback.')
+#       _timestamp = self._message_bus.last_message_timestamp
+#       if _timestamp is None:
+#           self._log.info('❄️  idle loop execute; no previous messages.')
+#       else:
+#           _elapsed_ms = (dt.now() - _timestamp).total_seconds() * 1000.0
+#           if ( _elapsed_ms / 1000.0 ) > self._idle_threshold_sec:
+#               self._log.info('❄️  idle loop execute; {}'.format(Util.get_formatted_time('message age:', _elapsed_ms)) 
+#                       + Fore.GREEN + ' type: {}'.format(type(_elapsed_ms)))
+#           else:
+#               self._log.info('❄️  idle loop execute; {}'.format(Util.get_formatted_time('message age:', _elapsed_ms)) 
+#                       + Fore.YELLOW + ' type: {}'.format(type(_elapsed_ms)))
+
+#   # ..........................................................................
+#   def execute(self, message):
+#       '''
+#       The method called upon each loop iteration.
+#
+#       :param message:  an optional Message passed along by the message bus
+#       '''
+#       if self.suppressed:
+#           self._log.info(Style.DIM + '🌜 idle execute() SUPPRESSED; message: {}'.format(message.event.description))
+#       else:
+#           self._log.info('🌜 idle execute() RELEASED; message: {}'.format(message.event.description))
+#           _timestamp = self._message_bus.last_message_timestamp
+#           if _timestamp is None:
+#               self._log.info('🌜 idle loop execute; no previous messages.')
+#           else:
+#               _elapsed_ms = (dt.now() - _timestamp).total_seconds() * 1000.0
+#               if ( _elapsed_ms / 1000.0 ) > self._idle_threshold_sec:
+#                   self._log.info('🌜 idle loop execute; {}'.format(Util.get_formatted_time('message age:', _elapsed_ms)) 
+#                           + Fore.GREEN + ' type: {}'.format(type(_elapsed_ms)))
+#               else:
+#                   self._log.info('🌜 idle loop execute; {}'.format(Util.get_formatted_time('message age:', _elapsed_ms)) 
+#                           + Fore.YELLOW + ' type: {}'.format(type(_elapsed_ms)))
+
+    # ..........................................................................
+    def disable(self):
+        '''
+        Disable this publisher.
+        '''
+        Publisher.disable(self)
+        self._log.info('disabled idle publisher.')
 
 #EOF

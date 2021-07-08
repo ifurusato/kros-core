@@ -19,7 +19,8 @@ init()
 
 from core.logger import Logger, Level
 from core.component import Component
-from core.event import Event
+from core.util import Util
+from core.event import Event, Group
 from core.fsm import FiniteStateMachine
 from core.message_bus import MessageBus
 
@@ -103,15 +104,22 @@ class Subscriber(Component, FiniteStateMachine):
         '''
         Adds the list of events to the list that this subscriber accepts.
         '''
-        if not isinstance(events, list):
-            raise ValueError('expected list argument, not: {}'.format(type(events)))
-        for _event in events:
-            if isinstance(_event, Event):
-                self.add_event(_event)
-            elif isinstance(_event, list):
-                self.add_events(_event)
-            else:
-                raise ValueError('unrecognised event value: {}'.format(type(_event)))
+        if not isinstance(events, list) and not isinstance(events, Group):
+            raise ValueError('expected list or Group argument, not: {}'.format(type(events)))
+        elif isinstance(events, Group):
+            _events = Event.by_group(events)
+            self.add_events(_events)
+        else:
+            for _event in events:
+                if isinstance(_event, Event):
+                    self.add_event(_event)
+                elif isinstance(_event, list):
+                    self.add_events(_event)
+                elif isinstance(_event, Group):
+                    _events = Event.by_group(_event)
+                    self.add_events(_events)
+                else:
+                    raise ValueError('unrecognised event value: {}'.format(type(_event)))
 
     def add_event(self, event):
         '''
@@ -207,6 +215,7 @@ class Subscriber(Component, FiniteStateMachine):
                 self._log.warning(self._color + 'message: {} already sent; event: {}'.format(_message.name, _message.event.description))
 
             # keep track of timestamp of last message
+            self._log.info(Fore.YELLOW + '🕘 last message timestamp: {}'.format(_message.timestamp))
             self._message_bus.last_message_timestamp = _message.timestamp
 
             # republish the message
@@ -302,35 +311,17 @@ class Subscriber(Component, FiniteStateMachine):
             self._log.debug(self._color + Style.BRIGHT + title + Style.NORMAL \
                     + ' id: ' + Style.BRIGHT + '{};'.format(message.name) + Style.NORMAL \
                     + ' event: ' + Style.BRIGHT + ( '{}; '.format(message.event.description) if message.event else 'n/a' ) + Style.NORMAL \
-                    + ' value: ' + Style.BRIGHT + Subscriber.get_formatted_value(message.payload.value))
+                    + ' value: ' + Style.BRIGHT + Util.get_formatted_value(message.payload.value))
         else:
             self._log.debug(self._color + Style.BRIGHT + title + Style.NORMAL + '\n' \
                     + Subscriber.LOG_INDENT + 'id: ' + Style.BRIGHT + '{};'.format(message.name) + Style.NORMAL \
                     + ' event: ' + Style.BRIGHT + ( '{}; '.format(message.event.description) if message.event else 'n/a: [gc\'d] ' ) + Style.NORMAL \
-                    + ' value: ' + Style.BRIGHT + Subscriber.get_formatted_value(message.payload.value) + '\n' + Style.NORMAL \
+                    + ' value: ' + Style.BRIGHT + Util.get_formatted_value(message.payload.value) + '\n' + Style.NORMAL \
                     + Subscriber.LOG_INDENT + '{:d} procd;'.format(message.processed) + ' sent {:d}x;'.format(message.sent) \
                             + ' expired? {}\n'.format(self._message_bus.is_expired(message)) \
                     + Subscriber.LOG_INDENT + 'procd by:\t{}\n'.format(message.print_procd()) \
                     + Subscriber.LOG_INDENT + 'acked by:\t{}\n'.format(message.print_acks()) \
-                    + Subscriber.LOG_INDENT + Subscriber.get_formatted_time('msg age: ', message.age) + '; ' + Subscriber.get_formatted_time('elapsed: ', elapsed))
-
-    # ..........................................................................
-    @staticmethod
-    def get_formatted_value(value):
-        if isinstance(value, float):
-            return '{:5.2f}'.format(value)
-        else:
-            return '{}'.format(value)
-
-    # ..........................................................................
-    @staticmethod
-    def get_formatted_time(label, value):
-       if value is None:
-           return ''
-       elif value > 1000.0:
-           return label + ' {:4.3f}s'.format(value/1000.0)
-       else:
-           return label + ' {:4.3f}ms'.format(value)
+                    + Subscriber.LOG_INDENT + Util.get_formatted_time('msg age: ', message.age) + '; ' + Util.get_formatted_time('elapsed: ', elapsed))
 
     # ..........................................................................
     def start(self):

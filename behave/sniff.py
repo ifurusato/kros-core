@@ -17,6 +17,7 @@ init()
 
 from core.logger import Logger, Level
 from core.event import Event
+from core.util import Util
 from core.subscriber import Subscriber
 from behave.behaviour import Behaviour
 
@@ -73,6 +74,6 @@ class Sniff(Behaviour):
             self._log.info('🌺 sniff loop execute; no previous messages.')
         else:
             _elapsed_ms = (dt.now() - _timestamp).total_seconds() * 1000.0
-            self._log.info('🌺 sniff loop execute; {}'.format(Subscriber.get_formatted_time('message age:', _elapsed_ms)))
+            self._log.info('🌺 sniff loop execute; {}'.format(Util.get_formatted_time('message age:', _elapsed_ms)))
 
 #EOF

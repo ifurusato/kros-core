@@ -7,7 +7,7 @@
 #
 # author:   Murray Altheim
 # created:  2020-05-19
-# modified: 2021-06-26
+# modified: 2021-07-08
 #
 
 import time
@@ -18,11 +18,10 @@ init()
 
 from core.logger import Logger, Level
 from core.event import Event
+from core.util import Util
 from core.orient import Orientation
 from core.fsm import State
 from behave.behaviour import Behaviour
-
-#from mock.rgbmatrix import RgbMatrix, Color, DisplayType, WipeDirection
 
 # ..............................................................................
 class Roam(Behaviour):
@@ -90,37 +89,6 @@ class Roam(Behaviour):
     def speed_limit(self):
         return self._speed_limit
 
-#   @speed_limit.setter
-#   def speed_limit(self, speed_limit):
-#       self._log.info('setting speed_limit to: {:5.2f}'.format(speed_limit))
-#       self._speed_limit = speed_limit
-
-#   # ..........................................................................
-#   def enable(self):
-#       '''
-#       The necessary state machine call to enable the publisher.
-#       '''
-#       Behaviour.enable(self)
-
-#   # ..........................................................................
-#   def disable(self):
-#       '''
-#       The state machine call to disable the publisher.
-#       '''
-#       Behaviour.disable(self)
-
-    # ..........................................................................
-    def _clip(self, value, min_value, max_value):
-        '''
-        A replacement for numpy's clip():
-
-            _value = numpy.clip(target_value, _min, _max)
-        '''
-        return min_value if value <= min_value else max_value if value >= max_value else value
-
-#   def clamp(n, minimum, maximum): 
-#       return max(minimum, min(n, maximum))
-
     # ..........................................................................
     @property
     def trigger_event(self):
@@ -129,7 +97,7 @@ class Roam(Behaviour):
         '''
         return Event.ROAM
 
-#   # ..........................................................................
+    # ..........................................................................
     def start(self):
         '''
         The state machine call to start the roam behaviour. Because this method
@@ -137,11 +105,6 @@ class Roam(Behaviour):
         '''
         if self.state is not State.STARTED:
             Behaviour.start(self)
-
-#   # ..........................................................................
-#   @property
-#   def name(self):
-#       return 'roam'
 
     # ..........................................................................
     def callback(self):
@@ -153,13 +116,13 @@ class Roam(Behaviour):
             if self._last_dt:
                 _elapsed_ms = (_dt_now - self._last_dt).total_seconds() * 1000.0
                 if self.speed_limit == self._max_speed:
-                    self._log.info('🌼 roam callback execute; {};\t'.format(self.get_formatted_time('message age:', _elapsed_ms)) 
+                    self._log.info('🌼 roam callback execute; {};'.format(Util.get_formatted_time('message age:', _elapsed_ms)) 
                             + Fore.BLUE + ' distance: {};'.format(self.distance)
-                            + Style.DIM + ' max speed: {:5.2f};'.format(self.speed_limit))
+                            + Style.DIM + ' speed limit: {:5.2f};'.format(self.speed_limit))
                 else:
-                    self._log.info('🌼 roam callback execute; {};\t'.format(self.get_formatted_time('message age:', _elapsed_ms)) 
+                    self._log.info('🌸 roam callback execute; {};'.format(Util.get_formatted_time('message age:', _elapsed_ms)) 
                             + Fore.BLUE + ' distance: {};'.format(self.distance)
-                            + Fore.GREEN + ' max speed: {:5.2f};'.format(self.speed_limit))
+                            + Fore.GREEN + ' speed limit: {:5.2f};'.format(self.speed_limit))
             self._last_dt = _dt_now
 
     # ..........................................................................
@@ -184,7 +147,6 @@ class Roam(Behaviour):
                     self._set_motor_speed_limit(Orientation.STBD)
                 else:
                     self._speed_limit = self._max_speed
-
                 self._log.info('🌼 processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {};'.format(_event.description) 
                         + Fore.BLUE + ' distance: {:5.2f};'.format(self.distance)
                         + Fore.GREEN + ' max speed: {:5.2f};'.format(self.speed_limit) 
@@ -200,7 +162,11 @@ class Roam(Behaviour):
         speed ahead never astern (reversing).
         '''
         _velocity = self._motors.get_motor_velocity(orientation)
-        _target_velocity = self._clip(_velocity, self._min_speed, self.speed_limit)
+        _target_velocity = Util.clip(_velocity, self._min_speed, self.speed_limit)
+        # TEMP test
+        _clipped = Util.clip(_velocity, self._min_speed, self.speed_limit)
+        if _target_velocity != _clipped:
+            raise Exception('clipped {} != clamped {}'.format(_target_velocity, _clipped))
         self._motors.set_motor_velocity(orientation, _target_velocity)
         self._log.info('🌼 set target velocity for {} motor to: {:5.2f} (limited by {:5.2f})'.format(orientation.name, _target_velocity, self.speed_limit))
 
@@ -212,7 +178,6 @@ class Roam(Behaviour):
         When the distance is less than min_distance, returns min_speed.
         Otherwise returns a ratio of distance to speed.
         '''
-
         if distance >= self._max_distance: # e.g., at 200cm return 100.0
             return self._max_speed
         elif distance < self._min_distance: # e.g., at 20cm return 0.0

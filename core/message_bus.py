@@ -55,7 +55,7 @@ class MessageBus(Component):
         self._publishers  = []
         self._subscribers = []
         self._loop        = None
-        self._last_msg_ts = None #dt.now() # timestamp of last message
+        self._last_message_timestamp = None #dt.now() # timestamp of last message
         self._arbitrator  = Arbitrator(level)
         self._max_age_ms  = 20.0
         self._publish_delay_sec = 0.01
@@ -68,11 +68,13 @@ class MessageBus(Component):
         Return the timestamp of the last message passed through the message bus.
         If no messages has passed through the bus the initial value is None.
         '''
-        return self._last_msg_ts
+        return self._last_message_timestamp
 
     @last_message_timestamp.setter
     def last_message_timestamp(self, timestamp):
-        self._last_msg_ts = timestamp
+        if timestamp is None:
+            raise ValueError('cannot set timestamp to null value.')
+        self._last_message_timestamp = timestamp
 
     # ..........................................................................
     @property
