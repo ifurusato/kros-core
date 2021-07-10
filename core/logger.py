@@ -31,7 +31,7 @@ class Logger:
     __color_critical = Fore.WHITE  + Style.NORMAL
     __color_reset    = Style.RESET_ALL
 
-    def __init__(self, name, level, log_to_file=False):
+    def __init__(self, name, level, mutex=None, log_to_file=False):
         '''
         Writes to a named log with the provided level, defaulting to a
         console (stream) handler unless 'log_to_file' is True, in which
@@ -51,7 +51,7 @@ class Logger:
         self.__ERROR_TOKEN = 'ERROR'
         self.__FATAL_TOKEN = 'FATAL'
         self._mf = '{}{} : {}{}'
-        self.mutex = threading.Lock()
+        self.mutex = mutex if mutex is not None else threading.Lock() 
         # some of this could be set via configuration
         self._include_timestamp = True
 #       _format='%(asctime)s.%(msecs)03d %(levelname)s {%(module)s} [%(funcName)s] %(message)s',

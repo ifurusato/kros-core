@@ -74,7 +74,8 @@ class Publisher(Component, FiniteStateMachine):
     async def publish(self, message):
         '''
         Asynchronously publishes the message to the message bus.
-        This is preferred to calling the message bus directly.
+        This is preferred to calling the message bus directly, and
+        as a rule should not be overridden by subclasses.
         '''
 #       self._log.debug(Fore.WHITE + '{} publishing message: {} (event: {})'.format(self.name, message.name, message.event.description))
         await self._message_bus.publish_message(message)

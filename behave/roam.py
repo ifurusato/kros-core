@@ -66,7 +66,7 @@ class Roam(Behaviour):
         self._log.info('configured speed: {:4.2f} to {:4.2f}'.format(self._min_speed, self._max_speed))
         self._ratio        = ( self._max_speed - self._min_speed ) / ( self._max_distance - self._min_distance )
         self._log.info('speed/distance ratio: {:4.2f} ({:.0%})'.format(self._ratio, self._ratio))
-        self.add_event(Event.INFRARED_CNTR)
+#       self.add_event(Event.INFRARED_CNTR)
         self._last_dt      = None
         self._log.info('ready.')
 
@@ -98,20 +98,12 @@ class Roam(Behaviour):
         return Event.ROAM
 
     # ..........................................................................
-    def start(self):
-        '''
-        The state machine call to start the roam behaviour. Because this method
-        is part of both superclasses we need to only call it once.
-        '''
-        if self.state is not State.STARTED:
-            Behaviour.start(self)
-
-    # ..........................................................................
     def callback(self):
+        self._log.info(Fore.YELLOW + '🌼 roam callback()...')
         if self.suppressed:
-            self._log.debug('roam callback suppressed.')
+            self._log.info(Fore.YELLOW + '🌼 roam callback suppressed.')
         else:
-            self._log.debug('roam callback released.')
+            self._log.info(Fore.YELLOW + '🌼 roam callback released.')
             _dt_now = dt.now()
             if self._last_dt:
                 _elapsed_ms = (_dt_now - self._last_dt).total_seconds() * 1000.0
@@ -124,6 +116,7 @@ class Roam(Behaviour):
                             + Fore.BLUE + ' distance: {};'.format(self.distance)
                             + Fore.GREEN + ' speed limit: {:5.2f};'.format(self.speed_limit))
             self._last_dt = _dt_now
+        self._log.info(Fore.YELLOW + '🌼 roam callback complete.')
 
     # ..........................................................................
     def execute(self, message):
@@ -132,6 +125,7 @@ class Roam(Behaviour):
 
         :param message:  an optional Message passed along by the message bus
         '''
+        self._log.info(Fore.YELLOW + '🌼 roam execute()...')
         if self.suppressed:
             self._log.info(Style.DIM + '🌼 roam execute() SUPPRESSED; message: {}'.format(message.event.description))
         else:
@@ -143,6 +137,7 @@ class Roam(Behaviour):
                 if self.enabled:
                     # TODO get current motor speed
                     self._speed_limit = self._convert_to_max_speed(self.distance)
+                    self._log.info('🌼 roam setting speed limit to: {}'.format(self._speed_limit))
                     self._set_motor_speed_limit(Orientation.PORT)
                     self._set_motor_speed_limit(Orientation.STBD)
                 else:
@@ -161,6 +156,7 @@ class Roam(Behaviour):
         The current speed cannot be less than zero as Roam should limit only
         speed ahead never astern (reversing).
         '''
+        self._log.info('🌼 setting motor speed limit...')
         _velocity = self._motors.get_motor_velocity(orientation)
         _target_velocity = Util.clip(_velocity, self._min_speed, self.speed_limit)
         # TEMP test
@@ -168,7 +164,7 @@ class Roam(Behaviour):
         if _target_velocity != _clipped:
             raise Exception('clipped {} != clamped {}'.format(_target_velocity, _clipped))
         self._motors.set_motor_velocity(orientation, _target_velocity)
-        self._log.info('🌼 set target velocity for {} motor to: {:5.2f} (limited by {:5.2f})'.format(orientation.name, _target_velocity, self.speed_limit))
+        self._log.info('🌼 set motor speed limit for {} motor to: {:5.2f} (limited by {:5.2f})'.format(orientation.name, _target_velocity, self.speed_limit))
 
     # ..........................................................................
     def _convert_to_max_speed(self, distance):

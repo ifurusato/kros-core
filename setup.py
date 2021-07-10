@@ -26,17 +26,21 @@
 #       'matrix11x7', \
 #       'rgbmatrix5x5', \
 #
+# you may find that you need to install psutil via apt:
+#
+#   % sudo apt-get install python3-psutil
+#
 # To build the package:
 #
-#  % python3 -m build
+#   % python3 -m build
 #
 # Then to download dependencies and install:
 #
-#  % sudo ./setup.py install
+#   % sudo ./setup.py install
 #
 # To run tests:
 #
-#  % pytest --pyargs kros-core
+#   % pytest --pyargs kros-core
 #
 
 from setuptools import setup, find_packages

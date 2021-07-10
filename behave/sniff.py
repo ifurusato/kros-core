@@ -24,7 +24,7 @@ from behave.behaviour import Behaviour
 # ...............................................................
 class Sniff(Behaviour):
     '''
-    Implements a sniffing behaviour.
+    Implements a sniffing behaviour, whatever that is.
 
     :param name:            the name of this behaviour
     :param config:          the application configuration
@@ -34,7 +34,7 @@ class Sniff(Behaviour):
     :param level:           the optional log level
     '''
     def __init__(self, config, message_bus, message_factory, motors, level=Level.INFO):
-        Behaviour.__init__(self, 'sniff', config, message_bus, message_factory, self._sniff_callback, level)
+        Behaviour.__init__(self, 'sniff', config, message_bus, message_factory, level)
         self._motors = motors
         self._log.info('ready.')
 
@@ -47,16 +47,16 @@ class Sniff(Behaviour):
         return Event.SNIFF
 
     # ..........................................................................
-    def _sniff_callback(self):
+    def callback(self):
         self._log.info('🌺 sniff callback.')
 
 #   # ..........................................................................
-    def start(self):
-        '''
-        The necessary state machine call to start the publisher, which performs
-        any initialisations of active sub-components, etc.
-        '''
-        Behaviour.start(self)
+#   def start(self):
+#       '''
+#       The necessary state machine call to start the publisher, which performs
+#       any initialisations of active sub-components, etc.
+#       '''
+#       Behaviour.start(self)
 
     # ..........................................................................
     @property

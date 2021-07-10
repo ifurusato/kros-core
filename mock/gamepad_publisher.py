@@ -29,7 +29,7 @@ from core.publisher import Publisher
 # ...............................................................
 class GamepadPublisher(Publisher):
 
-    _PUBLISH_LOOP_NAME = '__publish-loop__'
+    _PUBLISH_LOOP_NAME = '__gamepad_publish_loop'
 
     '''
     A Publisher that connects with a bluetooth-based gamepad.
@@ -107,7 +107,7 @@ class GamepadPublisher(Publisher):
                 return
             if self._gamepad:
                 self._gamepad.enable()
-                self._message_bus.loop.create_task(self._gamepad._gamepad_loop(self._gamepad_callback, lambda: self.enabled), name='__gamepad_callback')
+                self._message_bus.loop.create_task(self._gamepad._gamepad_loop(self._gamepad_publish_loop, lambda: self.enabled), name=GamepadPublisher._PUBLISH_LOOP_NAME)
 #               self._message_bus.loop.create_task(self._gamepad._gamepad_loop(self._gamepad_listener_loop, lambda: self.enabled), name='__gamepad_loop')
 #               self._message_bus.loop.create_task(self._gamepad._gamepad_loop(self._publish_message, lambda: self.enabled), name='__gamepad_loop')
             self._log.info('enabled')
@@ -124,7 +124,7 @@ class GamepadPublisher(Publisher):
 #       await Publisher.publish(self, message)
 
     # ................................................................
-    async def _gamepad_callback(self, message):
+    async def _gamepad_publish_loop(self, message):
         self._log.info('🎲 gamepad callback for message:\t' + Fore.YELLOW + '{}'.format(message.event.description))
         await Publisher.publish(self, message)
         await asyncio.sleep(self._publish_delay_sec)

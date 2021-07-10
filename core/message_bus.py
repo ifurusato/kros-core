@@ -55,7 +55,7 @@ class MessageBus(Component):
         self._publishers  = []
         self._subscribers = []
         self._loop        = None
-        self._last_message_timestamp = None #dt.now() # timestamp of last message
+        self._last_message_timestamp = None
         self._arbitrator  = Arbitrator(level)
         self._max_age_ms  = 20.0
         self._publish_delay_sec = 0.01
@@ -65,16 +65,19 @@ class MessageBus(Component):
     @property
     def last_message_timestamp(self):
         '''
-        Return the timestamp of the last message passed through the message bus.
-        If no messages has passed through the bus the initial value is None.
+        Return the timestamp of the moment the last message passed through 
+        the message bus. Note that this is not the timestamp of the message
+        itself. If no messages has passed through the bus the initial value
+        is None.
         '''
         return self._last_message_timestamp
 
-    @last_message_timestamp.setter
-    def last_message_timestamp(self, timestamp):
-        if timestamp is None:
-            raise ValueError('cannot set timestamp to null value.')
-        self._last_message_timestamp = timestamp
+    def update_last_message_timestamp(self):
+        '''
+        Updates the last_message_timestamp value to dt.now().
+        '''
+        self._log.info('🐳 update last_message_timestamp.')
+        self._last_message_timestamp = dt.now()
 
     # ..........................................................................
     @property
@@ -100,6 +103,7 @@ class MessageBus(Component):
         '''
         Clears the task list of any completed tasks.
         '''
+#       breakpoint()
         _tasks = self.get_all_tasks()
         if len(_tasks) == 0:
             self._log.debug('no outstanding tasks.')
@@ -107,9 +111,10 @@ class MessageBus(Component):
             self._log.debug('clearing {:d} task{}...'.format(len(_tasks), ('' if len(_tasks) == 1 else 's')))
             for _task in _tasks:
                 if not _task.cancelled():
+                    self._log.debug('cancelling task:\t' + Fore.YELLOW + '{}...'.format(_task.get_name()))
                     _task.cancel()
                 if _task.done():
-                    self._log.debug('removing completed task:\t' + Fore.BLUE + '{}...'.format(_task.get_name()))
+                    self._log.debug('removing completed task:\t' + Fore.YELLOW + '{}...'.format(_task.get_name()))
                     _tasks.remove(_task)
                 else:
                     self._log.debug('incomplete task:\t' + Fore.BLUE + '{}'.format(_task.get_name()))
@@ -333,6 +338,7 @@ class MessageBus(Component):
             for subscriber in self._subscribers:
                 self._log.debug('publishing to subscriber {}...'.format(subscriber.name))
                 await subscriber.consume()
+                self._log.debug('published to subscriber {}...'.format(subscriber.name))
         self._log.info('completed consume loop with {:d} subscriber{}...'.format(len(self._subscribers), '' if len(self._subscribers) == 1 else 's'))
 
     # ..........................................................................
@@ -397,6 +403,8 @@ class MessageBus(Component):
         self._log.info('rx request to publish message: {}'.format(message.name)
                 + ' (event: {}; age: {:d}ms);'.format(message.event.description, message.age))
         _put_task = asyncio.create_task(self._queue.put(message), name='publish-message-{}'.format(message.name))
+        # the first time the message is published we update the 'last_message_timestamp'
+        self.update_last_message_timestamp()
         self._log.debug(Style.DIM + 'created task: {}'.format(_put_task.get_name()))
         await asyncio.sleep(self._publish_delay_sec)
 
@@ -410,6 +418,8 @@ class MessageBus(Component):
         '''
 #       self._log.debug('republishing message: {} (event: {}; age: {:d}ms);'.format(message.name, message.event.description, message.age))
         asyncio.create_task(self._queue.put(message), name='republish-message-{}'.format(message.name))
+        # when the message is republished we also update the 'last_message_timestamp'
+        self.update_last_message_timestamp()
         self._log.debug('republished message: {} (event: {}; age: {:d}ms);'.format(message.name, message.event.description, message.age))
 
     # exception handling .......................................................
@@ -448,6 +458,8 @@ class MessageBus(Component):
         A convenience method that returns the first found instance of a task
         with the given name, otherwise null (None).
         '''
+        if name is None:
+            raise ValueError('null name argument.')
         for _task in asyncio.all_tasks():
             if _task.get_name() == name:
                 return _task

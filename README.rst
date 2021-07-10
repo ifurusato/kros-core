@@ -107,10 +107,14 @@ the script via::
 
     pub_sub_test.py
 
-to start the message bus event loop. The robot sensors are simulated via key
-presses. You can type '?' to see a display mapping which key fires which event
-(apologies if your keyboard doesn't match mine). You can type 'i' for system 
-information. To quit, type 'q' or Ctrl-C.
+to start the message bus event loop, or::
+
+    python3 -m pdb kros.py -s
+
+to start with the Python debugger 'pdb' active. The robot sensors are simulated
+via key presses. You can type '?' to see a display mapping which key fires which
+event (apologies if your keyboard doesn't match mine). You can type 'i' for
+system information. To quit, type 'q' or Ctrl-C.
 
 For example, you can type 'z' to display the motor status in a loop, then '8' 
 for Full Ahead (maximum speed), increase or decrease port and starboard motor

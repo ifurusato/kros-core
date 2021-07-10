@@ -36,10 +36,9 @@ class BehaviourManager(Subscriber):
     :param color:        the color for messages
     :param level:        the logging level 
     '''
-    def __init__(self, config, message_bus, ticker, level=Level.INFO):
+    def __init__(self, config, message_bus, level=Level.INFO):
         Subscriber.__init__(self, BehaviourManager.CLASS_NAME,
                 config, message_bus=message_bus, color=Fore.RED, suppressed=False, enabled=True, level=Level.INFO)
-        self._ticker           = ticker
         self._active_behaviour = None
         self._behaviours       = {}
 
@@ -54,8 +53,6 @@ class BehaviourManager(Subscriber):
         '''
         self._behaviours[behaviour.trigger_event] = behaviour
         self.add_event(behaviour.trigger_event)
-        # attach callback to Ticker
-        self._ticker.add_callback(behaviour.callback)
         self._log.info('🥝 added behaviour \'{}\' linked to trigger event \'{}\' to manager.'.format(behaviour.name, behaviour.trigger_event))
 
     # ..........................................................................
@@ -79,7 +76,7 @@ class BehaviourManager(Subscriber):
 
     # ..........................................................................
     def enable(self):
-        self._log.debug('🥝 enable behaviours...')
+        self._log.debug('enable behaviours...')
         if not self.enabled:
             Subscriber.enable(self)
             for _key, _behaviour in self._behaviours.items():
@@ -87,7 +84,7 @@ class BehaviourManager(Subscriber):
 
     # ..........................................................................
     def disable(self):
-        self._log.debug('🥝 disable behaviours...')
+        self._log.debug('disable behaviours...')
         if self.enabled:
             for _key, _behaviour in self._behaviours.items():
                 _behaviour.disable()
@@ -113,48 +110,53 @@ class BehaviourManager(Subscriber):
         :param message:  the message to process.
         '''
         _event = message.event
-        self._log.info('🥝 PRE-pre-processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.description) + Style.RESET_ALL)
         if message.gcd:
             raise GarbageCollectedError('cannot process message: message has been garbage collected. [3]')
-        self._log.info('🥝 pre-processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.description) + Style.RESET_ALL)
+        self._log.debug('pre-processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.description) + Style.RESET_ALL)
+#       breakpoint()
         # get behaviour for event type
         _behaviour = self.get_behavior_for_trigger_event(_event)
         if _behaviour is None:
-            self._log.info('🥝 0. no behaviour associated with event {}.'.format(_event.description))
-            # FIXME TODO how to associate INFRARED_CNTR to ROAM?
+            self._log.debug('no behaviour associated with event {}.'.format(_event.description))
+
         elif not _behaviour.suppressed:
-            self._log.info('🥝 1. suppressing behaviour {}...'.format(_behaviour.name))
+            self._log.debug('suppressing behaviour {}...'.format(_behaviour.name))
             _behaviour.suppress()
             if self._active_behaviour is _behaviour:
                 # then clear the active behavior
                 self._active_behaviour = None
+
         elif self._active_behaviour is None: # no current active behaviour so just release this one
-            self._log.info('🥝 2. releasing behaviour {}...'.format(_behaviour.name))
+            self._log.debug('releasing behaviour {}...'.format(_behaviour.name))
             self._active_behaviour = _behaviour
             _behaviour.release()
+
         elif self._active_behaviour is _behaviour: # if the current active behaviour is already this one, we ignore the message
-            self._log.info('🥝 3. behaviour {} already released.'.format(_behaviour.name))
+            self._log.debug('behaviour {} already released.'.format(_behaviour.name))
+
         else:
-            self._log.info('🥝 4. there is a behaviour {} already running.'.format(self._active_behaviour.name))
+            self._log.debug('there is a behaviour {} already running.'.format(self._active_behaviour.name))
             _compare = _event.compare_to_priority_of(self._active_behaviour.event)
             if _compare == 1:
-                self._log.info('🥝 5. new behaviour {} is HIGHER priority than existing behaviour {}.'.format(_event.name, self._active_behaviour.name))
+                self._log.debug('new behaviour {} is HIGHER priority than existing behaviour {}.'.format(_event.name, self._active_behaviour.name))
                 # the current active behaviour is a lower priority so we suppress the existing and release the new one
-                self._log.info('🥝 5a. suppressing old behaviour {}...'.format(self._active_behaviour.name))
+                self._log.debug('suppressing old behaviour {}...'.format(self._active_behaviour.name))
                 self._active_behaviour.suppress()
-                self._log.info('🥝 5b. setting new behaviour as active {}...'.format(_behaviour.name))
+                self._log.debug('setting new behaviour as active {}...'.format(_behaviour.name))
                 self._active_behaviour = _behaviour
-                self._log.info('🥝 5c. releasing new behaviour {}...'.format(self._active_behaviour.name))
+                self._log.debug('releasing new behaviour {}...'.format(self._active_behaviour.name))
                 self._active_behaviour.release()
-                self._log.info('🥝 5d. done.')
+                self._log.debug('done.')
             elif _compare == -1:
-                self._log.info('🥝 6. new behaviour {} is LOWER priority than existing behaviour {}.'.format(_event.name, self._active_behaviour.name))
+                self._log.debug('new behaviour {} is LOWER priority than existing behaviour {}.'.format(_event.name, self._active_behaviour.name))
                 # the current active behaviour is a higher priority so we ignore the request to alter it
             else: # _compare == 0: 
                 # same priority, no change
-                self._log.info('🥝 7. new behaviour {} has SAME priority as existing behaviour {}.'.format(_event.name, self._active_behaviour.name))
+                self._log.debug('new behaviour {} has SAME priority as existing behaviour {}.'.format(_event.name, self._active_behaviour.name))
 
+        self._log.debug('awaiting subscriber process_message {}.'.format(_event.name))
         await Subscriber.process_message(self, message)
-        self._log.info('post-processing message {}'.format(message.name))
+        self._log.debug('complete: awaited subscriber process_message {}.'.format(_event.name))
+        self._log.debug('post-processing message {}'.format(message.name))
 
 #EOF

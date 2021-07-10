@@ -33,7 +33,7 @@ class Moth(Behaviour):
     :param level:           the optional log level
     '''
     def __init__(self, config, message_bus, message_factory, motors, level=Level.INFO):
-        Behaviour.__init__(self, 'moth', config, message_bus, message_factory, self._moth_callback, level)
+        Behaviour.__init__(self, 'moth', config, message_bus, message_factory, level)
         cfg = self._config['kros'].get('moth')
         self._anti_moth = cfg.get('anti_moth')
         self._log.info('anti-moth: {}'.format(self._anti_moth))
@@ -49,21 +49,8 @@ class Moth(Behaviour):
         return Event.MOTH
 
     # ..........................................................................
-    def _moth_callback(self):
+    def callback(self):
         self._log.info('🍀 moth callback.')
-
-#   # ..........................................................................
-    def start(self):
-        '''
-        The necessary state machine call to start the publisher, which performs
-        any initialisations of active sub-components, etc.
-        '''
-        Behaviour.start(self)
-
-    # ..........................................................................
-    @property
-    def name(self):
-        return 'moth'
 
     # ..........................................................................
     def execute(self):

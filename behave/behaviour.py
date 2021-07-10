@@ -24,9 +24,7 @@ from behave.behaviour_manager import BehaviourManager
 # ...............................................................
 class Behaviour(ABC, Subscriber):
     '''
-    An abstract class providing the basis for a behaviour which
-    executes a callback method every loop, implemented using the
-    Ticker class, which is managed from the BehaviourManager.
+    An abstract class providing the basis for a behaviour.
     The loop callback is registered during class construction.
 
     :param name:             the name of this behaviour
@@ -54,16 +52,6 @@ class Behaviour(ABC, Subscriber):
     @property
     def message_factory(self):
         return self._message_factory
-
-    # ..........................................................................
-    @abstractmethod
-    def start(self):
-        '''
-        The necessary state machine call to start the behaviour, which performs
-        any initialisations of active sub-components, etc.
-        '''
-        self._log.info('start.')
-        Subscriber.start(self)
 
     # ..........................................................................
     async def process_message(self, message):
@@ -95,20 +83,6 @@ class Behaviour(ABC, Subscriber):
         means. The method should be implemented as a @property.
         '''
         raise NotImplementedError('trigger_event() must be implemented in subclasses.')
-
-    # ..........................................................................
-    @abstractmethod
-    def callback(self):
-        '''
-        The method called upon each loop iteration. This does nothing in this
-        abstract class and is meant to be extended by subclasses. It is up to
-        subclasses to suppress the results of this method when the behaviour
-        is suppressed as the Ticker will faithfully call it upon each loop
-        iteration.
-
-        :param message:  an optional Message passed along by the message bus
-        '''
-        raise NotImplementedError('callback() must be implemented in subclasses.')
 
     # ..........................................................................
     @abstractmethod

@@ -26,7 +26,7 @@ from core.publisher import Publisher
 # ...............................................................
 class Idle(Publisher):
 
-    _PUBLISH_LOOP_NAME = '_idle_listener_loop'
+    _LISTENER_LOOP_NAME = '__idle_listener_loop'
 
     '''
     Extends Publisher to implement a idle behaviour. This polls
@@ -45,7 +45,9 @@ class Idle(Publisher):
         cfg = self._config['kros'].get('idle')
         self._idle_threshold_sec = cfg.get('idle_threshold_sec') # int value
         self._log.info('idle threshold: {:d} sec.'.format(self._idle_threshold_sec))
-        self._publish_delay_sec = 1.0
+        self._idle_loop_delay_sec = cfg.get('idle_loop_delay_sec')
+        self._log.info('idle loop delay: {:4.2f} sec.'.format(self._idle_threshold_sec)) # float value
+        self._idle_loop_running = False
         self._counter = itertools.count()
 #       self.add_events([ Group.INFRARED, Group.BUMPER ])
         self._log.info('ready.')
@@ -71,49 +73,52 @@ class Idle(Publisher):
     def enable(self):
         Publisher.enable(self)
         if self.enabled:
-            if self._message_bus.get_task_by_name(Idle._PUBLISH_LOOP_NAME):
-                self._log.warning('already enabled.')
+            if self._message_bus.get_task_by_name(Idle._LISTENER_LOOP_NAME) or self._idle_loop_running:
+                raise Exception('already enabled.')
+#               self._log.warning('already enabled.')
             else:
                 self._log.info('creating task for idle listener loop...')
-                self._message_bus.loop.create_task(self._idle_listener_loop(lambda: self.enabled), name=Idle._PUBLISH_LOOP_NAME)
+                self._idle_loop_running = True
+                self._message_bus.loop.create_task(self._idle_listener_loop(lambda: self.enabled), name=Idle._LISTENER_LOOP_NAME)
                 self._log.info('enabled.')
         else:
             self._log.warning('failed to enable idle publisher.')
 
     # ................................................................
     async def _idle_listener_loop(self, f_is_enabled):
-        self._log.info('starting key listener loop: ' + Fore.YELLOW + 'type \'?\' for help, \'q\' or Ctrl-C to exit.')
+        self._log.info('starting idle listener loop: ' + Fore.YELLOW + 'type \'?\' for help, \'q\' or Ctrl-C to exit.')
         while f_is_enabled():
             _count = next(self._counter)
-            self._log.debug('🍥 [{:03d}] BEGIN loop...'.format(_count))
+            self._log.debug('[{:03d}] BEGIN idle loop...'.format(_count))
             if not self.suppressed:
                 # check for last message's timestamp
                 _timestamp = self._message_bus.last_message_timestamp
                 if _timestamp is None:
-                    self._log.info('🐹 idle loop execute; no previous messages.')
+                    self._log.info(Fore.BLACK + '[{:03d}] idle loop execute; no previous messages.'.format(_count))
                 else:
                     _elapsed_ms = (dt.now() - _timestamp).total_seconds() * 1000.0
                     if ( _elapsed_ms / 1000.0 ) > self._idle_threshold_sec:
-                        self._log.info('🐹 idle loop execute; {}'.format(Util.get_formatted_time('message age:', _elapsed_ms)) 
+                        self._log.info('[{:03d}] idle loop execute; {}'.format(_count, Util.get_formatted_time('message age:', _elapsed_ms)) 
                                 + Fore.YELLOW + ' type: {}'.format(type(_elapsed_ms)))
     
-                        self._log.info('"{}" ({}) pressed; publishing message for event: {}'.format(ch, och, _event))
                         _message = self._message_factory.get_message(Event.ROAM, True)
                         _message.value = dt.now()
-                        self._log.info('🐹 key-publishing message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
+                        self._log.debug('publishing message for event: {}; value: {}'.format(_message.event.description, _message.value))
+
+                        self._log.debug('key-publishing message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
                         await Publisher.publish(self, _message)
-                        self._log.info('🐹 key-published message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
+                        self._log.debug('key-published message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
     
                     else:
-                        self._log.info('🐹 idle loop execute; {}'.format(Util.get_formatted_time('message age:', _elapsed_ms)) 
+                        self._log.debug('idle loop execute; {}'.format(Util.get_formatted_time('message age:', _elapsed_ms)) 
                                 + Fore.BLUE + ' type: {}'.format(type(_elapsed_ms)))
             else:
-                self._log.info('🐹 [{:03d}] SUPPRESSED.'.format(_count))
+                self._log.debug('[{:03d}] idle suppressed.'.format(_count))
 
-            await asyncio.sleep(self._publish_delay_sec)
-            self._log.debug('🍥 [{:03d}] END loop.'.format(_count))
+            await asyncio.sleep(self._idle_loop_delay_sec)
+            self._log.debug('[{:03d}] END idle loop.'.format(_count))
 
-        self._log.info('publish loop complete.')
+        self._log.info('idle loop complete.')
 
 #   # ..........................................................................
 #   def callback(self):
