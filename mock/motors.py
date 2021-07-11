@@ -60,14 +60,14 @@ class Motors(Component):
         self._loop_enabled         = False
         self._event_counter        = itertools.count()
         # configured constants
-        cfg = config['kros'].get('motors')
-        self._loop_delay_sec       = cfg.get('loop_delay_sec')    # main loop delay
-        self._max_velocity         = cfg.get('max_velocity')      # limit to motor velocity
-        self._accel_increment      = cfg.get('accel_increment')   # normal incremental acceleration 
-        self._decel_increment      = cfg.get('decel_increment')   # normal incremental deceleration
-        self._halt_ratio           = cfg.get('halt_ratio')        # ratio for quick _halt behaviour
-        self._brake_ratio          = cfg.get('brake_ratio')       # ratio for slower braking behaviour
-        self._spin_speed           = Speed.from_string(cfg.get('spin_speed')) # motor speed when spinning
+        _cfg = config['kros'].get('motors')
+        self._loop_delay_sec       = _cfg.get('loop_delay_sec')    # main loop delay
+        self._max_velocity         = _cfg.get('max_velocity')      # limit to motor velocity
+        self._accel_increment      = _cfg.get('accel_increment')   # normal incremental acceleration 
+        self._decel_increment      = _cfg.get('decel_increment')   # normal incremental deceleration
+        self._halt_ratio           = _cfg.get('halt_ratio')        # ratio for quick _halt behaviour
+        self._brake_ratio          = _cfg.get('brake_ratio')       # ratio for slower braking behaviour
+        self._spin_speed           = Speed.from_string(_cfg.get('spin_speed')) # motor speed when spinning
         # variables
         self._port_target_velocity = 0.0 # the port motor target velocity for slewing
         self._stbd_target_velocity = 0.0 # the starboard motor target velocity for slewing

@@ -42,8 +42,8 @@ class Motor(Component):
         self._log.info('initialising {} motor...'.format(orientation))
         # configuration
         # get motors configuration section (we don't actually use this in the mock)
-        cfg = config['kros'].get('motors')
-        self._motor_power_limit = cfg.get('motor_power_limit')  # power limit to motor
+        _cfg = config['kros'].get('motors')
+        self._motor_power_limit = _cfg.get('motor_power_limit')  # power limit to motor
         self._log.info('motor power limit: {:5.2f}'.format(self._motor_power_limit))
         self._steps             = 0     # step counter
         self._max_power         = 0.0   # capture maximum power applied

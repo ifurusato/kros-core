@@ -56,12 +56,12 @@ class Roam(Behaviour):
         Behaviour.__init__(self, 'roam', config, message_bus, message_factory, level)
         self._motors       = motors
         self._distance     = None
-        cfg = config['kros'].get('roam')
-        self._min_distance = cfg.get('min_distance')
-        self._max_distance = cfg.get('max_distance')
+        _cfg = config['kros'].get('behaviour').get('roam')
+        self._min_distance = _cfg.get('min_distance')
+        self._max_distance = _cfg.get('max_distance')
         self._log.info('configured distance: {:4.2f} to {:4.2f}'.format(self._min_distance, self._max_distance))
-        self._min_speed    = cfg.get('min_speed')
-        self._max_speed    = cfg.get('max_speed')
+        self._min_speed    = _cfg.get('min_speed')
+        self._max_speed    = _cfg.get('max_speed')
         self._speed_limit  = self._max_speed # initial speed limit
         self._log.info('configured speed: {:4.2f} to {:4.2f}'.format(self._min_speed, self._max_speed))
         self._ratio        = ( self._max_speed - self._min_speed ) / ( self._max_distance - self._min_distance )

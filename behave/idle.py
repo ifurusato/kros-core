@@ -42,10 +42,10 @@ class Idle(Publisher):
     '''
     def __init__(self, config, message_bus, message_factory, level=Level.INFO):
         Publisher.__init__(self, 'idle', config, message_bus, message_factory, level)
-        cfg = self._config['kros'].get('idle')
-        self._idle_threshold_sec = cfg.get('idle_threshold_sec') # int value
+        _cfg = self._config['kros'].get('behaviour').get('idle')
+        self._idle_threshold_sec = _cfg.get('idle_threshold_sec') # int value
         self._log.info('idle threshold: {:d} sec.'.format(self._idle_threshold_sec))
-        self._idle_loop_delay_sec = cfg.get('idle_loop_delay_sec')
+        self._idle_loop_delay_sec = _cfg.get('idle_loop_delay_sec')
         self._log.info('idle loop delay: {:4.2f} sec.'.format(self._idle_threshold_sec)) # float value
         self._idle_loop_running = False
         self._counter = itertools.count()
@@ -89,7 +89,7 @@ class Idle(Publisher):
         self._log.info('starting idle listener loop: ' + Fore.YELLOW + 'type \'?\' for help, \'q\' or Ctrl-C to exit.')
         while f_is_enabled():
             _count = next(self._counter)
-            self._log.debug('[{:03d}] BEGIN idle loop...'.format(_count))
+            self._log.info('[{:03d}] BEGIN idle loop...'.format(_count))
             if not self.suppressed:
                 # check for last message's timestamp
                 _timestamp = self._message_bus.last_message_timestamp
@@ -103,20 +103,20 @@ class Idle(Publisher):
     
                         _message = self._message_factory.get_message(Event.ROAM, True)
                         _message.value = dt.now()
-                        self._log.debug('publishing message for event: {}; value: {}'.format(_message.event.description, _message.value))
+                        self._log.info('publishing message for event: {}; value: {}'.format(_message.event.description, _message.value))
 
-                        self._log.debug('key-publishing message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
+                        self._log.info('key-publishing message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
                         await Publisher.publish(self, _message)
-                        self._log.debug('key-published message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
+                        self._log.info('key-published message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
     
                     else:
-                        self._log.debug('idle loop execute; {}'.format(Util.get_formatted_time('message age:', _elapsed_ms)) 
+                        self._log.info('idle loop execute; {}'.format(Util.get_formatted_time('message age:', _elapsed_ms)) 
                                 + Fore.BLUE + ' type: {}'.format(type(_elapsed_ms)))
             else:
-                self._log.debug('[{:03d}] idle suppressed.'.format(_count))
+                self._log.info('[{:03d}] idle suppressed.'.format(_count))
 
             await asyncio.sleep(self._idle_loop_delay_sec)
-            self._log.debug('[{:03d}] END idle loop.'.format(_count))
+            self._log.info('[{:03d}] END idle loop.'.format(_count))
 
         self._log.info('idle loop complete.')
 

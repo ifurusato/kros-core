@@ -35,6 +35,7 @@ class Sniff(Behaviour):
     '''
     def __init__(self, config, message_bus, message_factory, motors, level=Level.INFO):
         Behaviour.__init__(self, 'sniff', config, message_bus, message_factory, level)
+        _cfg = self._config['kros'].get('behaviour').get('sniff')
         self._motors = motors
         self._log.info('ready.')
 

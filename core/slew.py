@@ -40,15 +40,14 @@ class SlewLimiter(Component):
         self._millis  = lambda: int(round(time.time() * 1000))
         self._seconds = lambda: int(round(time.time()))
         # Slew configuration .........................................
-        cfg = config['kros'].get('slew')
-        self._minimum_output = cfg.get('minimum_output')
-        self._maximum_output = cfg.get('maximum_output')
+        _cfg = config['kros'].get('slew')
+        self._minimum_output = _cfg.get('minimum_output')
+        self._maximum_output = _cfg.get('maximum_output')
         self._log.info('minimum output: {:5.2f}; maximum output: {:5.2f}'.format(self._minimum_output, self._maximum_output))
-        self._use_elapsed_time = cfg.get('use_elapsed_time')
-        _rate = cfg.get('rate')
-        self._slew_rate        = SlewRate.from_string(_rate) # default rate_limit, value change permitted per millisecond
+        self._use_elapsed_time = _cfg.get('use_elapsed_time')
+        self._slew_rate        = SlewRate.from_string(_cfg.get('rate')) # default rate_limit, value change permitted per millisecond
         self._log.info('slew rate: {}; {:6.4f}/cycle'.format(self._slew_rate.label, self._slew_rate.limit))
-        self._slew_hysteresis  = cfg.get('hysteresis')
+        self._slew_hysteresis  = _cfg.get('hysteresis')
         self._log.info('hysteresis: {:5.2f}'.format(self._slew_hysteresis))
         self._stats_queue      = None
         self._start_time       = None

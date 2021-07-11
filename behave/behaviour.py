@@ -11,6 +11,7 @@
 #
 
 from abc import ABC, abstractmethod
+from enum import Enum
 from colorama import init, Fore, Style
 init()
 
@@ -21,7 +22,28 @@ from core.message_factory import MessageFactory
 from core.subscriber import Subscriber
 from behave.behaviour_manager import BehaviourManager
 
-# ...............................................................
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+class TriggerBehaviour(Enum):
+    '''
+    Indicates what the Behaviour should do when triggered.
+    '''
+    NONE  = ( 0, "none")
+    BOTH  = ( 1, "both")
+    PORT  = ( 2, "port")
+    CNTR  = ( 3, "cntr")
+    STBD  = ( 4, "stbd")
+
+    # ignore the first param since it's already set by __new__
+    def __init__(self, num, name):
+        self._name = name
+
+    # this makes sure the name is read-only
+    @property
+    def name(self):
+        return self._name
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Behaviour(ABC, Subscriber):
     '''
     An abstract class providing the basis for a behaviour.

@@ -146,7 +146,7 @@ class KROS(Component, FiniteStateMachine):
         self._addresses = scanner.get_int_addresses()
         _hex_addresses = scanner.get_hex_addresses()
         self._addrDict = dict(list(map(lambda x, y:(x,y), self._addresses, _hex_addresses)))
-        cfg = self._config['devices']
+        _cfg = self._config['devices']
         for _address in self._addresses:
             _device_name = self.get_device_for_address(_address)
             self._log.info('found device at I²C address 0x{:02X}: '.format(_address) + Fore.YELLOW + '{}'.format(_device_name))

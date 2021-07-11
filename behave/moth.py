@@ -34,8 +34,8 @@ class Moth(Behaviour):
     '''
     def __init__(self, config, message_bus, message_factory, motors, level=Level.INFO):
         Behaviour.__init__(self, 'moth', config, message_bus, message_factory, level)
-        cfg = self._config['kros'].get('moth')
-        self._anti_moth = cfg.get('anti_moth')
+        _cfg = self._config['kros'].get('behaviour').get('moth')
+        self._anti_moth = _cfg.get('anti_moth')
         self._log.info('anti-moth: {}'.format(self._anti_moth))
         self._motors = motors
         self._log.info('ready.')

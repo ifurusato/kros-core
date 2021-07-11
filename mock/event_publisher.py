@@ -71,14 +71,14 @@ class EventPublisher(Publisher):
         self._message_limit   = 3 # fixed message limit (testing only)
         self._clamp = lambda n: self._irc_min if n <= self._irc_min else self._irc_max if n >= self._irc_max else n
         # configuration ....................................
-        cfg = config['kros'].get('mock').get('event_publisher')
-        self._irc_value       = cfg.get('irc_init_value') # initial value of mocked center IR
-        self._irc_min         = cfg.get('irc_min')        # minimum center IR value
-        self._irc_max         = cfg.get('irc_max')        # maximum center IR value
-        self._irc_incr        = cfg.get('irc_incr')       # initially decreasing increment
-        self._gamepad_publish_delay_sec = cfg.get('gamepad_publish_delay_sec') # delay after Gamepad event
-        self._publish_delay_sec = cfg.get('publish_delay_sec') # delay after IFS event
-        self._loop_delay_sec  = cfg.get('noop_loop_delay_sec') # delay on noop loop
+        _cfg = config['kros'].get('mock').get('event_publisher')
+        self._irc_value       = _cfg.get('irc_init_value') # initial value of mocked center IR
+        self._irc_min         = _cfg.get('irc_min')        # minimum center IR value
+        self._irc_max         = _cfg.get('irc_max')        # maximum center IR value
+        self._irc_incr        = _cfg.get('irc_incr')       # initially decreasing increment
+        self._gamepad_publish_delay_sec = _cfg.get('gamepad_publish_delay_sec') # delay after Gamepad event
+        self._publish_delay_sec = _cfg.get('publish_delay_sec') # delay after IFS event
+        self._loop_delay_sec  = _cfg.get('noop_loop_delay_sec') # delay on noop loop
         # attempt to find the gamepad ......................
         self._gamepad = None
         self._gamepad_enabled = config['kros'].get('arguments').get('gamepad_enabled')
