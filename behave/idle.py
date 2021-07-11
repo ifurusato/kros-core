@@ -89,7 +89,7 @@ class Idle(Publisher):
         self._log.info('starting idle listener loop: ' + Fore.YELLOW + 'type \'?\' for help, \'q\' or Ctrl-C to exit.')
         while f_is_enabled():
             _count = next(self._counter)
-            self._log.info('[{:03d}] BEGIN idle loop...'.format(_count))
+            self._log.debug('[{:03d}] begin idle loop...'.format(_count))
             if not self.suppressed:
                 # check for last message's timestamp
                 _timestamp = self._message_bus.last_message_timestamp
@@ -116,7 +116,7 @@ class Idle(Publisher):
                 self._log.info('[{:03d}] idle suppressed.'.format(_count))
 
             await asyncio.sleep(self._idle_loop_delay_sec)
-            self._log.info('[{:03d}] END idle loop.'.format(_count))
+            self._log.debug('[{:03d}] end idle loop.'.format(_count))
 
         self._log.info('idle loop complete.')
 

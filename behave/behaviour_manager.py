@@ -38,7 +38,7 @@ class BehaviourManager(Subscriber):
     '''
     def __init__(self, config, message_bus, level=Level.INFO):
         Subscriber.__init__(self, BehaviourManager.CLASS_NAME,
-                config, message_bus=message_bus, color=Fore.RED, suppressed=False, enabled=True, level=Level.INFO)
+                config, message_bus=message_bus, color=Fore.CYAN + Style.DIM, suppressed=False, enabled=True, level=Level.INFO)
         self._active_behaviour = None
         self._behaviours       = {}
 

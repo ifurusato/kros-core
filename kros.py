@@ -141,15 +141,9 @@ class KROS(Component, FiniteStateMachine):
         self._log.info('argument level:       {}'.format(arguments.level))
 
         # scan I2C bus .........................................................
-        self._log.info('scanning I²C address bus...')
-        scanner = I2CScanner(self._log.level)
+        scanner = I2CScanner(self._config, self._log.level)
+        scanner.print_device_list()
         self._addresses = scanner.get_int_addresses()
-        _hex_addresses = scanner.get_hex_addresses()
-        self._addrDict = dict(list(map(lambda x, y:(x,y), self._addresses, _hex_addresses)))
-        _cfg = self._config['devices']
-        for _address in self._addresses:
-            _device_name = self.get_device_for_address(_address)
-            self._log.info('found device at I²C address 0x{:02X}: '.format(_address) + Fore.YELLOW + '{}'.format(_device_name))
 
         # establish basic subsumption components ...............................
 
@@ -206,14 +200,6 @@ class KROS(Component, FiniteStateMachine):
         self._log.debug(Fore.BLUE + Style.BRIGHT + '-- set feature available. name: \'{}\' value: \'{}\'.'.format(name, value))
         self.set_property('features', name, value)
 
-    # ..........................................................................
-    def get_device_for_address(self, address):
-        '''
-        Returns the lookup device name from the device registry found in
-        the YAML configuration.
-        '''
-        _device = self._config['devices'].get(address)
-        return 'Unknown' if _device is None else _device
 
     # ..........................................................................
     @property

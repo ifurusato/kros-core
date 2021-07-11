@@ -30,10 +30,11 @@ class I2CScanner():
     '''
     Scans the I²C bus, returning a list of devices.
     '''
-    def __init__(self, level):
+    def __init__(self, config, level):
         super().__init__()
         self._log = Logger('i2cscan', level)
         self._log.debug('initialising...')
+        self._config = config
         self._int_list = []
         self._hex_list = []
         try:
@@ -80,6 +81,7 @@ class I2CScanner():
         called and populating the int and hex lists, this closes the connection
         to smbus.
         '''
+        self._log.info('scanning I²C address bus...')
         if len(self._int_list) == 0:
             device_count = 0
             if self._bus is not None:
@@ -101,6 +103,22 @@ class I2CScanner():
             else:
                 self._log.info("found no devices (no smbus available).")
         return self._int_list
+
+    # ..........................................................................
+    def print_device_list(self):
+        self._addrDict = dict(list(map(lambda x, y:(x,y), self.get_int_addresses(), self.get_hex_addresses())))
+        for _address in self.get_int_addresses():
+            _device_name = self.get_device_for_address(_address)
+            self._log.info('found device at I²C address 0x{:02X}: '.format(_address) + Fore.YELLOW + '{}'.format(_device_name))
+
+    # ..........................................................................
+    def get_device_for_address(self, address):
+        '''
+        Returns the lookup device name from the device registry found in
+        the YAML configuration.
+        '''
+        _device = self._config['devices'].get(address)
+        return 'Unknown' if _device is None else _device
 
     # end class ................................................................
 
