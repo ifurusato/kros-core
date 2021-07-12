@@ -20,6 +20,7 @@ from core.event import Event
 from core.util import Util
 from core.subscriber import Subscriber
 from behave.behaviour import Behaviour
+from behave.trigger_behaviour import TriggerBehaviour
 
 # ...............................................................
 class Sniff(Behaviour):
@@ -38,6 +39,10 @@ class Sniff(Behaviour):
         _cfg = self._config['kros'].get('behaviour').get('sniff')
         self._motors = motors
         self._log.info('ready.')
+
+    # ..........................................................................
+    def get_trigger_behaviour(self, event):
+        return TriggerBehaviour.TOGGLE
 
     # ..........................................................................
     @property

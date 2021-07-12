@@ -19,6 +19,7 @@ from core.logger import Logger, Level
 from core.event import Event
 from core.subscriber import Subscriber
 from behave.behaviour import Behaviour
+from behave.trigger_behaviour import TriggerBehaviour
 
 # ...............................................................
 class Moth(Behaviour):
@@ -39,6 +40,10 @@ class Moth(Behaviour):
         self._log.info('anti-moth: {}'.format(self._anti_moth))
         self._motors = motors
         self._log.info('ready.')
+
+    # ..........................................................................
+    def get_trigger_behaviour(self, event):
+        return TriggerBehaviour.RELEASE
 
     # ..........................................................................
     @property

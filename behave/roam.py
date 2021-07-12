@@ -22,6 +22,7 @@ from core.util import Util
 from core.orient import Orientation
 from core.fsm import State
 from behave.behaviour import Behaviour
+from behave.trigger_behaviour import TriggerBehaviour
 
 # ..............................................................................
 class Roam(Behaviour):
@@ -66,7 +67,7 @@ class Roam(Behaviour):
         self._log.info('configured speed: {:4.2f} to {:4.2f}'.format(self._min_speed, self._max_speed))
         self._ratio        = ( self._max_speed - self._min_speed ) / ( self._max_distance - self._min_distance )
         self._log.info('speed/distance ratio: {:4.2f} ({:.0%})'.format(self._ratio, self._ratio))
-#       self.add_event(Event.INFRARED_CNTR)
+        self.add_event(Event.INFRARED_CNTR)
         self._last_dt      = None
         self._log.info('ready.')
 
@@ -88,6 +89,10 @@ class Roam(Behaviour):
     @property
     def speed_limit(self):
         return self._speed_limit
+
+    # ..........................................................................
+    def get_trigger_behaviour(self, event):
+        return TriggerBehaviour.RELEASE
 
     # ..........................................................................
     @property

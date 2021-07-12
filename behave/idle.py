@@ -22,9 +22,11 @@ from core.util import Util
 from core.event import Event, Group
 from core.fsm import State
 from core.publisher import Publisher
+from behave.behaviour import Behaviour
+from behave.trigger_behaviour import TriggerBehaviour
 
 # ...............................................................
-class Idle(Publisher):
+class Idle(Behaviour, Publisher):
 
     _LISTENER_LOOP_NAME = '__idle_listener_loop'
 
@@ -41,6 +43,7 @@ class Idle(Publisher):
     :param level:           the optional log level
     '''
     def __init__(self, config, message_bus, message_factory, level=Level.INFO):
+        Behaviour.__init__(self, 'idle', config, message_bus, message_factory, level)
         Publisher.__init__(self, 'idle', config, message_bus, message_factory, level)
         _cfg = self._config['kros'].get('behaviour').get('idle')
         self._idle_threshold_sec = _cfg.get('idle_threshold_sec') # int value
@@ -53,12 +56,16 @@ class Idle(Publisher):
         self._log.info('ready.')
 
     # ..........................................................................
-#   @property
-#   def trigger_event(self):
-#       '''
-#       This returns the event used to enable/disable the behaviour manually.
-#       '''
-#       return Event.IDLE
+    def get_trigger_behaviour(self, event):
+        return TriggerBehaviour.TOGGLE
+
+    # ..........................................................................
+    @property
+    def trigger_event(self):
+        '''
+        This returns the event used to enable/disable the behaviour manually.
+        '''
+        return Event.IDLE
 
     # ..........................................................................
     def start(self):
@@ -94,24 +101,24 @@ class Idle(Publisher):
                 # check for last message's timestamp
                 _timestamp = self._message_bus.last_message_timestamp
                 if _timestamp is None:
-                    self._log.info(Fore.BLACK + '[{:03d}] idle loop execute; no previous messages.'.format(_count))
+                    self._log.info(Fore.CYAN + '[{:03d}] idle inactive; '.format(_count) + Style.DIM + ' no previous messages.')
                 else:
                     _elapsed_ms = (dt.now() - _timestamp).total_seconds() * 1000.0
                     if ( _elapsed_ms / 1000.0 ) > self._idle_threshold_sec:
-                        self._log.info('[{:03d}] idle loop execute; {}'.format(_count, Util.get_formatted_time('message age:', _elapsed_ms)) 
-                                + Fore.YELLOW + ' type: {}'.format(type(_elapsed_ms)))
-    
-                        _message = self._message_factory.get_message(Event.ROAM, True)
-                        _message.value = dt.now()
-                        self._log.info('publishing message for event: {}; value: {}'.format(_message.event.description, _message.value))
+                        self._log.info('[{:03d}] idle threshold met; '.format(_count) 
+                                + Fore.YELLOW + '{}'.format(Util.get_formatted_time('elapsed time since last message:', _elapsed_ms)))
+   
+                        _message = self._message_factory.get_message(Event.ROAM, dt.now())
+                        self._log.info('idle publishing message for event: {}; value: {}'.format(_message.event.description, _message.value))
 
-                        self._log.info('key-publishing message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
+                        self._log.debug('key-publishing message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
                         await Publisher.publish(self, _message)
-                        self._log.info('key-published message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
-    
+                        self._log.debug('key-published message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
                     else:
-                        self._log.info('idle loop execute; {}'.format(Util.get_formatted_time('message age:', _elapsed_ms)) 
-                                + Fore.BLUE + ' type: {}'.format(type(_elapsed_ms)))
+                        self._log.info('[{:03d}] idle active; '.format(_count) 
+                                + Style.DIM + '{}'.format(Util.get_formatted_time('elapsed time since last message:', _elapsed_ms)))
+                        pass
+    
             else:
                 self._log.info('[{:03d}] idle suppressed.'.format(_count))
 
@@ -120,57 +127,34 @@ class Idle(Publisher):
 
         self._log.info('idle loop complete.')
 
-#   # ..........................................................................
-#   def callback(self):
-#       '''
-#       This is the loop that's going to be called at 1Hz. Create a modulo
-#       variable such that even nth call we'd check for the last message,
-#       and if none have occurred recently we'd trigger an IDLE message, or
-#       we'd call ROAM or something. The current trigger_even of IDLE is 
-#       probably wrong. This should be running all the time unless suppressed,
-#       as it is an idle behaviour.
-#       '''
-#       self._log.info('❄️  idle callback.')
-#       _timestamp = self._message_bus.last_message_timestamp
-#       if _timestamp is None:
-#           self._log.info('❄️  idle loop execute; no previous messages.')
-#       else:
-#           _elapsed_ms = (dt.now() - _timestamp).total_seconds() * 1000.0
-#           if ( _elapsed_ms / 1000.0 ) > self._idle_threshold_sec:
-#               self._log.info('❄️  idle loop execute; {}'.format(Util.get_formatted_time('message age:', _elapsed_ms)) 
-#                       + Fore.GREEN + ' type: {}'.format(type(_elapsed_ms)))
-#           else:
-#               self._log.info('❄️  idle loop execute; {}'.format(Util.get_formatted_time('message age:', _elapsed_ms)) 
-#                       + Fore.YELLOW + ' type: {}'.format(type(_elapsed_ms)))
+    # ..........................................................................
+    def execute(self, message):
+        '''
+        The method called upon each loop iteration. 
 
-#   # ..........................................................................
-#   def execute(self, message):
-#       '''
-#       The method called upon each loop iteration.
-#
-#       :param message:  an optional Message passed along by the message bus
-#       '''
-#       if self.suppressed:
-#           self._log.info(Style.DIM + '🌜 idle execute() SUPPRESSED; message: {}'.format(message.event.description))
-#       else:
-#           self._log.info('🌜 idle execute() RELEASED; message: {}'.format(message.event.description))
-#           _timestamp = self._message_bus.last_message_timestamp
-#           if _timestamp is None:
-#               self._log.info('🌜 idle loop execute; no previous messages.')
-#           else:
-#               _elapsed_ms = (dt.now() - _timestamp).total_seconds() * 1000.0
-#               if ( _elapsed_ms / 1000.0 ) > self._idle_threshold_sec:
-#                   self._log.info('🌜 idle loop execute; {}'.format(Util.get_formatted_time('message age:', _elapsed_ms)) 
-#                           + Fore.GREEN + ' type: {}'.format(type(_elapsed_ms)))
-#               else:
-#                   self._log.info('🌜 idle loop execute; {}'.format(Util.get_formatted_time('message age:', _elapsed_ms)) 
-#                           + Fore.YELLOW + ' type: {}'.format(type(_elapsed_ms)))
-
+        :param message:  an optional Message passed along by the message bus
+        '''
+        self._log.info(Fore.YELLOW + '🍫 idle execute()...')
+        if self.suppressed:
+            self._log.info(Style.DIM + '🍫 idle execute() SUPPRESSED; message: {}'.format(message.event.description))
+        else:
+            self._log.info('🍫 idle execute() RELEASED; message: {}'.format(message.event.description))
+            _payload = message.payload
+            _event   = _payload.event
+            if _event is Event.IDLE:
+                self.distance = _payload.value
+                if self.enabled:
+                    self._log.info('🍫 idle enabled.')
+                else:
+                    self._log.info('🍫 idle disabled.')
+            else:
+                raise ValueError('expected IDLE event not: {}'.format(message.event.description))
     # ..........................................................................
     def disable(self):
         '''
         Disable this publisher.
         '''
+        Behaviour.disable(self)
         Publisher.disable(self)
         self._log.info('disabled idle publisher.')
 

@@ -7,11 +7,10 @@
 #
 # author:   Murray Altheim
 # created:  2020-05-19
-# modified: 2021-07-06
+# modified: 2021-07-12
 #
 
 from abc import ABC, abstractmethod
-from enum import Enum
 from colorama import init, Fore, Style
 init()
 
@@ -21,27 +20,7 @@ from core.message_bus import MessageBus
 from core.message_factory import MessageFactory
 from core.subscriber import Subscriber
 from behave.behaviour_manager import BehaviourManager
-
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-class TriggerBehaviour(Enum):
-    '''
-    Indicates what the Behaviour should do when triggered.
-    '''
-    NONE  = ( 0, "none")
-    BOTH  = ( 1, "both")
-    PORT  = ( 2, "port")
-    CNTR  = ( 3, "cntr")
-    STBD  = ( 4, "stbd")
-
-    # ignore the first param since it's already set by __new__
-    def __init__(self, num, name):
-        self._name = name
-
-    # this makes sure the name is read-only
-    @property
-    def name(self):
-        return self._name
-
+from behave.trigger_behaviour import TriggerBehaviour
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Behaviour(ABC, Subscriber):
@@ -98,13 +77,46 @@ class Behaviour(ABC, Subscriber):
 
     # ..........................................................................
     @abstractmethod
+    def get_trigger_behaviour(self, event):
+        '''
+        Returns the trigger behaviour (Enum) for this Behaviour, i.e., what
+        should occur when the trigger event in the argument occurs.
+        '''
+        raise NotImplementedError('trigger_behavior() must be implemented in subclasses.')
+
+    # ..........................................................................
+    @abstractmethod
     def trigger_event(self):
         '''
         This returns the event used to trigger (toggle enable/disable) the
         behaviour manually; it may be enabled or disabled through other 
-        means. The method should be implemented as a @property.
+        means.
+        The method should be implemented as a @property.
         '''
         raise NotImplementedError('trigger_event() must be implemented in subclasses.')
+
+
+    # ..........................................................................
+    def on_trigger(self, event):
+        '''
+        Alter this Behaviour based on its designated trigger event, which is
+        to suppress, release or toggle activity.
+        '''
+        if isinstance(event, Event):
+            _trigger_behaviour = self.get_trigger_behaviour(event)
+        else:
+            raise ValueError('expected Event, not {}.'.format(type(event)))
+        if _trigger_behaviour is TriggerBehaviour.SUPPRESS:
+            self.suppress()
+        elif _trigger_behaviour is TriggerBehaviour.RELEASE:
+            self.release()
+        elif _trigger_behaviour is TriggerBehaviour.TOGGLE:
+            if self.suppressed:
+                self.release()
+            else:
+                self.suppress()
+        else:
+            raise Exception('no trigger behaviour for event: {}'.format(event.name))
 
     # ..........................................................................
     @abstractmethod

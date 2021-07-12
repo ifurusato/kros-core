@@ -40,7 +40,7 @@ kros:
         sniff:
             nada: False                              # nada
         idle:
-            idle_threshold_sec: 5                    # how many seconds before we trigger an idle behaviour
+            idle_threshold_sec: 50                   # how many seconds before we trigger an idle behaviour
             idle_loop_delay_sec: 1.0                 # main loop delay in seconds
     mock:
         event_publisher:

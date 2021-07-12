@@ -436,8 +436,8 @@ class Motors(Component):
         Updates the value by the increment, clamping the result based on
         the maximum velocity limit.
         '''
-        _value += increment
-        return -1.0 * self._clamp(-1.0 * _value) if _value < 0 else self._clamp(_value)
+        value += increment
+        return -1.0 * self._clamp(-1.0 * value) if value < 0 else self._clamp(value)
 
     # ..........................................................................
     def get_motor_velocity(self, orientation):
