@@ -123,11 +123,11 @@ class Idle(Behaviour, Publisher):
                                 + Fore.YELLOW + '{}'.format(Util.get_formatted_time('elapsed time since last message:', _elapsed_ms)))
    
                         _message = self._message_factory.get_message(Event.ROAM, dt.now())
-                        self._log.info('idle publishing message for event: {}; value: {}'.format(_message.event.description, _message.value))
+                        self._log.info('idle publishing message for event: {}; value: {}'.format(_message.event.label, _message.value))
 
-                        self._log.debug('key-publishing message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
+                        self._log.debug('key-publishing message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
                         await Publisher.publish(self, _message)
-                        self._log.debug('key-published message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
+                        self._log.debug('key-published message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
                     else:
                         self._log.info('[{:03d}] idle active; '.format(_count) 
                                 + Style.DIM + '{}'.format(Util.get_formatted_time('elapsed time since last message:', _elapsed_ms)))
@@ -148,21 +148,21 @@ class Idle(Behaviour, Publisher):
 
         :param message:  an optional Message passed along by the message bus
         '''
-        self._log.info(Fore.YELLOW + '🍫 idle execute()...')
+        self._log.info(Fore.YELLOW + 'idle execute()...')
         if self.suppressed:
-            self._log.info(Style.DIM + '🍫 idle execute() SUPPRESSED; message: {}'.format(message.event.description))
+            self._log.info(Style.DIM + 'idle execute() SUPPRESSED; message: {}'.format(message.event.label))
         else:
-            self._log.info('🍫 idle execute() RELEASED; message: {}'.format(message.event.description))
+            self._log.info('idle execute() RELEASED; message: {}'.format(message.event.label))
             _payload = message.payload
             _event   = _payload.event
             if _event is Event.IDLE:
                 self.distance = _payload.value
                 if self.enabled:
-                    self._log.info('🍫 idle enabled.')
+                    self._log.info('idle enabled.')
                 else:
-                    self._log.info('🍫 idle disabled.')
+                    self._log.info('idle disabled.')
             else:
-                raise ValueError('expected IDLE event not: {}'.format(message.event.description))
+                raise ValueError('expected IDLE event not: {}'.format(message.event.label))
 
     # ..........................................................................
     def disable(self):

@@ -36,7 +36,7 @@ class Event(Enum):
     Messages are prioritised by their Event type, where the priority operates
     in reverse-order: the smaller the number the higher the priority.
     '''
-    # name                     n   description            priority   group 
+    # name                     n   label                  priority   group 
     # system events .........................................................................
     NOOP                   = ( 0, "no operation",            1000,   Group.SYSTEM )
     BATTERY_LOW            = ( 10, "battery low",               1,   Group.SYSTEM )
@@ -134,10 +134,10 @@ class Event(Enum):
         return obj
 
     # ignore the first param since it's already set by __new__
-    def __init__(self, num, description, priority, group):
-        self._description  = description
-        self._priority     = priority
-        self._group        = group
+    def __init__(self, num, label, priority, group):
+        self._label    = label
+        self._priority = priority
+        self._group    = group
 
 #   # ................................................................
 #   @staticmethod
@@ -178,8 +178,8 @@ class Event(Enum):
 
     # ................................................................
     @property
-    def description(self):
-        return self._description
+    def label(self):
+        return self._label
 
     @property
     def priority(self):

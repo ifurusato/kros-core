@@ -48,7 +48,7 @@ class BumperSubscriber(Subscriber):
         await self._message_bus.arbitrate(message.payload)
         # increment sent acknowledgement count
         message.acknowledge_sent()
-        self._log.info(self._color + Style.NORMAL + '🐻 arbitrated payload for event {}; value: {}'.format(message.payload.event.name, message.payload.value))
+        self._log.info(self._color + Style.NORMAL + 'arbitrated payload for event {}; value: {}'.format(message.payload.event.name, message.payload.value))
 
     # ..........................................................................
     async def process_message(self, message):
@@ -60,12 +60,12 @@ class BumperSubscriber(Subscriber):
         if message.gcd:
             raise GarbageCollectedError('cannot process message: message has been garbage collected. [3]')
         _event = message.event
-        self._log.info('🐻 pre-processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.description) + Style.RESET_ALL)
+        self._log.info('pre-processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.label) + Style.RESET_ALL)
         if Event.is_bumper_event(_event):
             self._motors.dispatch_bumper_event(message.payload)
         else:
-            self._log.warning('unrecognised bumper event on message {}'.format(message.name) + ''.format(message.event.description))
+            self._log.warning('unrecognised bumper event on message {}'.format(message.name) + ''.format(message.event.label))
         await Subscriber.process_message(self, message)
-        self._log.debug('🐻 post-processing message {}'.format(message.name))
+        self._log.debug('post-processing message {}'.format(message.name))
 
 #EOF

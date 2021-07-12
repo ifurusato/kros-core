@@ -60,7 +60,7 @@ class Controller(Component):
         '''
         Responds to the Event contained within the Payload.
         '''
-        self._log.info('🐰 callback with payload {}'.format(payload.event.name))
+        self._log.info('callback with payload {}'.format(payload.event.label))
         if not self.enabled:
             self._log.warning('action ignored: controller disabled.')
             return
@@ -68,16 +68,16 @@ class Controller(Component):
         if self._previous_payload == None:
             self._log.debug(Fore.CYAN + 'no previous payload.')
         elif payload == self._previous_payload:
-            self._log.info(Fore.CYAN + '🐰 no state change on event: ' + Style.BRIGHT + ' {}'.format(self._previous_payload.event.description)
+            self._log.info(Fore.CYAN + 'no state change on event: ' + Style.BRIGHT + ' {}'.format(self._previous_payload.event.label)
                     + Fore.BLACK + Style.NORMAL + ' [{:d}/{:d}]'.format(self._state_change_count, self._event_count))
             self._log.info(Fore.GREEN + 'payload: {}; previous payload: {}'.format(payload.value, self._previous_payload.value))
         else:
             if payload.event == self._previous_payload.event:
-                self._log.info(Fore.CYAN + '🐰 value {} changed on event: '.format(payload.value) + Style.BRIGHT + ' {}'.format(self._previous_payload.event.description)
+                self._log.info(Fore.CYAN + 'value {} changed on event: '.format(payload.value) + Style.BRIGHT + ' {}'.format(self._previous_payload.event.label)
                         + Fore.BLACK + Style.NORMAL + ' [{:d}/{:d}]'.format(self._state_change_count, self._event_count))
             else:
-                self._log.info(Fore.CYAN + '🐰 state change from event: ' + Style.BRIGHT + ' {}'.format(self._previous_payload.event.description)
-                        + Style.NORMAL + ' to event: {} ' + Style.BRIGHT + ' {}'.format(payload.event.description)
+                self._log.info(Fore.CYAN + 'state change from event: ' + Style.BRIGHT + ' {}'.format(self._previous_payload.event.label)
+                        + Style.NORMAL + ' to event: {} ' + Style.BRIGHT + ' {}'.format(payload.event.label)
                         + Fore.BLACK + Style.NORMAL + ' [{:d}/{:d}]'.format(self._state_change_count, self._event_count))
 #           return
 
@@ -86,7 +86,7 @@ class Controller(Component):
 
         _start_time = dt.datetime.now()
         _event = payload.event
-        self._log.info(Fore.CYAN + '🐰 act on event: ' + Style.BRIGHT + ' {}'.format(_event.description)
+        self._log.info(Fore.CYAN + 'act on event: ' + Style.BRIGHT + ' {}'.format(_event.label)
                 + Fore.BLACK + Style.NORMAL + ' [{:d}/{:d}]'.format(self._state_change_count, self._event_count))
 
         # system events ........................................................

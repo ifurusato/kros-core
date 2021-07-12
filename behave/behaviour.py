@@ -62,15 +62,15 @@ class Behaviour(ABC, Subscriber):
         if message.gcd:
             raise GarbageCollectedError('cannot process message: message has been garbage collected. [3]')
         _event = message.payload.event
-        self._log.info(self._color + 'processing message {}; with event '.format(message.name) + Fore.YELLOW + ' {}'.format(_event.description))
+        self._log.info(self._color + 'processing message {}; with event '.format(message.name) + Fore.YELLOW + ' {}'.format(_event.label))
         # indicate that this subscriber has processed the message
         message.process(self)
         # now process message...
         if not self.suppressed:
             # is this still valid for a Behaviour?
-            self._log.debug('calling execute() method on event {}...'.format(_event.description))
+            self._log.debug('calling execute() method on event {}...'.format(_event.label))
             self.execute(message)
-            self._log.debug('called execute() method on event {}...'.format(_event.description))
+            self._log.debug('called execute() method on event {}...'.format(_event.label))
         else:
             self._log.info(Style.DIM + '{} behaviour suppressed.'.format(self.name))
         self._log.debug('processed message {}'.format(message.name))

@@ -231,9 +231,9 @@ class EventPublisher(Publisher):
 #                               _message.value = 0
                             else:
                                 _message.value = dt.now() # we use a timestamp to guarantee each message is different
-                            self._log.debug('key-publishing message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
+                            self._log.debug('key-publishing message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
                             await Publisher.publish(self, _message)
-                            self._log.debug('key-published message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
+                            self._log.debug('key-published message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
                             # special case: check if all IFS sensors have been triggered 3 times; if so exit
                             if Event.is_ifs_event(_event):
                                 self._accumulate_message(_message)
@@ -249,7 +249,7 @@ class EventPublisher(Publisher):
                 elif self._flood_enable:
                     _event = self._get_random_event()
                     _message = self._message_factory.get_message(_event, True)
-                    self._log.info('flood-publishing message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
+                    self._log.info('flood-publishing message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
                     await Publisher.publish(self, _message)
                     self._log.info('flood-published message:' + Fore.WHITE + ' {}.'.format(_message.name))
                     await asyncio.sleep(random.triangular(0.2, 5.0, 2.0))
@@ -270,6 +270,8 @@ class EventPublisher(Publisher):
         Returns a continuually rising and falling value.
         This goes from a minimum of 50 to a maximum of 250,
         stepping by an increment of 10.
+
+        This is a special case; does it belong here?
         '''
         self._irc_value += self._irc_incr
         if self._irc_value <= self._irc_min:
@@ -277,7 +279,7 @@ class EventPublisher(Publisher):
         elif self._irc_value >= self._irc_max:
             self._irc_incr = -10
         self._irc_value = self._clamp(self._irc_value)
-        self._log.info('💓 infrared center: {:d}'.format(self._irc_value))
+        self._log.info('infrared center: {:d}'.format(self._irc_value))
         return self._irc_value
 
     # ..........................................................................
@@ -289,7 +291,7 @@ class EventPublisher(Publisher):
 
     # ................................................................
     async def _gamepad_callback(self, message):
-        self._log.info('gamepad callback for message:\t' + Fore.YELLOW + '{}'.format(message.event.description))
+        self._log.info('gamepad callback for message:\t' + Fore.YELLOW + '{}'.format(message.event.label))
         await Publisher.publish(self, message)
 
     # ..........................................................................
@@ -462,11 +464,11 @@ class EventPublisher(Publisher):
             if self._triggered_ir_stbd_side < self._message_limit:
                 self._triggered_ir_stbd_side += 1
         else:
-            self._log.debug(Fore.BLACK + Style.BRIGHT + 'other event: {}'.format(_event.description))
+            self._log.debug(Fore.BLACK + Style.BRIGHT + 'other event: {}'.format(_event.label))
 
     # ......................................................
     def _print_event(self, color, event, value):
-        self._log.info('event:\t' + color + Style.BRIGHT + '{}; value: {}'.format(event.description, value))
+        self._log.info('event:\t' + color + Style.BRIGHT + '{}; value: {}'.format(event.label, value))
 
     # ......................................................
     def _get_output(self, color, label, value):

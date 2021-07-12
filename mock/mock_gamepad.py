@@ -142,7 +142,7 @@ class MockGamepad(object):
         event, not one of our Events. In the mocked version we receive a Message
         so no conversion is necessary.
         '''
-        self._log.info('❄️  handle message:' + Fore.WHITE + ' {}; event: {}'.format(message.name, message.event.description))
+        self._log.info('❄️  handle message:' + Fore.WHITE + ' {}; event: {}'.format(message.name, message.event.label))
         return message
 
 #EOF

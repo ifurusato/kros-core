@@ -112,7 +112,7 @@ class BehaviourManager(Subscriber):
         _event = message.event
         if message.gcd:
             raise GarbageCollectedError('cannot process message: message has been garbage collected. [3]')
-        self._log.debug('pre-processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.description))
+        self._log.debug('pre-processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.label))
         self._alter_behaviour(_event)
 
         self._log.debug('awaiting subscriber process_message {}.'.format(_event.name))
@@ -130,7 +130,7 @@ class BehaviourManager(Subscriber):
         # get behaviour for event type
         _behaviour = self.get_behavior_for_trigger_event(event)
         if _behaviour is None:
-            self._log.warning('cannot act: no behaviour associated with event {}.'.format(event.description))
+            self._log.warning('cannot act: no behaviour associated with event {}.'.format(event.label))
             return
 
         _trigger_behaviour = _behaviour.get_trigger_behaviour(event)
@@ -151,7 +151,7 @@ class BehaviourManager(Subscriber):
                     + Fore.CYAN + ' already running; comparing...')
             _compare = event.compare_to_priority_of(self._active_behaviour.trigger_event)
             if _compare == 1:
-                self._log.info('requested behaviour ' + Fore.YELLOW + '{}'.format(event.description) + Fore.CYAN
+                self._log.info('requested behaviour ' + Fore.YELLOW + '{}'.format(event.label) + Fore.CYAN
                         + ' is HIGHER priority than existing behaviour ' + Fore.YELLOW + '{}'.format(self._active_behaviour.name))
                 # the current active behaviour is a lower priority so we suppress the existing and release the new one
                 self._log.info('suppressing old behaviour ' + Fore.YELLOW + '{}'.format(self._active_behaviour.name))
@@ -163,12 +163,12 @@ class BehaviourManager(Subscriber):
                 self._log.info('done.')
             elif _compare == -1:
                 # the current active behaviour is a higher priority so we ignore the request to alter it
-                self._log.info('requested behaviour ' + Fore.YELLOW + '{}'.format(event.description) + Fore.CYAN 
+                self._log.info('requested behaviour ' + Fore.YELLOW + '{}'.format(event.label) + Fore.CYAN 
                         + ' is LOWER priority than existing behaviour ' + Fore.YELLOW + '{}'.format(self._active_behaviour.name)
                         + Fore.CYAN + ' (no change)')
             else: # _compare == 0:
                 # same priority, no change
-                self._log.info('requested behaviour ' + Fore.YELLOW + '{}'.format(event.description) + Fore.CYAN 
+                self._log.info('requested behaviour ' + Fore.YELLOW + '{}'.format(event.label) + Fore.CYAN 
                         + ' has the SAME priority as existing behaviour ' + Fore.YELLOW + '{}'.format(self._active_behaviour.name) 
                         + Fore.CYAN + ' (no change)')
 

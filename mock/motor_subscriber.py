@@ -60,7 +60,7 @@ class MotorSubscriber(Subscriber):
         if message.gcd:
             raise GarbageCollectedError('cannot process message: message has been garbage collected. [3]')
         _event = message.event
-        self._log.info('pre-processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.description) + Style.RESET_ALL)
+        self._log.info('pre-processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.label) + Style.RESET_ALL)
         if _event.group is Group.STOP:
             self._motors.dispatch_stop_event(message.payload)
         elif _event.group is Group.VELOCITY:
@@ -70,7 +70,7 @@ class MotorSubscriber(Subscriber):
         elif _event.group is Group.CHADBURN:
             self._motors.dispatch_chadburn_event(message.payload)
         else:
-            self._log.warning('unrecognised message {}'.format(message.name) + ''.format(message.event.description))
+            self._log.warning('unrecognised message {}'.format(message.name) + ''.format(message.event.label))
         await Subscriber.process_message(self, message)
         self._log.debug('post-processing message {}'.format(message.name))
 

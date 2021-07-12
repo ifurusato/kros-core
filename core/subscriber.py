@@ -126,7 +126,7 @@ class Subscriber(Component, FiniteStateMachine):
         Adds an event to the list that this subscriber accepts.
         '''
         self._events.append(event)
-        self._log.debug('added \'{}\' event to subscriber {} ({:d} events).'.format(event.description, self._name, len(self._events)))
+        self._log.debug('added \'{}\' event to subscriber {} ({:d} events).'.format(event.label, self._name, len(self._events)))
 
     def print_events(self):
         if self._events == [Event.ANY]:
@@ -134,7 +134,7 @@ class Subscriber(Component, FiniteStateMachine):
         elif self._events:
             _events = []
             for event in self._events:
-                _description = event.description.replace(' ','-')
+                _description = event.label.replace(' ','-')
                 _events.append('{} '.format(_description))
             return ''.join(_events)
         else:
@@ -178,27 +178,27 @@ class Subscriber(Component, FiniteStateMachine):
         if not _ackd and self.acceptable(_peeked_message):
             _event = asyncio.Event()
             self._log.debug(Fore.RED + 'begin event tracking for message:' + Fore.WHITE 
-                    + ' {}; event: {}'.format(_peeked_message.name, _peeked_message.event.description))
+                    + ' {}; event: {}'.format(_peeked_message.name, _peeked_message.event.label))
 
             # acknowledge we've seen the message
             _peeked_message.acknowledge(self)
 
             # this subscriber accepts this message and hasn't seen it before so consume and handle the message
             self._log.debug(self._color + Style.DIM + 'waiting to consume acceptable message:'
-                    + Fore.WHITE + ' {}; event: {}'.format(_peeked_message.name, _peeked_message.event.description))
+                    + Fore.WHITE + ' {}; event: {}'.format(_peeked_message.name, _peeked_message.event.label))
 
             _message = await self._message_bus.consume_message()
             self._message_bus.consumed()
             if self._message_bus.verbose:
                 self._log.debug(self._color + Style.DIM + 'consumed acceptable message:' \
-                    + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
+                    + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
 
             # handle acceptable message
             if self._message_bus.verbose:
                 _elapsed_ms = (dt.now() - _message.timestamp).total_seconds() * 1000.0
                 self._print_message_info('process message:', _message, _elapsed_ms)
             self._log.debug(self._color + Style.DIM + 'creating task for processing message:' \
-                    + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
+                    + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
             # create message processing task
             asyncio.create_task(self.process_message(_message), name='{}:process-message-{}'.format(self.name, _message.name))
 
@@ -209,32 +209,32 @@ class Subscriber(Component, FiniteStateMachine):
 
 #           breakpoint()
 
-            self._log.debug('end event tracking for message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
+            self._log.debug('end event tracking for message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
             _event.set()
 
             # we've handled message so pass along to arbitrator
             if not _message.sent:
-                self._log.debug(self._color + 'sending message: {}; event: {} to arbitrator...'.format(_message.name, _message.event.description))
+                self._log.debug(self._color + 'sending message: {}; event: {} to arbitrator...'.format(_message.name, _message.event.label))
                 await self._arbitrate_message(_message)
-                self._log.debug(self._color + 'sent message:' + Fore.WHITE + ' {}; event: {} to arbitrator.'.format(_message.name, _message.event.description))
+                self._log.debug(self._color + 'sent message:' + Fore.WHITE + ' {}; event: {} to arbitrator.'.format(_message.name, _message.event.label))
             else:
-                self._log.warning(self._color + 'message: {} already sent; event: {}'.format(_message.name, _message.event.description))
+                self._log.warning(self._color + 'message: {} already sent; event: {}'.format(_message.name, _message.event.label))
 
 #           # keep track of timestamp of last message
 #           self._log.debug(Fore.YELLOW + '🕘 last message timestamp: {}'.format(_message.timestamp))
 #           self._message_bus.last_message_timestamp = _message.timestamp
             # republish the message
             self._log.debug(self._color + 'awaiting republication of message:' \
-                + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
+                + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
             await self._message_bus.republish_message(_message)
             self._log.debug(self._color + 'message:' \
-                + Fore.WHITE + ' {} with event: {}'.format(_message.name, _message.event.description) + self._color + ' has been republished.')
+                + Fore.WHITE + ' {} with event: {}'.format(_message.name, _message.event.label) + self._color + ' has been republished.')
 
         elif not _ackd:
             # if not already ack'd, acknowledge we've seen the message
             self._log.debug(self._color + Style.DIM + 'acknowledging unacceptable message:' \
                     + Fore.WHITE + ' {}; event: {} (queue: {:d} elements)'.format(
-                    _peeked_message.name, _peeked_message.event.description, self._message_bus.queue_size))
+                    _peeked_message.name, _peeked_message.event.label, self._message_bus.queue_size))
             _peeked_message.acknowledge(self)
 
         self._log.debug(self._color + Style.DIM + 'consume() complete on {}.'.format(self.name))
@@ -263,12 +263,12 @@ class Subscriber(Component, FiniteStateMachine):
 
         :param message:  the message to process.
         '''
-        self._log.info(self._color + Style.DIM + 'processing message {}'.format(message.name))
+        self._log.debug(self._color + Style.DIM + 'processing message {}'.format(message.name))
         if message.gcd:
             raise GarbageCollectedError('cannot process message: message has been garbage collected. [3]')
         # indicate that this subscriber has processed the message
         message.process(self)
-        self._log.info(self._color + Style.DIM + 'processed message {}'.format(message.name))
+        self._log.debug(self._color + Style.DIM + 'processed message {}'.format(message.name))
 
     # ..........................................................................
     async def _arbitrate_message(self, message):
@@ -294,7 +294,7 @@ class Subscriber(Component, FiniteStateMachine):
         :param message:  consumed message that is done being processed.
         '''
         if self._message_bus.verbose:
-            self._log.info(self._color + Style.DIM + 'begin cleanup of message: {}'.format(message.name))
+            self._log.debug(self._color + Style.DIM + 'begin cleanup of message: {}'.format(message.name))
         if message.gcd:
             self._log.warning('cannot cleanup message: message has been garbage collected. [4]')
             return
@@ -303,7 +303,7 @@ class Subscriber(Component, FiniteStateMachine):
         message.expire()
         # clear any tasks related to the message
 #       self._message_bus.clear_tasks()
-        self._log.info(self._color + Style.DIM + 'end cleanup of message: {}'.format(message.name))
+        self._log.debug(self._color + Style.DIM + 'end cleanup of message: {}'.format(message.name))
 
     # ..........................................................................
     def _print_message_info(self, title, message, elapsed):
@@ -317,12 +317,12 @@ class Subscriber(Component, FiniteStateMachine):
         if self._brief:
             self._log.debug(self._color + Style.BRIGHT + title + Style.NORMAL \
                     + ' id: ' + Style.BRIGHT + '{};'.format(message.name) + Style.NORMAL \
-                    + ' event: ' + Style.BRIGHT + ( '{}; '.format(message.event.description) if message.event else 'n/a' ) + Style.NORMAL \
+                    + ' event: ' + Style.BRIGHT + ( '{}; '.format(message.event.label) if message.event else 'n/a' ) + Style.NORMAL \
                     + ' value: ' + Style.BRIGHT + Util.get_formatted_value(message.payload.value))
         else:
             self._log.debug(self._color + Style.BRIGHT + title + Style.NORMAL + '\n' \
                     + Subscriber.LOG_INDENT + 'id: ' + Style.BRIGHT + '{};'.format(message.name) + Style.NORMAL \
-                    + ' event: ' + Style.BRIGHT + ( '{}; '.format(message.event.description) if message.event else 'n/a: [gc\'d] ' ) + Style.NORMAL \
+                    + ' event: ' + Style.BRIGHT + ( '{}; '.format(message.event.label) if message.event else 'n/a: [gc\'d] ' ) + Style.NORMAL \
                     + ' value: ' + Style.BRIGHT + Util.get_formatted_value(message.payload.value) + '\n' + Style.NORMAL \
                     + Subscriber.LOG_INDENT + '{:d} procd;'.format(message.processed) + ' sent {:d}x;'.format(message.sent) \
                             + ' expired? {}\n'.format(self._message_bus.is_expired(message)) \
@@ -419,7 +419,7 @@ class GarbageCollector(Subscriber):
         elif _peeked_message.gcd:
             self._log.warning('message has already been garbage collected. [1]'.format(self.name))
         if self._message_bus.verbose:
-            self._log.debug(self._color + 'gc-consume() message:' + Fore.WHITE + ' {}; event: {}'.format(_peeked_message.name, _peeked_message.event.description))
+            self._log.debug(self._color + 'gc-consume() message:' + Fore.WHITE + ' {}; event: {}'.format(_peeked_message.name, _peeked_message.event.label))
 
         # garbage collect (consume) if filter accepts the peeked message
         if self.acceptable(_peeked_message):
@@ -429,13 +429,13 @@ class GarbageCollector(Subscriber):
             if not _message.sent:
                 self._log.warning('garbage collected undelivered message: {}; event: {}'.format(_message.name, _message.event.name))
             elif self._message_bus.verbose:
-                self._log.debug(self._color + 'garbage collected message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
+                self._log.debug(self._color + 'garbage collected message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
         else:
             # acknowledge we've seen the message
             _peeked_message.acknowledge(self)
             self._log.debug(self._color + Style.DIM + 'acknowledged unacceptable message:' \
                     + Fore.WHITE + ' {}; event: {} (queue: {:d} elements)'.format(
-                    _peeked_message.name, _peeked_message.event.description, self._message_bus.queue_size))
+                    _peeked_message.name, _peeked_message.event.label, self._message_bus.queue_size))
 
 # GarbageCollectedError ........................................................
 class GarbageCollectedError(Exception):

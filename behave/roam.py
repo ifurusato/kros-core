@@ -131,9 +131,9 @@ class Roam(Behaviour):
         :param message:  an optional Message passed along by the message bus
         '''
         if self.suppressed:
-            self._log.info(Style.DIM + 'roam suppressed; message: {}'.format(message.event.description))
+            self._log.info(Style.DIM + 'roam suppressed; message: {}'.format(message.event.label))
         else:
-            self._log.info('roam released; message: {}'.format(message.event.description))
+            self._log.info('roam released; message: {}'.format(message.event.label))
             _payload = message.payload
             _event   = _payload.event
             if _event is Event.INFRARED_CNTR:
@@ -146,12 +146,12 @@ class Roam(Behaviour):
                     self._set_motor_speed_limit(Orientation.STBD)
                 else:
                     self._speed_limit = self._max_speed
-                self._log.info('🌼 processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {};'.format(_event.description) 
+                self._log.info('🌼 processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {};'.format(_event.label) 
                         + Fore.BLUE + ' distance: {:5.2f};'.format(self.distance)
                         + Fore.GREEN + ' max speed: {:5.2f};'.format(self.speed_limit) 
                         + Fore.MAGENTA + ' enabled? {}'.format(self.enabled))
             else:
-                raise ValueError('expected INFRARED_CNTER event not: {}'.format(message.event.description))
+                raise ValueError('expected INFRARED_CNTER event not: {}'.format(message.event.label))
 
     # ..........................................................................
     def _set_motor_speed_limit(self, orientation):

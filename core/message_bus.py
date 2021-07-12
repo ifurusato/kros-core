@@ -156,7 +156,7 @@ class MessageBus(Component):
         else:
             _message = await self._queue.get()
             self._queue.task_done()
-            self._log.info('popped message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
+            self._log.info('popped message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
             if self._queue.empty():
                 self._log.info('message bus queue is now empty.')
 
@@ -400,7 +400,7 @@ class MessageBus(Component):
         '''
 #       if ( message.event is not Event.CLOCK_TICK and message.event is not Event.CLOCK_TOCK ):
         self._log.info('rx request to publish message: {}'.format(message.name)
-                + ' (event: {}; age: {:d}ms);'.format(message.event.description, message.age))
+                + ' (event: {}; age: {:d}ms);'.format(message.event.label, message.age))
         _put_task = asyncio.create_task(self._queue.put(message), name='publish-message-{}'.format(message.name))
         # the first time the message is published we update the 'last_message_timestamp'
         self.update_last_message_timestamp()
@@ -415,11 +415,11 @@ class MessageBus(Component):
 
         NOTE: calls to this function should be await'd.
         '''
-#       self._log.debug('republishing message: {} (event: {}; age: {:d}ms);'.format(message.name, message.event.description, message.age))
+#       self._log.debug('republishing message: {} (event: {}; age: {:d}ms);'.format(message.name, message.event.label, message.age))
         asyncio.create_task(self._queue.put(message), name='republish-message-{}'.format(message.name))
         # when the message is republished we also update the 'last_message_timestamp'
         self.update_last_message_timestamp()
-        self._log.debug('republished message: {} (event: {}; age: {:d}ms);'.format(message.name, message.event.description, message.age))
+        self._log.debug('republished message: {} (event: {}; age: {:d}ms);'.format(message.name, message.event.label, message.age))
 
     # exception handling .......................................................
     def handle_exception(self, loop, context):

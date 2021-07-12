@@ -120,12 +120,12 @@ class GamepadPublisher(Publisher):
 #       Unless there is a class-level usage this can be replaced by a direct
 #       call to the superclass' method.
 #       '''
-#       self._log.info('🎲 gamepad callback for message:\t' + Fore.YELLOW + '{}'.format(message.event.description))
+#       self._log.info('🎲 gamepad callback for message:\t' + Fore.YELLOW + '{}'.format(message.event.label))
 #       await Publisher.publish(self, message)
 
     # ................................................................
     async def _gamepad_publish_loop(self, message):
-        self._log.info('🎲 gamepad callback for message:\t' + Fore.YELLOW + '{}'.format(message.event.description))
+        self._log.info('🎲 gamepad callback for message:\t' + Fore.YELLOW + '{}'.format(message.event.label))
         await Publisher.publish(self, message)
         await asyncio.sleep(self._publish_delay_sec)
 
@@ -141,7 +141,7 @@ class GamepadPublisher(Publisher):
 #                   self._log.info('"{}" ({}) pressed; publishing message for event: {}'.format(_event))
 #                   _message = self._message_factory.get_message(_event, True)
 #                   _message.value = 0
-#                   self._log.info('key-publishing message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
+#                   self._log.info('key-publishing message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
 #                   await Publisher.publish(self, _message)
 #                   self._log.info('key-published message:' + Fore.WHITE + ' {}.'.format(_message.name))
 #                   await asyncio.sleep(self._publish_delay_sec)
@@ -196,7 +196,7 @@ class GamepadPublisher(Publisher):
 
     # ......................................................
     def _print_event(self, color, event, value):
-        self._log.info('event:\t' + color + Style.BRIGHT + '{}; value: {}'.format(event.description, value))
+        self._log.info('event:\t' + color + Style.BRIGHT + '{}; value: {}'.format(event.label, value))
 
     # ..........................................................................
     def print_keymap(self):

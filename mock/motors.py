@@ -209,7 +209,7 @@ class Motors(Component):
                     + Fore.RED + 'port: {:5.2f};\t'.format(self._port_motor.velocity)
                     + Fore.GREEN + 'stbd: {:5.2f}'.format(self._stbd_motor.velocity))
         else:
-            raise ValueError('unrecognised velocity event {}'.format(_event.description))
+            raise ValueError('unrecognised velocity event {}'.format(_event.label))
 
     # ..........................................................................
     def dispatch_chadburn_event(self, payload):
@@ -258,7 +258,7 @@ class Motors(Component):
             _speed = Speed.FULL
             self._log.info(self._color + 'FULL AHEAD.')
         else:
-            raise ValueError('unrecognised chadburn event {}'.format(_event.description))
+            raise ValueError('unrecognised chadburn event {}'.format(_event.label))
         if _speed is not Speed.STOP and not self.loop_is_running():
             self.start_loop()
         # ........
@@ -276,7 +276,7 @@ class Motors(Component):
         self._reset_deceleration()
         _event = payload.event
         _value = payload.value
-        self._log.info('theta event: {}'.format(_event.description))
+        self._log.info('theta event: {}'.format(_event.label))
         if not self.loop_is_running():
             self.start_loop()
         # ........
@@ -315,7 +315,7 @@ class Motors(Component):
         elif _event is Event.TURN_AHEAD_STBD:
             pass
         else:
-            raise ValueError('unrecognised theta event {}'.format(_event.description))
+            raise ValueError('unrecognised theta event {}'.format(_event.label))
 
     # ..........................................................................
     def dispatch_stop_event(self, payload):
@@ -332,7 +332,7 @@ class Motors(Component):
         elif _event is Event.STOP:
             self._stop()
         else:
-            raise ValueError('unrecognised stop event {}'.format(_event.description))
+            raise ValueError('unrecognised stop event {}'.format(_event.label))
 
     # ..........................................................................
     def dispatch_infrared_event(self, payload):
@@ -358,7 +358,7 @@ class Motors(Component):
             self._log.info('INFRARED STBD SIDE.')
 #           self._stop()
         else:
-            raise ValueError('unrecognised bumper event {}'.format(_event.description))
+            raise ValueError('unrecognised bumper event {}'.format(_event.label))
 
     # ..........................................................................
     def dispatch_bumper_event(self, payload):
@@ -377,7 +377,7 @@ class Motors(Component):
             self._log.info('BUMPER STBD.')
             self._stop()
         else:
-            raise ValueError('unrecognised bumper event {}'.format(_event.description))
+            raise ValueError('unrecognised bumper event {}'.format(_event.label))
 
     # ..........................................................................
     def _spin(self, orientation):
