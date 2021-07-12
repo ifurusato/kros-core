@@ -7,7 +7,7 @@
 #
 # author:   Murray Altheim
 # created:  2021-02-16
-# modified: 2021-04-22
+# modified: 2021-07-12
 #
 
 import asyncio
@@ -34,7 +34,7 @@ class BehaviourManager(Subscriber):
     :param config:       the application configuration
     :param message_bus:  the message bus
     :param color:        the color for messages
-    :param level:        the logging level 
+    :param level:        the logging level
     '''
     def __init__(self, config, message_bus, level=Level.INFO):
         Subscriber.__init__(self, BehaviourManager.CLASS_NAME,
@@ -53,7 +53,7 @@ class BehaviourManager(Subscriber):
         '''
         self._behaviours[behaviour.trigger_event] = behaviour
         self.add_event(behaviour.trigger_event)
-        self._log.info('🥝 added behaviour \'{}\' linked to trigger event \'{}\' to manager.'.format(behaviour.name, behaviour.trigger_event))
+        self._log.info('added behaviour \'{}\' linked to trigger event \'{}\' to manager.'.format(behaviour.name, behaviour.trigger_event))
 
     # ..........................................................................
     def get_behavior_for_trigger_event(self, event):
@@ -112,8 +112,7 @@ class BehaviourManager(Subscriber):
         _event = message.event
         if message.gcd:
             raise GarbageCollectedError('cannot process message: message has been garbage collected. [3]')
-        self._log.debug('pre-processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.description) + Style.RESET_ALL)
-#       breakpoint()
+        self._log.debug('pre-processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.description))
         self._alter_behaviour(_event)
 
         self._log.debug('awaiting subscriber process_message {}.'.format(_event.name))
@@ -126,43 +125,51 @@ class BehaviourManager(Subscriber):
         '''
         Alters the Behaviour associated with the event.
         '''
+        if not isinstance(event, Event):
+            raise ValueError('expected event argument, not {}'.format(type(event)))
         # get behaviour for event type
         _behaviour = self.get_behavior_for_trigger_event(event)
         if _behaviour is None:
-            self._log.warning('🍀 cannot act: no behaviour associated with event {}.'.format(event.description))
+            self._log.warning('cannot act: no behaviour associated with event {}.'.format(event.description))
             return
 
         _trigger_behaviour = _behaviour.get_trigger_behaviour(event)
-        self._log.info('🍀 1. designated trigger behaviour: ' + Fore.YELLOW + '{}'.format(_trigger_behaviour.name))
+        self._log.info('designated trigger behaviour: ' + Fore.YELLOW + '{}'.format(_trigger_behaviour.name))
 
         if self._active_behaviour is None: # no current active behaviour so just release this one
-            self._log.info('🍀 2. no current behaviour; releasing behaviour {}...'.format(_behaviour.name))
+            self._log.info('no current behaviour; releasing behaviour ' + Fore.YELLOW + '{}'.format(_behaviour.name))
             self._active_behaviour = _behaviour
             _behaviour.on_trigger(event)
 
-        elif self._active_behaviour is _behaviour: # if the current active behaviour is already this one, we ignore the message
-            self._log.info('🍀 3. this particular behaviour {} is already executing.'.format(_behaviour.name))
+        elif self._active_behaviour is _behaviour:
+            # if the current active behaviour is already this one, we ignore the message
+            self._log.info('the requested behaviour ' + Fore.YELLOW + '{}'.format(_behaviour.name) + Fore.CYAN + ' is already executing.')
             _behaviour.on_trigger(event)
 
         else:
-            self._log.info('🍀 4. there is a behaviour {} already running; comparing...'.format(self._active_behaviour.name))
-            _compare = event.compare_to_priority_of(self._active_behaviour.event)
-
+            self._log.info('there is a behaviour ' + Fore.YELLOW + '{}'.format(self._active_behaviour.name)
+                    + Fore.CYAN + ' already running; comparing...')
+            _compare = event.compare_to_priority_of(self._active_behaviour.trigger_event)
             if _compare == 1:
-                self._log.info('🍀 4a. new behaviour {} is HIGHER priority than existing behaviour {}.'.format(event.name, self._active_behaviour.name))
+                self._log.info('requested behaviour ' + Fore.YELLOW + '{}'.format(event.description) + Fore.CYAN
+                        + ' is HIGHER priority than existing behaviour ' + Fore.YELLOW + '{}'.format(self._active_behaviour.name))
                 # the current active behaviour is a lower priority so we suppress the existing and release the new one
-                self._log.info('🍀 4b. suppressing old behaviour {}...'.format(self._active_behaviour.name))
+                self._log.info('suppressing old behaviour ' + Fore.YELLOW + '{}'.format(self._active_behaviour.name))
                 self._active_behaviour.suppress()
-                self._log.info('🍀 4c. setting new behaviour as active {}...'.format(_behaviour.name))
+                self._log.info('setting new behaviour ' + Fore.YELLOW + '{}'.format(_behaviour.name) + Fore.CYAN + ' as active...')
                 self._active_behaviour = _behaviour
-                self._log.info('🍀 4d. releasing new behaviour {}...'.format(self._active_behaviour.name))
+                self._log.info('releasing new behaviour ' + Fore.YELLOW + '{}'.format(self._active_behaviour.name))
                 self._active_behaviour.release()
-                self._log.info('🍀 4e. done.')
+                self._log.info('done.')
             elif _compare == -1:
-                self._log.info('🍀 5. new behaviour {} is LOWER priority than existing behaviour {}.'.format(event.name, self._active_behaviour.name))
                 # the current active behaviour is a higher priority so we ignore the request to alter it
-            else: # _compare == 0: 
+                self._log.info('requested behaviour ' + Fore.YELLOW + '{}'.format(event.description) + Fore.CYAN 
+                        + ' is LOWER priority than existing behaviour ' + Fore.YELLOW + '{}'.format(self._active_behaviour.name)
+                        + Fore.CYAN + ' (no change)')
+            else: # _compare == 0:
                 # same priority, no change
-                self._log.info('🍀 new behaviour {} has SAME priority as existing behaviour {}.'.format(event.name, self._active_behaviour.name))
+                self._log.info('requested behaviour ' + Fore.YELLOW + '{}'.format(event.description) + Fore.CYAN 
+                        + ' has the SAME priority as existing behaviour ' + Fore.YELLOW + '{}'.format(self._active_behaviour.name) 
+                        + Fore.CYAN + ' (no change)')
 
 #EOF

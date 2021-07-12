@@ -32,25 +32,23 @@ class Publisher(Component, FiniteStateMachine):
     :param message_factory:  the factory for messages
     :param level:            the logging level
     '''
-    def __init__(self, name, config, message_bus, message_factory, level=Level.INFO):
+    def __init__(self, name, config, message_bus, message_factory, suppressed=False, level=Level.INFO):
+        if not isinstance(level, Level):
+            raise ValueError('wrong type for log level argument: {}'.format(type(level)))
         self._log = Logger('pub:{}'.format(name), level)
-        if isinstance(name, str):
-            self._name = name
-        else:
+        if not isinstance(name, str):
             raise ValueError('wrong type for name argument: {}'.format(type(name)))
-        if isinstance(config, dict):
-            self._config = config
-        else:
+        self._name = name
+        if not isinstance(config, dict):
             raise ValueError('wrong type for config argument: {}'.format(type(name)))
-        if isinstance(message_bus, MessageBus):
-            self._message_bus = message_bus
-        else:
+        self._config = config
+        if not isinstance(message_bus, MessageBus):
             raise ValueError('unrecognised message bus argument: {}'.format(type(message_bus)))
-        if isinstance(message_factory, MessageFactory):
-            self._message_factory = message_factory
-        else:
+        self._message_bus = message_bus
+        if not isinstance(message_factory, MessageFactory):
             raise ValueError('unrecognised message factory argument: {}'.format(type(message_bus)))
-        Component.__init__(self, self._log, suppressed=False, enabled=False)
+        self._message_factory = message_factory
+        Component.__init__(self, self._log, suppressed=suppressed, enabled=False)
         FiniteStateMachine.__init__(self, self._log, name)
         self._name = name
         self._message_bus.register_publisher(self)

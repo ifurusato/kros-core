@@ -123,11 +123,9 @@ class Event(Enum):
     MOTION_DETECT          = ( 507, "motion detect",          157,   Group.BEHAVIOUR )
     IDLE                   = ( 508, "idle",                   159,   Group.BEHAVIOUR ) # A Button
 
-#   CLOCK_TICK             = ( 601, "tick",                   400,   Group.CLOCK )
-#   CLOCK_TOCK             = ( 602, "tock",                   400,   Group.CLOCK )
-
     # other events (> 900) ..................................................................
     NO_ACTION              = ( 999, "no action",              999,   Group.OTHER )
+    ANY                    = ( 1000, "any",                  1000,   Group.OTHER )
 
     # ..................................
     def __new__(cls, *args, **kwds):
@@ -194,7 +192,9 @@ class Event(Enum):
         argument is a lower priority (higher number) than this Event;
         and 0 if they have the same priority.
         '''
-        if self._priority < event.priority:
+        if not isinstance(event, Event):
+            raise ValueError('expected event argument, not {}'.format(type(event)))
+        elif self._priority < event.priority:
             return 1
         elif self._priority > event.priority:
             return -1

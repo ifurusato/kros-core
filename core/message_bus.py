@@ -7,7 +7,7 @@
 #
 # author:   Murray Altheim
 # created:  2021-03-10
-# modified: 2021-07-03
+# modified: 2021-07-12
 #
 # An asyncio-based publish/subscribe-style message bus guaranteeing exactly-once
 # delivery for each message. This is done by populating each message with the
@@ -76,7 +76,6 @@ class MessageBus(Component):
         '''
         Updates the last_message_timestamp value to dt.now().
         '''
-        self._log.info('🐳 update last_message_timestamp.')
         self._last_message_timestamp = dt.now()
 
     # ..........................................................................

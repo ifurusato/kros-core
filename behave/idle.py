@@ -18,6 +18,7 @@ from colorama import init, Fore, Style
 init()
 
 from core.logger import Logger, Level
+from core.component import Component
 from core.util import Util
 from core.event import Event, Group
 from core.fsm import State
@@ -44,7 +45,7 @@ class Idle(Behaviour, Publisher):
     '''
     def __init__(self, config, message_bus, message_factory, level=Level.INFO):
         Behaviour.__init__(self, 'idle', config, message_bus, message_factory, level)
-        Publisher.__init__(self, 'idle', config, message_bus, message_factory, level)
+        Publisher.__init__(self, 'idle', config, message_bus, message_factory, suppressed=True, level=level)
         _cfg = self._config['kros'].get('behaviour').get('idle')
         self._idle_threshold_sec = _cfg.get('idle_threshold_sec') # int value
         self._log.info('idle threshold: {:d} sec.'.format(self._idle_threshold_sec))
@@ -56,6 +57,15 @@ class Idle(Behaviour, Publisher):
         self._log.info('ready.')
 
     # ..........................................................................
+    def release(self):
+        Component.release(self)
+        self._log.debug('released.')
+
+    def suppress(self):
+        Component.suppress(self)
+        self._log.debug('suppressed.')
+
+    # ..........................................................................
     def get_trigger_behaviour(self, event):
         return TriggerBehaviour.TOGGLE
 
@@ -64,6 +74,9 @@ class Idle(Behaviour, Publisher):
     def trigger_event(self):
         '''
         This returns the event used to enable/disable the behaviour manually.
+
+        The priority of this event determines the priority of this Behaviour
+        when compared to other Behaviours.
         '''
         return Event.IDLE
 
@@ -93,7 +106,8 @@ class Idle(Behaviour, Publisher):
 
     # ................................................................
     async def _idle_listener_loop(self, f_is_enabled):
-        self._log.info('starting idle listener loop: ' + Fore.YELLOW + 'type \'?\' for help, \'q\' or Ctrl-C to exit.')
+        self._log.info('starting idle listener loop:\t' + Fore.YELLOW + 'idle threshold: {:d} sec'.format(self._idle_threshold_sec)
+                + ( '; (suppressed, type \'u\' to release)' if self.suppressed else '.') )
         while f_is_enabled():
             _count = next(self._counter)
             self._log.debug('[{:03d}] begin idle loop...'.format(_count))
@@ -120,7 +134,7 @@ class Idle(Behaviour, Publisher):
                         pass
     
             else:
-                self._log.info('[{:03d}] idle suppressed.'.format(_count))
+                self._log.debug(Fore.BLACK + '[{:03d}] idle suppressed.'.format(_count))
 
             await asyncio.sleep(self._idle_loop_delay_sec)
             self._log.debug('[{:03d}] end idle loop.'.format(_count))
@@ -149,6 +163,7 @@ class Idle(Behaviour, Publisher):
                     self._log.info('🍫 idle disabled.')
             else:
                 raise ValueError('expected IDLE event not: {}'.format(message.event.description))
+
     # ..........................................................................
     def disable(self):
         '''

@@ -34,8 +34,14 @@ class Component(object): # ABC
     :param logger:  the Logger used for the component
     '''
     def __init__(self, logger, suppressed=True, enabled=False):
+        if not isinstance(logger, Logger):
+            raise ValueError('wrong type for logger argument: {}'.format(type(logger)))
         self._log        = logger
+        if not isinstance(suppressed, bool):
+            raise ValueError('wrong type for suppressed argument: {}'.format(type(suppressed)))
         self._suppressed = suppressed
+        if not isinstance(enabled, bool):
+            raise ValueError('wrong type for enabled argument: {}'.format(type(enabled)))
         self._enabled    = enabled
         self._closed     = False
 

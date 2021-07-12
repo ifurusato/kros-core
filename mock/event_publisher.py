@@ -60,7 +60,7 @@ class EventPublisher(Publisher):
       event-bearing messages at a random interval.
     '''
     def __init__(self, config, message_bus, message_factory, motors, level=Level.INFO):
-        Publisher.__init__(self, 'event', config, message_bus, message_factory, level)
+        Publisher.__init__(self, 'event', config, message_bus, message_factory, level=level)
         self._motors   = motors
         self._level    = level
         self._counter  = itertools.count()
@@ -169,7 +169,7 @@ class EventPublisher(Publisher):
 
     # ................................................................
     async def _key_listener_loop(self, f_is_enabled):
-        self._log.info('starting key listener loop: ' + Fore.YELLOW + 'type \'?\' for help, \'q\' or Ctrl-C to exit.')
+        self._log.info('starting key listener loop:\t' + Fore.YELLOW + 'type \'?\' for help, \'q\' or Ctrl-C to exit.')
         try:
             while f_is_enabled():
                 _count = next(self._counter)
@@ -223,7 +223,7 @@ class EventPublisher(Publisher):
                         # otherwise handle as event
                         _event = self.get_event_for_char(och)
                         if _event is not None:
-                            self._log.info('"{}" ({}) pressed; publishing message for event: {}'.format(ch, och, _event))
+                            self._log.info('key \'{}\' ({}) pressed; publishing message for event: {}'.format(ch, och, _event))
                             _message = self._message_factory.get_message(_event, True)
                             # FIXME TODO load message value for various event types correctly...
                             if _event is Event.INFRARED_CNTR:
@@ -231,9 +231,9 @@ class EventPublisher(Publisher):
 #                               _message.value = 0
                             else:
                                 _message.value = dt.now() # we use a timestamp to guarantee each message is different
-                            self._log.info('🐹 key-publishing message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
+                            self._log.debug('key-publishing message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
                             await Publisher.publish(self, _message)
-                            self._log.info('🐹 key-published message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
+                            self._log.debug('key-published message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.description))
                             # special case: check if all IFS sensors have been triggered 3 times; if so exit
                             if Event.is_ifs_event(_event):
                                 self._accumulate_message(_message)
@@ -242,7 +242,7 @@ class EventPublisher(Publisher):
                                     self._log.info(Fore.YELLOW + 'exit having triggered all sensors...')
                                     self.disable()
                         else:
-                            self._log.warning('unmapped key "{}" ({}) pressed.'.format(ch, och))
+                            self._log.warning('unmapped key \'{}\' ({}) pressed.'.format(ch, och))
                         await asyncio.sleep(self._publish_delay_sec)
                     else:
                         self._log.warning('readchar returned null.')

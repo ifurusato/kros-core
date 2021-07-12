@@ -129,22 +129,25 @@ class Subscriber(Component, FiniteStateMachine):
         self._log.debug('added \'{}\' event to subscriber {} ({:d} events).'.format(event.description, self._name, len(self._events)))
 
     def print_events(self):
-        if self._events:
+        if self._events == [Event.ANY]:
+            return '[ANY]'
+        elif self._events:
             _events = []
             for event in self._events:
                 _description = event.description.replace(' ','-')
                 _events.append('{} '.format(_description))
             return ''.join(_events)
         else:
-            return '[ANY]'
+            return '[NONE]'
 
     # ..........................................................................
     def acceptable(self, message):
         '''
         A filter that returns True if the message's event type is acceptable
-        to this subcriber.
+        to this subcriber, either by being included in the list of acceptable
+        events, or by matching the special case Event.ANY.
         '''
-        return message.event in self._events
+        return message.event is Event.ANY or message.event in self._events
 
     # ..........................................................................
     @final
@@ -366,7 +369,7 @@ class GarbageCollector(Subscriber):
     CLASS_NAME = 'gc'
     '''
     Extends subscriber as a garbage collector that eliminates messages after
-    they've passed the publish cycle.
+    they've passed the publish cycle. This subscriber accepts ANY event type.
 
     :param name:         the subscriber name (for logging)
     :param config:       the application configuration
@@ -376,6 +379,7 @@ class GarbageCollector(Subscriber):
     '''
     def __init__(self, config, message_bus, color=Fore.BLUE, level=Level.INFO):
         Subscriber.__init__(self, GarbageCollector.CLASS_NAME, config, message_bus=message_bus, color=color, suppressed=False, enabled=False, level=level)
+        self.add_event(Event.ANY)
 
     # ..........................................................................
     @property

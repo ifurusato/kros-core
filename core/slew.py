@@ -62,7 +62,7 @@ class SlewLimiter(Component):
         overrides the value set in configuration.
         '''
         if not isinstance(slew_rate, SlewRate):
-            raise Exception('expected SlewRate argument, not {}'.format(type(slew_rate)))
+            raise ValueError('expected SlewRate argument, not {}'.format(type(slew_rate)))
         self._slew_rate = slew_rate
         self._log.info('slew rate limit set to {}; {:>6.4f}/cycle.'.format(slew_rate.label, self._slew_rate.limit))
 
