@@ -30,10 +30,14 @@ class Motors(Component):
     '''
     A mocked dual motor controller with encoders. 
 
-    This incorporates an increment value for halting and braking by 
-    altering the set velocity of the motors, but also relies upon a 
+    This incorporates an increment value for stopping, halting or braking
+    by altering the set velocity of the motors, but also relies upon a 
     SlewLimiter installed on each of the motors, so that velocity 
     changes occur gradually.
+
+      Stop:  set the target velocity of the motors to zero immediately.
+      Halt:  slew the target velocity of the motors to zero quickly.
+      Brake: slew the target velocity of the motors to zero slowly.
 
     :param name:         the subscriber name (for logging)
     :param tb:           the ThunderBorg motor controller

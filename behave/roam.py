@@ -39,12 +39,12 @@ class Roam(Behaviour):
     the perceived distance. I.e., if the sensor sees nothing at its maximum 
     range the robot's forward target velocity will be set to its maximum. As 
     the sensed distance is lessened the target velocity is likewise, until the 
-    robot reaches a minimum distance in which it stops and then goes into an 
+    robot reaches a minimum distance in which it halts and then goes into an 
     obstacle avoidance behaviour (handled elsewhere).
 
     An option is to set the maximum distance to roam, so that the robot
     accelerates to roaming speed, varies its speed as described above,
-    then as it nears its target distance, decelerates to a stop at the
+    then as it nears its target distance, decelerates to a halt at the
     target.
 
     :param config:         the application configuration
