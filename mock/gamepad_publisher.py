@@ -14,7 +14,7 @@
 # displays the Gamepad output signals. No motors, video, etc.
 #
 
-import time, itertools, psutil, traceback
+import time, itertools, traceback
 import asyncio
 from pathlib import Path
 from colorama import init, Fore, Style
@@ -165,21 +165,6 @@ class GamepadPublisher(Publisher):
         self._message_bus.disable()
         Publisher.disable(self)
         self._log.info(Fore.YELLOW + 'disabled publisher.')
-
-    # ................................................................
-    def print_sys_info(self):
-        _M = 1000000
-        _vm = psutil.virtual_memory()
-        self._log.info('virtual memory: \t' + Fore.YELLOW + 'total: {:4.1f}MB; available: {:4.1f}MB ({:5.2f}%); used: {:4.1f}MB; free: {:4.1f}MB'.format(\
-                _vm[0]/_M, _vm[1]/_M, _vm[2], _vm[3]/_M, _vm[4]/_M))
-        # svmem(total=n, available=n, percent=n, used=n, free=n, active=n, inactive=n, buffers=n, cached=n, shared=n)
-        _sw = psutil.swap_memory()
-        # sswap(total=n, used=n, free=n, percent=n, sin=n, sout=n)
-        self._log.info('swap memory:    \t' + Fore.YELLOW + 'total: {:4.1f}MB; used: {:4.1f}MB; free: {:4.1f}MB ({:5.2f}%)'.format(\
-                _sw[0]/_M, _sw[1]/_M, _sw[2]/_M, _sw[3]))
-        temperature = self.read_cpu_temperature()
-        if temperature:
-            self._log.info('cpu temperature:\t' + Fore.YELLOW + '{:5.2f}°C'.format(temperature))
 
     # ................................................................
     def read_cpu_temperature(self):

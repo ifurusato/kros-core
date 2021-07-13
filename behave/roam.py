@@ -104,9 +104,8 @@ class Roam(Behaviour):
 
     # ..........................................................................
     def callback(self):
-        self._log.info(Fore.YELLOW + '🌼 roam callback()...')
         if self.suppressed:
-            self._log.info(Fore.YELLOW + '🌼 roam callback suppressed.')
+            self._log.info(Style.DIM + '🌼 roam callback suppressed.')
         else:
             self._log.info(Fore.YELLOW + '🌼 roam callback released.')
             _dt_now = dt.now()
@@ -117,11 +116,11 @@ class Roam(Behaviour):
                             + Fore.BLUE + ' distance: {};'.format(self.distance)
                             + Style.DIM + ' speed limit: {:5.2f};'.format(self.speed_limit))
                 else:
-                    self._log.info('🌸 roam callback execute; {};'.format(Util.get_formatted_time('message age:', _elapsed_ms)) 
+                    self._log.info('🌼 roam callback execute; {};'.format(Util.get_formatted_time('message age:', _elapsed_ms)) 
                             + Fore.BLUE + ' distance: {};'.format(self.distance)
                             + Fore.GREEN + ' speed limit: {:5.2f};'.format(self.speed_limit))
             self._last_dt = _dt_now
-        self._log.info(Fore.YELLOW + '🌼 roam callback complete.')
+        self._log.debug('🌼 roam callback complete.')
 
     # ..........................................................................
     def execute(self, message):

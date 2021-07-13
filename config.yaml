@@ -29,8 +29,9 @@ kros:
         loop_delay: 0.01                         # main loop delay was sleep(0.01) or 1/100th second, or 10ms. 50ms is the delay for 20Hz, so 10ms is 5x 20Hz or 100Hz.
         loop_freq_hz: 100                        # polling loop frequency (Hz)
     behaviour:
+        avoid:
+            min_distance: 20.0                       # minimum distance in cm upon which we trigger avoidance behaviour
         roam:
-            nada: False                              # nada
             min_distance: 20.0                       # minimum distance in cm
             max_distance: 200.0                      # maximum distance in cm
             min_speed: 0.0                           # minimum motor speed
@@ -44,10 +45,10 @@ kros:
             idle_loop_delay_sec: 1.0                 # main loop delay in seconds
     mock:
         event_publisher:
-            irc_init_value: 100                  # initial value of mocked center IR
-            irc_min: 50                          # minimum center IR value
-            irc_max: 200                         # maximum center IR value
-            irc_incr: -20                        # initially decreasing increment
+            ir_init_value: 100                  # initial value of mocked center IR
+            ir_min: 10                           # minimum center IR value
+            ir_max: 200                          # maximum center IR value
+            ir_incr: 20                          # IR step increment
             gamepad_publish_delay_sec: 0.01      # delay after Gamepad event
             publish_delay_sec: 0.01              # delay after IFS event
             noop_loop_delay_sec: 0.01            # delay on noop loop

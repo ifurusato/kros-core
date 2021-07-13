@@ -24,6 +24,7 @@ init()
 
 from core.logger import Logger, Level
 from core.event import Event
+from core.system import System
 from core.component import Component
 from core.fsm import FiniteStateMachine
 from core.message_bus import MessageBus
@@ -43,6 +44,7 @@ from mock.motor_subscriber import MotorSubscriber
 #from mock.gamepad_publisher import GamepadPublisher
 #from mock.gamepad_controller import GamepadController
 from behave.behaviour_manager import BehaviourManager
+from behave.avoid import Avoid
 from behave.roam import Roam
 from behave.moth import Moth
 from behave.sniff import Sniff
@@ -83,10 +85,8 @@ class KROS(Component, FiniteStateMachine):
         self._log.info('…')
         Component.__init__(self, self._log, suppressed=False, enabled=False)
         FiniteStateMachine.__init__(self, self._log, _name)
-        # set KROS as high priority process
-        self._log.info('setting process as high priority...')
-        proc = psutil.Process(os.getpid())
-        proc.nice(10)
+        self._system        = System(level)
+        self._system.set_nice()
         # configuration...
         self._config        = None
         self._behaviour_mgr = None
@@ -165,7 +165,7 @@ class KROS(Component, FiniteStateMachine):
         # create publishers ....................................................
 
 #       self._clock  = Clock(self._config, self._message_bus, self._message_factory, level=self._level)
-        self._publisher1  = EventPublisher(self._config, self._message_bus, self._message_factory, self._motors, level=self._level)
+        self._publisher1  = EventPublisher(self._config, self._message_bus, self._message_factory, self._motors, self._system, level=self._level)
 #       self._publisher2  = FloodPublisher(self._message_bus, self._message_factory)
 #       self._publisher3  = GamepadPublisher(self._config, self._message_bus, self._message_factory)
     
@@ -182,6 +182,7 @@ class KROS(Component, FiniteStateMachine):
         self._behaviour_mgr = BehaviourManager(self._config, self._message_bus, self._level) # a specialised subscriber
 #       self._behaviour_mgr = None
         # create and register behaviours (listed in priority order)
+        self._avoid = Avoid(self._config, self._message_bus, self._message_factory, self._motors, self._level)
         self._roam  = Roam(self._config, self._message_bus, self._message_factory, self._motors, self._level)
         self._moth  = Moth(self._config, self._message_bus, self._message_factory, self._motors, self._level)
         self._sniff = Sniff(self._config, self._message_bus, self._message_factory, self._motors, self._level)

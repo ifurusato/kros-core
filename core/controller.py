@@ -220,23 +220,25 @@ class Controller(Component):
            self._log.info('event: "full ahead"')
 
     # high level behaviours .................................................................
-        elif _event is Event.ROAM:                         # 500, "roam"
+        elif _event is Event.AVOID:                        # 500, "roam"
+           self._log.info('event: "avoid"')
+        elif _event is Event.ROAM:                         # 501, "roam"
            self._log.info('event: "roam"')
-        elif _event is Event.MOTH:                         # 501, "moth"
+        elif _event is Event.MOTH:                         # 502, "moth"
            self._log.info('event: "moth"')
-        elif _event is Event.SNIFF:                        # 502, "sniff"
+        elif _event is Event.SNIFF:                        # 503, "sniff"
            self._log.info('event: "sniff"')
-        elif _event is Event.VIDEO:                        # 503, "video"
+        elif _event is Event.VIDEO:                        # 504, "video"
            self._log.info('event: "video"')
-        elif _event is Event.EVENT_L2:                     # 504, "L2"
+        elif _event is Event.EVENT_L2:                     # 505, "L2"
            self._log.info('event: "L2"')
-        elif _event is Event.EVENT_R1:                     # 505, "cruise"
+        elif _event is Event.EVENT_R1:                     # 506, "cruise"
            self._log.info('event: "cruise"')
-        elif _event is Event.LIGHTS:                       # 506, "lights"
+        elif _event is Event.LIGHTS:                       # 507, "lights"
            self._log.info('event: "lights"')
-        elif _event is Event.MOTION_DETECT:                # 507, "motion detect"
+        elif _event is Event.MOTION_DETECT:                # 508, "motion detect"
            self._log.info('event: "motion detect"')
-        elif _event is Event.IDLE:                         # 508, "idle"
+        elif _event is Event.IDLE:                         # 509, "idle"
            self._log.info('event: "idle"')
 
     # other events (> 900) ..................................................................

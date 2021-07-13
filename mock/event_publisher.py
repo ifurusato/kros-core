@@ -10,13 +10,12 @@
 # modified: 2021-06-17
 #
 
-import sys, time, itertools, psutil, random, traceback
+import sys, time, itertools, random, traceback
 import select, tty, termios # used by _Getch
 import select
 import asyncio
 import concurrent.futures
 from datetime import datetime as dt
-from pathlib import Path
 from colorama import init, Fore, Style
 init()
 
@@ -38,7 +37,7 @@ class EventPublisher(Publisher):
             Event.INCREASE_VELOCITY, Event.DECREASE_VELOCITY, 
             Event.BRAKE, Event.HALT, Event.STOP, 
             Event.AHEAD, Event.ASTERN, 
-            Event.ROAM, Event.SNIFF, Event.MOTH, Event.IDLE,
+            Event.AVOID, Event.ROAM, Event.SNIFF, Event.MOTH, Event.IDLE,
             Event.NOOP, Event.SHUTDOWN, 
         ]
 
@@ -59,9 +58,10 @@ class EventPublisher(Publisher):
     Finally, there is also has a "flood" mode that auto-generates random
       event-bearing messages at a random interval.
     '''
-    def __init__(self, config, message_bus, message_factory, motors, level=Level.INFO):
+    def __init__(self, config, message_bus, message_factory, motors, system, level=Level.INFO):
         Publisher.__init__(self, 'event', config, message_bus, message_factory, level=level)
         self._motors   = motors
+        self._system   = system
         self._level    = level
         self._counter  = itertools.count()
         self._triggered_ir_port_side = self._triggered_ir_port  = self._triggered_ir_cntr  = self._triggered_ir_stbd  = \
@@ -69,13 +69,14 @@ class EventPublisher(Publisher):
         self._getch           = _Getch()
         self._flood_enable    = False
         self._message_limit   = 3 # fixed message limit (testing only)
-        self._clamp = lambda n: self._irc_min if n <= self._irc_min else self._irc_max if n >= self._irc_max else n
+        self._clamp = lambda n: self._ir_min if n <= self._ir_min else self._ir_max if n >= self._ir_max else n
         # configuration ....................................
         _cfg = config['kros'].get('mock').get('event_publisher')
-        self._irc_value       = _cfg.get('irc_init_value') # initial value of mocked center IR
-        self._irc_min         = _cfg.get('irc_min')        # minimum center IR value
-        self._irc_max         = _cfg.get('irc_max')        # maximum center IR value
-        self._irc_incr        = _cfg.get('irc_incr')       # initially decreasing increment
+        self._ir_value        = _cfg.get('ir_init_value')       # initial value of mocked center IR
+        self._ir_min          = _cfg.get('ir_min')              # minimum center IR value
+        self._ir_max          = _cfg.get('ir_max')              # maximum center IR value
+        self._ir_incr         = _cfg.get('ir_incr')             # IR step increment
+        self._ir_direction    = -1                              # initial direction (down)
         self._gamepad_publish_delay_sec = _cfg.get('gamepad_publish_delay_sec') # delay after Gamepad event
         self._publish_delay_sec = _cfg.get('publish_delay_sec') # delay after IFS event
         self._loop_delay_sec  = _cfg.get('noop_loop_delay_sec') # delay on noop loop
@@ -188,8 +189,9 @@ class EventPublisher(Publisher):
                             continue
                         elif och == 105: # 'i' print info
                             self._log.heading('System Information','Memory, CPU and Message Bus Information.')
-                            self.print_sys_info()
-                            self._message_bus.print_bus_info()
+                            self._system.print_sys_info()
+                            self._message_bus.print_system_status()
+                            self._motors.print_info(None)
                             continue
                         elif och == 111: # 'o'
                             self._message_bus.clear_tasks()
@@ -220,15 +222,21 @@ class EventPublisher(Publisher):
                         elif och == 122: # 'z' toggle motors loop
                             self._toggle_motors()
                             continue
+                        elif 65 <= och <= 90: # then we're uppercased alpha
+                            self._ir_direction *= -1 # toggle direction
+                            self._log.info('🐙 toggle increment direction: {:d}'.format(self._ir_direction))
+                            och += 32
                         # otherwise handle as event
                         _event = self.get_event_for_char(och)
                         if _event is not None:
                             self._log.info('key \'{}\' ({}) pressed; publishing message for event: {}'.format(ch, och, _event))
                             _message = self._message_factory.get_message(_event, True)
                             # FIXME TODO load message value for various event types correctly...
-                            if _event is Event.INFRARED_CNTR:
-                                _message.value = self._get_infrared_center_value() # we use a rising and falling value
-#                               _message.value = 0
+#                           if _event is Event.INFRARED_CNTR:
+                            if Event.is_infrared_event(_event):
+                                _message.value = self._get_infrared_value() # we use a rising and falling value
+                            elif Event.is_bumper_event(_event):
+                                _message.value = 0 # bumpers by definition have a distance of zero
                             else:
                                 _message.value = dt.now() # we use a timestamp to guarantee each message is different
                             self._log.debug('key-publishing message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
@@ -265,7 +273,7 @@ class EventPublisher(Publisher):
                 self._getch.close()
 
     # ..........................................................................
-    def _get_infrared_center_value(self):
+    def _get_infrared_value(self):
         '''
         Returns a continuually rising and falling value.
         This goes from a minimum of 50 to a maximum of 250,
@@ -273,14 +281,14 @@ class EventPublisher(Publisher):
 
         This is a special case; does it belong here?
         '''
-        self._irc_value += self._irc_incr
-        if self._irc_value <= self._irc_min:
-            self._irc_incr = 10
-        elif self._irc_value >= self._irc_max:
-            self._irc_incr = -10
-        self._irc_value = self._clamp(self._irc_value)
-        self._log.info('infrared center: {:d}'.format(self._irc_value))
-        return self._irc_value
+        self._ir_value += ( self._ir_incr * self._ir_direction )
+        if self._ir_value <= self._ir_min:
+            self._ir_direction = 1
+        elif self._ir_value >= self._ir_max:
+            self._ir_direction = -1
+        self._ir_value = self._clamp(self._ir_value)
+        self._log.info('infrared center: {:d}'.format(self._ir_value))
+        return self._ir_value
 
     # ..........................................................................
     def _get_random_event(self):
@@ -376,32 +384,6 @@ class EventPublisher(Publisher):
         self._message_bus.disable()
         Publisher.disable(self)
         self._log.info('disabled publisher.')
-
-    # ................................................................
-    def print_sys_info(self):
-        _M = 1000000
-        _vm = psutil.virtual_memory()
-        self._log.info('virtual memory: \t' + Fore.YELLOW + 'total: {:4.1f}MB; available: {:4.1f}MB ({:5.2f}%); used: {:4.1f}MB; free: {:4.1f}MB'.format(\
-                _vm[0]/_M, _vm[1]/_M, _vm[2], _vm[3]/_M, _vm[4]/_M))
-        # svmem(total=n, available=n, percent=n, used=n, free=n, active=n, inactive=n, buffers=n, cached=n, shared=n)
-        _sw = psutil.swap_memory()
-        # sswap(total=n, used=n, free=n, percent=n, sin=n, sout=n)
-        self._log.info('swap memory:    \t' + Fore.YELLOW + 'total: {:4.1f}MB; used: {:4.1f}MB; free: {:4.1f}MB ({:5.2f}%)'.format(\
-                _sw[0]/_M, _sw[1]/_M, _sw[2]/_M, _sw[3]))
-        temperature = self.read_cpu_temperature()
-        if temperature:
-            self._log.info('cpu temperature:\t' + Fore.YELLOW + '{:5.2f}°C'.format(temperature))
-
-    # ................................................................
-    def read_cpu_temperature(self):
-        temp_file = Path('/sys/class/thermal/thermal_zone0/temp')
-        if temp_file.is_file():
-            with open(temp_file, 'r') as f:
-                data = int(f.read())
-                temperature = data / 1000
-                return temperature
-        else:
-            return None
 
     # ..........................................................................
     def _print_waiting_for_message(self):
@@ -501,7 +483,7 @@ class EventPublisher(Publisher):
         self._log.info('''key map:
 
   ┏━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┓
-  ┃    1    ┃    2    ┃    3    ┃    4    ┃    5    ┃    6    ┃    7    ┃    8    ┃    9    ┃    0    ┃    -    ┃    +    ┃   DEL   ┃
+  ┃    1    ┃    2    ┃    3    ┃    4    ┃    5    ┃    6    ┃    7    ┃    8    ┃    9    ┃    0    ┃    -    ┃    =    ┃   DEL   ┃
   ┃ FUL AST ┃ HAF AST ┃ SLO AST ┃ DSL AST ┃  STOP   ┃ DSL AHD ┃ SLO AHD ┃ HAF AHD ┃ FUL AHD ┃  HALT   ┃  BRAKE  ┃  EVEN   ┃ SHUTDWN ┃
   ┗━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┛
        ┃    Q    ┃    W    ┃    E    ┃    R    ┃    T    ┃    Y    ┃    U    ┃    I    ┃    O    ┃    P    ┃    [    ┃    ]    ┃
@@ -511,14 +493,14 @@ class EventPublisher(Publisher):
             ┃ IR_PSID ┃ IR_PORT ┃ IR_CNTR ┃ IR_STBD ┃ IR_SSID ┃  HELP   ┃ BM_PORT ┃ BM_CNTR ┃ BM_STBD ┃ DE_PORT ┃ DE_STBD ┃  CLEAR  ┃
             ┗━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┛
                  ┃    Z    ┃    X    ┃    C    ┃    V    ┃    B    ┃    N    ┃    M    ┃    <    ┃    >    ┃    ?    ┃    \    ┃
-                 ┃ MTR_INF ┃ SP_PORT ┃ TN_PORT ┃ VERBOSE ┃ TN_STBD ┃ SP_STBD ┃  NOOP   ┃ DE_VELO ┃ IN_VELO ┃  HELP   ┃  CLOCK  ┃
+                 ┃ MTR_INF ┃ SP_PORT ┃ TN_PORT ┃ VERBOSE ┃ TN_STBD ┃ SP_STBD ┃  AVOID  ┃ DE_VELO ┃ IN_VELO ┃  HELP   ┃  CLOCK  ┃
                  ┗━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┛
     
   FUL AST:   full astern        QUIT:     quit application              IR_PSID:  port side infrared            MTR_INF:  toggle motor info
   HAF AST:   half astern        FLOOD:    toggle flood publisher        IR_PORT:  port infrared                 SP_PORT:  spin port
   SLO AST:   slow astern        SNIFF:    tirgger SNIFF behaviour       IR_CNTR:  center infrared               TN_PORT:  turn to port
   DSL AST:   dead slow astern   ROAM:     trigger ROAM behaviour        IR_STBD:  starboard infrared            VERBOSE:  toggle verbosity
-  STOP:      stop               NOOP:     no operation event            IR_SSID:  starboard side infrared       TN_STBD:  turn to starboard 
+  STOP:      stop               AVOID:    avoidance beheaviour          IR_SSID:  starboard side infrared       TN_STBD:  turn to starboard 
   DSL AHD:   dead slow ahead    INFO:     print system information      HELP:     print help                    SP_STBD:  spin starboard
   SLO AHD:   slow ahead         CLR_TSK:  clear completed tasks         BM_PORT:  port bumper                    
   HAF AHD:   half ahead         POP_MSG:  pop messages from queue       BM_CNTR:  center bumper                 DE_VELO:  decrease velocity
@@ -631,7 +613,7 @@ class EventPublisher(Publisher):
         elif och == 108: # l
             return Event.BUMPER_STBD
         elif och == 109: # m
-            return Event.NOOP
+            return Event.AVOID
         elif och == 110: # n
             return Event.SPIN_STBD
         elif och == 114: # r

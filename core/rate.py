@@ -67,9 +67,7 @@ class Rate():
         mode, not the nanosecond timer. Note that the argument's units
         are seconds, not milliseconds.
         '''
-#       self._log.info(Fore.BLACK + 'trim argument: {:9.6f}ms'.format(trim_s))
         if trim_s < self._dt_s:
-            # trim value is in seconds
             self._trim = trim_s
             self._log.debug('trim set to: {:9.7f}s'.format(self._trim))
         else:
@@ -119,13 +117,10 @@ class Rate():
             _ns_diff = time.perf_counter_ns() - self._last_ns
             _delay_sec = ( self._dt_ns - _ns_diff ) / ( 1000 * 1000000 )
             if self._dt_ns > _ns_diff:
-#               print('...')
                 time.sleep(_delay_sec)
-#           self._log.info(Fore.BLACK + Style.BRIGHT + 'dt_ns: {:7.4f}; diff: {:7.4f}ns; delay: {:7.4f}s'.format(self._dt_ns, _ns_diff, _delay_sec))
             self._last_ns = time.perf_counter_ns()
         else:
             _diff = time.time() - self._last_time
-#           _delay_sec = self._dt_s - _diff
             _delay_sec = self._dt_s - _diff
             # adjust for error
             if _delay_sec + self._trim > 0.0:
@@ -134,20 +129,6 @@ class Rate():
                 time.sleep(_delay_sec)
             else:
                 self._log.debug('no additional delay in rate loop (diff: {:7.4f}ms)'.format(_diff * 1000.0))
-#           if _delay_sec < self._dt_s:
-#               self._log.debug(Fore.CYAN + Style.DIM    + '< dt: {:7.4f}ms;'.format(self._dt_s * 1000.0) + Fore.CYAN  \
-#                       + ' delay: {:7.4f}ms; diff: {:7.4f}ms; trim: {:5.2f}'.format(_delay_sec * 1000.0, _diff * 1000.0, self._trim))
-#           elif _delay_sec > self._dt_s:
-#               self._log.debug(Fore.CYAN + Style.DIM    + '> dt: {:7.4f}ms;'.format(self._dt_s * 1000.0) + Fore.CYAN  \
-#                       + ' delay: {:7.4f}ms; diff: {:7.4f}ms; trim: {:5.2f}'.format(_delay_sec * 1000.0, _diff * 1000.0, self._trim))
-#           else:
-#               self._log.debug(Fore.CYAN + Style.NORMAL + '= dt: {:7.4f}ms;'.format(self._dt_s * 1000.0) + Fore.WHITE \
-#                       + ' delay: {:7.4f}s; diff: {:7.4f}ms; trim: {:5.2f}'.format(_delay_sec * 1000.0, _diff * 1000.0, self._trim))
             self._last_time = time.time()
 
-#       self._log.info(Fore.BLACK + Style.BRIGHT + 'elapsed: {:>6.3f}ms'.format(_elapsed))
-
 #EOF
-
-
-

@@ -56,30 +56,33 @@ class Sniff(Behaviour):
     def callback(self):
         self._log.info('🌺 sniff callback.')
 
-#   # ..........................................................................
-#   def start(self):
-#       '''
-#       The necessary state machine call to start the publisher, which performs
-#       any initialisations of active sub-components, etc.
-#       '''
-#       Behaviour.start(self)
-
     # ..........................................................................
     @property
     def name(self):
         return 'sniff'
 
     # ..........................................................................
-    def execute(self):
+    def execute(self, message):
         '''
-        The method called upon each loop iteration. This does nothing in this
-        abstract class and is meant to be extended by subclasses.
+        The method called upon each loop iteration. 
+
+        :param message:  an optional Message passed along by the message bus
         '''
-        _timestamp = self._message_bus.last_message_timestamp
-        if _timestamp is None:
-            self._log.info('🌺 sniff loop execute; no previous messages.')
+        if self.suppressed:
+            self._log.info(Style.DIM + '🌺 sniff suppressed; message: {}'.format(message.event.label))
         else:
-            _elapsed_ms = (dt.now() - _timestamp).total_seconds() * 1000.0
-            self._log.info('🌺 sniff loop execute; {}'.format(Util.get_formatted_time('message age:', _elapsed_ms)))
+            self._log.info('🌺 sniff released; message: {}'.format(message.event.label))
+            _payload = message.payload
+            _event   = _payload.event
+            _timestamp = self._message_bus.last_message_timestamp
+            if _timestamp is None:
+                self._log.info('🌺 sniff loop execute; no previous messages.')
+            else:
+                _elapsed_ms = (dt.now() - _timestamp).total_seconds() * 1000.0
+                self._log.info('🌺 sniff loop execute; {}'.format(Util.get_formatted_time('message age:', _elapsed_ms)))
+            if self.enabled:
+                self._log.info('🌺 sniff enabled, execution on message {}; '.format(message.name) + Fore.YELLOW + ' event: {};'.format(_event.label))
+            else:
+                self._log.info('🌺 sniff disabled, execution on message {}; '.format(message.name) + Fore.YELLOW + ' event: {};'.format(_event.label)) 
 
 #EOF

@@ -22,8 +22,8 @@ from core.component import Component
 from core.util import Util
 from core.event import Event, Group
 from core.fsm import State
-from core.publisher import Publisher
 from behave.behaviour import Behaviour
+from core.publisher import Publisher
 from behave.trigger_behaviour import TriggerBehaviour
 
 # ...............................................................
@@ -32,10 +32,11 @@ class Idle(Behaviour, Publisher):
     _LISTENER_LOOP_NAME = '__idle_listener_loop'
 
     '''
-    Extends Publisher to implement a idle behaviour. This polls
-    the MessageBus' value for last message timestamp, and after
-    a certain amount of time has passed with no sensor events it
-    then triggers publication of an IDLE event message.
+    Extends both Behaviour and Publisher to implement a idle
+    behaviour. This polls the MessageBus value for last message
+    timestamp, and after a certain amount of time has passed
+    with no sensor events it then triggers publication of an
+    IDLE event message.
 
     :param name:            the name of this behaviour
     :param config:          the application configuration
@@ -53,7 +54,6 @@ class Idle(Behaviour, Publisher):
         self._log.info('idle loop delay: {:4.2f} sec.'.format(self._idle_threshold_sec)) # float value
         self._idle_loop_running = False
         self._counter = itertools.count()
-#       self.add_events([ Group.INFRARED, Group.BUMPER ])
         self._log.info('ready.')
 
     # ..........................................................................
@@ -119,9 +119,9 @@ class Idle(Behaviour, Publisher):
                 else:
                     _elapsed_ms = (dt.now() - _timestamp).total_seconds() * 1000.0
                     if ( _elapsed_ms / 1000.0 ) > self._idle_threshold_sec:
-                        self._log.info('[{:03d}] idle threshold met; '.format(_count) 
+                        self._log.info('[{:03d}] idle threshold met; '.format(_count)
                                 + Fore.YELLOW + '{}'.format(Util.get_formatted_time('elapsed time since last message:', _elapsed_ms)))
-   
+
                         _message = self._message_factory.get_message(Event.ROAM, dt.now())
                         self._log.info('idle publishing message for event: {}; value: {}'.format(_message.event.label, _message.value))
 
@@ -129,10 +129,10 @@ class Idle(Behaviour, Publisher):
                         await Publisher.publish(self, _message)
                         self._log.debug('key-published message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
                     else:
-                        self._log.info('[{:03d}] idle active; '.format(_count) 
+                        self._log.info('[{:03d}] idle active; '.format(_count)
                                 + Style.DIM + '{}'.format(Util.get_formatted_time('elapsed time since last message:', _elapsed_ms)))
                         pass
-    
+
             else:
                 self._log.debug(Fore.BLACK + '[{:03d}] idle suppressed.'.format(_count))
 
@@ -144,7 +144,7 @@ class Idle(Behaviour, Publisher):
     # ..........................................................................
     def execute(self, message):
         '''
-        The method called upon each loop iteration. 
+        The method called upon each loop iteration.
 
         :param message:  an optional Message passed along by the message bus
         '''

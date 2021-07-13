@@ -113,15 +113,16 @@ class Event(Enum):
     FULL_AHEAD             = ( 414, "full ahead",             100,   Group.CHADBURN )
 
     # high level behaviours .................................................................
-    ROAM                   = ( 500, "roam",                   150,   Group.BEHAVIOUR )
-    MOTH                   = ( 501, "moth",                   151,   Group.BEHAVIOUR )
-    SNIFF                  = ( 502, "sniff",                  152,   Group.BEHAVIOUR ) # A Button
-    VIDEO                  = ( 503, "video",                  153,   Group.BEHAVIOUR ) # L1 Button
-    EVENT_L2               = ( 504, "L2",                     154,   Group.BEHAVIOUR ) # L2 Button
-    EVENT_R1               = ( 505, "cruise",                 155,   Group.BEHAVIOUR ) # R1 Button
-    LIGHTS                 = ( 506, "lights",                 156,   Group.BEHAVIOUR ) # R2 Button
-    MOTION_DETECT          = ( 507, "motion detect",          157,   Group.BEHAVIOUR )
-    IDLE                   = ( 508, "idle",                   159,   Group.BEHAVIOUR ) # A Button
+    AVOID                  = ( 500, "avoid",                  150,   Group.BEHAVIOUR )
+    ROAM                   = ( 501, "roam",                   150,   Group.BEHAVIOUR )
+    MOTH                   = ( 502, "moth",                   151,   Group.BEHAVIOUR )
+    SNIFF                  = ( 503, "sniff",                  152,   Group.BEHAVIOUR ) # A Button
+    VIDEO                  = ( 504, "video",                  153,   Group.BEHAVIOUR ) # L1 Button
+    EVENT_L2               = ( 505, "L2",                     154,   Group.BEHAVIOUR ) # L2 Button
+    EVENT_R1               = ( 506, "cruise",                 155,   Group.BEHAVIOUR ) # R1 Button
+    LIGHTS                 = ( 507, "lights",                 156,   Group.BEHAVIOUR ) # R2 Button
+    MOTION_DETECT          = ( 508, "motion detect",          157,   Group.BEHAVIOUR )
+    IDLE                   = ( 509, "idle",                   159,   Group.BEHAVIOUR ) # A Button
 
     # other events (> 900) ..................................................................
     NO_ACTION              = ( 999, "no action",              999,   Group.OTHER )
@@ -138,11 +139,6 @@ class Event(Enum):
         self._label    = label
         self._priority = priority
         self._group    = group
-
-#   # ................................................................
-#   @staticmethod
-#   def is_clock_event(event):
-#       return ( event.group is Group.CLOCK )
 
     # ................................................................
     @staticmethod

@@ -34,6 +34,7 @@ init()
 from asyncio.queues import Queue, QueueEmpty
 
 from core.logger import Logger, Level
+from core.util import Util
 from core.component import Component
 from core.event import Event
 from core.message import Message
@@ -59,6 +60,7 @@ class MessageBus(Component):
         self._arbitrator  = Arbitrator(level)
         self._max_age_ms  = 20.0
         self._publish_delay_sec = 0.01
+        self._clip_event_list = False # used for printing only
         self._log.info('ready.')
 
     # ..........................................................................
@@ -288,13 +290,17 @@ class MessageBus(Component):
             return
         self._log.info('{} subscriber{}:'.format(Numbers.from_number(len(self._subscribers)), 's' if len(self._subscribers) > 1 else ''))
         for subscriber in self._subscribers:
+            if self._clip_event_list:
+                _event_list = Util.ellipsis(subscriber.print_events(), 45)
+            else:
+                _event_list = subscriber.print_events()
             self._log.info(Fore.YELLOW + '\t{}'.format(subscriber.name)
                     + Fore.CYAN + ' {}enabled: '.format((' ' * max(0, (10 - len(subscriber.name)))))
                     + Fore.YELLOW + '{}\t'.format(subscriber.enabled)
                     + Fore.CYAN + 'suppressed: '
                     + Fore.YELLOW + '{}\t'.format(subscriber.suppressed)
                     + Fore.CYAN + 'listening for: '
-                    + Fore.YELLOW + '{}'.format(subscriber.print_events()))
+                    + Fore.YELLOW + '{}'.format(_event_list))
 
     @property
     def subscribers(self):
@@ -349,7 +355,17 @@ class MessageBus(Component):
                 publisher.enable()
 
     # ..........................................................................
-    def print_bus_info(self):
+    def print_system_status(self):
+        '''
+        Prints the current system status to the console.
+        '''
+        self.print_task_info()
+        self.print_publishers()
+        self.print_subscribers()
+        self.print_arbitrator_info()
+
+    # ..........................................................................
+    def print_task_info(self):
         self._log.info('in queue:    \t' + Fore.YELLOW + '{:d} message{}.'.format(self._queue.qsize(), '' if self._queue.qsize() == 1 else 's'))
         _tasks = self.get_all_tasks()
         if len(_tasks) == 0:
@@ -361,9 +377,6 @@ class MessageBus(Component):
                 self._log.info('active tasks:\t' + Fore.YELLOW + '{:d} remain:'.format(len(_tasks)))
             for _task in _tasks:
                 self._log.info(Fore.YELLOW + '    \t\t{};  \t'.format(_task.get_name()) + Fore.BLACK + ' done? {}'.format(_task.done()))
-        self.print_publishers()
-        self.print_subscribers()
-        self.print_arbitrator_info()
 
     # ..........................................................................
     async def peek_message(self):
@@ -404,7 +417,7 @@ class MessageBus(Component):
         _put_task = asyncio.create_task(self._queue.put(message), name='publish-message-{}'.format(message.name))
         # the first time the message is published we update the 'last_message_timestamp'
         self.update_last_message_timestamp()
-        self._log.debug(Style.DIM + 'created task: {}'.format(_put_task.get_name()))
+        self._log.info(Style.DIM + 'created task: {}'.format(_put_task.get_name()))
         await asyncio.sleep(self._publish_delay_sec)
 
     # ..........................................................................

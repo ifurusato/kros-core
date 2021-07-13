@@ -89,12 +89,11 @@ class Behaviour(ABC, Subscriber):
     def trigger_event(self):
         '''
         This returns the event used to trigger (toggle enable/disable) the
-        behaviour manually; it may be enabled or disabled through other 
-        means.
+        behaviour manually, used only during testing; the Behaviour would
+        normally be enabled or disabled through other means.
         The method should be implemented as a @property.
         '''
         raise NotImplementedError('trigger_event() must be implemented in subclasses.')
-
 
     # ..........................................................................
     def on_trigger(self, event):

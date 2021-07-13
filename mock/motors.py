@@ -28,11 +28,11 @@ from mock.motor import Motor
 # ..............................................................................
 class Motors(Component):
     '''
-    A mocked dual motor controller with encoders. 
+    A mocked dual motor controller with encoders.
 
     This incorporates an increment value for stopping, halting or braking
-    by altering the set velocity of the motors, but also relies upon a 
-    SlewLimiter installed on each of the motors, so that velocity 
+    by altering the set velocity of the motors, but also relies upon a
+    SlewLimiter installed on each of the motors, so that velocity
     changes occur gradually.
 
       Stop:  set the target velocity of the motors to zero immediately.
@@ -64,10 +64,11 @@ class Motors(Component):
         self._loop_enabled         = False
         self._event_counter        = itertools.count()
         # configured constants
+        self._print_motor_velocity = False # on _get_movement_description()
         _cfg = config['kros'].get('motors')
         self._loop_delay_sec       = _cfg.get('loop_delay_sec')    # main loop delay
         self._max_velocity         = _cfg.get('max_velocity')      # limit to motor velocity
-        self._accel_increment      = _cfg.get('accel_increment')   # normal incremental acceleration 
+        self._accel_increment      = _cfg.get('accel_increment')   # normal incremental acceleration
         self._decel_increment      = _cfg.get('decel_increment')   # normal incremental deceleration
         self._halt_ratio           = _cfg.get('halt_ratio')        # ratio for quick _halt behaviour
         self._brake_ratio          = _cfg.get('brake_ratio')       # ratio for slower braking behaviour
@@ -138,8 +139,8 @@ class Motors(Component):
         '''
         while f_is_enabled():
             _event_count = next(self._event_counter)
-            _current_port_velocity = self._port_motor.velocity
-            _current_stbd_velocity = self._stbd_motor.velocity
+#           _current_port_velocity = self._port_motor.velocity
+#           _current_stbd_velocity = self._stbd_motor.velocity
             if not isclose(self._decelerate_ratio, 0.0, abs_tol=0.1):
                 # if decelerating then apply that to target velocities first
                 self._decelerate(_event_count)
@@ -148,27 +149,81 @@ class Motors(Component):
             if self._stbd_motor.velocity != self._stbd_target_velocity:
                 self.set_motor_velocity(Orientation.STBD, self._stbd_target_velocity)
             # print stats...
-            if self.stopped:
-#               self._log.info('[{:04d}] velocity: '.format(_event_count) + Fore.BLUE + 'stopped.')
-                self._log.info('[{:04d}] velocity: '.format(_event_count) 
-                        + Fore.RED   + 'port: {:5.2f} / {:<5.2f}'.format(_current_port_velocity, self._port_target_velocity)
-                        + Fore.CYAN  + '\t:: '
-                        + Fore.GREEN + 'stbd: {:5.2f} / {:<5.2f}'.format(_current_stbd_velocity, self._stbd_target_velocity) + Fore.CYAN + '\t:: stopped.')
-            else:
-                if self._decelerate_ratio == 0.0:
-                    self._log.info('[{:04d}] velocity: '.format(_event_count) 
-                            + Fore.RED   + 'port: {:5.2f} / {:<5.2f}'.format(_current_port_velocity, self._port_target_velocity)
-                            + Fore.CYAN  + '\t:: '
-                            + Fore.GREEN + 'stbd: {:5.2f} / {:<5.2f}'.format(_current_stbd_velocity, self._stbd_target_velocity))
-                else:
-                    self._log.info('[{:04d}] velocity: '.format(_event_count) 
-                            + Fore.RED   + 'port: {:5.2f} / {:<5.2f}'.format(_current_port_velocity, self._port_target_velocity)
-                            + Fore.CYAN  + '\t:: '
-                            + Fore.GREEN + 'stbd: {:5.2f} / {:<5.2f}'.format(_current_stbd_velocity, self._stbd_target_velocity)
-                            + Fore.CYAN  + '\t:: decelerate: '
-                            + Fore.BLUE + '{:.0%}'.format(self._decelerate_ratio))
+            self.print_info(_event_count)
             time.sleep(self._loop_delay_sec)
         self._log.info('exited display loop.')
+
+    # ..........................................................................
+    def print_info(self, count):
+        if self.stopped:
+            self._log.info(('[{:04d}] '.format(count) if count else '')
+                    + 'velocity: '
+                    + Fore.RED   + 'port: {:5.2f} / {:<5.2f}'.format(self._port_motor.velocity, self._port_target_velocity)
+                    + Fore.CYAN  + ' :: '
+                    + Fore.GREEN + 'stbd: {:5.2f} / {:<5.2f}'.format(self._stbd_motor.velocity, self._stbd_target_velocity)
+                    + Fore.CYAN + ' :: {}.'.format(self._get_movement_description()))
+        else:
+            if self._decelerate_ratio == 0.0:
+                self._log.info(('[{:04d}] '.format(count) if count else '')
+                        + 'velocity: '
+                        + Fore.RED   + 'port: {:5.2f} / {:<5.2f}'.format(self._port_motor.velocity, self._port_target_velocity)
+                        + Fore.CYAN  + ' :: '
+                        + Fore.GREEN + 'stbd: {:5.2f} / {:<5.2f}'.format(self._stbd_motor.velocity, self._stbd_target_velocity)
+                        + Fore.CYAN + ' :: {}.'.format(self._get_movement_description()))
+            else:
+                self._log.info(('[{:04d}] '.format(count) if count else '')
+                        + 'velocity: '
+                        + Fore.RED   + 'port: {:5.2f} / {:<5.2f}'.format(self._port_motor.velocity, self._port_target_velocity)
+                        + Fore.CYAN  + ' :: '
+                        + Fore.GREEN + 'stbd: {:5.2f} / {:<5.2f}'.format(self._stbd_motor.velocity, self._stbd_target_velocity)
+                        + Fore.CYAN  + ' :: decelerate: '
+                        + Fore.BLUE + '{:.0%}'.format(self._decelerate_ratio)
+                        + Fore.CYAN + ' :: {}.'.format(self._get_movement_description()))
+
+    # ..........................................................................
+    def _get_movement_description(self):
+        '''
+        Return a string characterising movement based on the direction of
+        the two motors.
+        '''
+        if self._print_motor_velocity:
+            _port_velocity = self._port_motor.velocity
+            _stbd_velocity = self._stbd_motor.velocity
+        else:
+            _port_velocity = self._port_target_velocity
+            _stbd_velocity = self._stbd_target_velocity
+
+        _avg_velocity = ( _port_velocity + _stbd_velocity ) / 2.0
+
+        if isclose(_port_velocity, 0.0, abs_tol=0.5) and isclose(_stbd_velocity, 0.0, abs_tol=0.5):
+            # close to stopped
+            return 'stopped'
+        elif isclose(_port_velocity, _stbd_velocity, abs_tol=0.5):
+            if _port_velocity > 0.0:
+                return 'straight ahead'
+            else:
+                return 'straight astern'
+        elif isclose(_avg_velocity, 0.0, abs_tol=0.5):
+            if _port_velocity > _stbd_velocity:
+                return 'rotate to starboard'
+            elif _port_velocity < _stbd_velocity:
+                return 'rotate to port'
+            else:
+                return 'indeterminate (0)'
+        elif _avg_velocity > 0.0:
+            if _port_velocity > _stbd_velocity:
+                return 'turn ahead to starboard'
+            elif _port_velocity < _stbd_velocity:
+                return 'turn ahead to port'
+            else:
+                return 'ahead indeterminate (1)'
+        elif _avg_velocity < 0.0:
+            if _port_velocity > _stbd_velocity:
+                return 'turn astern to starboard'
+            elif _port_velocity < _stbd_velocity:
+                return 'turn astern to port'
+            else:
+                return 'astern indeterminate (2)'
 
     # ..........................................................................
     def get_motor(self, orientation):
@@ -181,6 +236,7 @@ class Motors(Component):
     def dispatch_velocity_event(self, payload):
         self._reset_deceleration()
         _event = payload.event
+        self._log.info('🚩 dispatch velocity event: {}'.format(_event.label))
         _value = payload.value
         if not self.loop_is_running():
             self.start_loop()
@@ -223,6 +279,7 @@ class Motors(Component):
         '''
         self._reset_deceleration()
         _event = payload.event
+        self._log.info('🚩 dispatch chadburn event: {}'.format(_event.label))
         _value = payload.value
         _speed = None
         _direction = None
@@ -274,11 +331,12 @@ class Motors(Component):
     # ..........................................................................
     def dispatch_theta_event(self, payload):
         '''
-        A dispatcher for theta (rotation/turning) events: turn ahead, turn to, 
+        A dispatcher for theta (rotation/turning) events: turn ahead, turn to,
         and turn astern for port and starboard; spin port and spin starboard.
         '''
         self._reset_deceleration()
         _event = payload.event
+        self._log.info('🚩 dispatch theta event: {}'.format(_event.label))
         _value = payload.value
         self._log.info('theta event: {}'.format(_event.label))
         if not self.loop_is_running():
@@ -328,10 +386,11 @@ class Motors(Component):
         '''
         self._reset_deceleration()
         _event = payload.event
+        self._log.info('🚩 dispatch stop event: {}'.format(_event.label))
         _value = payload.value
         if _event is Event.HALT:
             self._halt()
-        elif _event is Event.BRAKE: 
+        elif _event is Event.BRAKE:
             self._brake()
         elif _event is Event.STOP:
             self._stop()
@@ -345,22 +404,22 @@ class Motors(Component):
         '''
         _event = payload.event
         _value = payload.value
-
+        self._log.info('🚩 dispatch infrared event: {}'.format(_event.label))
         if _event is Event.INFRARED_PORT_SIDE:
             self._log.info('INFRARED PORT SIDE.')
-#           self._stop()
+#           self._brake()
         elif _event is Event.INFRARED_PORT:
             self._log.info('INFRARED PORT.')
-#           self._stop()
-        elif _event is Event.INFRARED_CNTR: 
+#           self._brake()
+        elif _event is Event.INFRARED_CNTR:
             self._log.info('INFRARED CNTR.')
-#           self._stop()
+#           self._brake()
         elif _event is Event.INFRARED_STBD:
             self._log.info('INFRARED STBD.')
-#           self._stop()
+#           self._brake()
         elif _event is Event.INFRARED_STBD_SIDE:
             self._log.info('INFRARED STBD SIDE.')
-#           self._stop()
+#           self._brake()
         else:
             raise ValueError('unrecognised bumper event {}'.format(_event.label))
 
@@ -368,18 +427,20 @@ class Motors(Component):
     def dispatch_bumper_event(self, payload):
         '''
         A dispatcher for bumper events from port, center or starboard.
+
+        This causes the robot to halt.
         '''
         _event = payload.event
         _value = payload.value
         if _event is Event.BUMPER_PORT:
             self._log.info('BUMPER PORT.')
-            self._stop()
-        elif _event is Event.BUMPER_CNTR: 
+            self._halt()
+        elif _event is Event.BUMPER_CNTR:
             self._log.info('BUMPER CNTR.')
-            self._stop()
+            self._halt()
         elif _event is Event.BUMPER_STBD:
             self._log.info('BUMPER STBD.')
-            self._stop()
+            self._halt()
         else:
             raise ValueError('unrecognised bumper event {}'.format(_event.label))
 
@@ -405,14 +466,14 @@ class Motors(Component):
     # ..........................................................................
     def _even(self):
         '''
-        Set the target velocity of both motors to the average of their target 
+        Set the target velocity of both motors to the average of their target
         velocities. If they are both currently equal this exits gracefully.
         '''
         if self._port_target_velocity == self._stbd_target_velocity:
             self._log.info('target velocities of both motors already equal.')
         else:
             _average_velocity = ( self._port_target_velocity + self._stbd_target_velocity ) / 2.0
-            self._log.info('even velocity from: ' + Fore.RED + 'port: {:5.2f}; '.format(self._port_target_velocity) 
+            self._log.info('even velocity from: ' + Fore.RED + 'port: {:5.2f}; '.format(self._port_target_velocity)
                     + Fore.GREEN + 'stbd: {:5.2f}; '.format(self._stbd_target_velocity)
                     + Fore.YELLOW + 'average: {:5.2f}.'.format(_average_velocity))
             self.set_motor_velocity(Orientation.PORT, _average_velocity)
@@ -461,12 +522,12 @@ class Motors(Component):
             _current_port_velocity = self._port_motor.velocity
             self._port_target_velocity = target_velocity
             self._port_motor.velocity = self._port_slew_limiter.slew(_current_port_velocity, self._port_target_velocity)
-            self._log.debug('set port motor velocity: {:5.2f} ➔ {:<5.2f}'.format(_current_port_velocity, self._port_target_velocity))
+            self._log.debug(Fore.BLACK + 'set port motor velocity: {:5.2f} ➔ {:<5.2f}'.format(_current_port_velocity, self._port_target_velocity))
         else:
             _current_stbd_velocity = self._stbd_motor.velocity
             self._stbd_target_velocity = target_velocity
             self._stbd_motor.velocity = self._stbd_slew_limiter.slew(_current_stbd_velocity, self._stbd_target_velocity)
-            self._log.debug('set stbd motor velocity: {:5.2f} ➔ {:<5.2f}'.format(_current_stbd_velocity, target_velocity))
+            self._log.debug(Fore.BLACK + 'set stbd motor velocity: {:5.2f} ➔ {:<5.2f}'.format(_current_stbd_velocity, target_velocity))
 
     # ..........................................................................
     def _halt(self):
@@ -537,7 +598,7 @@ class Motors(Component):
                 self._stbd_target_velocity = self._stbd_target_velocity * self._decelerate_ratio
         # print stats...
         if self._log.is_at_least(Level.WARN):
-            self._log.info(Style.DIM + '[{:04d}] velocity:'.format(count) 
+            self._log.info(Style.DIM + '[{:04d}] velocity:'.format(count)
                     + Fore.RED   + ' port: {:5.2f} ➔ {:<5.2f}'.format(self._port_motor.velocity, self._port_target_velocity)
                     + Fore.CYAN  + '\t:: '
                     + Fore.GREEN + 'stbd: {:5.2f} ➔ {:<5.2f}'.format(self._stbd_motor.velocity, self._stbd_target_velocity)

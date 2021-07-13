@@ -50,6 +50,17 @@ class Util(object):
 
     # ..........................................................................
     @staticmethod
+    def ellipsis(string, max_length):
+        '''
+        Repeat 'string' a given number of times.
+        '''
+        if len(string) < max_length:
+            return string
+        else: 
+            return '{}…'.format(string[:max_length-1])
+
+    # ..........................................................................
+    @staticmethod
     def clip(value, min_value, max_value):
         '''
         A replacement for numpy's clip():
