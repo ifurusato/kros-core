@@ -164,7 +164,7 @@ class MessageBus(Component):
 
     # ..........................................................................
     async def arbitrate(self, payload):
-        self._log.debug('arbitrating payload {}...'.format(payload.event.name))
+        self._log.info('💎 arbitrating payload {}...'.format(payload.event.name))
         await self._arbitrator.arbitrate(payload)
 
     # ..........................................................................
@@ -238,7 +238,7 @@ class MessageBus(Component):
         self._log.info('{} publisher{}:'.format(Numbers.from_number(len(self._publishers)), 's' if len(self._publishers) > 1 else ''))
         for publisher in self._publishers:
             self._log.info(Fore.YELLOW + '\t{}'.format(publisher.name) \
-                    + Fore.CYAN + ' {}enabled: '.format((' ' * max(0, (10 - len(publisher.name)))))
+                    + Fore.CYAN + ' {}enabled: '.format((' ' * max(0, (12 - len(publisher.name)))))
                     + Fore.YELLOW + '{}\t'.format(publisher.enabled)
                     + Fore.CYAN + 'suppressed: '
                     + Fore.YELLOW + '{}'.format(publisher.suppressed))

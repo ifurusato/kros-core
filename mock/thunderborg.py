@@ -41,7 +41,7 @@ SetMotor2(0.75)  -> motor 2 moving forward at 75% power
 SetMotor2(-0.5)  -> motor 2 moving reverse at 50% power
 SetMotor2(1)     -> motor 2 moving forward at 100% power
         """
-        print('SetMotor2() power: {:5.2f}'.format(power))
+        self._log.info('SetMotor2() power: {:5.2f}'.format(power))
         self._motor2_power = power
 
     # ..........................................................................
@@ -70,7 +70,7 @@ SetMotor1(0.75)  -> motor 1 moving forward at 75% power
 SetMotor1(-0.5)  -> motor 1 moving reverse at 50% power
 SetMotor1(1)     -> motor 1 moving forward at 100% power
         """
-        print('SetMotor1() power: {:5.2f}'.format(power))
+        self._log.info('SetMotor1() power: {:5.2f}'.format(power))
         self._motor1_power = power
 
     # ..........................................................................

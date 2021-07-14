@@ -36,7 +36,6 @@ from core.controller import Controller
 from core.publisher import Publisher
 from core.subscriber import Subscriber, GarbageCollector
 
-from mock.motor_configurer import MotorConfigurer
 from mock.event_publisher import EventPublisher
 from mock.bumper_subscriber import BumperSubscriber
 from mock.infrared_subscriber import InfraredSubscriber
@@ -49,6 +48,9 @@ from behave.roam import Roam
 from behave.moth import Moth
 from behave.sniff import Sniff
 from behave.idle import Idle
+
+from hardware.motor_configurer import MotorConfigurer
+from hardware.pid_motor_ctrl import PIDMotorController
 
 led_0_path = '/sys/class/leds/led0/brightness'
 led_1_path = '/sys/class/leds/led1/brightness'
@@ -141,9 +143,9 @@ class KROS(Component, FiniteStateMachine):
         self._log.info('argument level:       {}'.format(arguments.level))
 
         # scan I2C bus .........................................................
-        scanner = I2CScanner(self._config, self._log.level)
-        scanner.print_device_list()
-        self._addresses = scanner.get_int_addresses()
+        _i2c_scanner = I2CScanner(self._config, self._log.level)
+        _i2c_scanner.print_device_list()
+        self._addresses = _i2c_scanner.get_int_addresses()
 
         # establish basic subsumption components ...............................
 
@@ -158,9 +160,12 @@ class KROS(Component, FiniteStateMachine):
     #    _message_bus.register_controller(_gp_controller)
 
         # add motor controller
-        self._motor_configurer = MotorConfigurer(self._config, self._message_bus, enable_mock=True, level=self._level)
+        self._motor_configurer = MotorConfigurer(self._config, self._message_bus, _i2c_scanner, level=self._level)
         self._motors = self._motor_configurer.get_motors()
 #       self._publisher1.set_motors(self._motors)
+
+        self._log.info('configure pid motor controller...')
+        self._pid_motor_ctrl = PIDMotorController(self._config, self._message_bus, self._motors, self._level)
     
         # create publishers ....................................................
 

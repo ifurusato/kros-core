@@ -137,7 +137,7 @@ class Avoid(Behaviour, Publisher):
         until the delay_tick_counter reaches zero.
         '''
         self._log.info('starting avoid listener loop:\t' + Fore.YELLOW + 'min distance: {:5.2f} cm'.format(self._min_distance)
-                + ( '; (suppressed, type \'u\' to release)' if self.suppressed else '.') )
+                + ( '; (suppressed, type \'m\' to release)' if self.suppressed else '.') )
         _last_event = Event.NOOP
         while f_is_enabled():
             _count = next(self._counter)
@@ -146,6 +146,14 @@ class Avoid(Behaviour, Publisher):
                 self._log.debug('[{:03d}] avoid released.'.format(_count))
                 if self._delay_ticks == 0: # then we can pop the next message from the queue...
                     if not self._queue.empty():
+
+                        if _last_event is not Event.NOOP:
+                            _delta = dt.now() - _start_time
+                            _elapsed_ms = int(_delta.total_seconds() * 1000)
+                            self._log.debug(Fore.MAGENTA + Style.DIM + 'elapsed: {}ms'.format(_elapsed_ms) + Style.DIM)
+                            self._log.info(Fore.YELLOW + '[{:03d}] {} has completed; {} ms elapsed...'.format(_count, _last_event.label, _elapsed_ms))
+                        _start_time = dt.now()
+
                         # pop queue and publish...
                         _message = self._queue.get()
                         _last_event = _message.event
@@ -163,9 +171,15 @@ class Avoid(Behaviour, Publisher):
             if self._delay_ticks > 0:
                 self._delay_ticks -= 1
                 if _count % 1 == 0:
-                    self._log.info('[{:03d}] waiting for {} to complete, with {} delay ticks remaining...'.format(_count, _last_event.label, self._delay_ticks))
+                    self._log.debug('[{:03d}] waiting for {} to complete, with {} delay ticks remaining...'.format(_count, _last_event.label, self._delay_ticks))
+            elif _last_event is not Event.NOOP:
+                _delta = dt.now() - _start_time
+                _elapsed_ms = int(_delta.total_seconds() * 1000)
+                self._log.info(Fore.YELLOW + '[{:03d}] {} has completed; {} ms elapsed...'.format(_count, _last_event.label, _elapsed_ms))
+                # reset
+                _last_event = Event.NOOP
             else:
-                self._log.debug('[{:03d}] end avoid loop with no delay ticks...'.format(_count))
+                self._log.debug('[{:03d}] no task executing.'.format(_count))
 
         self._log.info('avoid loop complete.')
 
@@ -217,7 +231,7 @@ class Avoid(Behaviour, Publisher):
 #                       if (bumper) {                   // if any switches are closed
                     if Event.is_bumper_event(_event):
                         # Ballistic segment 1 ........................
-                        self._queue_directive(Event.SLOW_ASTERN, 1000)
+                        self._queue_directive(Event.SLOW_ASTERN, 6000)
                         # bump.cmd = BACKUP_SLOW;     // request reverse low speed
                         # bump.arg = 0;               // straight back
                         # bump.flag = TRUE;           // signal arbitrator
@@ -229,22 +243,23 @@ class Avoid(Behaviour, Publisher):
                         # if (bump == LEFT)           // and turn away from the bump
                         # bump.arg = RIGHT_TURN;
                         # else bump.arg = LEFT_TURN;
+                        _turn_ahead_delay = 3000
                         if _event is Event.BUMPER_PORT:
                             self._log.info('👾 avoid; event: {}; value: {}'.format(_event.label, _value))
-                            self._queue_directive(Event.TURN_AHEAD_STBD, 500)
+                            self._queue_directive(Event.TURN_AHEAD_STBD, _turn_ahead_delay)
         
                         elif _event is Event.BUMPER_STBD:
                             self._log.info('👾 avoid; event: {}; value: {}'.format(_event.label, _value))
-                            self._queue_directive(Event.TURN_AHEAD_PORT, 500)
+                            self._queue_directive(Event.TURN_AHEAD_PORT, _turn_ahead_delay)
         
                         elif _event is Event.BUMPER_CNTR:
                             self._log.info('👾 avoid; event: {}; value: {}'.format(_event.label, _value))
-                            self._queue_directive(Event.TURN_AHEAD_PORT, 500) # same as starboard
+                            self._queue_directive(Event.TURN_AHEAD_PORT, _turn_ahead_delay) # same as starboard
                         # msleep(500);                // suspend and turn for 1/2 second
  
                         # Ballistic segment 3 ........................
                         # bump.cmd = top_speed;       // request full speed
-                        self._queue_directive(Event.FULL_AHEAD, 250) 
+                        self._queue_directive(Event.FULL_AHEAD, 4000) 
                         # bump.arg = 0;               // straight forward
                         # bump.flag = TRUE;           // signal arbitrator
                         # msleep(250);               // suspend and back up for 1/4 second

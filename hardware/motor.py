@@ -37,9 +37,9 @@ class Motor(Component):
             raise ValueError('null thunderborg argument.')
         self._tb = tb
         self._orientation = orientation
-        self._log = Logger('motor:{}'.format(orientation.label), level)
+        self._log = Logger('mock-motor:{}'.format(orientation.label), level)
         Component.__init__(self, self._log, suppressed=False, enabled=False)
-        self._log.info('initialising {} motor...'.format(orientation))
+        self._log.info('initialising {} motor with {} as motor controller...'.format(orientation, type(self._tb)))
         # configuration
         # get motors configuration section (we don't actually use this in the mock)
         _cfg = config['kros'].get('motors')

@@ -17,6 +17,16 @@ kros:
         brake_ratio: 0.7                         # ratio for slower braking behaviour
         spin_speed: 'HALF'                       # motor speed when spinning
         motor_power_limit: 0.85                  # limit set on power sent to motor
+        pid-controller:
+            kp:                 0.09500          # proportional gain
+            ki:                 0.00000          # integral gain
+            kd:                 0.00000          # derivative gain
+            min_output:           -10.0          # lower output limit
+            max_output:            10.0          # upper output limit
+            enable_slew:          False
+            sample_freq_hz:          20
+            hyst_queue_len:          20          # size of queue used for running average for hysteresis
+            pot_ctrl:             False          # if True enable potentiometer for setting PID terms
     slew:
         minimum_output: 0.00                     # lower limit of permitted output values
         maximum_output: 100.00                   # upper limit of permitted output values
@@ -54,6 +64,7 @@ kros:
             noop_loop_delay_sec: 0.01            # delay on noop loop
     arguments:                                   # CLI arguments are copied here
         nada: False                              # nada
+        mock_enabled: False                      # permit mocks if real hardware is unavailable
 
 pi:
     disable_leds: False                          # disable and re-enable Pi LEDs during operation?

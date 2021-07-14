@@ -89,13 +89,13 @@ class Event(Enum):
     DECREASE_STBD_THETA    = ( 307, "decrease stbd theta",    100,   Group.THETA )
     # port turns ...........
     TURN_AHEAD_PORT        = ( 310, "turn ahead port",        100,   Group.THETA )
-    TURN_TO_PORT           = ( 311, "turn to port",           100,   Group.THETA )
+    TURN_TO_PORT           = ( 311, "turn to port",           100,   Group.THETA ) # based on current avg direction
     TURN_ASTERN_PORT       = ( 312, "turn astern port",       100,   Group.THETA )
     SPIN_PORT              = ( 313, "spin port",              100,   Group.THETA )
     # starboard turns ......
     SPIN_STBD              = ( 320, "spin stbd",              100,   Group.THETA )
     TURN_ASTERN_STBD       = ( 321, "turn astern stbd",       100,   Group.THETA )
-    TURN_TO_STBD           = ( 322, "turn to stbd",           100,   Group.THETA )
+    TURN_TO_STBD           = ( 322, "turn to stbd",           100,   Group.THETA ) # based on current avg direction
     TURN_AHEAD_STBD        = ( 323, "turn ahead stbd",        100,   Group.THETA )
 
     # chadburn event ........................................................................
@@ -114,15 +114,15 @@ class Event(Enum):
 
     # high level behaviours .................................................................
     AVOID                  = ( 500, "avoid",                  150,   Group.BEHAVIOUR )
-    ROAM                   = ( 501, "roam",                   150,   Group.BEHAVIOUR )
-    MOTH                   = ( 502, "moth",                   151,   Group.BEHAVIOUR )
-    SNIFF                  = ( 503, "sniff",                  152,   Group.BEHAVIOUR ) # A Button
-    VIDEO                  = ( 504, "video",                  153,   Group.BEHAVIOUR ) # L1 Button
-    EVENT_L2               = ( 505, "L2",                     154,   Group.BEHAVIOUR ) # L2 Button
-    EVENT_R1               = ( 506, "cruise",                 155,   Group.BEHAVIOUR ) # R1 Button
-    LIGHTS                 = ( 507, "lights",                 156,   Group.BEHAVIOUR ) # R2 Button
-    MOTION_DETECT          = ( 508, "motion detect",          157,   Group.BEHAVIOUR )
-    IDLE                   = ( 509, "idle",                   159,   Group.BEHAVIOUR ) # A Button
+    MOTION_DETECT          = ( 501, "motion detect",          151,   Group.BEHAVIOUR )
+    ROAM                   = ( 502, "roam",                   160,   Group.BEHAVIOUR )
+    MOTH                   = ( 503, "moth",                   161,   Group.BEHAVIOUR )
+    SNIFF                  = ( 504, "sniff",                  162,   Group.BEHAVIOUR ) # A Button
+    VIDEO                  = ( 505, "video",                  163,   Group.BEHAVIOUR ) # L1 Button
+    EVENT_L2               = ( 506, "L2",                     164,   Group.BEHAVIOUR ) # L2 Button
+    EVENT_R1               = ( 507, "cruise",                 165,   Group.BEHAVIOUR ) # R1 Button
+    LIGHTS                 = ( 508, "lights",                 166,   Group.BEHAVIOUR ) # R2 Button
+    IDLE                   = ( 509, "idle",                   180,   Group.BEHAVIOUR ) # A Button
 
     # other events (> 900) ..................................................................
     NO_ACTION              = ( 999, "no action",              999,   Group.OTHER )

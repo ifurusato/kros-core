@@ -20,11 +20,12 @@ from core.logger import Logger, Level
 from core.orient import Orientation
 from core.event import Event, Group
 from core.subscriber import Subscriber
-from mock.motor import Motor
 
 # ..............................................................................
 class InfraredSubscriber(Subscriber):
+
     CLASS_NAME = 'infrared'
+
     '''
     A subscriber to infrared events.
 

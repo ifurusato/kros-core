@@ -191,6 +191,7 @@ class EventPublisher(Publisher):
                             self._log.heading('System Information','Memory, CPU and Message Bus Information.')
                             self._system.print_sys_info()
                             self._message_bus.print_system_status()
+                            self._motors.print_motor_status()
                             self._motors.print_info(None)
                             continue
                         elif och == 111: # 'o'

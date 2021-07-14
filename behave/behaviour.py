@@ -37,10 +37,9 @@ class Behaviour(ABC, Subscriber):
     def __init__(self, name, config, message_bus, message_factory, level=Level.INFO):
         self._log = Logger('beh:{}'.format(name), level)
         Subscriber.__init__(self, name, config, message_bus, suppressed=True, enabled=False, level=Level.INFO)
-        if isinstance(message_factory, MessageFactory):
-            self._message_factory = message_factory
-        else:
+        if not isinstance(message_factory, MessageFactory):
             raise ValueError('expected MessageFactory, not {}.'.format(type(message_factory)))
+        self._message_factory = message_factory
         # register this behaviour with behaviour manager
         _behaviour_manager = message_bus.get_subscriber(BehaviourManager.CLASS_NAME)
         if _behaviour_manager:
