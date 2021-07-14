@@ -158,7 +158,8 @@ class Motor(Component):
         _driving_power = float(power_level * self._max_power_ratio)
         self._max_power = max(power_level, self._max_power)
         self._max_driving_power = max(abs(_driving_power), self._max_driving_power)
-        self._log.info(Fore.MAGENTA + Style.BRIGHT + 'power argument: {:>5.2f}'.format(power_level) + Style.NORMAL \
+        # display actual power to motor
+        self._log.debug(Fore.MAGENTA + Style.BRIGHT + 'power argument: {:>5.2f}'.format(power_level) + Style.NORMAL \
                 + '\tcurrent power: {:>5.2f}; driving power: {:>5.2f}.'.format(_current_power, _driving_power))
         if self._orientation is Orientation.PORT:
             self._tb.SetMotor1(_driving_power)

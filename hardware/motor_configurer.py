@@ -94,6 +94,7 @@ class MotorConfigurer():
                     self._log.info('successfully imported ThunderBorg.')
                 else:
                     self._log.info('importing mock ThunderBorg...')
+                    self._enable_mock = True # we default if no ThunderBorg found
                     import mock.thunderborg as ThunderBorg
                     self._log.info('successfully imported mock ThunderBorg.')
     
@@ -163,7 +164,7 @@ class MotorConfigurer():
         try:
             import mock.thunderborg as ThunderBorg
             self._log.info('successfully imported mock ThunderBorg.')
-            self._tb = ThunderBorg.ThunderBorg(Level.INFO)  # create a new ThunderBorg object
+            self._tb = ThunderBorg.ThunderBorg(Level.WARN)  # create a new ThunderBorg object
 #           self._tb.Init()                       # set the board up (checks the board is connected)
             self._log.info(Fore.YELLOW + 'successfully instantiated mock ThunderBorg.')
 #           self._tb.SetLedShowBattery(True)
