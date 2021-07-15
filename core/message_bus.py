@@ -94,9 +94,12 @@ class MessageBus(Component):
         Returns the task list, not including those whose name starts with '__'.
         '''
         _tasks = []
-        for _task in asyncio.all_tasks(loop=self._loop):
-            if include_hidden or not _task.get_name().startswith('__'):
-                _tasks.append(_task)
+        try:
+            for _task in asyncio.all_tasks(loop=self._loop):
+                if include_hidden or not _task.get_name().startswith('__'):
+                    _tasks.append(_task)
+        except RuntimeError:
+            self._log.warning('no running loop.')
         return _tasks
 
     # ..........................................................................
@@ -522,7 +525,7 @@ class MessageBus(Component):
             self._log.info('disabling {:d} subscribers...'.format(len(self._subscribers)))
             for subscriber in self._subscribers:
                 subscriber.disable()
-            if self._loop.is_running():
+            if self._loop and self._loop.is_running():
                 self._loop.stop()
             self._log.info('disabled.')
             self.clear_queue()

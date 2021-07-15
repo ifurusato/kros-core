@@ -44,6 +44,7 @@ class Motor(Component):
         # get motors configuration section (we don't actually use this in the mock)
         _cfg = config['kros'].get('motors')
         self._motor_power_limit = _cfg.get('motor_power_limit')  # power limit to motor
+        self._motor_delta_limit = _cfg.get('motor_delta_limit')  # change limit to motor
         self._log.info('motor power limit: {:5.2f}'.format(self._motor_power_limit))
         self._steps             = 0     # step counter
         self._max_power         = 0.0   # capture maximum power applied
@@ -131,22 +132,48 @@ class Motor(Component):
     # ..........................................................................
     def set_motor_power(self, power_level):
         '''
-        Sets the power level to a number between 0.0 and 1.0, with the actual
+        Sets the power level to a number between -1.0 to 1.0, with the actual
         limits set by the _max_power_ratio, which alters the value to match
         the power/motor voltage ratio.
+
+        :param power_level:  the target power level
         '''
         if not self.enabled and power_level > 0.0: # though we'll let the power be set to zero
             self._log.warning('motor disabled, ignoring setting of {:<5.2f}'.format(power_level))
             return
+        _current_power = self.get_current_power_level()
+        _max = 1.0 # was 0.3?
+
+#       self._motor_delta_limit
+
+
+        _diff = power_level - _current_power
+
+        # evaluate change...
+        if _diff < _max:
+            self._log.info(Fore.YELLOW + '😨 current: {:4.2f}; target: {:4.2f}; diff: {:4.2f}; max: {:4.2f}'.format(
+                    _current_power, power_level, _diff, _max))
+        elif _diff == 0:
+            self._log.info(Fore.BLACK + '😨 current: {:4.2f}; target: {:4.2f}; diff: {:4.2f}; max: {:4.2f}'.format(
+                    _current_power, power_level, _diff, _max))
+        elif _diff < 0:
+            self._log.info(Fore.RED + '😨 current: {:4.2f}; target: {:4.2f}; diff: {:4.2f}; max: {:4.2f}'.format(
+                    _current_power, power_level, _diff, _max))
+        else:
+            self._log.info(Fore.GREEN + '😨 current: {:4.2f}; target: {:4.2f}; diff: {:4.2f}; max: {:4.2f}'.format(
+                    _current_power, power_level, _diff, _max))
+
+
         # safety checks ..........................
         if power_level > self._motor_power_limit:
             self._log.error('motor power too high: {:>5.2f}; limit: {:>5.2f}'.format(power_level, self._motor_power_limit))
             power_level = self._motor_power_limit
         elif power_level < ( -1.0 * self._motor_power_limit ):
-            self._log.error('motor power too low: {:>5.2f}; limit: {:>5.2f}'.format( power_level,( -1.0 * self._motor_power_limit )))
+            self._log.error('motor power too low: {:>5.2f}; limit: {:>5.2f}'.format( power_level, ( -1.0 * self._motor_power_limit )))
             power_level = -1.0 * self._motor_power_limit
-        _current_power = self.get_current_power_level()
-        _max = 1.0 # was 0.3?
+        else:
+            self._log.info('ok- motor power level: {:>5.2f}; limit: {:>5.2f}'.format( power_level, self._motor_power_limit ))
+
         if abs(_current_power - power_level) > _max and _current_power > 0.0 and power_level < 0:
             self._log.error('cannot perform positive-negative power jump: {:>5.2f} to {:>5.2f}.'.format(_current_power, power_level))
             return

@@ -17,7 +17,7 @@ init()
 
 from core.logger import Logger, Level
 from core.i2c_scanner import I2CScanner
-from core.orient import Orientation
+from core.orient import Orientation, Speed
 from hardware.motors import Motors
 
 # ..............................................................................
@@ -79,7 +79,21 @@ class MotorConfigurer():
 #           sys.stderr = DevNull()
             raise Exception('unable to instantiate ThunderBorg [3].')
 #           sys.exit(1)
+        self._configure_speed()
         self._log.info('ready.')
+
+    # ..........................................................................
+    def _configure_speed(self):
+        '''
+        Sets the value of Speed's entries to the values provided in the
+        YAML configuration.
+        '''
+        self._log.info('configure motor speed...')
+        _cfg = self._config['kros'].get('motors').get('speed')
+        for _speed in Speed:
+            _value = _cfg.get(_speed.name)
+            _speed.value = _value
+            self._log.debug('speed: {}; set value: {}'.format(_speed, _speed.value))
 
     # ..........................................................................
     def _import_thunderborg(self):

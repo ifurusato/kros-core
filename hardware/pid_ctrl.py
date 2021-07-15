@@ -78,7 +78,7 @@ class PIDController(object):
         _queue_len = self._config.get('hyst_queue_len')
         self._deque = Deque([], maxlen=_queue_len)
 
-        self._enable_slew = True #self._config.get('enable_slew')
+        self._enable_slew = self._config.get('enable_slew')
         self._slewlimiter = SlewLimiter(config, orientation=self._motor.orientation, level=Level.INFO)
         _slew_rate = SlewRate.NORMAL # TODO self._config.get('slew_rate')
         self._slewlimiter.set_rate_limit(_slew_rate)

@@ -5,8 +5,9 @@
 # of the Robot Operating System project, released under the MIT License. Please
 # see the LICENSE file included as part of this package.
 #
-# author:  altheim
-# created: 2020-02-14
+# author:   altheim
+# created:  2020-02-14
+# modified: 2021-07-14
 #
 #  Scans the I²C bus, returning a list of devices.
 #

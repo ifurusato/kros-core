@@ -41,8 +41,6 @@ class Orientation(Enum):
 
 # ..............................................................................
 class Direction(Enum):
-#   FORWARD = 0
-#   REVERSE = 1
     AHEAD   = 0
     ASTERN  = 1
 
@@ -53,15 +51,15 @@ class Rotation(Enum):
 
 # ..............................................................................
 class Speed(Enum):
-    STOP          = ( 1, "stop",  0.0 )
-    DEAD_SLOW     = ( 2, "dead slow", 20.0 )
-    SLOW          = ( 3, "slow", 30.0 )
-    HALF          = ( 4, "half speed", 50.0 )
-    TWO_THIRDS    = ( 5, "two third speed", 66.7 )
-    THREE_QUARTER = ( 6, "three quarter speed", 75.0 )
-    FULL          = ( 7, "full speed", 90.0 )
-    EMERGENCY     = ( 8, "emergency speed", 100.0 )
-    MAXIMUM       = ( 9, "maximum speed", 100.000001 )
+    STOP          = ( 1, "stop",                  0.0 )
+    DEAD_SLOW     = ( 2, "dead slow",            20.0 )
+    SLOW          = ( 3, "slow",                 30.0 )
+    HALF          = ( 4, "half speed",           50.0 )
+    TWO_THIRDS    = ( 5, "two thirds speed",     66.7 )
+    THREE_QUARTER = ( 6, "three quarter speed",  75.0 )
+    FULL          = ( 7, "full speed",           90.0 )
+    EMERGENCY     = ( 8, "emergency speed",     100.0 )
+    MAXIMUM       = ( 9, "maximum speed",       100.000001 )
 
     # ignore the first param since it's already set by __new__
     def __init__(self, num, label, value):
@@ -75,6 +73,10 @@ class Speed(Enum):
     @property
     def value(self):
         return self._value
+
+    @value.setter
+    def value(self, value):
+        self._value = value
 
     @staticmethod
     def get_slower_than(speed):

@@ -296,45 +296,52 @@ class Motors(Component):
         _event = payload.event
         self._log.info('dispatch chadburn event: {}'.format(_event.label))
         _value = payload.value
-        _speed = None
-        _direction = None
-        if _event is Event.STOP:
-            _speed = Speed.STOP
-            self._log.info(self._color + 'STOP.')
-        elif _event is Event.FULL_ASTERN:
-            _direction = Direction.ASTERN
-            _speed = Speed.FULL
-            self._log.info(self._color + 'FULL ASTERN.')
-        elif _event is Event.HALF_ASTERN:
-            _direction = Direction.ASTERN
-            _speed = Speed.HALF
-            self._log.info(self._color + 'HALF ASTERN.')
-        elif _event is Event.SLOW_ASTERN:
-            _direction = Direction.ASTERN
-            _speed = Speed.SLOW
-            self._log.info(self._color + 'SLOW ASTERN.')
-        elif _event is Event.DEAD_SLOW_ASTERN:
-            _direction = Direction.ASTERN
-            _speed = Speed.DEAD_SLOW
-            self._log.info(self._color + 'DEAD SLOW ASTERN.')
-        elif _event is Event.DEAD_SLOW_AHEAD:
-            _direction = Direction.AHEAD
-            _speed = Speed.DEAD_SLOW
-            self._log.info(self._color + 'DEAD SLOW AHEAD.')
-        elif _event is Event.SLOW_AHEAD:
-            _direction = Direction.AHEAD
-            _speed = Speed.SLOW
-            self._log.info(self._color + 'SLOW AHEAD.')
-        elif _event is Event.HALF_AHEAD:
-            _direction = Direction.AHEAD
-            _speed = Speed.HALF
-            self._log.info(self._color + 'HALF AHEAD.')
-        elif _event is Event.FULL_AHEAD:
-            _direction = Direction.AHEAD
-            _speed = Speed.FULL
-            self._log.info(self._color + 'FULL AHEAD.')
-        else:
-            raise ValueError('unrecognised chadburn event {}'.format(_event.label))
+        _speed = _event.speed
+        _direction = _event.direction
+#        # ahead ................................................................
+#        if _event is Event.AHEAD:
+#            # use existing value in payload
+#            _direction = Direction.AHEAD
+#            self._log.info(self._color + 'AHEAD.')
+#        elif _event is Event.DEAD_SLOW_AHEAD:
+#            _direction = Direction.AHEAD
+#            _speed = Speed.DEAD_SLOW
+#            self._log.info(self._color + 'DEAD SLOW AHEAD.')
+#        elif _event is Event.SLOW_AHEAD:
+#            _direction = Direction.AHEAD
+#            _speed = Speed.SLOW
+#            self._log.info(self._color + 'SLOW AHEAD.')
+#        elif _event is Event.HALF_AHEAD:
+#            _direction = Direction.AHEAD
+#            _speed = Speed.HALF
+#            self._log.info(self._color + 'HALF AHEAD.')
+#        elif _event is Event.FULL_AHEAD:
+#            _direction = Direction.AHEAD
+#            _speed = Speed.FULL
+#            self._log.info(self._color + 'FULL AHEAD.')
+#        # astern ...............................................................
+#        elif _event is Event.ASTERN:
+#            # use existing value in payload
+#            _direction = Direction.ASTERN
+#            self._log.info(self._color + 'ASTERN.')
+#        elif _event is Event.FULL_ASTERN:
+#            _direction = Direction.ASTERN
+#            _speed = Speed.FULL
+#            self._log.info(self._color + 'FULL ASTERN.')
+#        elif _event is Event.HALF_ASTERN:
+#            _direction = Direction.ASTERN
+#            _speed = Speed.HALF
+#            self._log.info(self._color + 'HALF ASTERN.')
+#        elif _event is Event.SLOW_ASTERN:
+#            _direction = Direction.ASTERN
+#            _speed = Speed.SLOW
+#            self._log.info(self._color + 'SLOW ASTERN.')
+#        elif _event is Event.DEAD_SLOW_ASTERN:
+#            _direction = Direction.ASTERN
+#            _speed = Speed.DEAD_SLOW
+#            self._log.info(self._color + 'DEAD SLOW ASTERN.')
+#        else:
+#            raise ValueError('unrecognised chadburn event {}'.format(_event.label))
         if _speed is not Speed.STOP and not self.loop_is_running():
             self.start_loop()
         # ........

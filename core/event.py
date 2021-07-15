@@ -11,6 +11,8 @@
 
 from enum import Enum
 
+from core.orient import Speed, Direction
+
 # ..............................................................................
 class Group(Enum):
     NONE      = 0
@@ -99,18 +101,19 @@ class Event(Enum):
     TURN_AHEAD_STBD        = ( 323, "turn ahead stbd",        100,   Group.THETA )
 
     # chadburn event ........................................................................
+    # the num values here are fixed, and used in ./hardware/motors
     # astern ...............
-    FULL_ASTERN            = ( 400, "full astern",            100,   Group.CHADBURN )
-    HALF_ASTERN            = ( 401, "half astern",            100,   Group.CHADBURN )
-    SLOW_ASTERN            = ( 402, "slow astern",            100,   Group.CHADBURN )
-    DEAD_SLOW_ASTERN       = ( 403, "dead slow astern",       100,   Group.CHADBURN )
-    ASTERN                 = ( 404, "astern",                 100,   Group.CHADBURN ) # with value
+    ASTERN                 = ( 400, "astern",                 100,   Group.CHADBURN, Direction.ASTERN ) # with value
+    DEAD_SLOW_ASTERN       = ( 401, "dead slow astern",       100,   Group.CHADBURN, Direction.ASTERN, Speed.DEAD_SLOW )
+    SLOW_ASTERN            = ( 402, "slow astern",            100,   Group.CHADBURN, Direction.ASTERN, Speed.SLOW )
+    HALF_ASTERN            = ( 403, "half astern",            100,   Group.CHADBURN, Direction.ASTERN, Speed.HALF )
+    FULL_ASTERN            = ( 404, "full astern",            100,   Group.CHADBURN, Direction.ASTERN, Speed.FULL )
     # ahead ................
-    AHEAD                  = ( 410, "ahead",                  100,   Group.CHADBURN ) # with value
-    DEAD_SLOW_AHEAD        = ( 411, "dead slow ahead",        100,   Group.CHADBURN )
-    SLOW_AHEAD             = ( 412, "slow ahead",             100,   Group.CHADBURN )
-    HALF_AHEAD             = ( 413, "half ahead",             100,   Group.CHADBURN )
-    FULL_AHEAD             = ( 414, "full ahead",             100,   Group.CHADBURN )
+    AHEAD                  = ( 410, "ahead",                  100,   Group.CHADBURN, Direction.AHEAD ) # with value
+    DEAD_SLOW_AHEAD        = ( 411, "dead slow ahead",        100,   Group.CHADBURN, Direction.AHEAD, Speed.DEAD_SLOW )
+    SLOW_AHEAD             = ( 412, "slow ahead",             100,   Group.CHADBURN, Direction.AHEAD, Speed.SLOW )
+    HALF_AHEAD             = ( 413, "half ahead",             100,   Group.CHADBURN, Direction.AHEAD, Speed.HALF )
+    FULL_AHEAD             = ( 414, "full ahead",             100,   Group.CHADBURN, Direction.AHEAD, Speed.FULL )
 
     # high level behaviours .................................................................
     AVOID                  = ( 500, "avoid",                  150,   Group.BEHAVIOUR )
@@ -135,10 +138,13 @@ class Event(Enum):
         return obj
 
     # ignore the first param since it's already set by __new__
-    def __init__(self, num, label, priority, group):
-        self._label    = label
-        self._priority = priority
-        self._group    = group
+    def __init__(self, num, label, priority, group, direction=None, speed=None):
+        self._num       = num
+        self._label     = label
+        self._priority  = priority
+        self._group     = group
+        self._direction = direction
+        self._speed     = speed
 
     # ................................................................
     @staticmethod
@@ -173,6 +179,10 @@ class Event(Enum):
         return Event.is_bumper_event(event) or Event.is_infrared_event(event)
 
     # ................................................................
+    @property
+    def num(self):
+        return self._num
+
     @property
     def label(self):
         return self._label
@@ -222,6 +232,14 @@ class Event(Enum):
             _events = Event.by_group(_gid)
             _list.append(_events)
         return _list
+
+    @property
+    def direction(self):
+        return self._direction
+
+    @property
+    def speed(self):
+        return self._speed
 
     # the normal value returned for an enum
     def __str__(self):
