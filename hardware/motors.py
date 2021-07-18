@@ -21,8 +21,8 @@ from core.logger import Logger, Level
 from core.component import Component
 from core.orient import Orientation, Speed, Direction
 from core.event import Event
-from core.slew import SlewLimiter
 from hardware.motor import Motor
+from hardware.slew import SlewLimiter
 
 # ..............................................................................
 class Motors(Component):
@@ -52,9 +52,9 @@ class Motors(Component):
         self._config = config
         if tb is None:
             raise Exception('no tb argument provided.')
-        _tb = tb
-        self._port_motor = Motor(self._config, _tb, Orientation.PORT, level)
-        self._stbd_motor = Motor(self._config, _tb, Orientation.STBD, level)
+        self._tb = tb
+        self._port_motor = Motor(self._config, self._tb, Orientation.PORT, level)
+        self._stbd_motor = Motor(self._config, self._tb, Orientation.STBD, level)
         self._port_slew_limiter = SlewLimiter(self._config, Orientation.PORT, level)
         self._stbd_slew_limiter = SlewLimiter(self._config, Orientation.STBD, level)
         # temporary until we move functionality to motors
@@ -76,8 +76,13 @@ class Motors(Component):
         self._stbd_target_velocity = 0.0 # the starboard motor target velocity for slewing
         self._decelerate_ratio     = 0.0 # variable used in loop
         # lambdas
-        self._clamp = lambda n: ( -1.0 * self._max_velocity ) if n <= ( -1.0 * self._max_velocity ) else self._max_velocity if n >= self._max_velocity else n
+        self._clip = lambda n: ( -1.0 * self._max_velocity ) if n <= ( -1.0 * self._max_velocity ) else self._max_velocity if n >= self._max_velocity else n
         self._log.info('motors ready.')
+
+    # ..........................................................................
+    @property
+    def thunderborg(self):
+        return self._tb
 
     # ..........................................................................
     @property
@@ -538,11 +543,11 @@ class Motors(Component):
     # ..........................................................................
     def _update_target_velocity(self, value, increment):
         '''
-        Updates the value by the increment, clamping the result based on
+        Updates the value by the increment, clipping the result based on
         the maximum velocity limit.
         '''
         value += increment
-        return -1.0 * self._clamp(-1.0 * value) if value < 0 else self._clamp(value)
+        return -1.0 * self._clip(-1.0 * value) if value < 0 else self._clip(value)
 
     # ..........................................................................
     def get_motor_velocity(self, orientation):

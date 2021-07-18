@@ -69,11 +69,11 @@ class Util(object):
         '''
         return min_value if value <= min_value else max_value if value >= max_value else value
 
-    @staticmethod
-    def clamp(n, minimum, maximum): 
-        '''
-        Another clip alternative.
-        '''
-        return max(minimum, min(n, maximum))
+#   @staticmethod
+#   def clip_alt(n, minimum, maximum): 
+#       '''
+#       Another clip alternative.
+#       '''
+#       return max(minimum, min(n, maximum))
 
 #EOF

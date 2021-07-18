@@ -168,11 +168,11 @@ class PID(object):
         # compute the proportional, integral and derivative terms
         self._proportional = self._kp * _error
         self._integral    += self._ki * _error * dt
-        self._integral     = self.clamp(self._integral) # avoid integral windup
+        self._integral     = self._clip(self._integral) # avoid integral windup
         self._derivative   = -self._kd * d_input / dt
 
-        # compute output, clamping to limits
-        output = self.clamp(self._proportional + self._integral + self._derivative)
+        # compute output, clipped to limits
+        output = self._clip(self._proportional + self._integral + self._derivative)
 
         kp, ki, kd = self.constants
         cp, ci, cd = self.components
@@ -254,8 +254,8 @@ class PID(object):
             raise ValueError('lower limit must be less than upper limit')
         self._min_output  = min_output
         self._max_output  = max_output
-        self._integral    = self.clamp(self._integral)
-        self._last_output = self.clamp(self._last_output)
+        self._integral    = self._clip(self._integral)
+        self._last_output = self._clip(self._last_output)
 
     # ..........................................................................
     def print_state(self):
@@ -299,15 +299,14 @@ class PID(object):
         self._last_time    = self._current_time()
 
     # ..........................................................................
-    def clamp(self, value):
+    def _clip(self, value):
         '''
-        Clamp the value between the lower and upper limits. If either limit
+        Clip the value between the lower and upper limits. If either limit
         is not set ('None') the original argument is returned.
         '''
         if self._min_output is None or self._max_output is None:
             return value
         else:
             return max(self._min_output, min(value, self._max_output))
-#       return numpy.clip(value, self._min_output, self._max_output)
 
 #EOF

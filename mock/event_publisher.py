@@ -69,7 +69,7 @@ class EventPublisher(Publisher):
         self._getch           = _Getch()
         self._flood_enable    = False
         self._message_limit   = 3 # fixed message limit (testing only)
-        self._clamp = lambda n: self._ir_min if n <= self._ir_min else self._ir_max if n >= self._ir_max else n
+        self._clip = lambda n: self._ir_min if n <= self._ir_min else self._ir_max if n >= self._ir_max else n
         # configuration ....................................
         _cfg = config['kros'].get('mock').get('event_publisher')
         self._ir_value        = _cfg.get('ir_init_value')       # initial value of mocked center IR
@@ -287,7 +287,7 @@ class EventPublisher(Publisher):
             self._ir_direction = 1
         elif self._ir_value >= self._ir_max:
             self._ir_direction = -1
-        self._ir_value = self._clamp(self._ir_value)
+        self._ir_value = self._clip(self._ir_value)
         self._log.info('infrared center: {:d}'.format(self._ir_value))
         return self._ir_value
 

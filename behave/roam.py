@@ -165,7 +165,7 @@ class Roam(Behaviour):
         # TEMP test
         _clipped = Util.clip(_velocity, self._min_speed, self.speed_limit)
         if _target_velocity != _clipped:
-            raise Exception('clipped {} != clamped {}'.format(_target_velocity, _clipped))
+            raise Exception('clipped {} != clipped {}'.format(_target_velocity, _clipped))
         self._motors.set_motor_velocity(orientation, _target_velocity)
         self._log.info('set motor speed limit for {} motor to: {:5.2f} (limited by {:5.2f})'.format(orientation.name, _target_velocity, self.speed_limit))
 

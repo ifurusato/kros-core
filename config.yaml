@@ -22,8 +22,8 @@ kros:
             kp:                 0.09500          # proportional gain
             ki:                 0.00000          # integral gain
             kd:                 0.00000          # derivative gain
-            min_output:           -10.0          # lower output limit
-            max_output:            10.0          # upper output limit
+            minimum_output:       -10.0          # lower output limit
+            maximum_output:        10.0          # upper output limit
             enable_slew:           True
             sample_freq_hz:          20
             hyst_queue_len:          20          # size of queue used for running average for hysteresis
@@ -38,13 +38,16 @@ kros:
             FULL:                   90.0
             EMERGENCY:             100.0
             MAXIMUM:               100.000001
-
-    slew:
-        minimum_output: 0.00                     # lower limit of permitted output values
-        maximum_output: 100.00                   # upper limit of permitted output values
-        rate: 'FAST'                             # select value of enum: EXTREMELY_SLOW, VERY_SLOW, SLOWER, SLOW, NORMAL, FAST, VERY_FAST
-        hysteresis: 2.0                          # how close do we get to the target velocity?
-        use_elapsed_time: False                  # used elapsed time or percentage
+        slew:
+            minimum_output: 0.00                     # lower limit of permitted output values
+            maximum_output: 1.00                     # upper limit of permitted output values
+            rate: 'FAST'                             # select value of enum: EXTREMELY_SLOW, VERY_SLOW, SLOWER, SLOW, NORMAL, FAST, VERY_FAST
+            hysteresis: 2.0                          # how close do we get to the target velocity?
+            use_elapsed_time: False                  # used elapsed time or percentage
+        jerk:
+            minimum_output: -0.90                    # lower limit of permitted output values
+            maximum_output:  0.90                    # upper limit of permitted output values
+            maximum_change:  0.3                     # limit of permitted change
     gamepad:
         enabled: False
         device_path: '/dev/input/event5'         # the path to the bluetooth gamepad on the pi (see find_gamepad.py)

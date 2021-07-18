@@ -435,6 +435,9 @@ def main(argv):
             if _args.start:
                 _kros.start()
 
+            _kros.close()
+            print(' iiiiiiiiiiiiiiiiiiiiii close ')
+
     except KeyboardInterrupt:
         print(Fore.CYAN + Style.BRIGHT + 'caught Ctrl-C; exiting...')
     except Exception:
@@ -442,6 +445,7 @@ def main(argv):
         if _kros:
             _kros.close()
     finally:
+            print(' iiiiiiiiiiiiiiiiiiiiii finally ')
         _log.info('exit.')
 
 # call main ....................................................................

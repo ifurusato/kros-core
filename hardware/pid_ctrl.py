@@ -23,8 +23,8 @@ from core.logger import Logger, Level
 from core.orient import Orientation
 from core.message import Message
 from core.event import Event
-from core.slew import SlewRate, SlewLimiter
 from hardware.pid import PID
+from hardware.slew import SlewRate, SlewLimiter
 
 # ..............................................................................
 class PIDController(object):
@@ -70,8 +70,8 @@ class PIDController(object):
         _kp         = self._config.get('kp') # proportional gain
         _ki         = self._config.get('ki') # integral gain
         _kd         = self._config.get('kd') # derivative gain
-        _min_output = self._config.get('min_output')
-        _max_output = self._config.get('max_output')
+        _min_output = self._config.get('mininum_output')
+        _max_output = self._config.get('maximum_output')
         self._pid = PID(self._orientation.label, _kp, _ki, _kd, _min_output, _max_output, sample_time=_period_sec, level=level)
 
         # used for hysteresis, if queue too small will zero-out motor power too quickly

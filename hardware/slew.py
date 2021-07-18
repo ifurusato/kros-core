@@ -15,7 +15,6 @@
 import time
 from math import isclose
 from enum import Enum
-from collections import deque
 from colorama import init, Fore, Style
 init()
 
@@ -40,7 +39,7 @@ class SlewLimiter(Component):
         self._millis  = lambda: int(round(time.time() * 1000))
         self._seconds = lambda: int(round(time.time()))
         # Slew configuration .........................................
-        _cfg = config['kros'].get('slew')
+        _cfg = config['kros'].get('motors').get('slew')
         self._minimum_output = _cfg.get('minimum_output')
         self._maximum_output = _cfg.get('maximum_output')
         self._log.info('minimum output: {:5.2f}; maximum output: {:5.2f}'.format(self._minimum_output, self._maximum_output))
@@ -52,7 +51,7 @@ class SlewLimiter(Component):
         self._stats_queue      = None
         self._start_time       = None
         # lambdas
-        self._clamp = lambda n: self._minimum_output if n <= self._minimum_output else self._maximum_output if n >= self._maximum_output else n
+        self._clip = lambda n: self._minimum_output if n <= self._minimum_output else self._maximum_output if n >= self._maximum_output else n
         self._log.info('ready.')
 
     # ..........................................................................
@@ -102,13 +101,13 @@ class SlewLimiter(Component):
             elif target_value > current_value: # increasing ..........
                 _min = current_value - ( self._slew_rate.limit * _elapsed )
                 _max = current_value + ( self._slew_rate.limit * _elapsed )
-                _value = self._clip(target_value, _min, _max)
+                _value = self._clip_by(target_value, _min, _max)
                 self._log.debug(Fore.BLACK + '+value: {:+06.2f} = clip(target_value: {:+06.2f}), _min: {:+06.2f}), _max: {:+06.2f}); elapsed: {:+06.2f}'.format(\
                         _value, target_value, _min, _max, _elapsed))
             else: # decreasing .......................................
                 _min = current_value - ( self._slew_rate.limit * _elapsed )
                 _max = current_value + ( self._slew_rate.limit * _elapsed )
-                _value = self._clip(target_value, _min, _max)
+                _value = self._clip_by(target_value, _min, _max)
                 self._log.debug(Fore.BLACK + '-value: {:+06.2f} = clip(target_value: {:+06.2f}), _min: {:+06.2f}), _max: {:+06.2f}); elapsed: {:+06.2f}'.format(\
                         _value, target_value, _min, _max, _elapsed))
         else:
@@ -137,13 +136,13 @@ class SlewLimiter(Component):
         if ( _value > target_value - self._slew_hysteresis and _value < target_value + self._slew_hysteresis ):
             self._log.debug('value: {:+06.2f}; target_value: {:+06.2f}'.format(_value, target_value))
             return target_value
-        # clamp the output between min and max set in config (if negative we fix it before and after)
-        return -1.0 * self._clamp(-1.0 * _value) if _value < 0.0 else self._clamp(_value)
+        # clip the output between min and max set in config (if negative we fix it before and after)
+        return -1.0 * self._clip(-1.0 * _value) if _value < 0.0 else self._clip(_value)
 
     # ..........................................................................
-    def _clip(self, value, min_value, max_value):
+    def _clip_by(self, value, min_value, max_value):
         '''
-        Like the existing _clamp lambda except the limits are passed
+        Like the existing _clip lambda except the limits are passed
         into the method.
         '''
         return min_value if value <= min_value else max_value if value >= max_value else value
