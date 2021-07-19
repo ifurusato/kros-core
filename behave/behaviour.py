@@ -48,12 +48,12 @@ class Behaviour(ABC, Subscriber):
             self._log.warning('no behaviour manager found: {} operating as subscriber only.'.format(self.name))
         self._log.info('ready.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def message_factory(self):
         return self._message_factory
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def process_message(self, message):
         '''
         Overrides the method in Subscriber.
@@ -74,7 +74,7 @@ class Behaviour(ABC, Subscriber):
             self._log.info(Style.DIM + '{} behaviour suppressed.'.format(self.name))
         self._log.debug('processed message {}'.format(message.name))
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @abstractmethod
     def get_trigger_behaviour(self, event):
         '''
@@ -83,7 +83,7 @@ class Behaviour(ABC, Subscriber):
         '''
         raise NotImplementedError('trigger_behavior() must be implemented in subclasses.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @abstractmethod
     def trigger_event(self):
         '''
@@ -94,7 +94,7 @@ class Behaviour(ABC, Subscriber):
         '''
         raise NotImplementedError('trigger_event() must be implemented in subclasses.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def on_trigger(self, event):
         '''
         Alter this Behaviour based on its designated trigger event, which is
@@ -116,7 +116,7 @@ class Behaviour(ABC, Subscriber):
         else:
             raise Exception('no trigger behaviour for event: {}'.format(event.name))
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @abstractmethod
     def execute(self, message):
         '''
@@ -128,7 +128,7 @@ class Behaviour(ABC, Subscriber):
         '''
         raise NotImplementedError('execute() must be implemented in subclasses.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def enable(self):
         '''
         The necessary state machine call to enable the behaviour.
@@ -138,7 +138,7 @@ class Behaviour(ABC, Subscriber):
                 Subscriber.enable(self)
                 self._log.info('enabled behaviour {}'.format(self.name))
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def disable(self):
         '''
         The state machine call to disable the behaviour.

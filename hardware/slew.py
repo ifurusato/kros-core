@@ -91,7 +91,7 @@ class SlewLimiter(Component):
         if not self.enabled:
             self._log.warning('disabled; returning original target value {:+06.2f}.'.format(target_value))
             return target_value
-        self._log.debug('slew from current {:+06.2f} to target value {:+06.2f}.'.format(current_value, target_value))
+        self._log.info('slew from current {:+06.2f} to target value {:+06.2f}.'.format(current_value, target_value))
         if self._use_elapsed_time:
             _now = self._millis()
             _elapsed = _now - self._start_time
@@ -102,17 +102,17 @@ class SlewLimiter(Component):
                 _min = current_value - ( self._slew_rate.limit * _elapsed )
                 _max = current_value + ( self._slew_rate.limit * _elapsed )
                 _value = self._clip_by(target_value, _min, _max)
-                self._log.debug(Fore.BLACK + '+value: {:+06.2f} = clip(target_value: {:+06.2f}), _min: {:+06.2f}), _max: {:+06.2f}); elapsed: {:+06.2f}'.format(\
+                self._log.info(Fore.BLACK + '+value: {:+06.2f}; target_value: {:+06.2f}), _min: {:+06.2f}), _max: {:+06.2f}); elapsed: {:+06.2f}'.format(
                         _value, target_value, _min, _max, _elapsed))
             else: # decreasing .......................................
                 _min = current_value - ( self._slew_rate.limit * _elapsed )
                 _max = current_value + ( self._slew_rate.limit * _elapsed )
                 _value = self._clip_by(target_value, _min, _max)
-                self._log.debug(Fore.BLACK + '-value: {:+06.2f} = clip(target_value: {:+06.2f}), _min: {:+06.2f}), _max: {:+06.2f}); elapsed: {:+06.2f}'.format(\
+                self._log.info(Fore.BLACK + '-value: {:+06.2f}; target_value: {:+06.2f}), _min: {:+06.2f}), _max: {:+06.2f}); elapsed: {:+06.2f}'.format(
                         _value, target_value, _min, _max, _elapsed))
         else:
             if isclose(target_value, current_value, abs_tol=1e-3):
-                self._log.debug(Fore.BLACK + '=value: {:+06.2f}; (close)'.format(current_value))
+                self._log.info(Fore.BLACK + '=value: {:+06.2f}; (close)'.format(current_value))
                 return current_value
             elif target_value > current_value: # increasing ..........
                 # add a percentage of difference between current and target to current
@@ -120,7 +120,7 @@ class SlewLimiter(Component):
                 if abs(_diff) < self._slew_hysteresis:
                     _diff = self._slew_hysteresis
                 _value = current_value + _diff
-                self._log.debug(Fore.BLACK + '+value: {:+06.2f}; diff: {:06.2f} ({:3.1f}%); target_value: {:+06.2f}'.format(\
+                self._log.info(Fore.BLACK + '+value: {:+06.2f}; diff: {:06.2f} ({:3.1f}%); target_value: {:+06.2f}'.format(\
                         _value, _diff, 100.0 * self._slew_rate.ratio, target_value))
             else: # decreasing .......................................
                 # subtract a percentage of difference between current and target to current
@@ -129,12 +129,12 @@ class SlewLimiter(Component):
 #                   _value = target_value
                     _diff = self._slew_hysteresis
                 _value = current_value - _diff
-                self._log.debug(Fore.BLACK + '-value: {:+06.2f}; diff: {:06.2f} ({:3.1f}%); target_value: {:+06.2f}'.format(\
+                self._log.info(Fore.BLACK + '-value: {:+06.2f}; diff: {:06.2f} ({:3.1f}%); target_value: {:+06.2f}'.format(\
                         _value, _diff, 100.0 * self._slew_rate.ratio, target_value))
             pass
 
         if ( _value > target_value - self._slew_hysteresis and _value < target_value + self._slew_hysteresis ):
-            self._log.debug('value: {:+06.2f}; target_value: {:+06.2f}'.format(_value, target_value))
+            self._log.info('value: {:+06.2f}; target_value: {:+06.2f}'.format(_value, target_value))
             return target_value
         # clip the output between min and max set in config (if negative we fix it before and after)
         return -1.0 * self._clip(-1.0 * _value) if _value < 0.0 else self._clip(_value)

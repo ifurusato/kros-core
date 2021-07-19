@@ -183,7 +183,7 @@ class PIDController(object):
         '''
         kp, ki, kd = self._pid.constants
         cp, ci, cd = self._pid.components
-        return kp, ki, kd, cp, ci, cd, self._last_power, self._motor.get_current_power_level(), self._power, self._motor.velocity, self._pid.setpoint, self._motor.steps
+        return kp, ki, kd, cp, ci, cd, self._last_power, self._motor.current_power_level, self._power, self._motor.velocity, self._pid.setpoint, self._motor.steps
 
     # ..........................................................................
     @property

@@ -40,7 +40,7 @@ kros:
             MAXIMUM:               100.000001
         slew:
             minimum_output: 0.00                     # lower limit of permitted output values
-            maximum_output: 1.00                     # upper limit of permitted output values
+            maximum_output: 0.88                     # upper limit of permitted output values
             rate: 'FAST'                             # select value of enum: EXTREMELY_SLOW, VERY_SLOW, SLOWER, SLOW, NORMAL, FAST, VERY_FAST
             hysteresis: 2.0                          # how close do we get to the target velocity?
             use_elapsed_time: False                  # used elapsed time or percentage

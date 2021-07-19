@@ -34,16 +34,21 @@ class JerkLimiter(object):
     This uses the ros:motors:jerk: section of the YAML configuration.
 
     Parameters:
-    :param config:        application configuration
-    :param orientation:   used only for the logger label
-    :param level:         the logging Level
+    :param config:           application configuration
+    :param orientation:      used only for the logger label
+    :param max_power_limit:  optionally set the maximum power limit (with 'value * -1' for lower limit)
+    :param level:            the logging Level
     '''
-    def __init__(self, config, orientation, level=Level.INFO):
+    def __init__(self, config, orientation, max_power_limit=None, level=Level.INFO):
         self._log = Logger('jerk:{}'.format(orientation.label), level)
         _cfg = config['kros'].get('motors').get('jerk')
         self._maximum_change = _cfg.get('maximum_change')
-        _minimum_output = _cfg.get('minimum_output')
-        _maximum_output = _cfg.get('maximum_output')
+        if max_power_limit != None:
+            _maximum_output = max_power_limit
+            _minimum_output = -1 * max_power_limit
+        else:
+            _minimum_output = _cfg.get('minimum_output')
+            _maximum_output = _cfg.get('maximum_output')
         self._log.info('maximum change: {:5.2f}; minimum output: {:5.2f}; maximum output: {:5.2f}'.format(
                 self._maximum_change, _minimum_output, _maximum_output))
         self._clip = lambda n: _minimum_output if n <= _minimum_output else _maximum_output if n >= _maximum_output else n
@@ -61,7 +66,7 @@ class JerkLimiter(object):
         This filter works for either negative or positive values, clipping
         changes larger than the jerk value.
         '''
-        self._log.info(Fore.BLACK + 'limit current {:+06.2f} to target value {:+06.2f}.'.format(current_value, target_value))
+        self._log.debug('limit current {:+06.2f} to target value {:+06.2f}.'.format(current_value, target_value))
         _value = target_value
         if isclose(current_value, target_value, abs_tol=1e-3):
             pass

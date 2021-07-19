@@ -7,7 +7,7 @@
 #
 # author:   Murray Altheim
 # created:  2019-12-23
-# modified: 2020-03-12
+# modified: 2021-07-19
 #
 # The NZPRG K-Series Robot Operating System (KROS), including its command line
 # interface (CLI).
@@ -15,7 +15,6 @@
 #        1         2         3         4         5         6         7         8         9         C
 #234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
 
-# ..............................................................................
 import os, sys, signal, time, threading, traceback
 import argparse, psutil
 from pathlib import Path
@@ -55,9 +54,7 @@ from hardware.pid_motor_ctrl import PIDMotorController
 led_0_path = '/sys/class/leds/led0/brightness'
 led_1_path = '/sys/class/leds/led1/brightness'
 
-# ==============================================================================
-
-# KROS ..........................................................................
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class KROS(Component, FiniteStateMachine):
     '''
     Extends Component and Finite State Machine (FSM) as a basis of a K-Series
@@ -101,7 +98,7 @@ class KROS(Component, FiniteStateMachine):
         self._closing       = False
         self._log.info('initialised.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def configure(self, arguments):
         '''
         Provided with a set of configuration arguments, configures KROS based on
@@ -198,7 +195,7 @@ class KROS(Component, FiniteStateMachine):
 
         self._log.info('configured.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _set_feature_available(self, name, value):
         '''
             Sets a feature's availability to the boolean value.
@@ -206,13 +203,12 @@ class KROS(Component, FiniteStateMachine):
         self._log.debug(Fore.BLUE + Style.BRIGHT + '-- set feature available. name: \'{}\' value: \'{}\'.'.format(name, value))
         self.set_property('features', name, value)
 
-
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def configuration(self):
         return self._config
     
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def get_property(self, section, property_name):
         '''
         Return the value of the named property of the application
@@ -220,7 +216,7 @@ class KROS(Component, FiniteStateMachine):
         '''
         return self._config[section].get(property_name)
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def set_property(self, section, property_name, property_value):
         '''
         Set the value of the named property of the application
@@ -234,7 +230,7 @@ class KROS(Component, FiniteStateMachine):
             _kros = self._config['ros']
             _kros[section].update(property_name = property_value)
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _set_pi_leds(self, enable):
         '''
         Enables or disables the Raspberry Pi's board LEDs.
@@ -258,7 +254,7 @@ class KROS(Component, FiniteStateMachine):
         else:
             self._log.warning('could not change state of LEDs: does not appear to be a Raspberry Pi.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _callback_shutdown(self):
         _enable_self_shutdown = self._config['ros'].get('enable_self_shutdown')
         if _enable_self_shutdown:
@@ -268,7 +264,7 @@ class KROS(Component, FiniteStateMachine):
         else:
             self._log.critical('self-shutdown disabled.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _print_banner(self):
         '''
         Display banner on console.
@@ -287,7 +283,7 @@ class KROS(Component, FiniteStateMachine):
         self._log.info(' ')
         self._log.info(' ')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def start(self):
         '''
         This first disables the Pi's status LEDs, establishes the message bus,
@@ -324,7 +320,7 @@ class KROS(Component, FiniteStateMachine):
 
         # end main ...................................
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def close(self):
         '''
         This sets the KROS back to normal following a session.
@@ -352,9 +348,9 @@ class KROS(Component, FiniteStateMachine):
             self._log.info('closed.')
             sys.exit(0)
 
-# ==============================================================================
+# ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
 
-# ..............................................................................
+# ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 def parse_args():
     '''
     Parses the command line arguments and return the resulting args object.
@@ -366,27 +362,24 @@ def parse_args():
     parser = argparse.ArgumentParser(formatter_class=formatter,
             description='Provides command line control of the KROS application.', \
             epilog='This script may be executed by krosd (kros daemon) or run directly from the command line.')
-    parser.add_argument('--configure',      '-c', action='store_true', help='run configuration (included by -s)')
-    parser.add_argument('--start',          '-s', action='store_true', help='start kros')
-    parser.add_argument('--no-motors',      '-n', action='store_true', help='disable motors (uses mock)')
-    parser.add_argument('--gamepad',        '-g', action='store_true', help='enable bluetooth gamepad control')
-    parser.add_argument('--video',          '-v', action='store_true', help='enable video if installed')
-    parser.add_argument('--mock',           '-m', action='store_true', help='permit mocked libraries (when not on a Pi)')
-    parser.add_argument('--config-file',    '-f', help='use alternative configuration file')
-    parser.add_argument('--level',          '-l', help='specify logging level \'DEBUG\'|\'INFO\'|\'WARN\'|\'ERROR\' (default: \'INFO\')')
+    parser.add_argument('--configure',   '-c', action='store_true', help='run configuration (included by -s)')
+    parser.add_argument('--start',       '-s', action='store_true', help='start kros')
+    parser.add_argument('--no-motors',   '-n', action='store_true', help='disable motors (uses mock)')
+    parser.add_argument('--gamepad',     '-g', action='store_true', help='enable bluetooth gamepad control')
+    parser.add_argument('--video',       '-v', action='store_true', help='enable video if installed')
+    parser.add_argument('--mock',        '-m', action='store_true', help='permit mocked libraries (when not on a Pi)')
+    parser.add_argument('--config-file', '-f', help='use alternative configuration file')
+    parser.add_argument('--level',       '-l', help='specify logging level \'DEBUG\'|\'INFO\'|\'WARN\'|\'ERROR\' (default: \'INFO\')')
     try:
         args = parser.parse_args()
         _log.debug('parsed arguments: {}\n'.format(args))
-#       print_banner()
         if not args.configure and not args.start:
             print(Fore.CYAN)
-#           print('' + Fore.CYAN)
             parser.print_help()
             print(Style.RESET_ALL)
             return None
         else:
             return args
-
     except NotImplementedError as nie:
         _log.error('unrecognised log level \'{}\': {}'.format(args.level, nie))
         _log.error('exit on error.')
@@ -396,8 +389,7 @@ def parse_args():
         _log.error('exit on error.')
         sys.exit(1)
 
-# exception handler ............................................................
-
+# execution handler ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 def signal_handler(signal, frame):
     global _kros
     print('\nsignal handler    :' + Fore.MAGENTA + Style.BRIGHT + ' INFO  : Ctrl-C caught: exiting...' + Style.RESET_ALL)
@@ -405,10 +397,9 @@ def signal_handler(signal, frame):
         _kros.close()
     print(Fore.MAGENTA + 'exit.' + Style.RESET_ALL)
 #   sys.stderr = DevNull()
-#   sys.exit()
     sys.exit(0)
 
-# main .........................................................................
+# main ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 _kros = None
 
@@ -422,7 +413,7 @@ def main(argv):
         _args = parse_args()
         if _args == None:
             print('')
-            _log.info(Fore.CYAN + 'arguments: no action.')
+            _log.info('arguments: no action.')
         else:
             _level = Level.from_string(_args.level) if _args.level != None else Level.INFO
             _log.level = _level
@@ -434,19 +425,16 @@ def main(argv):
                     _log.info('configure only: ' + Fore.YELLOW + 'specify the -s argument to start kros.')
             if _args.start:
                 _kros.start()
-
-            _kros.close()
-            print(' iiiiiiiiiiiiiiiiiiiiii close ')
-
+            # kros is now running...
     except KeyboardInterrupt:
-        print(Fore.CYAN + Style.BRIGHT + 'caught Ctrl-C; exiting...')
+        print(Style.BRIGHT + 'caught Ctrl-C; exiting...')
     except Exception:
         print(Fore.RED + Style.BRIGHT + 'error starting kros: {}'.format(traceback.format_exc()) + Style.RESET_ALL)
-        if _kros:
-            _kros.close()
     finally:
-            print(' iiiiiiiiiiiiiiiiiiiiii finally ')
         _log.info('exit.')
+        if _kros:
+            _log.info(Style.DIM + 'finally closing kros...')
+            _kros.close()
 
 # call main ....................................................................
 if __name__== "__main__":

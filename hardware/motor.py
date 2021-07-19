@@ -50,8 +50,10 @@ class Motor(Component):
         self._steps             = 0     # step counter
         self._max_power         = 0.0   # capture maximum power applied
         self._max_driving_power = 0.0   # capture maximum adjusted power applied
+        self._max_power_ratio   = 1.0   # will be set by MotorConfigurer
         self._velocity          = 0     # currently a proxy for actual velocity
-        self._jerk_limiter      = JerkLimiter(config, orientation, level) 
+        self._jerk_limiter      = JerkLimiter(config, orientation, self._motor_power_limit, level) 
+#       self._jerk_limiter      = JerkLimiter(config, orientation, level) 
         self._log.info('ready.')
 
     # ..........................................................................
@@ -132,54 +134,53 @@ class Motor(Component):
         '''
         Returns True if the motor is moving.
         '''
-        return self.get_current_power_level() > 0.0
+        return self.current_power > 0.0
 
     # ..........................................................................
     def set_motor_power(self, target_power):
         '''
-        Sets the power level to a number between -1.0 to 1.0, with the actual
+        Sets the motor power to a number between -1.0 to 1.0, with the actual
         limits set by the _max_power_ratio, which alters the value to match
         the power/motor voltage ratio.
 
-        :param target_power:  the target power level
+        :param target_power:  the target motor power
         '''
         if not self.enabled and target_power > 0.0: # though we'll let the power be set to zero
             self._log.warning('motor disabled, ignoring setting of {:<5.2f}'.format(target_power))
             return
-        _current_power = self.get_current_power_level()
         _max = 0.9 # was 0.3?
 
 #       self._motor_delta_limit
 
+        _current_power = self.current_power
+        if self.orientation is Orientation.PORT and False:
+            # TEMP (port only) evaluate change...
+            _diff = target_power - _current_power
+            if _diff < _max:
+                self._log.info(Fore.YELLOW + '😨 current: {:4.2f}; target: {:4.2f}; diff: {:4.2f}; max: {:4.2f}'.format(
+                        _current_power, target_power, _diff, _max))
+            elif _diff == 0:
+                self._log.info(Fore.BLACK + '😨 current: {:4.2f}; target: {:4.2f}; diff: {:4.2f}; max: {:4.2f}'.format(
+                        _current_power, target_power, _diff, _max))
+            elif _diff < 0:
+                self._log.info(Fore.RED + '😨 current: {:4.2f}; target: {:4.2f}; diff: {:4.2f}; max: {:4.2f}'.format(
+                        _current_power, target_power, _diff, _max))
+            else:
+                self._log.info(Fore.GREEN + '😨 current: {:4.2f}; target: {:4.2f}; diff: {:4.2f}; max: {:4.2f}'.format(
+                        _current_power, target_power, _diff, _max))
 
+        target_power = self._jerk_limiter.limit(self.current_power, target_power)
+        self._log.debug('current: {:4.2f}; target: {:4.2f}'.format(self.current_power, target_power))
 
-        # evaluate change...
-        _diff = target_power - _current_power
-        if _diff < _max:
-            self._log.info(Fore.YELLOW + '😨 current: {:4.2f}; target: {:4.2f}; diff: {:4.2f}; max: {:4.2f}'.format(
-                    _current_power, target_power, _diff, _max))
-        elif _diff == 0:
-            self._log.info(Fore.BLACK + '😨 current: {:4.2f}; target: {:4.2f}; diff: {:4.2f}; max: {:4.2f}'.format(
-                    _current_power, target_power, _diff, _max))
-        elif _diff < 0:
-            self._log.info(Fore.RED + '😨 current: {:4.2f}; target: {:4.2f}; diff: {:4.2f}; max: {:4.2f}'.format(
-                    _current_power, target_power, _diff, _max))
+        # safety checks ..........................
+        if target_power > self._motor_power_limit:
+            self._log.error('motor power too high: {:>5.2f}; limit: {:>5.2f}'.format(target_power, self._motor_power_limit))
+            target_power = self._motor_power_limit
+        elif target_power < ( -1.0 * self._motor_power_limit ):
+            self._log.error('motor power too low: {:>5.2f}; limit: {:>5.2f}'.format( target_power, ( -1.0 * self._motor_power_limit )))
+            target_power = -1.0 * self._motor_power_limit
         else:
-            self._log.info(Fore.GREEN + '😨 current: {:4.2f}; target: {:4.2f}; diff: {:4.2f}; max: {:4.2f}'.format(
-                    _current_power, target_power, _diff, _max))
-
-#       target_power = self._jerk_limiter.limit(_current_power, target_power)
-        self._log.info(Fore.GREEN + '😨 current: {:4.2f}; target: {:4.2f}'.format(_current_power, target_power))
-
-#       # safety checks ..........................
-#       if target_power > self._motor_power_limit:
-#           self._log.error('motor power too high: {:>5.2f}; limit: {:>5.2f}'.format(target_power, self._motor_power_limit))
-#           target_power = self._motor_power_limit
-#       elif target_power < ( -1.0 * self._motor_power_limit ):
-#           self._log.error('motor power too low: {:>5.2f}; limit: {:>5.2f}'.format( target_power, ( -1.0 * self._motor_power_limit )))
-#           target_power = -1.0 * self._motor_power_limit
-#       else:
-#           self._log.info('ok- motor power level: {:>5.2f}; limit: {:>5.2f}'.format( target_power, self._motor_power_limit ))
+            self._log.debug('ok- motor power: {:>5.2f}; limit: {:>5.2f}'.format( target_power, self._motor_power_limit ))
 #
 #       if abs(_current_power - target_power) > _max and _current_power > 0.0 and target_power < 0:
 #           self._log.error('cannot perform positive-negative power jump: {:>5.2f} to {:>5.2f}.'.format(_current_power, target_power))
@@ -193,17 +194,18 @@ class Motor(Component):
         self._max_power = max(target_power, self._max_power)
         self._max_driving_power = max(abs(_driving_power), self._max_driving_power)
         # display actual power to motor
-        self._log.debug(Fore.MAGENTA + Style.BRIGHT + 'power argument: {:>5.2f}'.format(target_power) + Style.NORMAL \
-                + '\tcurrent power: {:>5.2f}; driving power: {:>5.2f}.'.format(_current_power, _driving_power))
+#       self._log.info(Fore.MAGENTA + Style.BRIGHT + 'power argument: {:>5.2f}'.format(target_power) + Style.NORMAL \
+#               + '\tcurrent power: {:>5.2f}; driving power: {:>5.2f}.'.format(_current_power, _driving_power))
         if self._orientation is Orientation.PORT:
             self._tb.SetMotor1(_driving_power)
         else:
             self._tb.SetMotor2(_driving_power)
 
     # ................................
-    def get_current_power_level(self):
+    @property
+    def current_power(self):
         '''
-         Makes a best attempt at getting the power level value from the motors.
+         Makes a best attempt at getting the current power value from the motors.
         '''
         value = None
         count = 0
@@ -228,7 +230,7 @@ class Motor(Component):
         '''
          Returns True if the motor is entirely stopped.
         '''
-        return ( self.get_current_power_level() == 0.0 )
+        return ( self.current_power == 0.0 )
 
     def stop(self):
         '''
