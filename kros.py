@@ -148,7 +148,7 @@ class KROS(Component, FiniteStateMachine):
 
         self._log.info('configure subsumption components...')
        
-        self._message_bus = MessageBus(self._level)
+        self._message_bus = MessageBus(self._config, self._level)
         self._message_factory = MessageFactory(self._message_bus, self._level)
 
         self._controller = Controller(self._message_bus, self._level)

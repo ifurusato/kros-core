@@ -45,21 +45,30 @@ from core.numbers import Numbers
 class MessageBus(Component):
     '''
     An asyncio-based asynchronous message bus.
+
+    :param config:  the application configuration
+    :param level:   the optional log level
     '''
-    def __init__(self, level):
+    def __init__(self, config, level):
         self._log = Logger("bus", level)
         Component.__init__(self, self._log, suppressed=False, enabled=True)
+        if isinstance(config, dict):
+            self._config = config
+        else:
+            raise ValueError('wrong type for config argument: {}'.format(type(name)))
         if level is Level.DEBUG:
             self._log.debug('logging message bus set to debug level.')
             logging.basicConfig(level=logging.DEBUG)
-        self._queue       = PeekableQueue(level)
-        self._publishers  = []
-        self._subscribers = []
-        self._loop        = None
+        self._queue = PeekableQueue(level)
+        self._arbitrator = Arbitrator(level)
+        # configuration ..........................
+        _cfg = config['kros'].get('message_bus')
+        self._max_age_ms             = _cfg.get('max_age_ms') # was: 20.0ms
+        self._publish_delay_sec      = _cfg.get('publish_delay_sec') # was: 0.01 sec
+        self._publishers             = []
+        self._subscribers            = []
+        self._loop                   = None
         self._last_message_timestamp = None
-        self._arbitrator  = Arbitrator(level)
-        self._max_age_ms  = 20.0
-        self._publish_delay_sec = 0.01
         self._clip_event_list = False # used for printing only
         self._log.info('ready.')
 
