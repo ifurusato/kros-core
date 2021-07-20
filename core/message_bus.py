@@ -7,7 +7,7 @@
 #
 # author:   Murray Altheim
 # created:  2021-03-10
-# modified: 2021-07-12
+# modified: 2021-07-19
 #
 # An asyncio-based publish/subscribe-style message bus guaranteeing exactly-once
 # delivery for each message. This is done by populating each message with the
@@ -41,7 +41,7 @@ from core.message import Message
 from core.arbitrator import Arbitrator
 from core.numbers import Numbers
 
-# ..............................................................................
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class MessageBus(Component):
     '''
     An asyncio-based asynchronous message bus.
@@ -72,7 +72,7 @@ class MessageBus(Component):
         self._clip_event_list = False # used for printing only
         self._log.info('ready.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def last_message_timestamp(self):
         '''
@@ -89,7 +89,7 @@ class MessageBus(Component):
         '''
         self._last_message_timestamp = dt.now()
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def loop(self):
         '''
@@ -97,7 +97,7 @@ class MessageBus(Component):
         '''
         return self._loop
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def get_all_tasks(self, include_hidden=False):
         '''
         Returns the task list, not including those whose name starts with '__'.
@@ -111,7 +111,7 @@ class MessageBus(Component):
             self._log.warning('no running loop.')
         return _tasks
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def clear_tasks(self):
         '''
         Clears the task list of any completed tasks.
@@ -138,7 +138,7 @@ class MessageBus(Component):
                 for _task in _tasks:
                     self._log.debug('unfinished task:\t' + Fore.BLUE + '{}...'.format(_task.get_name()))
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def queue(self):
         '''
@@ -148,7 +148,7 @@ class MessageBus(Component):
         '''
         return self._queue
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def queue_empty(self):
         '''
@@ -158,7 +158,7 @@ class MessageBus(Component):
         '''
         return self._queue.empty()
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def pop_queue(self):
         '''
         Pops the queue but does nothing with the message, if there is one.
@@ -174,17 +174,17 @@ class MessageBus(Component):
             if self._queue.empty():
                 self._log.info('message bus queue is now empty.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def arbitrate(self, payload):
         self._log.info('💎 arbitrating payload {}...'.format(payload.event.name))
         await self._arbitrator.arbitrate(payload)
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def queue_size(self):
         return self._queue.qsize()
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def clear_queue(self):
         '''
         Clear the message bus of any messages.
@@ -193,7 +193,7 @@ class MessageBus(Component):
         self._queue.clear()
         self._log.info('queue contains {:d} message{} after clearing.'.format(self._queue.qsize(), '' if self._queue.qsize() == 1 else 's'))
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def verbose(self):
         '''
@@ -219,7 +219,7 @@ class MessageBus(Component):
         for _controller in self._arbitrator.controllers:
             _controller.set_log_level(self._log.level)
 
-    # publisher ................................................................
+    # publicher ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
     def register_publisher(self, publisher):
         '''
@@ -271,7 +271,8 @@ class MessageBus(Component):
     def publisher_count(self):
         return len(self._publishers)
 
-    # subscriber ...............................................................
+    # subscriber ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+
     def register_subscriber(self, subscriber):
         '''
         Register a message subscriber with the message bus.
@@ -322,7 +323,7 @@ class MessageBus(Component):
     def subscriber_count(self):
         return len(self._subscribers)
 
-    # controller ................................................................
+    # controller ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
     def register_controller(self, controller):
         '''
@@ -330,7 +331,7 @@ class MessageBus(Component):
         '''
         self._arbitrator.register_controller(controller)
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def is_expired(self, message):
         '''
         Returns True if the message has been manually expired or its age has
@@ -338,7 +339,7 @@ class MessageBus(Component):
         '''
         return message.expired or message.age > self._max_age_ms
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def _start_consuming(self):
         '''
         Enable the publishers and then start the subscribers' consume cycle.
@@ -358,7 +359,7 @@ class MessageBus(Component):
                 self._log.debug('published to subscriber {}...'.format(subscriber.name))
         self._log.info('completed consume loop with {:d} subscriber{}...'.format(len(self._subscribers), '' if len(self._subscribers) == 1 else 's'))
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _enable_publishers(self):
         self._log.info('enabling {:d} publisher{}...'.format(len(self._publishers), '' if len(self._publishers) == 1 else 's'))
         for publisher in self._publishers:
@@ -366,7 +367,7 @@ class MessageBus(Component):
             if not publisher.enabled:
                 publisher.enable()
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def print_system_status(self):
         '''
         Prints the current system status to the console.
@@ -376,7 +377,7 @@ class MessageBus(Component):
         self.print_subscribers()
         self.print_arbitrator_info()
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def print_task_info(self):
         self._log.info('in queue:    \t' + Fore.YELLOW + '{:d} message{}.'.format(self._queue.qsize(), '' if self._queue.qsize() == 1 else 's'))
         _tasks = self.get_all_tasks()
@@ -390,7 +391,7 @@ class MessageBus(Component):
             for _task in _tasks:
                 self._log.info(Fore.YELLOW + '    \t\t{};  \t'.format(_task.get_name()) + Fore.BLACK + ' done? {}'.format(_task.done()))
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def peek_message(self):
         '''
         Asynchronously waits until it peeks a message from the queue. This
@@ -398,7 +399,7 @@ class MessageBus(Component):
         '''
         return await self._queue.peek()
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def consume_message(self):
         '''
         Asynchronously waits until it pops a message from the queue.
@@ -408,7 +409,7 @@ class MessageBus(Component):
         '''
         return self._queue.get()
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def consumed(self):
         '''
         Every call to consume_message() should correspond with a call to consumed().
@@ -416,7 +417,7 @@ class MessageBus(Component):
         '''
         self._queue.task_done()
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def publish_message(self, message):
         '''
         Asynchronously publishes the Message to the MessageBus, and therefore to any Subscribers.
@@ -432,7 +433,7 @@ class MessageBus(Component):
         self._log.info(Style.DIM + 'created task: {}'.format(_put_task.get_name()))
         await asyncio.sleep(self._publish_delay_sec)
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def republish_message(self, message):
         '''
         Asynchronously re-publishes a Message to the MessageBus, making it
@@ -446,7 +447,8 @@ class MessageBus(Component):
         self.update_last_message_timestamp()
         self._log.debug('republished message: {} (event: {}; age: {:d}ms);'.format(message.name, message.event.label, message.age))
 
-    # exception handling .......................................................
+    # exception handling ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+
     def handle_exception(self, loop, context):
         self._log.error('handle exception on loop: {}'.format(loop))
         # context["message"] will always be there; but context["exception"] may not
@@ -460,7 +462,8 @@ class MessageBus(Component):
         else:
             self._log.info("loop already shut down.")
 
-    # shutdown .....................................................................
+    # shutdown ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+
     async def shutdown(self, signal=None):
         '''
         Cleanup tasks tied to the service's shutdown.
@@ -476,7 +479,7 @@ class MessageBus(Component):
         self._loop.stop()
         self._log.info(Fore.RED + 'shutting down...' + Style.RESET_ALL)
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def get_task_by_name(self, name):
         '''
         A convenience method that returns the first found instance of a task
@@ -489,7 +492,7 @@ class MessageBus(Component):
                 return _task
         return None
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def enable(self):
         if not self.closed:
             Component.enable(self)
@@ -497,10 +500,12 @@ class MessageBus(Component):
             self._get_event_loop()
             self._log.info('exited forever loop.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _get_event_loop(self):
         '''
         Return the asyncio event loop, starting it if it is not already running.
+
+        Calling this method will basically start the OS, blocking until disabled.
         '''
         if not self._loop:
             self._log.debug('creating asyncio task loop...')
@@ -519,7 +524,7 @@ class MessageBus(Component):
             self._loop.run_forever()
         return self._loop
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def disable(self):
         '''
         NOTE: we are at this point incidentally tying publishing with
@@ -543,7 +548,7 @@ class MessageBus(Component):
         else:
             self._log.warning('already disabled.')
 
-# ..............................................................................
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class PeekableQueue(Queue):
     '''
     Extends the asyncio Queue to add peek() and clear() methods.
@@ -553,7 +558,7 @@ class PeekableQueue(Queue):
         self._log = Logger("queue", level)
         self._log.info('ready.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def peek(self):
         '''
         Returns the message at the top of the queue without removing it.
@@ -567,7 +572,7 @@ class PeekableQueue(Queue):
         self.put_nowait(_message)
         return _message
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def clear(self):
         '''
         Clears the queue of any messages, brute-force, without waiting.

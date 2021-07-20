@@ -22,7 +22,6 @@ from core.component import Component
 from core.orient import Orientation, Speed, Direction
 from core.event import Event
 from hardware.motor import Motor
-from hardware.slew import SlewLimiter
 
 # ..............................................................................
 class Motors(Component):
@@ -30,9 +29,9 @@ class Motors(Component):
     A mocked dual motor controller with encoders.
 
     This incorporates an increment value for stopping, halting or braking
-    by altering the set velocity of the motors, but also relies upon a
-    SlewLimiter installed on each of the motors, so that velocity
-    changes occur gradually.
+    by altering the set velocity of the motors. This relies upon both a
+    SlewLimiter and JerkLimiter installed on each of the motors, so that
+    velocity and power (resp.) changes occur gradually and safely.
 
       Stop:  set the target velocity of the motors to zero immediately.
       Halt:  slew the target velocity of the motors to zero quickly.
@@ -53,12 +52,8 @@ class Motors(Component):
         if tb is None:
             raise Exception('no tb argument provided.')
         self._tb = tb
-        _cfg = config['kros'].get('motors')
-        self._motor_power_limit = _cfg.get('motor_power_limit') # power limit to motor
         self._port_motor = Motor(self._config, self._tb, Orientation.PORT, level)
         self._stbd_motor = Motor(self._config, self._tb, Orientation.STBD, level)
-        self._port_slew_limiter = SlewLimiter(self._config, Orientation.PORT, level)
-        self._stbd_slew_limiter = SlewLimiter(self._config, Orientation.STBD, level)
         # temporary until we move functionality to motors
         self._color                = Fore.MAGENTA
         self._loop_thread          = None
@@ -78,7 +73,9 @@ class Motors(Component):
         self._stbd_target_velocity = 0.0 # the starboard motor target velocity for slewing
         self._decelerate_ratio     = 0.0 # variable used in loop
         # lambdas
-        self._clip = lambda n: ( -1.0 * self._max_velocity ) if n <= ( -1.0 * self._max_velocity ) else self._max_velocity if n >= self._max_velocity else n
+        self._velocity_clip = lambda n: ( -1.0 * self._max_velocity ) if n <= ( -1.0 * self._max_velocity ) \
+                else self._max_velocity if n >= self._max_velocity \
+                else n
         self._log.info('motors ready.')
 
     # ..........................................................................
@@ -149,10 +146,15 @@ class Motors(Component):
             if not isclose(self._decelerate_ratio, 0.0, abs_tol=0.1):
                 # if decelerating then apply that to target velocities first
                 self._decelerate(_event_count)
-            if self._port_motor.velocity != self._port_target_velocity:
-                self.set_motor_velocity(Orientation.PORT, self._port_target_velocity)
-            if self._stbd_motor.velocity != self._stbd_target_velocity:
-                self.set_motor_velocity(Orientation.STBD, self._stbd_target_velocity)
+
+            self._port_motor.update_motor_velocity()
+            self._stbd_motor.update_motor_velocity()
+
+#           if self._port_motor.velocity != self._port_target_velocity:
+#               self.set_motor_velocity(Orientation.PORT, self._port_target_velocity)
+#           if self._stbd_motor.velocity != self._stbd_target_velocity:
+#               self.set_motor_velocity(Orientation.STBD, self._stbd_target_velocity)
+
             # print stats...
             self.print_info(_event_count)
             time.sleep(self._loop_delay_sec)
@@ -556,12 +558,13 @@ class Motors(Component):
         the maximum velocity limit.
         '''
         value += increment
-        return -1.0 * self._clip(-1.0 * value) if value < 0 else self._clip(value)
+        return -1.0 * self._velocity_clip(-1.0 * value) if value < 0 else self._velocity_clip(value)
 
     # ..........................................................................
     def get_motor_velocity(self, orientation):
         '''
-        Return the target velocity of the specified motor.
+        A convenience method that returns the target velocity of the
+        specified motor.
         '''
         if orientation is Orientation.PORT:
             return self._port_motor.velocity
@@ -570,37 +573,13 @@ class Motors(Component):
 
     def set_motor_velocity(self, orientation, target_velocity):
         '''
-        Set the target velocity and motor power of the specified motor.
+        A convenience method that sets the target velocity and motor
+        power of the specified motor.
         '''
         if orientation is Orientation.PORT:
-            _current_port_velocity = self._port_motor.velocity
-            self._port_target_velocity = target_velocity
-            self._port_motor.velocity = self._port_slew_limiter.slew(_current_port_velocity, self._port_target_velocity)
-            self._log.debug(Fore.BLACK + 'set port motor velocity: {:5.2f} ➔ {:<5.2f}'.format(_current_port_velocity, self._port_target_velocity))
-            # translate velocity to power...
-            _port_power = self._convert_to_power(self._port_target_velocity)
-            self._port_motor.set_motor_power(_port_power)
+            self._port_motor.set_motor_velocity(target_velocity)
         else:
-            _current_stbd_velocity = self._stbd_motor.velocity
-            self._stbd_target_velocity = target_velocity
-            self._stbd_motor.velocity = self._stbd_slew_limiter.slew(_current_stbd_velocity, self._stbd_target_velocity)
-            self._log.debug(Fore.BLACK + 'set stbd motor velocity: {:5.2f} ➔ {:<5.2f}'.format(_current_stbd_velocity, target_velocity))
-            # translate velocity to power...
-            _stbd_power = self._convert_to_power(self._stbd_target_velocity)
-            self._stbd_motor.set_motor_power(_stbd_power)
-
-    # ..........................................................................
-    def _convert_to_power(self, velocity):
-        '''
-        TODO done by the Motor class or PID controller?
-        90 becomes 0.9
-        '''
-        if velocity < 0:
-            # with limit at -0.99, min would always be -0.99
-            return max( velocity / 100.0, -1 * self._motor_power_limit )
-        else:
-            # with limit at 0.99, min will be always less than 0.99
-            return min( velocity / 100.0, self._motor_power_limit )
+            self._stbd_motor.set_motor_velocity(target_velocity)
 
     # ..........................................................................
     def _halt(self):
@@ -727,10 +706,8 @@ class Motors(Component):
             self._log.warning('already enabled.')
         if not self._port_motor.enabled:
             self._port_motor.enable()
-        self._port_slew_limiter.enable()
         if not self._stbd_motor.enabled:
             self._stbd_motor.enable()
-        self._stbd_slew_limiter.enable()
         Component.enable(self)
         self._log.info('enabled.')
 
@@ -745,9 +722,7 @@ class Motors(Component):
             if self.is_in_motion(): # if we're moving then halt
                 self._log.warning('event: motors are in motion (halting).')
                 self._halt()
-            self._port_slew_limiter.disable()
             self._port_motor.disable()
-            self._stbd_slew_limiter.disable()
             self._stbd_motor.disable()
             self._log.info('disabled.')
         else:

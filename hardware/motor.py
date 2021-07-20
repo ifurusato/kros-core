@@ -16,6 +16,7 @@ init()
 from core.logger import Level, Logger
 from core.component import Component
 from core.orient import Orientation
+from hardware.slew import SlewLimiter
 from hardware.jerk import JerkLimiter
 
 # ..............................................................................
@@ -44,15 +45,15 @@ class Motor(Component):
         # configuration
         # get motors configuration section (we don't actually use this in the mock)
         _cfg = config['kros'].get('motors')
-        self._motor_power_limit = _cfg.get('motor_power_limit')  # power limit to motor
-        self._motor_delta_limit = _cfg.get('motor_delta_limit')  # change limit to motor
-        self._log.info('motor power limit: {:5.2f}'.format(self._motor_power_limit))
+        self._motor_power_limit = _cfg.get('motor_power_limit') # power limit to motor
         self._steps             = 0     # step counter
         self._max_power         = 0.0   # capture maximum power applied
         self._max_driving_power = 0.0   # capture maximum adjusted power applied
         self._max_power_ratio   = 1.0   # will be set by MotorConfigurer
         self._velocity          = 0     # currently a proxy for actual velocity
-        self._jerk_limiter      = JerkLimiter(config, orientation, self._motor_power_limit, level) 
+        self._target_velocity   = 0.0   # the target velocity of the motor
+        self._slew_limiter      = SlewLimiter(config, orientation, level)
+        self._jerk_limiter      = JerkLimiter(config, orientation, level) 
 #       self._jerk_limiter      = JerkLimiter(config, orientation, level) 
         self._log.info('ready.')
 
@@ -73,6 +74,16 @@ class Motor(Component):
     @velocity.setter
     def velocity(self, velocity):
         self._velocity = velocity
+
+    # ..........................................................................
+    @property
+    def target_velocity(self):
+        return self._target_velocity
+
+    # ..........................................................................
+    @target_velocity.setter
+    def target_velocity(self, target_velocity):
+        self._target_velocity = target_velocity
 
     # ..............................................................................
     @property
@@ -101,10 +112,18 @@ class Motor(Component):
         else:
             self._steps = self._steps + pulse
 
+
+    # ..........................................................................
+    def enable(self):
+        if not self.enabled:
+            Component.enable(self)
+        self._slew_limiter.enable()
+
     # ..........................................................................
     def disable(self):
         if self.enabled:
             Component.disable(self)
+        self._slew_limiter.disable()
 
     # ..........................................................................
     def close(self):
@@ -135,6 +154,42 @@ class Motor(Component):
         Returns True if the motor is moving.
         '''
         return self.current_power > 0.0
+
+    # ..........................................................................
+    def update_motor_velocity(self):
+        '''
+        If the current velocity doesn't match the target, set the target
+        velocity and motor power as an attempt to align them.
+        '''
+        if self.velocity != self.target_velocity:
+            self.set_motor_velocity(self.target_velocity)
+
+    # ..........................................................................
+    def set_motor_velocity(self, target_velocity):
+        '''
+        Set the target velocity and motor power.
+        '''
+        self._log.info(Fore.BLACK + '🌺 set {} motor target velocity: {:5.2f} ➔ {:<5.2f}'.format(self._orientation, self.velocity, target_velocity))
+        self.target_velocity = self._slew_limiter.slew(self.velocity, target_velocity)
+        # TEMP
+        if self.target_velocity is None:
+            raise Exception('null self.target_velocity')
+        # translate velocity to power...
+        _power = self._convert_to_power(self.target_velocity)
+        self.set_motor_power(_power)
+
+    # ..........................................................................
+    def _convert_to_power(self, velocity):
+        '''
+        TODO done by the Motor class or PID controller?
+        90 becomes 0.9
+        '''
+        if velocity < 0:
+            # with limit at -0.99, min would always be -0.99
+            return max( velocity / 100.0, -1 * self._motor_power_limit )
+        else:
+            # with limit at 0.99, min will be always less than 0.99
+            return min( velocity / 100.0, self._motor_power_limit )
 
     # ..........................................................................
     def set_motor_power(self, target_power):
@@ -171,23 +226,6 @@ class Motor(Component):
 
         target_power = self._jerk_limiter.limit(self.current_power, target_power)
         self._log.debug('current: {:4.2f}; target: {:4.2f}'.format(self.current_power, target_power))
-
-        # safety checks ..........................
-        if target_power > self._motor_power_limit:
-            self._log.error('motor power too high: {:>5.2f}; limit: {:>5.2f}'.format(target_power, self._motor_power_limit))
-            target_power = self._motor_power_limit
-        elif target_power < ( -1.0 * self._motor_power_limit ):
-            self._log.error('motor power too low: {:>5.2f}; limit: {:>5.2f}'.format( target_power, ( -1.0 * self._motor_power_limit )))
-            target_power = -1.0 * self._motor_power_limit
-        else:
-            self._log.debug('ok- motor power: {:>5.2f}; limit: {:>5.2f}'.format( target_power, self._motor_power_limit ))
-#
-#       if abs(_current_power - target_power) > _max and _current_power > 0.0 and target_power < 0:
-#           self._log.error('cannot perform positive-negative power jump: {:>5.2f} to {:>5.2f}.'.format(_current_power, target_power))
-#           return
-#       elif abs(_current_power - target_power) > _max and _current_power < 0.0 and target_power > 0:
-#           self._log.error('cannot perform negative-positive power jump: {:>5.2f} to {:>5.2f}.'.format(_current_power, target_power))
-#           return
 
         # okay, let's go .........................
         _driving_power = float(target_power * self._max_power_ratio)
