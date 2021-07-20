@@ -10,10 +10,8 @@
 # modified: 2021-06-26
 #
 
-from abc import ABC, abstractmethod
 import itertools
 import asyncio
-import math
 from queue import SimpleQueue
 from datetime import datetime as dt
 from colorama import init, Fore, Style
@@ -23,7 +21,6 @@ from core.logger import Logger, Level
 from core.fsm import State
 from core.event import Event, Group
 from core.util import Util
-from core.subscriber import Subscriber
 from behave.behaviour import Behaviour
 from core.publisher import Publisher
 from behave.trigger_behaviour import TriggerBehaviour

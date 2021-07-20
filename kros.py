@@ -36,6 +36,7 @@ from core.publisher import Publisher
 from core.subscriber import Subscriber, GarbageCollector
 
 from mock.event_publisher import EventPublisher
+from mock.pot_publisher import PotentiometerPublisher
 from mock.bumper_subscriber import BumperSubscriber
 from mock.infrared_subscriber import InfraredSubscriber
 from mock.motor_subscriber import MotorSubscriber
@@ -168,6 +169,7 @@ class KROS(Component, FiniteStateMachine):
 
 #       self._clock  = Clock(self._config, self._message_bus, self._message_factory, level=self._level)
         self._publisher1  = EventPublisher(self._config, self._message_bus, self._message_factory, self._motors, self._system, level=self._level)
+        self._pot_publisher = PotentiometerPublisher(self._config, self._message_bus, self._message_factory, level=self._level)
 #       self._publisher2  = FloodPublisher(self._message_bus, self._message_factory)
 #       self._publisher3  = GamepadPublisher(self._config, self._message_bus, self._message_factory)
     

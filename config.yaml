@@ -70,6 +70,8 @@ kros:
             idle_threshold_sec: 10               # how many seconds before we trigger an idle behaviour
             idle_loop_delay_sec: 1.0             # main loop delay in seconds
     mock:
+        pot_publisher:
+            loop_delay_sec: 0.05                 # loop delay
         event_publisher:
             ir_init_value: 100                   # initial value of mocked center IR
             ir_min: 10                           # minimum center IR value
@@ -78,10 +80,21 @@ kros:
             gamepad_publish_delay_sec: 0.01      # delay after Gamepad event
             publish_delay_sec: 0.01              # delay after IFS event
             noop_loop_delay_sec: 0.01            # delay on noop loop
+        ioe_potentiometer:                           # IO Expander-based Potentiometer board
+            i2c_address:   0x0E                      # the I²C address for the device
+            brightness:     1.0                      # the brightness of the RGB LED (0.0-1.0)
+            pin_red:          1                      # red pin
+            pin_green:        7                      # green pin
+            pin_blue:         2                      # blue pin
+            in_min:         0.0                      # minimum analog value from IO Expander
+            in_max:         3.3                      # maximum analog value from IO Expander
+    #       out_min:       -100.0                    # minimum scaled output value
+    #       out_max:        100.0                    # maximum scaled output value
+            out_min:       -255.0                    # minimum scaled output value
+            out_max:        255.0                    # maximum scaled output value
     arguments:                                   # CLI arguments are copied here
         nada: False                              # nada
         mock_enabled: False                      # permit mocks if real hardware is unavailable
-
 pi:
     disable_leds: False                          # disable and re-enable Pi LEDs during operation?
     led_0_path:   '/sys/class/leds/led0/brightness'
@@ -285,18 +298,6 @@ devices:
 #        schema:            'robot'
 #        index:             'kr01'
 #        doc_type:          'pid'
-#    ioe_potentiometer:                           # IO Expander-based Potentiometer board
-#        i2c_address:   0x0E                      # the I²C address for the device
-#        brightness:     1.0                      # the brightness of the RGB LED (0.0-1.0)
-#        pin_red:          1                      # red pin
-#        pin_green:        7                      # green pin
-#        pin_blue:         2                      # blue pin
-#        in_min:         0.0                      # minimum analog value from IO Expander
-#        in_max:         3.3                      # maximum analog value from IO Expander
-##       out_min:       -100.0                    # minimum scaled output value
-##       out_max:        100.0                    # maximum scaled output value
-#        out_min:       -255.0                    # minimum scaled output value
-#        out_max:        255.0                    # maximum scaled output value
 #    potentiometer:                               # potentiometer connected as voltage divider
 #        pin:             14                      # pin connected to wiper
 #        in_min:           0                      # minimum analog value from IO Expander

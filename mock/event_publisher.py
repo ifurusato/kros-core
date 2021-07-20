@@ -519,6 +519,7 @@ class EventPublisher(Publisher):
 
            dec   char   usage
 
+            27   del    same as backspace
             39   ' *    increase stbd velocity
             59   ; *    increase port velocity
             44   , *    decrease velocity
@@ -559,7 +560,9 @@ class EventPublisher(Publisher):
 
         * represents robot sensor or control input.
         '''
-        if och   == 39:  # ' decrease stbd velocity
+        if och == 27: # delete
+            return Event.SHUTDOWN
+        elif och   == 39:  # ' decrease stbd velocity
             return Event.DECREASE_STBD_VELOCITY
         elif och == 44:  # , decrease velocity
             return Event.DECREASE_VELOCITY
@@ -629,7 +632,7 @@ class EventPublisher(Publisher):
             return Event.SPIN_PORT
         elif och == 121: # y
             return Event.SNIFF
-        elif och == 127: # del
+        elif och == 127: # backspace or delete
             return Event.SHUTDOWN
         else:
             return None
