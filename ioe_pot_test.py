@@ -19,6 +19,7 @@ from core.config_loader import ConfigLoader
 from core.logger import Level, Logger
 from core.rate import Rate
 from mock.potentiometer import Potentiometer
+from mock.pot_publisher import MockPotentiometer
 
 # ..............................................................................
 @pytest.mark.unit
@@ -31,7 +32,10 @@ def test_ioe_potentiometer():
     _loader = ConfigLoader(Level.INFO)
     _config = _loader.configure('config.yaml')
 
-    _pot = Potentiometer(_config, Level.INFO)
+    try:
+        _pot = Potentiometer(_config, Level.INFO)
+    except Exception as e:
+        _pot = MockPotentiometer(Level.INFO)
 #   _pot.set_output_limits(0.00, 0.150) 
     _pot.set_output_limits(-0.90, 0.90) 
 

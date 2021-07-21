@@ -7,7 +7,9 @@
 #
 # author:   Murray Altheim
 # created:  2020-05-19
-# modified: 2021-06-26
+# modified: 2021-07-21
+#
+# MockPoteniometer at bottom.
 #
 
 from abc import ABC, abstractmethod
@@ -48,7 +50,11 @@ class PotentiometerPublisher(Publisher):
         self._publish_loop_running = False
         self._counter              = itertools.count()
         self._last_scaled_value    = -999.0
-        self._pot = Potentiometer(config, level)
+        try:
+            self._pot = Potentiometer(config, level)
+        except Exception:
+            self._log.warning('could not start hardware potentiometer; using mock...')
+            self._pot = MockPotentiometer(level)
         self._pot.set_output_limits(-90, 90)
         _hysteresis_value          = _cfg.get('hysteresis')
         self._hysteresis = lambda n: n if ( n < ( -1 * _hysteresis_value ) or n > _hysteresis_value ) else 0.0
@@ -149,5 +155,21 @@ class PotentiometerPublisher(Publisher):
         :param message:  an optional Message passed along by the message bus
         '''
         raise Exception('what is this doing here?')
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+class MockPotentiometer(object):
+    def __init__(self, level=Level.INFO):
+        super().__init__()
+        self._log = Logger('mock-pot', level)
+        self._log.info('ready.')
+
+    def set_output_limits(self, out_min, out_max):
+        pass
+
+    def get_scaled_value(self, update_led=True):
+        return 0.0
+
+    def set_black(self):
+        pass
 
 #EOF
