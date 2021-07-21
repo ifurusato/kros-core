@@ -24,7 +24,7 @@ from core.event import Event, Group
 from core.util import Util
 from core.subscriber import Subscriber
 from core.publisher import Publisher
-from mock.ioe_pot import Potentiometer
+from mock.potentiometer import Potentiometer
 from behave.trigger_behaviour import TriggerBehaviour
 
 # ...............................................................
@@ -124,12 +124,12 @@ class PotentiometerPublisher(Publisher):
                         self._pot.set_black()
                     else:
                         self._pot.set_rgb(self._pot.value)
-                    # populate message with value and publish...
-#                   _message = TODO
-#                   self._log.info('💠 publishing message:' + Fore.WHITE + ' {}; event: {} for {:d} ticks.'.format(_message.name, _message.event.label, _message.payload.value))
-#                   await Publisher.publish(self, _message)
-#                   self._log.info('published message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
                     self._log.info(Fore.YELLOW + '[{:03d}] pot value; {:<5.2f}'.format(_count, _scaled_value))
+                    # populate message with value and publish...
+                    _message = self._message_factory.create_message(Event.VELOCITY, _scaled_value)
+                    self._log.info('💠 publishing message:' + Fore.WHITE + ' {}; event: {} with value: {}'.format(_message.name, _message.event.label, _message.payload.value))
+                    await Publisher.publish(self, _message)
+                    self._log.info('published message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
                 self._last_scaled_value = _scaled_value
             else:
                 self._log.debug('[{:03d}] publisher suppressed.'.format(_count))

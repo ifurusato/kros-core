@@ -56,9 +56,9 @@ class MockGamepad(object):
         await asyncio.sleep(2.0 * random.random())
         self._log.info('🤙 get_messages called.')
         _messages = []
-        _messages.append(self._message_factory.get_message(Event.INFRARED_PORT, self._get_random_distance()))
-        _messages.append(self._message_factory.get_message(Event.INFRARED_CNTR, self._get_random_distance()))
-        _messages.append(self._message_factory.get_message(Event.INFRARED_STBD, self._get_random_distance()))
+        _messages.append(self._message_factory.create_message(Event.INFRARED_PORT, self._get_random_distance()))
+        _messages.append(self._message_factory.create_message(Event.INFRARED_CNTR, self._get_random_distance()))
+        _messages.append(self._message_factory.create_message(Event.INFRARED_STBD, self._get_random_distance()))
         return _messages
 
     def _get_random_distance(self):

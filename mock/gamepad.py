@@ -309,7 +309,7 @@ class Gamepad():
         else:
             pass
         if _control != None:
-            _message = self._message_factory.get_message(_control.event, event.value)
+            _message = self._message_factory.create_message(_control.event, event.value)
             return _message
         return None
 

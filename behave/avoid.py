@@ -116,7 +116,7 @@ class Avoid(Behaviour, Publisher):
           # one tick is one loop of 50ms, 1000ms/1sec = 20 ticks
         '''
         _ticks = int( delay_ms / ( self._avoid_loop_delay_sec * 1000 ))
-        _message = self._message_factory.get_message(event, _ticks)
+        _message = self._message_factory.create_message(event, _ticks)
         self._log.info('💠 _creating publish task for message: {} for {:d} ticks (delay: {}ms)'.format(_message.event.label, _message.payload.value, delay_ms))
 #               + Fore.GREEN + ' / total: {:5.2f} sec)'.format( _ticks * self._avoid_loop_delay_sec ))
         self._queue.put(_message, False)

@@ -163,16 +163,46 @@ class Motors(Component):
     # ..........................................................................
     def print_motor_status(self):
         self._log.info('motors:')
+
+        # port .............................................
+
         self._log.info(Fore.RED + '\t{}'.format('port') \
                 + Fore.CYAN + ' {}enabled: '.format((' ' * max(0, (10 - len('port')))))
                 + Fore.YELLOW + '{}\t'.format(self._port_motor.enabled)
                 + Fore.CYAN + 'suppressed: '
                 + Fore.YELLOW + '{}'.format(self._port_motor.suppressed))
+
+        self._log.info(Fore.RED + '\t{}'.format('slew') \
+                + Fore.CYAN + ' {}enabled: '.format((' ' * max(0, (10 - len('port')))))
+                + Fore.YELLOW + '{}\t'.format(self._port_motor.slew_limiter.enabled)
+                + Fore.CYAN + 'suppressed: '
+                + Fore.YELLOW + '{}'.format(self._port_motor.slew_limiter.suppressed))
+
+        self._log.info(Fore.RED + '\t{}'.format('jerk') \
+                + Fore.CYAN + ' {}enabled: '.format((' ' * max(0, (10 - len('port')))))
+                + Fore.YELLOW + '{}\t'.format(self._port_motor.jerk_limiter.enabled)
+                + Fore.CYAN + 'suppressed: '
+                + Fore.YELLOW + '{}'.format(self._port_motor.jerk_limiter.suppressed))
+
+        # starboard ........................................
+
         self._log.info(Fore.GREEN + '\t{}'.format('stbd') \
                 + Fore.CYAN + ' {}enabled: '.format((' ' * max(0, (10 - len('stbd')))))
-                + Fore.YELLOW + '{}\t'.format(self._port_motor.enabled)
+                + Fore.YELLOW + '{}\t'.format(self._stbd_motor.enabled)
                 + Fore.CYAN + 'suppressed: '
-                + Fore.YELLOW + '{}'.format(self._port_motor.suppressed))
+                + Fore.YELLOW + '{}'.format(self._stbd_motor.suppressed))
+
+        self._log.info(Fore.GREEN + '\t{}'.format('slew') \
+                + Fore.CYAN + ' {}enabled: '.format((' ' * max(0, (10 - len('stbd')))))
+                + Fore.YELLOW + '{}\t'.format(self._stbd_motor.slew_limiter.enabled)
+                + Fore.CYAN + 'suppressed: '
+                + Fore.YELLOW + '{}'.format(self._stbd_motor.slew_limiter.suppressed))
+
+        self._log.info(Fore.GREEN + '\t{}'.format('jerk') \
+                + Fore.CYAN + ' {}enabled: '.format((' ' * max(0, (10 - len('stbd')))))
+                + Fore.YELLOW + '{}\t'.format(self._stbd_motor.jerk_limiter.enabled)
+                + Fore.CYAN + 'suppressed: '
+                + Fore.YELLOW + '{}'.format(self._stbd_motor.jerk_limiter.suppressed))
 
     # ..........................................................................
     def print_info(self, count):
@@ -271,7 +301,13 @@ class Motors(Component):
         _value = payload.value
         if not self.loop_is_running():
             self.start_loop()
-        if _event is Event.INCREASE_PORT_VELOCITY:
+        if _event is Event.VELOCITY:
+            self._log.info(self._color + Style.BRIGHT + 'set velocity;\t'
+                    + Fore.RED + 'port: {:5.2f} / {:5.2f};\t'.format(_value, self._port_motor.velocity)
+                    + Fore.GREEN + 'stbd: {:5.2f} / {:5.2f}'.format(_value, self._stbd_motor.velocity))
+            self.set_motor_velocity(Orientation.PORT, _value)
+            self.set_motor_velocity(Orientation.STBD, _value)
+        elif _event is Event.INCREASE_PORT_VELOCITY:
             self._increment_motor_velocity(Orientation.PORT, self._accel_increment)
             self._log.info(self._color + Style.BRIGHT + 'increase PORT velocity; velocity: {:5.2f}'.format(self._port_motor.velocity))
             pass

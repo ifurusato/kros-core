@@ -122,7 +122,7 @@ class Idle(Behaviour, Publisher):
                         self._log.info('[{:03d}] idle threshold met; '.format(_count)
                                 + Fore.YELLOW + '{}'.format(Util.get_formatted_time('elapsed time since last message:', _elapsed_ms)))
 
-                        _message = self._message_factory.get_message(Event.ROAM, dt.now())
+                        _message = self._message_factory.create_message(Event.ROAM, dt.now())
                         self._log.info('idle publishing message for event: {}; value: {}'.format(_message.event.label, _message.value))
 
                         self._log.debug('key-publishing message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))

@@ -20,7 +20,7 @@ from core.logger import Level, Logger
 from core.component import Component
 
 # ..............................................................................
-class JerkLimiter(object):
+class JerkLimiter(Component):
     '''
     A jerk limiter that limits the rate of change of a value. This isn't
     actually a jerk limiter in the formal sense because it doesn't take
@@ -37,16 +37,23 @@ class JerkLimiter(object):
     :param orientation:      used only for the logger label
     :param level:            the logging Level
     '''
-    def __init__(self, config, orientation, level=Level.INFO):
+    def __init__(self, config, orientation, suppressed=False, enabled=True, level=Level.INFO):
         self._log = Logger('jerk:{}'.format(orientation.label), level)
+        Component.__init__(self, self._log, suppressed=suppressed, enabled=enabled)
         _cfg = config['kros'].get('motors')
         _maximum_output = _cfg.get('motor_power_limit') # power limit to motor
         _minimum_output = _maximum_output * -1
-        self._maximum_change = _cfg.get('jerk').get('maximum_change')
+        self._jerk_rate_limit = _cfg.get('jerk').get('jerk_rate_limit')
         self._clip = lambda n: _minimum_output if n <= _minimum_output else _maximum_output if n >= _maximum_output else n
-        self._log.info('maximum change: {:5.2f}; minimum output: {:5.2f}; maximum output: {:5.2f}'.format(
-                self._maximum_change, _minimum_output, _maximum_output))
+        self._log.info('jerk limit: {:5.2f}; minimum output: {:5.2f}; maximum output: {:5.2f}'.format(
+                self._jerk_rate_limit, _minimum_output, _maximum_output))
         self._log.info('ready.')
+
+    # ..........................................................................
+    def enable(self):
+        self._log.info('starting jerk limiter with jerk limit of {:5.3f}/cycle.'.format(self._jerk_rate_limit))
+        self._start_time = self._millis()
+        Component.enable(self)
 
     # ..........................................................................
     def limit(self, current_value, target_value):
@@ -59,19 +66,27 @@ class JerkLimiter(object):
 
         This filter works for either negative or positive values, clipping
         changes larger than the jerk value.
+
+        If suppressed or disabled this returns the target value argument.
         '''
+        if not self.enabled:
+            self._log.warning('disabled; returning target value {:+06.2f}.'.format(target_value))
+            return target_value
+        elif self.suppressed:
+            self._log.info('suppressed; returning target value {:+06.2f}.'.format(target_value))
+            return target_value
         self._log.debug('limit current {:+06.2f} to target value {:+06.2f}.'.format(current_value, target_value))
         _value = target_value
         if isclose(current_value, target_value, abs_tol=1e-3):
             pass
         elif target_value > current_value: # increasing ..........
-            if abs(current_value - target_value) > self._maximum_change:
+            if abs(current_value - target_value) > self._jerk_rate_limit:
                 # only allow the current value plus the jerk limit
-                _value = current_value + self._maximum_change
+                _value = current_value + self._jerk_rate_limit
         else: # decreasing .......................................
-            if abs(current_value - target_value) > self._maximum_change:
+            if abs(current_value - target_value) > self._jerk_rate_limit:
                 # only allow the current value minus the jerk limit
-                _value = current_value - self._maximum_change
+                _value = current_value - self._jerk_rate_limit
         return -1.0 * self._clip(-1.0 * _value) if _value < 0.0 else self._clip(_value)
 
     # ..........................................................................

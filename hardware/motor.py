@@ -52,10 +52,23 @@ class Motor(Component):
         self._max_power_ratio   = 1.0   # will be set by MotorConfigurer
         self._velocity          = 0     # currently a proxy for actual velocity
         self._target_velocity   = 0.0   # the target velocity of the motor
-        self._slew_limiter      = SlewLimiter(config, orientation, level)
-        self._jerk_limiter      = JerkLimiter(config, orientation, level) 
-#       self._jerk_limiter      = JerkLimiter(config, orientation, level) 
+        _suppress_slew_limiter  = _cfg.get('suppress_slew_limiter')
+        _enable_slew_limiter    = _cfg.get('enable_slew_limiter')
+        self._slew_limiter      = SlewLimiter(config, orientation, suppressed=_suppress_slew_limiter, enabled=_enable_slew_limiter, level=level)
+        _suppress_jerk_limiter  = _cfg.get('suppress_jerk_limiter')
+        _enable_jerk_limiter    = _cfg.get('enable_jerk_limiter')
+        self._jerk_limiter      = JerkLimiter(config, orientation, suppressed=_suppress_jerk_limiter, enabled=_enable_jerk_limiter, level=level) 
         self._log.info('ready.')
+
+    # ..........................................................................
+    @property
+    def slew_limiter(self):
+        return self._slew_limiter
+
+    # ..........................................................................
+    @property
+    def jerk_limiter(self):
+        return self._jerk_limiter
 
     # ..........................................................................
     @property
@@ -117,13 +130,13 @@ class Motor(Component):
     def enable(self):
         if not self.enabled:
             Component.enable(self)
-        self._slew_limiter.enable()
+#       self._slew_limiter.enable()
 
     # ..........................................................................
     def disable(self):
         if self.enabled:
             Component.disable(self)
-        self._slew_limiter.disable()
+#       self._slew_limiter.disable()
 
     # ..........................................................................
     def close(self):
@@ -170,7 +183,7 @@ class Motor(Component):
         Set the target velocity and motor power.
         '''
         self._log.info(Fore.BLACK + '🌺 set {} motor target velocity: {:5.2f} ➔ {:<5.2f}'.format(self._orientation, self.velocity, target_velocity))
-        self.target_velocity = self._slew_limiter.slew(self.velocity, target_velocity)
+        self.target_velocity = self._slew_limiter.limit(self.velocity, target_velocity)
         # TEMP
         if self.target_velocity is None:
             raise Exception('null self.target_velocity')

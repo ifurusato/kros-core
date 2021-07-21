@@ -33,9 +33,9 @@ class SlewLimiter(Component):
     :param orientation:   used for the logger label
     :param level:   the logging Level
     '''
-    def __init__(self, config, orientation, level=Level.INFO):
+    def __init__(self, config, orientation, suppressed=False, enabled=True, level=Level.INFO):
         self._log = Logger('slew:{}'.format(orientation.label), level)
-        Component.__init__(self, self._log, suppressed=False, enabled=True)
+        Component.__init__(self, self._log, suppressed=suppressed, enabled=enabled)
         self._millis  = lambda: int(round(time.time() * 1000))
         self._seconds = lambda: int(round(time.time()))
         # Slew configuration .........................................
@@ -79,17 +79,20 @@ class SlewLimiter(Component):
         self._start_time = self._millis()
 
     # ..........................................................................
-    def slew(self, current_value, target_value):
+    def limit(self, current_value, target_value):
         '''
         The returned result is the maximum amount of change between the current value
         and the target value based on the amount of elapsed time between calls (in
         milliseconds) multiplied by a constant set in configuration. If the two arguments
         are the same we just return the current value.
 
-        If not enabled this returns the passed target value argument.
+        If suppressed or disabled this returns the target value argument.
         '''
         if not self.enabled:
-            self._log.warning('disabled; returning original target value {:+06.2f}.'.format(target_value))
+            self._log.warning('disabled; returning target value {:+06.2f}.'.format(target_value))
+            return target_value
+        elif self.suppressed:
+            self._log.debug('suppressed; returning target value {:+06.2f}.'.format(target_value))
             return target_value
         self._log.info('slew from current {:+06.2f} to target value {:+06.2f}.'.format(current_value, target_value))
         if self._use_elapsed_time:

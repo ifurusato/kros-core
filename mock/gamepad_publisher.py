@@ -139,7 +139,7 @@ class GamepadPublisher(Publisher):
 #               _event = None # TODO
 #               if _event is not None:
 #                   self._log.info('"{}" ({}) pressed; publishing message for event: {}'.format(_event))
-#                   _message = self._message_factory.get_message(_event, True)
+#                   _message = self._message_factory.create_message(_event, True)
 #                   _message.value = 0
 #                   self._log.info('key-publishing message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
 #                   await Publisher.publish(self, _message)

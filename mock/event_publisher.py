@@ -231,7 +231,7 @@ class EventPublisher(Publisher):
                         _event = self.get_event_for_char(och)
                         if _event is not None:
                             self._log.info('key \'{}\' ({}) pressed; publishing message for event: {}'.format(ch, och, _event))
-                            _message = self._message_factory.get_message(_event, True)
+                            _message = self._message_factory.create_message(_event, True)
                             # FIXME TODO load message value for various event types correctly...
 #                           if _event is Event.INFRARED_CNTR:
                             if Event.is_infrared_event(_event):
@@ -257,7 +257,7 @@ class EventPublisher(Publisher):
                         self._log.warning('readchar returned null.')
                 elif self._flood_enable:
                     _event = self._get_random_event()
-                    _message = self._message_factory.get_message(_event, True)
+                    _message = self._message_factory.create_message(_event, True)
                     self._log.info('flood-publishing message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
                     await Publisher.publish(self, _message)
                     self._log.info('flood-published message:' + Fore.WHITE + ' {}.'.format(_message.name))

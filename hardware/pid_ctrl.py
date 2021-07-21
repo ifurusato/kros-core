@@ -79,13 +79,13 @@ class PIDController(object):
         self._deque = Deque([], maxlen=_queue_len)
 
         self._enable_slew = self._config.get('enable_slew')
-        self._slewlimiter = SlewLimiter(config, orientation=self._motor.orientation, level=Level.INFO)
-        _slew_rate = SlewRate.NORMAL # TODO self._config.get('slew_rate')
-        self._slewlimiter.set_rate_limit(_slew_rate)
         if self._enable_slew:
+            self._slewlimiter = SlewLimiter(config, orientation=self._motor.orientation, level=Level.INFO)
+            self._slewlimiter.set_rate_limit(SlewRate.NORMAL) # configurable?
             self._slewlimiter.enable()
             self._log.info('slew limiter enabled.')
         else:
+            self._slewlimiter = None
             self._log.info('slew limiter disabled.')
 
         self._power        = 0.0
@@ -126,20 +126,20 @@ class PIDController(object):
     def kd(self, kd):
         self._pid.kd = kd
 
-    # ..............................................................................
-    def enable_slew(self, enable):
-        _old_value = self._enable_slew
-        if not self._slewlimiter.is_enabled():
-            self._slewlimiter.enable()
-        self._enable_slew = enable
-        return _old_value
+#   # ..............................................................................
+#   def enable_slew(self, enable):
+#       _old_value = self._enable_slew
+#       if not self._slewlimiter.is_enabled():
+#           self._slewlimiter.enable()
+#       self._enable_slew = enable
+#       return _old_value
 
-    # ..............................................................................
-    def set_slew_rate(self, slew_rate):
-        if type(slew_rate) is SlewRate:
-            self._slewlimiter.set_rate_limit(slew_rate)
-        else:
-            raise Exception('expected SlewRate argument, not {}'.format(type(slew_rate)))
+#   # ..............................................................................
+#   def set_slew_rate(self, slew_rate):
+#       if type(slew_rate) is SlewRate:
+#           self._slewlimiter.set_rate_limit(slew_rate)
+#       else:
+#           raise Exception('expected SlewRate argument, not {}'.format(type(slew_rate)))
 
     # ..............................................................................
     @property
@@ -162,8 +162,8 @@ class PIDController(object):
         '''
         Setter for the setpoint (PID set point).
         '''
-        if self._enable_slew:
-            setpoint = self._slewlimiter.slew(self.setpoint, setpoint)
+#       if self._enable_slew:
+#           setpoint = self._slewlimiter.limit(self.setpoint, setpoint)
         self._pid.setpoint = setpoint
 
     # ..........................................................................
