@@ -112,4 +112,13 @@ Sets all motors to stopped, useful when ending a program
         self.SetMotor1(0.0)
         self.SetMotor2(0.0)
 
+    def GetBatteryReading(self):
+        """
+voltage = GetBatteryReading()
+
+Reads the current battery level from the main input.
+Returns the value as a voltage based on the 3.3 V rail as a reference.
+        """ 
+        return 19.09
+
 #EOF

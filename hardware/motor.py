@@ -22,8 +22,9 @@ from hardware.jerk import JerkLimiter
 # ..............................................................................
 class Motor(Component):
     '''
-    Mocks control over a motor that uses a Hall Effect encoder
-    to determine the robot's velocity and distance traveled.
+    Controls a motor that uses a Hall Effect encoder to determine the robot's
+    velocity and distance traveled. This uses a mock when the motor controller
+    is unavailable.
 
     This uses the kros:motors: section of the configuration.
 
@@ -39,7 +40,7 @@ class Motor(Component):
             raise ValueError('null thunderborg argument.')
         self._tb = tb
         self._orientation = orientation
-        self._log = Logger('mock-motor:{}'.format(orientation.label), level)
+        self._log = Logger('motor:{}'.format(orientation.label), level)
         Component.__init__(self, self._log, suppressed=False, enabled=False)
         self._log.info('initialising {} motor with {} as motor controller...'.format(orientation, type(self._tb)))
         # configuration
@@ -49,7 +50,7 @@ class Motor(Component):
         self._steps             = 0     # step counter
         self._max_power         = 0.0   # capture maximum power applied
         self._max_driving_power = 0.0   # capture maximum adjusted power applied
-        self._max_power_ratio   = 1.0   # will be set by MotorConfigurer
+        self._max_power_ratio   = 0.0   # will be set by MotorConfigurer
         self._velocity          = 0     # currently a proxy for actual velocity
         self._target_velocity   = 0.0   # the target velocity of the motor
         _suppress_slew_limiter  = _cfg.get('suppress_slew_limiter')
@@ -107,13 +108,16 @@ class Motor(Component):
     def reset_steps(self):
         self._steps = 0
 
-    # ..............................................................................
-    def set_max_power_ratio(self, max_power_ratio):
-        self._max_power_ratio = max_power_ratio
+    # max power ratio ..............................................................
 
-    # ..............................................................................
-    def get_max_power_ratio(self):
+    @property
+    def max_power_ratio(self):
         return self._max_power_ratio
+
+    @max_power_ratio.setter
+    def max_power_ratio(self, max_power_ratio):
+        self._max_power_ratio = max_power_ratio
+        self._log.info(Fore.YELLOW + 'motor power limit: {:5.2f}'.format(self._motor_power_limit))
 
     # ..............................................................................
     def _callback_step_count(self, pulse):
@@ -208,7 +212,7 @@ class Motor(Component):
     def set_motor_power(self, target_power):
         '''
         Sets the motor power to a number between -1.0 to 1.0, with the actual
-        limits set by the _max_power_ratio, which alters the value to match
+        limits set by the max_power_ratio, which alters the value to match
         the power/motor voltage ratio.
 
         :param target_power:  the target motor power
@@ -241,7 +245,7 @@ class Motor(Component):
         self._log.debug('current: {:4.2f}; target: {:4.2f}'.format(self.current_power, target_power))
 
         # okay, let's go .........................
-        _driving_power = float(target_power * self._max_power_ratio)
+        _driving_power = float(target_power * self.max_power_ratio)
         self._max_power = max(target_power, self._max_power)
         self._max_driving_power = max(abs(_driving_power), self._max_driving_power)
         # display actual power to motor

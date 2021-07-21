@@ -43,17 +43,6 @@ class MotorConfigurer():
             raise ValueError('expected I2CScanner, not {}.'.format(type(i2c_scanner)))
         self._i2c_scanner = i2c_scanner
         self._log.debug('getting battery reading...')
-        # get battery voltage to determine max motor power (moved earlier in config)
-        voltage_in = 19.0
-        self._log.info('voltage in: {:>5.2f}V'.format(voltage_in))
-        voltage_out = 9.0
-        self._log.info('voltage out: {:>5.2f}V'.format(voltage_out))
-        self._max_power_ratio = voltage_out / float(voltage_in)
-        # convert float to ratio format
-        self._log.info('battery level: {:>5.2f}V; motor voltage: {:>5.2f}V; maximum power ratio: {}'.format(voltage_in, voltage_out, \
-                str(Fraction(self._max_power_ratio).limit_denominator(max_denominator=20)).replace('/',':')))
-        # actually, for the mock just set it to 1:1
-        self._max_power_ratio = 1.0
         # configure from command line argument properties
         _cfg = self._config['kros'].get('arguments')
         self._motors_enabled = _cfg.get('motors_enabled')
@@ -63,22 +52,19 @@ class MotorConfigurer():
         else:
             self._enable_mock = _cfg.get('mock_enabled')
         self._log.info(Fore.YELLOW + 'enabled mocks? {}'.format(self._enable_mock))
-
         # Import the ThunderBorg library, then configure and return the Motors.
+        self._max_power_ratio = None # this should get set by the ThunderBorg code.
         self._import_thunderborg()
-
         # now import motors
         try:
             self._log.info('configuring motors...')
             self._motors = Motors(self._config, self._tb, level=Level.INFO)
-            self._motors.get_motor(Orientation.PORT).set_max_power_ratio(self._max_power_ratio)
-            self._motors.get_motor(Orientation.STBD).set_max_power_ratio(self._max_power_ratio)
+            self._motors.get_motor(Orientation.PORT).max_power_ratio = self._max_power_ratio
+            self._motors.get_motor(Orientation.STBD).max_power_ratio = self._max_power_ratio
         except OSError as oe:
             self._log.error('failed to configure motors: {}'.format(oe))
             self._motors = None
-#           sys.stderr = DevNull()
             raise Exception('unable to instantiate ThunderBorg [3].')
-#           sys.exit(1)
         self._configure_speed()
         self._log.info('ready.')
 
@@ -111,7 +97,19 @@ class MotorConfigurer():
                     self._enable_mock = True # we default if no ThunderBorg found
                     import mock.thunderborg as ThunderBorg
                     self._log.info('successfully imported mock ThunderBorg.')
-    
+
+                    # get battery voltage to determine max motor power (moved earlier in config)
+#                   voltage_in = 19.0
+#                   self._log.info('voltage in: {:>5.2f}V'.format(voltage_in))
+#                   voltage_out = 9.0
+#                   self._log.info('voltage out: {:>5.2f}V'.format(voltage_out))
+#                   self._max_power_ratio = voltage_out / float(voltage_in)
+                    # actually, for the mock just set it to 1:1
+#                   self._max_power_ratio = 1.0
+                    # convert float to ratio format
+#                   self._log.info('battery level: {:>5.2f}V; motor voltage: {:>5.2f}V; maximum power ratio: {}'.format(voltage_in, voltage_out, \
+#                           str(Fraction(self._max_power_ratio).limit_denominator(max_denominator=20)).replace('/',':')))
+
                 self._tb = ThunderBorg.ThunderBorg(Level.INFO)  # create a new ThunderBorg object
                 self._tb.Init()                       # set the board up (checks the board is connected)
                 self._log.info('successfully instantiated ThunderBorg.')
@@ -145,12 +143,12 @@ class MotorConfigurer():
                     raise OSError('cannot continue: battery voltage too low ({:>5.2f}V).'.format(voltage_in))
                 # Setup the power limits
                 if voltage_out > voltage_in:
-                    _max_power_ratio = 1.0
+                    self._max_power_ratio = 1.0
                 else:
-                    _max_power_ratio = voltage_out / float(voltage_in)
+                    self._max_power_ratio = voltage_out / float(voltage_in)
                 # convert float to ratio format
                 self._log.info('battery level: {:>5.2f}V; motor voltage: {:>5.2f}V; maximum power ratio: {}'.format(voltage_in, voltage_out, \
-                        str(Fraction(_max_power_ratio).limit_denominator(max_denominator=20)).replace('/',':')))
+                        str(Fraction(self._max_power_ratio).limit_denominator(max_denominator=20)).replace('/',':')))
     
             except OSError as e:
                 if self._enable_mock:

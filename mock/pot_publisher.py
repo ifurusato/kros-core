@@ -49,7 +49,7 @@ class PotentiometerPublisher(Publisher):
         self._loop_delay_sec = _cfg.get('loop_delay_sec') # 0.05 is 50ms/20Hz, so each loop is 1/20th second or 20 loops/sec
         self._publish_loop_running = False
         self._counter              = itertools.count()
-        self._last_scaled_value    = -999.0
+        self._last_scaled_value    = 0.0
         try:
             self._pot = Potentiometer(config, level)
         except Exception:
@@ -122,7 +122,6 @@ class PotentiometerPublisher(Publisher):
             self._log.debug('[{:03d}] begin publisher loop...'.format(_count))
             if not self.suppressed:
                 self._log.debug('[{:03d}] publisher released.'.format(_count))
-
                 # get value with hysteresis around zero
                 _scaled_value = self._hysteresis(round(self._pot.get_scaled_value(False)))
                 if _scaled_value != self._last_scaled_value: # if not the same as last time
