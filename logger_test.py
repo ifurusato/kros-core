@@ -17,7 +17,7 @@ init()
 
 from core.logger import Logger, Level
 
-# ..............................................................................
+# ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 @pytest.mark.unit
 def test_logger():
 
@@ -45,7 +45,7 @@ def test_logger():
 
 #   raise Exception('error message.')
 
-# main .........................................................................
+# ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 def main():
     try:
         test_logger()
@@ -53,12 +53,12 @@ def main():
         print('Ctrl-C caught: test interrupted.')
         sys.exit(0)
     except Exception as e:
-        print(Fore.RED + 'Error in test: {} / {}'.format(e, traceback.print_stack()) + Style.RESET_ALL)
+        print(Fore.RED + 'Error in test: {} / {}'.format(e, traceback.format_exc()) + Style.RESET_ALL)
         sys.exit(1)
     finally:
         pass
 
-# ........................
+# ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 if __name__ == "__main__":
     main()
 

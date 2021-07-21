@@ -24,10 +24,10 @@ from core.event import Event, Group
 from core.util import Util
 from core.subscriber import Subscriber
 from core.publisher import Publisher
-from mock.potentiometer import Potentiometer
+from hardware.potentiometer import Potentiometer
 from behave.trigger_behaviour import TriggerBehaviour
 
-# ...............................................................
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class PotentiometerPublisher(Publisher):
 
     _PUBLISHER_LOOP = '__pot_publisher_loop'
@@ -50,15 +50,15 @@ class PotentiometerPublisher(Publisher):
         self._last_scaled_value    = -999.0
         self._pot = Potentiometer(config, level)
         self._pot.set_output_limits(-90, 90)
-        self._hysteresis_value     = 3.0
-        self._hysteresis = lambda n: n if ( n < ( -1 * self._hysteresis_value ) or n > self._hysteresis_value ) else 0.0
+        _hysteresis_value          = _cfg.get('hysteresis')
+        self._hysteresis = lambda n: n if ( n < ( -1 * _hysteresis_value ) or n > _hysteresis_value ) else 0.0
         self._log.info('ready.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def get_trigger_behaviour(self, event):
         return TriggerBehaviour.TOGGLE # or RELEASE
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def trigger_event(self):
         '''
@@ -66,7 +66,7 @@ class PotentiometerPublisher(Publisher):
         '''
         return Event.AVOID
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def start(self):
         '''
         The necessary state machine call to start the publisher, which performs
@@ -75,7 +75,7 @@ class PotentiometerPublisher(Publisher):
         if self.state is not State.STARTED:
             Publisher.start(self)
 
-    # ................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def enable(self):
         Publisher.enable(self)
         if self.enabled:
@@ -90,16 +90,16 @@ class PotentiometerPublisher(Publisher):
         else:
             self._log.warning('failed to enable publisher loop.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def callback(self):
         self._log.info('👾 pot callback.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def name(self):
         return 'pot_publisher'
 
-    # ................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def _publisher_loop(self, f_is_enabled):
         '''
         We get a message from the queue and publish it.
@@ -107,7 +107,7 @@ class PotentiometerPublisher(Publisher):
         Then we loop. The published message's value is the number
         of loop ticks to wait until getting the next message.
 
-        We continue to loop but without getting another message 
+        We continue to loop but without getting another message
         until the delay_tick_counter reaches zero.
         '''
         self._log.info('starting pot publisher loop:\t' + Fore.YELLOW + ( '; (suppressed, type \'m\' to release)' if self.suppressed else '.') )
@@ -139,7 +139,7 @@ class PotentiometerPublisher(Publisher):
 
         self._log.info('publisher loop complete.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def execute(self, message):
         '''
         The method called upon each loop iteration. This receives a message and

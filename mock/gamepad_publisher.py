@@ -13,6 +13,8 @@
 # a paired Bluetooth device. This differs from GamepadDemo in that it simply
 # displays the Gamepad output signals. No motors, video, etc.
 #
+# GamepadConnectException at bottom.
+#
 
 import time, itertools, traceback
 import asyncio
@@ -26,7 +28,7 @@ from core.message_bus import MessageBus
 from core.logger import Logger, Level
 from core.publisher import Publisher
 
-# ...............................................................
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class GamepadPublisher(Publisher):
 
     _PUBLISH_LOOP_NAME = '__gamepad_publish_loop'
@@ -52,7 +54,7 @@ class GamepadPublisher(Publisher):
 
         self._log.info('ready.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _connect_gamepad(self):
         if not self._gamepad_enabled:
             self._log.info('gamepad disabled.')
@@ -70,17 +72,17 @@ class GamepadPublisher(Publisher):
                 return
 #           except Exception as e:
             except ModuleNotFoundError as e:
-                self._log.error('{} thrown establishing gamepad: {}\n{}'.format(type(e), e, traceback.print_stack()))
+                self._log.error('{} thrown establishing gamepad: {}\n{}'.format(type(e), e, traceback.format_exc()))
         # attempt connection ..................................
         if self._gamepad is not None:
             self._log.info(Fore.YELLOW + 'enabling gamepad...')
-            try:    
+            try:
                 self._gamepad.enable()
                 _count = 0
                 while not self._gamepad.has_connection():
                     _count += 1
                     if _count == 1:
-                        self._log.info(Fore.YELLOW + 'connecting to gamepad...') 
+                        self._log.info(Fore.YELLOW + 'connecting to gamepad...')
                     else:
                         self._log.info(Fore.YELLOW + 'gamepad not connected; re-trying... [{:d}]'.format(_count))
                     self._gamepad.connect()
@@ -88,17 +90,17 @@ class GamepadPublisher(Publisher):
                     if self._gamepad.has_connection() or _count > 5:
                         break
             except Exception as e:
-                self._log.error('🐶 {} thrown connecting to gamepad: {}\n{}'.format(type(e), e, traceback.print_stack()))
+                self._log.error('🐶 {} thrown connecting to gamepad: {}\n{}'.format(type(e), e, traceback.format_exc()))
 
         if self._gamepad is None:
             self._gamepad = MockGamepad(self._message_bus, self._message_factory)
             self._log.info(Fore.YELLOW + 'using mocked gamepad.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def has_connected_gamepad(self):
         return self._gamepad is not None and self._gamepad.has_connection()
 
-    # ................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def enable(self):
         Publisher.enable(self)
         if self.enabled:
@@ -114,7 +116,7 @@ class GamepadPublisher(Publisher):
         else:
             self._log.info(Fore.BLACK + '<<< enabled: {}'.format(self.enabled))
 
-    # ..........................................................................
+#   # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 #   async def _publish_message(self, message):
 #       '''
 #       Unless there is a class-level usage this can be replaced by a direct
@@ -123,13 +125,13 @@ class GamepadPublisher(Publisher):
 #       self._log.info('🎲 gamepad callback for message:\t' + Fore.YELLOW + '{}'.format(message.event.label))
 #       await Publisher.publish(self, message)
 
-    # ................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def _gamepad_publish_loop(self, message):
         self._log.info('🎲 gamepad callback for message:\t' + Fore.YELLOW + '{}'.format(message.event.label))
         await Publisher.publish(self, message)
         await asyncio.sleep(self._publish_delay_sec)
 
-    # ................................................................
+#   # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 #   async def _gamepad_listener_loop(self, f_is_enabled):
 #       self._log.info('starting key listener loop: ' + Fore.YELLOW + 'type \'?\' for help, \'q\' or Ctrl-C to exit.')
 #       try:
@@ -154,8 +156,8 @@ class GamepadPublisher(Publisher):
 #       finally:
 #           self._log.info('publish loop finally.')
 #           pass
-      
-    # ..........................................................................
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def disable(self):
         '''
         Disable this publisher as well as shut down the message bus.
@@ -166,7 +168,7 @@ class GamepadPublisher(Publisher):
         Publisher.disable(self)
         self._log.info(Fore.YELLOW + 'disabled publisher.')
 
-    # ................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def read_cpu_temperature(self):
         temp_file = Path('/sys/class/thermal/thermal_zone0/temp')
         if temp_file.is_file():
@@ -177,13 +179,13 @@ class GamepadPublisher(Publisher):
         else:
             return None
 
-    # message handling .........................................................
+    # message handling ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
-    # ......................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _print_event(self, color, event, value):
         self._log.info('event:\t' + color + Style.BRIGHT + '{}; value: {}'.format(event.label, value))
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def print_keymap(self):
 #        1         2         3         4         5         6         7         8         9         C         1         2
 #23456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
@@ -207,7 +209,7 @@ class GamepadPublisher(Publisher):
          ┃                   ┗━━━━━━━━┛          ┗━━━━━━━━┛                    ┃
          ┃                                                                     ┃
          ┗━━━━━━━━━┻━━━━━━━━━┻━━┳━━━━━━┻━┳━━━━━┳━┻━━━━━━┳━━┻━━━━━━━━━┻━━━━━━━━━┛
-                                ┃   B1   ┃  P  ┃   B2   ┃  
+                                ┃   B1   ┃  P  ┃   B2   ┃
                                 ┗━━━━━━━━┻━━━━━┻━━━━━━━━┛
 
    L1:        description                                                                   R1:        description
@@ -223,7 +225,7 @@ class GamepadPublisher(Publisher):
                                               B2:        description
         ''')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def get_event_for_char(self, och):
         '''
         Below are the mapped characters for IFS-based events, including several others:
@@ -301,7 +303,7 @@ class GamepadPublisher(Publisher):
         else:
             return None
 
-# ..............................................................................
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class GamepadConnectException(Exception):
     '''
     Exception raised when unable to connect to Gamepad.

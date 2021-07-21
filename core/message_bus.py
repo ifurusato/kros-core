@@ -76,7 +76,7 @@ class MessageBus(Component):
     @property
     def last_message_timestamp(self):
         '''
-        Return the timestamp of the moment the last message passed through 
+        Return the timestamp of the moment the last message passed through
         the message bus. Note that this is not the timestamp of the message
         itself. If no messages has passed through the bus the initial value
         is None.
@@ -454,7 +454,7 @@ class MessageBus(Component):
         # context["message"] will always be there; but context["exception"] may not
         _exception = context.get('exception', context['message'])
         if _exception != None:
-            self._log.error('caught {}: {}\n{}'.format(type(_exception), _exception, traceback.print_stack()))
+            self._log.error('caught {}: {}\n{}'.format(type(_exception), _exception, traceback.format_exc()))
         else:
             self._log.error('caught exception: {}'.format(context.get('message')))
         if loop.is_running() and not loop.is_closed():

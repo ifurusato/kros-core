@@ -7,7 +7,9 @@
 #
 # author:   Murray Altheim
 # created:  2020-05-19
-# modified: 2021-06-17
+# modified: 2021-07-21
+#
+# _Getch and GamepadConnectException at bottom.
 #
 
 import sys, time, itertools, random, traceback
@@ -26,19 +28,19 @@ from core.util import Util
 from core.publisher import Publisher
 from mock.mock_gamepad import MockGamepad
 
-# ...............................................................
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class EventPublisher(Publisher):
 
     _LISTENER_LOOP_NAME = '__key_listener_loop'
 
     _RANDOM_EVENTS = [
-            Event.INFRARED_PORT_SIDE, Event.INFRARED_PORT, Event.INFRARED_CNTR, Event.INFRARED_STBD, Event.INFRARED_STBD_SIDE, 
-            Event.BUMPER_PORT, Event.BUMPER_CNTR, Event.BUMPER_STBD, 
-            Event.INCREASE_VELOCITY, Event.DECREASE_VELOCITY, 
-            Event.BRAKE, Event.HALT, Event.STOP, 
-            Event.AHEAD, Event.ASTERN, 
+            Event.INFRARED_PORT_SIDE, Event.INFRARED_PORT, Event.INFRARED_CNTR, Event.INFRARED_STBD, Event.INFRARED_STBD_SIDE,
+            Event.BUMPER_PORT, Event.BUMPER_CNTR, Event.BUMPER_STBD,
+            Event.INCREASE_VELOCITY, Event.DECREASE_VELOCITY,
+            Event.BRAKE, Event.HALT, Event.STOP,
+            Event.AHEAD, Event.ASTERN,
             Event.AVOID, Event.ROAM, Event.SNIFF, Event.MOTH, Event.IDLE,
-            Event.NOOP, Event.SHUTDOWN, 
+            Event.NOOP, Event.SHUTDOWN,
         ]
 
     '''
@@ -90,11 +92,11 @@ class EventPublisher(Publisher):
         self._gamepad_released = False # suppressed/released toggle
         self._log.info('ready.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 #   def set_motors(self, motors):
 #       self._motors = motors
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _connect_gamepad(self):
         '''
         Connect to the Gamepad. If disabled or suppressed this exits without a
@@ -125,7 +127,7 @@ class EventPublisher(Publisher):
                 return
 #           except Exception as e:
             except ModuleNotFoundError as e:
-                self._log.error('{} thrown establishing gamepad: {}\n{}'.format(type(e), e, traceback.print_stack()))
+                self._log.error('{} thrown establishing gamepad: {}\n{}'.format(type(e), e, traceback.format_exc()))
         # attempt connection ..................................
 #       breakpoint()
         if self._gamepad is not None:
@@ -144,18 +146,18 @@ class EventPublisher(Publisher):
                     if self._gamepad.has_connection() or _count > 5:
                         break
             except Exception as e:
-                self._log.error('{} thrown connecting to gamepad: {}\n{}'.format(type(e), e, traceback.print_stack()))
+                self._log.error('{} thrown connecting to gamepad: {}\n{}'.format(type(e), e, traceback.format_exc()))
 
 #       breakpoint()
         if self._gamepad is None:
             self._gamepad = MockGamepad(self._message_bus, self._message_factory)
             self._log.info(Fore.YELLOW + 'using mocked gamepad.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def has_connected_gamepad(self):
         return self._gamepad is not None and self._gamepad.has_connection()
 
-    # ................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def enable(self):
         Publisher.enable(self)
         if self.enabled:
@@ -168,7 +170,7 @@ class EventPublisher(Publisher):
         else:
             self._log.warning('failed to enable publisher.')
 
-    # ................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def _key_listener_loop(self, f_is_enabled):
         self._log.info('starting key listener loop:\t' + Fore.YELLOW + 'type \'?\' for help, \'q\' or Ctrl-C to exit.')
         try:
@@ -273,7 +275,7 @@ class EventPublisher(Publisher):
             if self._getch:
                 self._getch.close()
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _get_infrared_value(self):
         '''
         Returns a continuually rising and falling value.
@@ -291,32 +293,32 @@ class EventPublisher(Publisher):
         self._log.info('infrared center: {:d}'.format(self._ir_value))
         return self._ir_value
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _get_random_event(self):
         '''
         Returns one of the randomly-assigned event types.
         '''
         return EventPublisher._RANDOM_EVENTS[random.randint(0, len(EventPublisher._RANDOM_EVENTS)-1)]
 
-    # ................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def _gamepad_callback(self, message):
         self._log.info('gamepad callback for message:\t' + Fore.YELLOW + '{}'.format(message.event.label))
         await Publisher.publish(self, message)
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _toggle_clock(self):
         _clock = self._message_bus.get_publisher('clock')
         if _clock:
             if _clock.enabled:
-                _clock.disable() 
+                _clock.disable()
                 self._log.info('system clock disabled.')
             else:
-                _clock.enable() 
+                _clock.enable()
                 self._log.info('system clock enabled.')
         else:
             self._log.info(Fore.YELLOW + 'system clock not found.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _toggle_verbosity(self):
         self._message_bus.verbose = not self._message_bus.verbose
         if self._message_bus.verbose:
@@ -324,7 +326,7 @@ class EventPublisher(Publisher):
         else:
             print(Fore.CYAN + Util.repeat(' ',60) + ': setting verbosity to: ' + Fore.YELLOW + '{}'.format(self._message_bus.verbose))
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _toggle_gamepad(self):
         if not self._gamepad_enabled:
             self._log.warning('cannot start gamepad: disabled in configuration.')
@@ -355,7 +357,7 @@ class EventPublisher(Publisher):
                 self._log.info(Fore.GREEN + 'creating task for existing gamepad...')
                 self._message_bus.loop.create_task(self._gamepad._gamepad_loop(self._gamepad_callback, lambda: self._gamepad_released), name=GAMEPAD_TASK_NAME)
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _toggle_flood(self):
         if self._flood_enable:
             self._flood_enable = False
@@ -365,7 +367,7 @@ class EventPublisher(Publisher):
             self._flood_enable = True
             self._log.info('flood enabled: ' + Fore.YELLOW + 'type \'w\' to disable.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _toggle_motors(self):
         if self._motors:
             self._log.info('toggle motors...')
@@ -377,7 +379,7 @@ class EventPublisher(Publisher):
         else:
             self._log.warning('no motors available.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def disable(self):
         '''
         Disable this publisher as well as shut down the message bus.
@@ -386,7 +388,7 @@ class EventPublisher(Publisher):
         Publisher.disable(self)
         self._log.info('disabled publisher.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _print_waiting_for_message(self):
         _div = Fore.CYAN + Style.NORMAL + ' | '
         self._log.info('waiting for: | ' \
@@ -407,7 +409,7 @@ class EventPublisher(Publisher):
                 + self._get_output(Fore.GREEN, 'BSTB', self._triggered_bmp_stbd) \
                 + _div )
 
-    # message handling .........................................................
+    # message handling ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
     def _accumulate_message(self, message):
         '''
@@ -449,11 +451,11 @@ class EventPublisher(Publisher):
         else:
             self._log.debug(Fore.BLACK + Style.BRIGHT + 'other event: {}'.format(_event.label))
 
-    # ......................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _print_event(self, color, event, value):
         self._log.info('event:\t' + color + Style.BRIGHT + '{}; value: {}'.format(event.label, value))
 
-    # ......................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _get_output(self, color, label, value):
         if ( value == 0 ):
             _style = color + Style.BRIGHT
@@ -465,7 +467,7 @@ class EventPublisher(Publisher):
             _style = Fore.BLACK + Style.DIM
         return _style + '{0:>9}'.format( label if ( value < self._message_limit ) else '' )
 
-    # ......................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def all_triggered(self):
         return self._triggered_ir_port_side  >= self._message_limit \
@@ -477,7 +479,7 @@ class EventPublisher(Publisher):
             and self._triggered_bmp_cntr     >= self._message_limit \
             and self._triggered_bmp_stbd     >= self._message_limit
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def print_help(self):
 #        1         2         3         4         5         6         7         8         9         C         1         2         3         4
 #2345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
@@ -496,14 +498,14 @@ class EventPublisher(Publisher):
                  ┃    Z    ┃    X    ┃    C    ┃    V    ┃    B    ┃    N    ┃    M    ┃    <    ┃    >    ┃    ?    ┃    \    ┃
                  ┃ MTR_INF ┃ SP_PORT ┃ TN_PORT ┃ VERBOSE ┃ TN_STBD ┃ SP_STBD ┃  AVOID  ┃ DE_VELO ┃ IN_VELO ┃  HELP   ┃  CLOCK  ┃
                  ┗━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┛
-    
+
   FUL AST:   full astern        QUIT:     quit application              IR_PSID:  port side infrared            MTR_INF:  toggle motor info
   HAF AST:   half astern        FLOOD:    toggle flood publisher        IR_PORT:  port infrared                 SP_PORT:  spin port
   SLO AST:   slow astern        SNIFF:    tirgger SNIFF behaviour       IR_CNTR:  center infrared               TN_PORT:  turn to port
   DSL AST:   dead slow astern   ROAM:     trigger ROAM behaviour        IR_STBD:  starboard infrared            VERBOSE:  toggle verbosity
-  STOP:      stop               AVOID:    avoidance beheaviour          IR_SSID:  starboard side infrared       TN_STBD:  turn to starboard 
+  STOP:      stop               AVOID:    avoidance beheaviour          IR_SSID:  starboard side infrared       TN_STBD:  turn to starboard
   DSL AHD:   dead slow ahead    INFO:     print system information      HELP:     print help                    SP_STBD:  spin starboard
-  SLO AHD:   slow ahead         CLR_TSK:  clear completed tasks         BM_PORT:  port bumper                    
+  SLO AHD:   slow ahead         CLR_TSK:  clear completed tasks         BM_PORT:  port bumper
   HAF AHD:   half ahead         POP_MSG:  pop messages from queue       BM_CNTR:  center bumper                 DE_VELO:  decrease velocity
   FUL AHD:   full ahead         IN_PORT:  increase port velocity        BM_STBD:  starboard bumper              IN_VELO:  increase velocity
   HALT:      halt               IN_STBD:  increase starboard velocity   DE_PORT:  decrease port velocity        HELP:     print help
@@ -512,7 +514,7 @@ class EventPublisher(Publisher):
   SHUTDOWN:  shut down robot
         ''')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def get_event_for_char(self, och):
         '''
         Below are the mapped characters for IFS-based events, including several others:
@@ -542,7 +544,7 @@ class EventPublisher(Publisher):
            106   j *    port bumper
            107   k *    cntr bumper
            108   l *    stbd bumper
-           109   m 
+           109   m
            110   n *    spin stbd
            111   o      clear task list
            112   p      pop message
@@ -579,21 +581,21 @@ class EventPublisher(Publisher):
         elif och == 51:  # 3 slow astern
             return Event.SLOW_ASTERN
         elif och == 52:  # 4 dead slow astern
-            return Event.DEAD_SLOW_ASTERN 
+            return Event.DEAD_SLOW_ASTERN
         elif och == 53:  # 5 stop
             return Event.STOP
         elif och == 54:  # 6 dead slow ahead
             return Event.DEAD_SLOW_AHEAD
         elif och == 55:  # 7 slow ahead
-            return Event.SLOW_AHEAD    
+            return Event.SLOW_AHEAD
         elif och == 56:  # 8 half ahead
-            return Event.HALF_AHEAD   
+            return Event.HALF_AHEAD
         elif och == 57:  # 9 full ahead
-            return Event.FULL_AHEAD  
+            return Event.FULL_AHEAD
         elif och == 59:  # . decrease port velocity
             return Event.DECREASE_PORT_VELOCITY
         elif och == 61:  # + even
-            return Event.EVEN  
+            return Event.EVEN
         elif och == 91:  # [ increase port velocity
             return Event.INCREASE_PORT_VELOCITY
         elif och == 93:  # . increase stbd velocity
@@ -637,7 +639,7 @@ class EventPublisher(Publisher):
         else:
             return None
 
-# ..............................................................................
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class _Getch():
     '''
     Provides non-blocking key input from stdin.
@@ -655,7 +657,7 @@ class _Getch():
     def close(self):
         termios.tcsetattr(sys.stdin, termios.TCSADRAIN, self._old_settings)
 
-# ..............................................................................
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class GamepadConnectException(Exception):
     '''
     Exception raised when unable to connect to Gamepad.
