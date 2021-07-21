@@ -108,19 +108,14 @@ class PotentiometerPublisher(Publisher):
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def _publisher_loop(self, f_is_enabled):
         '''
-        We get a message from the queue and publish it.
-
-        Then we loop. The published message's value is the number
-        of loop ticks to wait until getting the next message.
-
-        We continue to loop but without getting another message
-        until the delay_tick_counter reaches zero.
+        After ignoring the first few messages to avoid pot startup noise,
+        we look for changing values and publish them to the message bus.
         '''
-        self._log.info('starting pot publisher loop:\t' + Fore.YELLOW + ( '; (suppressed, type \'m\' to release)' if self.suppressed else '.') )
+        self._log.info('starting pot publisher loop:\t' + Fore.YELLOW + ( '; (suppressed, type \'m\' to release)' if self.suppressed else '(released)') )
         while f_is_enabled():
             _count = next(self._counter)
             self._log.debug('[{:03d}] begin publisher loop...'.format(_count))
-            if not self.suppressed:
+            if _count > 10 and not self.suppressed:
                 self._log.debug('[{:03d}] publisher released.'.format(_count))
                 # get value with hysteresis around zero
                 _scaled_value = self._hysteresis(round(self._pot.get_scaled_value(False)))

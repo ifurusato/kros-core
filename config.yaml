@@ -7,10 +7,10 @@
 kros:
     use_external_clock: True                     # if True use external clock
     ticker:
-        loop_freq_hz:            0.1             # main loop frequency
+        loop_freq_hz:            0.05            # main loop frequency
     message_bus:
         max_age_ms:             20.0             # maximum age of a message before expiry
-        publish_delay_sec:       0.2             # publishing delay loop
+        publish_delay_sec:       0.05            # publishing delay loop
     hardware:
         potentiometer:                           # IO Expander-based Potentiometer board
             i2c_address:   0x0E                  # the I²C address for the device
@@ -34,8 +34,8 @@ kros:
         spin_speed:           'HALF'             # motor speed when spinning
         motor_power_limit:       0.901           # upper and lower (x -1) limit set on power sent to motor
         motor_delta_limit:       0.25            # limit on how fast motor power can change
-        enable_slew_limiter:    False
-        suppress_slew_limiter:  True
+        enable_slew_limiter:    True
+        suppress_slew_limiter:  False
         enable_jerk_limiter:    False
         suppress_jerk_limiter:  True
         pid-controller:
@@ -44,7 +44,7 @@ kros:
             kd:                  0.00000         # derivative gain
             minimum_output:    -10.0             # lower output limit
             maximum_output:     10.0             # upper output limit
-            enable_slew:         False           # we now use the slew limiter from Motor instead
+            enable_slew:        False            # we now use the slew limiter from Motor instead
             sample_freq_hz:     20
             hyst_queue_len:     20               # size of queue used for running average for hysteresis
             pot_ctrl:           False            # if True enable potentiometer for setting PID terms
@@ -59,8 +59,8 @@ kros:
             EMERGENCY:          100.0
             MAXIMUM:            100.000001
         slew:
-            minimum_output:      0.00           # lower limit of permitted output values
-            maximum_output:      0.88           # upper limit of permitted output values
+            minimum_output:    -90.0            # lower limit of permitted velocity output values
+            maximum_output:     90.0            # upper limit of permitted velocity output values
             rate:               'FAST'          # select value of enum: EXTREMELY_SLOW, VERY_SLOW, SLOWER, SLOW, NORMAL, FAST, VERY_FAST
             hysteresis:          2.0            # how close do we get to the target velocity?
             use_elapsed_time:    False          # used elapsed time or percentage

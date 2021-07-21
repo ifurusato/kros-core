@@ -80,10 +80,11 @@ class PIDController(object):
 
         self._enable_slew = self._config.get('enable_slew')
         if self._enable_slew:
-            self._slewlimiter = SlewLimiter(config, orientation=self._motor.orientation, level=Level.INFO)
-            self._slewlimiter.set_rate_limit(SlewRate.NORMAL) # configurable?
-            self._slewlimiter.enable()
-            self._log.info('slew limiter enabled.')
+            raise Exception('use slew limiter from Motor instead.')
+#           self._slewlimiter = SlewLimiter(config, orientation=self._motor.orientation, level=Level.INFO)
+#           self._slewlimiter.set_rate_limit(SlewRate.NORMAL) # configurable?
+#           self._slewlimiter.enable()
+#           self._log.info('slew limiter enabled.')
         else:
             self._slewlimiter = None
             self._log.info('slew limiter disabled.')

@@ -510,7 +510,7 @@ class EventPublisher(Publisher):
   FUL AHD:   full ahead         IN_PORT:  increase port velocity        BM_STBD:  starboard bumper              IN_VELO:  increase velocity
   HALT:      halt               IN_STBD:  increase starboard velocity   DE_PORT:  decrease port velocity        HELP:     print help
   BRAKE:     brake                                                      DE_STBD:  decrease starboard velocity   CLOCK:    toggle system clock
-  EVEN:      even velocity, port and stbd motors
+  EVEN:      even velocity, port and stbd motors                        RET:      clear display
   SHUTDOWN:  shut down robot
         ''')
 

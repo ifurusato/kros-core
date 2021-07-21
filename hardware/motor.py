@@ -117,7 +117,7 @@ class Motor(Component):
     @max_power_ratio.setter
     def max_power_ratio(self, max_power_ratio):
         self._max_power_ratio = max_power_ratio
-        self._log.info(Fore.YELLOW + 'motor power limit: {:5.2f}'.format(self._motor_power_limit))
+        self._log.info('motor power limit: {:<5.2f}'.format(self._motor_power_limit))
 
     # ..............................................................................
     def _callback_step_count(self, pulse):
@@ -134,13 +134,11 @@ class Motor(Component):
     def enable(self):
         if not self.enabled:
             Component.enable(self)
-#       self._slew_limiter.enable()
 
     # ..........................................................................
     def disable(self):
         if self.enabled:
             Component.disable(self)
-#       self._slew_limiter.disable()
 
     # ..........................................................................
     def close(self):
@@ -186,8 +184,11 @@ class Motor(Component):
         '''
         Set the target velocity and motor power.
         '''
-        self._log.info(Fore.BLACK + '🌺 set {} motor target velocity: {:5.2f} ➔ {:<5.2f}'.format(self._orientation, self.velocity, target_velocity))
         self.target_velocity = self._slew_limiter.limit(self.velocity, target_velocity)
+        if self._orientation is Orientation.PORT:
+            self._log.info(Fore.RED + '🌺 slew {} motor target velocity: {:5.2f} ➔ {:<5.2f} = {:<5.2f}'.format(self._orientation, self.velocity, target_velocity, self.target_velocity))
+        else:
+            self._log.info(Fore.GREEN + '🌺 slew {} motor target velocity: {:5.2f} ➔ {:<5.2f} = {:<5.2f}'.format(self._orientation, self.velocity, target_velocity, self.target_velocity))
         # TEMP
         if self.target_velocity is None:
             raise Exception('null self.target_velocity')

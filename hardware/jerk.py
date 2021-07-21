@@ -47,7 +47,10 @@ class JerkLimiter(Component):
         self._clip = lambda n: _minimum_output if n <= _minimum_output else _maximum_output if n >= _maximum_output else n
         self._log.info('jerk limit: {:5.2f}; minimum output: {:5.2f}; maximum output: {:5.2f}'.format(
                 self._jerk_rate_limit, _minimum_output, _maximum_output))
-        self._log.info('ready.')
+        if not self.suppressed and self.enabled:
+            self._log.info('ready.')
+        else:
+            self._log.info('ready (enabled: {}; suppressed: {})'.format(self.enabled, self.suppressed))
 
     # ..........................................................................
     def enable(self):
@@ -75,7 +78,7 @@ class JerkLimiter(Component):
         elif self.suppressed:
             self._log.debug('suppressed; returning target value {:+06.2f}.'.format(target_value))
             return target_value
-        self._log.debug('limit current {:+06.2f} to target value {:+06.2f}.'.format(current_value, target_value))
+        self._log.info('limit current {:+06.2f} to target value {:+06.2f}.'.format(current_value, target_value))
         _value = target_value
         if isclose(current_value, target_value, abs_tol=1e-3):
             pass
@@ -87,7 +90,9 @@ class JerkLimiter(Component):
             if abs(current_value - target_value) > self._jerk_rate_limit:
                 # only allow the current value minus the jerk limit
                 _value = current_value - self._jerk_rate_limit
-        return -1.0 * self._clip(-1.0 * _value) if _value < 0.0 else self._clip(_value)
+        _value = -1.0 * self._clip(-1.0 * _value) if _value < 0.0 else self._clip(_value)
+        self._log.info('limit current {:+06.2f} to target value {:+06.2f}, returning value: {:5.2f}'.format(current_value, target_value, _value))
+        return _value
 
     # ..........................................................................
     def print_test_result(self, current_value, target_value):

@@ -46,10 +46,10 @@ class PID(object):
         self._limit      = None
         self._log = Logger('pid:{}'.format(label), level)
         if self._min_output is None or self._max_output is None:
-            self._log.info('kp:{:7.4f}; ki:{:7.4f}; kd:{:7.4f};\tmin={}; max={}'.format(
+            self._log.info('kp:{:7.4f}; ki:{:7.4f}; kd:{:7.4f}; min={}; max={}'.format(
                     self._kp, self._ki, self._kd, self._min_output, self._max_output))
         else:
-            self._log.info('kp:{:7.4f}; ki:{:7.4f}; kd:{:7.4f};\tmin={:>5.2f}; max={:>5.2f}'.format(
+            self._log.info('kp:{:7.4f}; ki:{:7.4f}; kd:{:7.4f}; min={:>5.2f}; max={:>5.2f}'.format(
                     self._kp, self._ki, self._kd, self._min_output, self._max_output))
         if sample_time is None:
             raise Exception('no sample time argument provided')

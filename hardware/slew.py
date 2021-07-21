@@ -24,7 +24,8 @@ from core.component import Component
 # ..............................................................................
 class SlewLimiter(Component):
     '''
-    A general purpose slew limiter that limits the rate of change of a value.
+    A general purpose slew limiter that limits the rate of change of a value,
+    configured for managing velocity values, which vary from -90.0 to +90.0.
 
     This uses the ros:slew: section of the YAML configuration.
 
@@ -52,7 +53,10 @@ class SlewLimiter(Component):
         self._start_time       = None
         # lambdas
         self._clip = lambda n: self._minimum_output if n <= self._minimum_output else self._maximum_output if n >= self._maximum_output else n
-        self._log.info('ready.')
+        if not self.suppressed and self.enabled:
+            self._log.info('ready.')
+        else:
+            self._log.info('ready (enabled: {}; suppressed: {})'.format(self.enabled, self.suppressed))
 
     # ..........................................................................
     def set_rate_limit(self, slew_rate):
