@@ -133,11 +133,15 @@ class Motor(Component):
     # ..........................................................................
     def enable(self):
         if not self.enabled:
+            self._slew_limiter.enable()
+            self._jerk_limiter.enable()
             Component.enable(self)
 
     # ..........................................................................
     def disable(self):
         if self.enabled:
+            self._slew_limiter.disable()
+            self._jerk_limiter.disable()
             Component.disable(self)
 
     # ..........................................................................
@@ -185,13 +189,7 @@ class Motor(Component):
         Set the target velocity and motor power.
         '''
         self.target_velocity = self._slew_limiter.limit(self.velocity, target_velocity)
-        if self._orientation is Orientation.PORT:
-            self._log.info(Fore.RED + '🌺 slew {} motor target velocity: {:5.2f} ➔ {:<5.2f} = {:<5.2f}'.format(self._orientation, self.velocity, target_velocity, self.target_velocity))
-        else:
-            self._log.info(Fore.GREEN + '🌺 slew {} motor target velocity: {:5.2f} ➔ {:<5.2f} = {:<5.2f}'.format(self._orientation, self.velocity, target_velocity, self.target_velocity))
-        # TEMP
-        if self.target_velocity is None:
-            raise Exception('null self.target_velocity')
+        self._log.debug('{} motor target velocity: {:5.2f} ➔ {:<5.2f} = {:<5.2f}'.format(self._orientation, self.velocity, target_velocity, self.target_velocity))
         # translate velocity to power...
         _power = self._convert_to_power(self.target_velocity)
         self.set_motor_power(_power)

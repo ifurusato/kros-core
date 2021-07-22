@@ -20,8 +20,6 @@ kros:
             pin_blue:         2                  # blue pin
             in_min:         0.0                  # minimum analog value from IO Expander
             in_max:         3.3                  # maximum analog value from IO Expander
-    #       out_min:       -100.0                # minimum scaled output value
-    #       out_max:        100.0                # maximum scaled output value
             out_min:       -255.0                # minimum scaled output value
             out_max:        255.0                # maximum scaled output value
     motors:
@@ -36,8 +34,8 @@ kros:
         motor_delta_limit:       0.25            # limit on how fast motor power can change
         enable_slew_limiter:    True
         suppress_slew_limiter:  False
-        enable_jerk_limiter:    False
-        suppress_jerk_limiter:  True
+        enable_jerk_limiter:    True
+        suppress_jerk_limiter:  False
         pid-controller:
             kp:                  0.09500         # proportional gain
             ki:                  0.00000         # integral gain
@@ -63,7 +61,7 @@ kros:
             maximum_output:     90.0            # upper limit of permitted velocity output values
             rate:               'FAST'          # select value of enum: EXTREMELY_SLOW, VERY_SLOW, SLOWER, SLOW, NORMAL, FAST, VERY_FAST
             hysteresis:          2.0            # how close do we get to the target velocity?
-            use_elapsed_time:    False          # used elapsed time or percentage
+            use_elapsed_time:    True          # used elapsed time or percentage
         jerk:
             jerk_rate_limit:     0.3            # limit of permitted change per iteration
     gamepad:

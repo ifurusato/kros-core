@@ -48,9 +48,15 @@ class Component(object): # ABC
     # ..........................................................................
     @property
     def enabled(self):
+        '''
+        Return the enabled state of this component.
+        '''
         return self._enabled
 
     def enable(self):
+        '''
+        Enable this component.
+        '''
         if not self._closed:
             self._enabled = True
             self._log.info('enabled.')
@@ -60,6 +66,10 @@ class Component(object): # ABC
     # ..........................................................................
     @property
     def disabled(self):
+        '''
+        Return the disabled state of this component.
+        This is a convenience method.
+        '''
         return not self._enabled
 
     def disable(self):

@@ -55,7 +55,6 @@ class JerkLimiter(Component):
     # ..........................................................................
     def enable(self):
         self._log.info('starting jerk limiter with jerk limit of {:5.3f}/cycle.'.format(self._jerk_rate_limit))
-        self._start_time = self._millis()
         Component.enable(self)
 
     # ..........................................................................
@@ -78,7 +77,7 @@ class JerkLimiter(Component):
         elif self.suppressed:
             self._log.debug('suppressed; returning target value {:+06.2f}.'.format(target_value))
             return target_value
-        self._log.info('limit current {:+06.2f} to target value {:+06.2f}.'.format(current_value, target_value))
+        self._log.debug('limit current {:+06.2f} to target value {:+06.2f}.'.format(current_value, target_value))
         _value = target_value
         if isclose(current_value, target_value, abs_tol=1e-3):
             pass
