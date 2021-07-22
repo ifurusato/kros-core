@@ -216,33 +216,15 @@ class Motor(Component):
 
         :param target_power:  the target motor power
         '''
-        if not self.enabled and target_power > 0.0: # though we'll let the power be set to zero
+        if target_power is None:
+            raise ValueError('null target_power argument.')
+        elif not self.enabled and target_power > 0.0: # though we'll let the power be set to zero
             self._log.warning('motor disabled, ignoring setting of {:<5.2f}'.format(target_power))
             return
-        _max = 0.9 # was 0.3?
-
-#       self._motor_delta_limit
-
         _current_power = self.current_power
-        if self.orientation is Orientation.PORT and False:
-            # TEMP (port only) evaluate change...
-            _diff = target_power - _current_power
-            if _diff < _max:
-                self._log.info(Fore.YELLOW + '😨 current: {:4.2f}; target: {:4.2f}; diff: {:4.2f}; max: {:4.2f}'.format(
-                        _current_power, target_power, _diff, _max))
-            elif _diff == 0:
-                self._log.info(Fore.BLACK + '😨 current: {:4.2f}; target: {:4.2f}; diff: {:4.2f}; max: {:4.2f}'.format(
-                        _current_power, target_power, _diff, _max))
-            elif _diff < 0:
-                self._log.info(Fore.RED + '😨 current: {:4.2f}; target: {:4.2f}; diff: {:4.2f}; max: {:4.2f}'.format(
-                        _current_power, target_power, _diff, _max))
-            else:
-                self._log.info(Fore.GREEN + '😨 current: {:4.2f}; target: {:4.2f}; diff: {:4.2f}; max: {:4.2f}'.format(
-                        _current_power, target_power, _diff, _max))
-
         target_power = self._jerk_limiter.limit(self.current_power, target_power)
-        self._log.debug('current: {:4.2f}; target: {:4.2f}'.format(self.current_power, target_power))
-
+        self._log.info('current: {:5.2f}; target: {:5.2f}; max power ratio: {:5.2f}'.format(
+                _current_power, target_power, self.max_power_ratio))
         # okay, let's go .........................
         _driving_power = float(target_power * self.max_power_ratio)
         self._max_power = max(target_power, self._max_power)

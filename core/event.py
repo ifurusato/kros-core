@@ -121,10 +121,10 @@ class Event(Enum):
     ROAM                   = ( 502, "roam",                   160,   Group.BEHAVIOUR )
     MOTH                   = ( 503, "moth",                   161,   Group.BEHAVIOUR )
     SNIFF                  = ( 504, "sniff",                  162,   Group.BEHAVIOUR ) # A Button
-    VIDEO                  = ( 505, "video",                  163,   Group.BEHAVIOUR ) # L1 Button
-    EVENT_L2               = ( 506, "L2",                     164,   Group.BEHAVIOUR ) # L2 Button
-    EVENT_R1               = ( 507, "cruise",                 165,   Group.BEHAVIOUR ) # R1 Button
-    LIGHTS                 = ( 508, "lights",                 166,   Group.BEHAVIOUR ) # R2 Button
+    EVENT_L2               = ( 505, "L2",                     163,   Group.BEHAVIOUR ) # L2 Button
+    EVENT_R1               = ( 506, "cruise",                 164,   Group.BEHAVIOUR ) # R1 Button
+    LIGHTS                 = ( 507, "lights",                 165,   Group.BEHAVIOUR ) # R2 Button
+    VIDEO                  = ( 508, "video",                  175,   Group.BEHAVIOUR ) # L1 Button
     IDLE                   = ( 509, "idle",                   180,   Group.BEHAVIOUR ) # A Button
 
     # other events (> 900) ..................................................................
