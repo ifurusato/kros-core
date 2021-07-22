@@ -26,7 +26,6 @@ from core.event import Event, Group
 from core.util import Util
 from core.subscriber import Subscriber
 from core.publisher import Publisher
-from hardware.potentiometer import Potentiometer
 from behave.trigger_behaviour import TriggerBehaviour
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -51,6 +50,7 @@ class PotentiometerPublisher(Publisher):
         self._counter              = itertools.count()
         self._last_scaled_value    = 0.0
         try:
+            from hardware.potentiometer import Potentiometer
             self._pot = Potentiometer(config, level)
         except Exception:
             self._log.warning('could not start hardware potentiometer; using mock...')
@@ -103,7 +103,7 @@ class PotentiometerPublisher(Publisher):
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def name(self):
-        return 'pot_publisher'
+        return 'pot'
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def _publisher_loop(self, f_is_enabled):

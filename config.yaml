@@ -34,8 +34,8 @@ kros:
         spin_speed:           'HALF'             # motor speed when spinning
         motor_power_limit:       0.901           # upper and lower (x -1) limit set on power sent to motor
         motor_delta_limit:       0.25            # limit on how fast motor power can change
-        enable_slew_limiter:    True
-        suppress_slew_limiter:  False
+        enable_slew_limiter:    False
+        suppress_slew_limiter:  True
         enable_jerk_limiter:    False
         suppress_jerk_limiter:  True
         pid-controller:

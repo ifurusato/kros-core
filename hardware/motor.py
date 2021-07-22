@@ -186,9 +186,11 @@ class Motor(Component):
         '''
         self.target_velocity = self._slew_limiter.limit(self.velocity, target_velocity)
         if self._orientation is Orientation.PORT:
-            self._log.info(Fore.RED + '🌺 slew {} motor target velocity: {:5.2f} ➔ {:<5.2f} = {:<5.2f}'.format(self._orientation, self.velocity, target_velocity, self.target_velocity))
+            self._log.info(Fore.RED + '🌺 {} motor target velocity: {:5.2f} ➔ {:<5.2f} = {:<5.2f}'.format(
+                    self._orientation.name, self.velocity, target_velocity, self.target_velocity))
         else:
-            self._log.info(Fore.GREEN + '🌺 slew {} motor target velocity: {:5.2f} ➔ {:<5.2f} = {:<5.2f}'.format(self._orientation, self.velocity, target_velocity, self.target_velocity))
+            self._log.info(Fore.GREEN + '🌺 {} motor target velocity: {:5.2f} ➔ {:<5.2f} = {:<5.2f}'.format(
+                    self._orientation.name, self.velocity, target_velocity, self.target_velocity))
         # TEMP
         if self.target_velocity is None:
             raise Exception('null self.target_velocity')
@@ -218,13 +220,15 @@ class Motor(Component):
 
         :param target_power:  the target motor power
         '''
-        if not self.enabled and target_power > 0.0: # though we'll let the power be set to zero
+        if target_power is None:
+            raise ValueError('null target_power argument.')
+        elif not self.enabled and target_power > 0.0: # though we'll let the power be set to zero
             self._log.warning('motor disabled, ignoring setting of {:<5.2f}'.format(target_power))
             return
         _max = 0.9 # was 0.3?
 
 #       self._motor_delta_limit
-
+#       breakpoint()
         _current_power = self.current_power
         if self.orientation is Orientation.PORT and False:
             # TEMP (port only) evaluate change...
@@ -246,6 +250,7 @@ class Motor(Component):
         self._log.debug('current: {:4.2f}; target: {:4.2f}'.format(self.current_power, target_power))
 
         # okay, let's go .........................
+        self._log.info(Fore.MAGENTA + '😨 target: {}; max power ratio: {}'.format(target_power, self.max_power_ratio))
         _driving_power = float(target_power * self.max_power_ratio)
         self._max_power = max(target_power, self._max_power)
         self._max_driving_power = max(abs(_driving_power), self._max_driving_power)

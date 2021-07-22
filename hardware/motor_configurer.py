@@ -53,8 +53,11 @@ class MotorConfigurer():
             self._enable_mock = _cfg.get('mock_enabled')
         self._log.info(Fore.YELLOW + 'enabled mocks? {}'.format(self._enable_mock))
         # Import the ThunderBorg library, then configure and return the Motors.
-        self._max_power_ratio = None # this should get set by the ThunderBorg code.
+        self._max_power_ratio = None
         self._import_thunderborg()
+        if self._max_power_ratio is None: # this should have been set by the ThunderBorg code.
+            raise ValueError('max_power_ratio not set.')
+
         # now import motors
         try:
             self._log.info('configuring motors...')
@@ -87,8 +90,7 @@ class MotorConfigurer():
             self._log.info('configure thunderborg & motors...')
             try:
     
-                _has_thunderborg = self._i2c_scanner.has_address([MotorConfigurer.THUNDERBORG_ADDRESS])
-                if _has_thunderborg:
+                if self._i2c_scanner.has_address([MotorConfigurer.THUNDERBORG_ADDRESS]):
                     self._log.info('importing ThunderBorg...')
                     import hardware.ThunderBorg3 as ThunderBorg
                     self._log.info('successfully imported ThunderBorg.')
@@ -122,9 +124,9 @@ class MotorConfigurer():
                         self._log.error('No ThunderBorg at address %02X, but we did find boards:' % (self._tb.i2cAddress))
                         for board in boards:
                             self._log.info('    %02X (%d)' % (board, board))
-                        self._log.error('If you need to change the I²C address change the setup line so it is correct, e.g. TB.i2cAddress = 0x{}'.format(boards[0]))
+                        self._log.error('If you need to change the I²C address change the setup line so it is correct, e.g. TB.i2cAddress = 0x{}'.format(
+                                boards[0]))
                     raise Exception('unable to instantiate ThunderBorg [1].')
-    #               sys.exit(1)
                 self._tb.SetLedShowBattery(True)
     
                 # initialise ThunderBorg ...........................
@@ -141,7 +143,7 @@ class MotorConfigurer():
                 self._log.info('voltage out: {:>5.2f}V'.format(voltage_out))
                 if voltage_in < voltage_out:
                     raise OSError('cannot continue: battery voltage too low ({:>5.2f}V).'.format(voltage_in))
-                # Setup the power limits
+                # set the power limits
                 if voltage_out > voltage_in:
                     self._max_power_ratio = 1.0
                 else:
@@ -180,6 +182,9 @@ class MotorConfigurer():
 #           self._tb.Init()                       # set the board up (checks the board is connected)
             self._log.info(Fore.YELLOW + 'successfully instantiated mock ThunderBorg.')
 #           self._tb.SetLedShowBattery(True)
+            _voltage_in  = 19.0
+            _voltage_out = 9.0
+            self._max_power_ratio = _voltage_out / float(_voltage_in)
         except OSError as e:
             if self._enable_mock:
                 self._log.info('using mock ThunderBorg.')

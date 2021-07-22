@@ -183,8 +183,14 @@ class EventPublisher(Publisher):
                     if ch != None and ch != '':
                         och = ord(ch)
                         self._log.debug('key "{}" ({}) pressed, processing...'.format(ch, och))
+                        if och == 9: # 'tab' toggle gamepad
+                            self._toggle_gamepad()
+                            continue
                         if och == 10 or och == 13: # LF or CR to print 48 newlines
                             print(Util.repeat('\n',48))
+                            continue
+                        elif och == 101: # 'e' toggle pot
+                            self._toggle_pot()
                             continue
                         elif och == 104: # 'h' help
                             self.print_help()
@@ -215,9 +221,6 @@ class EventPublisher(Publisher):
                             continue
                         elif och == 118: # 'v' toggle verbose
                             self._toggle_verbosity()
-                            continue
-                        elif och == 101: # 'e' toggle gamepad
-                            self._toggle_gamepad()
                             continue
                         elif och == 119: # 'w' toggle flood mode
                             self._toggle_flood()
@@ -304,6 +307,26 @@ class EventPublisher(Publisher):
     async def _gamepad_callback(self, message):
         self._log.info('gamepad callback for message:\t' + Fore.YELLOW + '{}'.format(message.event.label))
         await Publisher.publish(self, message)
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def _toggle_pot(self):
+        _pot = self._message_bus.get_publisher('pot')
+        if _pot:
+            if _pot.enabled:
+                self._log.info(Fore.YELLOW + 'disabling potentiometer...')
+                _pot.suppress()
+                _pot.disable()
+                self._log.info('potentiometer disabled.')
+            else:
+                self._log.info(Fore.YELLOW + 'enabling potentiometer...')
+                try:
+                    _pot.enable()
+                    _pot.release()
+                except Exception as e:
+                    self._log.error('potentiometer error: {}'.format(e))
+                self._log.info('potentiometer enabled.')
+        else:
+            self._log.info(Fore.YELLOW + 'potentiometer not found.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _toggle_clock(self):
@@ -485,19 +508,19 @@ class EventPublisher(Publisher):
 #2345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
         self._log.info('''key map:
 
-  ┏━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┓
-  ┃    1    ┃    2    ┃    3    ┃    4    ┃    5    ┃    6    ┃    7    ┃    8    ┃    9    ┃    0    ┃    -    ┃    =    ┃   DEL   ┃
-  ┃ FUL AST ┃ HAF AST ┃ SLO AST ┃ DSL AST ┃  STOP   ┃ DSL AHD ┃ SLO AHD ┃ HAF AHD ┃ FUL AHD ┃  HALT   ┃  BRAKE  ┃  EVEN   ┃ SHUTDWN ┃
-  ┗━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┛
-       ┃    Q    ┃    W    ┃    E    ┃    R    ┃    T    ┃    Y    ┃    U    ┃    I    ┃    O    ┃    P    ┃    [    ┃    ]    ┃
-       ┃  QUIT   ┃  FLOOD  ┃ GAMEPAD ┃  ROAM   ┃  MOTH   ┃  SNIFF  ┃  IDLE   ┃  INFO   ┃ CLR TSK ┃ POP_MSG ┃ IN_PORT ┃ IN_STBD ┃
-       ┗━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┓
-            ┃    A    ┃    S    ┃    D    ┃    F    ┃    G    ┃    H    ┃    J    ┃    K    ┃    L    ┃    :    ┃    "    ┃   RET   ┃
-            ┃ IR_PSID ┃ IR_PORT ┃ IR_CNTR ┃ IR_STBD ┃ IR_SSID ┃  HELP   ┃ BM_PORT ┃ BM_CNTR ┃ BM_STBD ┃ DE_PORT ┃ DE_STBD ┃  CLEAR  ┃
-            ┗━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┛
-                 ┃    Z    ┃    X    ┃    C    ┃    V    ┃    B    ┃    N    ┃    M    ┃    <    ┃    >    ┃    ?    ┃    \    ┃
-                 ┃ MTR_INF ┃ SP_PORT ┃ TN_PORT ┃ VERBOSE ┃ TN_STBD ┃ SP_STBD ┃  AVOID  ┃ DE_VELO ┃ IN_VELO ┃  HELP   ┃  CLOCK  ┃
-                 ┗━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┛
+      ┏━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┓
+      ┃    1    ┃    2    ┃    3    ┃    4    ┃    5    ┃    6    ┃    7    ┃    8    ┃    9    ┃    0    ┃    -    ┃    =    ┃   DEL   ┃
+      ┃ FUL AST ┃ HAF AST ┃ SLO AST ┃ DSL AST ┃  STOP   ┃ DSL AHD ┃ SLO AHD ┃ HAF AHD ┃ FUL AHD ┃  HALT   ┃  BRAKE  ┃  EVEN   ┃ SHUTDWN ┃
+ ┏━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┛
+ ┃   TAB   ┃    Q    ┃    W    ┃    E    ┃    R    ┃    T    ┃    Y    ┃    U    ┃    I    ┃    O    ┃    P    ┃    [    ┃    ]    ┃
+ ┃ GAMEPAD ┃  QUIT   ┃  FLOOD  ┃   POT   ┃  ROAM   ┃  MOTH   ┃  SNIFF  ┃  IDLE   ┃  INFO   ┃ CLR TSK ┃ POP_MSG ┃ IN_PORT ┃ IN_STBD ┃
+ ┗━━━━━━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┓
+                ┃    A    ┃    S    ┃    D    ┃    F    ┃    G    ┃    H    ┃    J    ┃    K    ┃    L    ┃    :    ┃    "    ┃   RET   ┃
+                ┃ IR_PSID ┃ IR_PORT ┃ IR_CNTR ┃ IR_STBD ┃ IR_SSID ┃  HELP   ┃ BM_PORT ┃ BM_CNTR ┃ BM_STBD ┃ DE_PORT ┃ DE_STBD ┃  CLEAR  ┃
+                ┗━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┛
+                     ┃    Z    ┃    X    ┃    C    ┃    V    ┃    B    ┃    N    ┃    M    ┃    <    ┃    >    ┃    ?    ┃    \    ┃
+                     ┃ MTR_INF ┃ SP_PORT ┃ TN_PORT ┃ VERBOSE ┃ TN_STBD ┃ SP_STBD ┃  AVOID  ┃ DE_VELO ┃ IN_VELO ┃  HELP   ┃  CLOCK  ┃
+                     ┗━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┛
 
   FUL AST:   full astern        QUIT:     quit application              IR_PSID:  port side infrared            MTR_INF:  toggle motor info
   HAF AST:   half astern        FLOOD:    toggle flood publisher        IR_PORT:  port infrared                 SP_PORT:  spin port
@@ -521,6 +544,7 @@ class EventPublisher(Publisher):
 
            dec   char   usage
 
+             9   tab    gamepad
             27   del    same as backspace
             39   ' *    increase stbd velocity
             59   ; *    increase port velocity
