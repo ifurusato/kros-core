@@ -51,7 +51,7 @@ from mock.infrared_subscriber import InfraredSubscriber
 #from behave.sniff import Sniff
 #from behave.idle import Idle
 
-# ..............................................................................
+# ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 @pytest.mark.unit
 def test_pub_sub():
 
@@ -99,11 +99,10 @@ def test_pub_sub():
     if _message_bus:
         _message_bus.close()
 
-# main .........................................................................
+# ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 def main():
     test_pub_sub()
 
-# ........................
 if __name__ == "__main__":
     main()
 

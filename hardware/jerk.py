@@ -52,12 +52,12 @@ class JerkLimiter(Component):
         else:
             self._log.info('ready (enabled: {}; suppressed: {})'.format(self.enabled, self.suppressed))
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def enable(self):
         self._log.info('starting jerk limiter with jerk limit of {:5.3f}/cycle.'.format(self._jerk_rate_limit))
         Component.enable(self)
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def limit(self, current_value, target_value):
         '''
         The returned result is the limited by maximum amount of change between
@@ -93,7 +93,7 @@ class JerkLimiter(Component):
         self._log.info('limit current {:+06.2f} to target value {:+06.2f}, returning value: {:5.2f}'.format(current_value, target_value, _value))
         return _value
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def print_test_result(self, current_value, target_value):
         _result = self.limit(current_value, target_value)
         self._log.info(Fore.GREEN + 'current: {:5.2f}; '.format(current_value)

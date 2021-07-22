@@ -24,18 +24,14 @@ from core.orient import Orientation
 from core.message import Message
 from core.event import Event
 from hardware.pid import PID
-from hardware.slew import SlewRate, SlewLimiter
 
-# ..............................................................................
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class PIDController(object):
     '''
-     Provides a configurable PID motor controller via a threaded
-     fixed-time loop. This also maintains a value for the current 
-     motor velocity by sampling the step count from the motors on
-     the same interval as the PID calls.
-
-     If the 'kros:motors:pid:enable_slew' property is True, this
-     will set a slew limiter on the PID setpoint.
+    Provides a configurable PID motor controller via a threaded
+    fixed-time loop. This also maintains a value for the current
+    motor velocity by sampling the step count from the motors on
+    the same interval as the PID calls.
     '''
 
     def __init__(self, config, message_bus, motor, setpoint=0.0, sample_time=0.01, level=Level.INFO):
@@ -63,9 +59,6 @@ class PIDController(object):
             self._log.error('PID class requires Python 3.')
             sys.exit(1)
         # PID configuration ................................
-#        self._pot_ctrl = self._config.get('pot_ctrl')
-#        if self._pot_ctrl:
-#            self._pot = Potentiometer(config, Level.INFO)
         _period_sec = 1.0 / self._config.get('sample_freq_hz')
         _kp         = self._config.get('kp') # proportional gain
         _ki         = self._config.get('ki') # integral gain
@@ -73,36 +66,21 @@ class PIDController(object):
         _min_output = self._config.get('mininum_output')
         _max_output = self._config.get('maximum_output')
         self._pid = PID(self._orientation.label, _kp, _ki, _kd, _min_output, _max_output, sample_time=_period_sec, level=level)
-
         # used for hysteresis, if queue too small will zero-out motor power too quickly
         _queue_len = self._config.get('hyst_queue_len')
         self._deque = Deque([], maxlen=_queue_len)
-
-        self._enable_slew = self._config.get('enable_slew')
-        if self._enable_slew:
-            raise Exception('use slew limiter from Motor instead.')
-#           self._slewlimiter = SlewLimiter(config, orientation=self._motor.orientation, level=Level.INFO)
-#           self._slewlimiter.set_rate_limit(SlewRate.NORMAL) # configurable?
-#           self._slewlimiter.enable()
-#           self._log.info('slew limiter enabled.')
-        else:
-            self._slewlimiter = None
-            self._log.info('slew limiter disabled.')
-
         self._power        = 0.0
         self._last_power   = 0.0
         self._enabled      = False
         self._closed       = False
-#       self._last_steps   = 0
-#       self._max_diff_steps = 0
         self._log.info('ready.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def orientation(self):
         return self._orientation
 
-    # ..............................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def kp(self):
         return self._pid.kp
@@ -127,30 +105,16 @@ class PIDController(object):
     def kd(self, kd):
         self._pid.kd = kd
 
-#   # ..............................................................................
-#   def enable_slew(self, enable):
-#       _old_value = self._enable_slew
-#       if not self._slewlimiter.is_enabled():
-#           self._slewlimiter.enable()
-#       self._enable_slew = enable
-#       return _old_value
-
-#   # ..............................................................................
-#   def set_slew_rate(self, slew_rate):
-#       if type(slew_rate) is SlewRate:
-#           self._slewlimiter.set_rate_limit(slew_rate)
-#       else:
-#           raise Exception('expected SlewRate argument, not {}'.format(type(slew_rate)))
-
-    # ..............................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def steps(self):
         return self._motor.steps
 
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def reset_steps(self):
         self._motor._steps = 0
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def setpoint(self):
         '''
@@ -163,11 +127,9 @@ class PIDController(object):
         '''
         Setter for the setpoint (PID set point).
         '''
-#       if self._enable_slew:
-#           setpoint = self._slewlimiter.limit(self.setpoint, setpoint)
         self._pid.setpoint = setpoint
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def set_limit(self, limit):
         '''
         Setter for the limit of the PID setpoint.
@@ -175,7 +137,7 @@ class PIDController(object):
         '''
         self._pid.set_limit(limit)
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def stats(self):
         '''
@@ -186,12 +148,12 @@ class PIDController(object):
         cp, ci, cd = self._pid.components
         return kp, ki, kd, cp, ci, cd, self._last_power, self._motor.current_power_level, self._power, self._motor.velocity, self._pid.setpoint, self._motor.steps
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def enabled(self):
         return self._enabled
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def handle(self, message):
         '''
         The PID loop that continues while the enabled flag is True.
@@ -218,7 +180,7 @@ class PIDController(object):
 #               self._motor.set_motor_power(self._power / 100.0)
         return message
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _get_mean_setpoint(self, value):
         '''
         Returns the mean of setpoint values collected in the queue.
@@ -235,20 +197,20 @@ class PIDController(object):
             _mean += ( x - _mean ) / _n
         return float('nan') if _n < 1 else _mean
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def print_state(self):
         _fore = Fore.RED if self._orientation == Orientation.PORT else Fore.GREEN
         self._log.info(_fore + 'power:        \t{}'.format(self._power))
         self._log.info(_fore + 'last_power:   \t{}'.format(self._last_power))
         self._pid.print_state()
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def reset(self):
         self._pid.reset()
         self._motor.stop()
         self._log.info(Fore.GREEN + 'reset.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def enable(self):
         if not self._closed:
             if self._enabled:
@@ -259,7 +221,7 @@ class PIDController(object):
         else:
             self._log.warning('cannot enable PID loop: already closed.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def disable(self):
         if not self._enabled:
             self._log.warning('already disabled.')
@@ -269,7 +231,7 @@ class PIDController(object):
             self._enabled = False
             self._log.info('disabled.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def close(self):
         self.disable()
         self._closed = True

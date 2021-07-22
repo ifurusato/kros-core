@@ -23,7 +23,7 @@ from core.event import Event
 from core.logger import Logger, Level
 from core.rate import Rate
 
-# ...............................................................
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class MockGamepad(object):
     def __init__(self, message_bus, message_factory, level=Level.INFO):
         self._message_bus = message_bus
@@ -36,7 +36,7 @@ class MockGamepad(object):
         self._rate = Rate(_loop_freq_hz)
         self._log.info('ready.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def enable(self):
         if self._enabled:
             self._log.info('already enabled.')
@@ -44,11 +44,11 @@ class MockGamepad(object):
             self._enabled = True
             self._log.info('enabled.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def disable(self):
         self._enabled = False
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def _get_messages(self):
         '''
         Mocks one or more messages being returned by a Gamepad.
@@ -61,10 +61,11 @@ class MockGamepad(object):
         _messages.append(self._message_factory.create_message(Event.INFRARED_STBD, self._get_random_distance()))
         return _messages
 
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _get_random_distance(self):
         return random.triangular(20.0, 100.0, 70.0)
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def start_gamepad_loop(self, callback):
         '''
         This is the method to call to actually start the loop.
@@ -83,7 +84,7 @@ class MockGamepad(object):
         else:
             self._log.warning('cannot enable: already closed.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def _gamepad_loop(self, callback, f_is_enabled):
         '''
         The mocked Gamepad loop.
@@ -135,7 +136,7 @@ class MockGamepad(object):
 
         self._log.info('exited event loop.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _handleMessage(self, message):
         '''
         Note that the parameter in the original lass is an evdev InputDevice

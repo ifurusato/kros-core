@@ -14,7 +14,7 @@
 
 from enum import Enum
 
-# ..............................................................................
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Numbers(Enum):
     ZERO    = ( 0,  'zero' )
     ONE     = ( 1,  'one' )
@@ -39,10 +39,12 @@ class Numbers(Enum):
     def __init__(self, num, name):
         self._name = name
 
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def name(self):
         return self.name
 
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @staticmethod
     def from_number(num):
         '''
@@ -54,6 +56,7 @@ class Numbers(Enum):
                 return n._name
         return str(num)
 
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def __eq__(self, obj):
         return isinstance(obj, Number) and obj.value == self.value
 

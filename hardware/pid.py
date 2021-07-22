@@ -21,7 +21,7 @@ init()
 from core.logger import Logger, Level
 from core.orient import Orientation
 
-# ..............................................................................
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class PID(object):
     '''
     The PID controller itself.
@@ -59,7 +59,7 @@ class PID(object):
         self.reset()
         self._log.info('ready.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def kp(self):
         return self._kp
@@ -68,7 +68,7 @@ class PID(object):
     def kp(self, kp):
         self._kp = kp
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def ki(self):
         return self._ki
@@ -77,7 +77,7 @@ class PID(object):
     def ki(self, ki):
         self._ki = ki
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def kd(self):
         return self._kd
@@ -86,7 +86,7 @@ class PID(object):
     def kd(self, kd):
         self._kd = kd
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def setpoint(self):
         '''
@@ -115,7 +115,7 @@ class PID(object):
 #       else:
 #           self._log.info('setpoint: {:<5.2f}'.format(self._setpoint))
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def limit(self):
         return self._limit
@@ -133,7 +133,7 @@ class PID(object):
             self._log.info(Fore.CYAN + 'setpoint limit: {:5.2f}'.format(limit))
         self._limit = limit
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def __call__(self, target, dt=None):
         '''
         Call the PID controller with a target value and calculate and return
@@ -188,7 +188,7 @@ class PID(object):
         self._last_time   = _now
         return output
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def sample_time(self):
         '''
@@ -196,7 +196,7 @@ class PID(object):
         '''
         return self._sample_time
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def constants(self):
         '''
@@ -204,7 +204,7 @@ class PID(object):
         '''
         return self._kp, self._ki, self._kd
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def components(self):
         '''
@@ -214,7 +214,7 @@ class PID(object):
         '''
         return self._proportional, self._integral, self._derivative
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def tunings(self):
         '''
@@ -222,7 +222,7 @@ class PID(object):
         '''
         return self._kp, self._ki, self._kd
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @tunings.setter
     def tunings(self, tunings):
         '''
@@ -230,7 +230,7 @@ class PID(object):
         '''
         self._kp, self._ki, self._kd = tunings
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def output_limits(self):
         '''
@@ -239,7 +239,7 @@ class PID(object):
         '''
         return self._min_output, self._max_output
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @output_limits.setter
     def output_limits(self, limits):
         '''
@@ -257,7 +257,7 @@ class PID(object):
         self._integral    = self._clip(self._integral)
         self._last_output = self._clip(self._last_output)
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def print_state(self):
         _fore = Fore.YELLOW
         self._log.info(_fore + 'kp:             \t{}'.format(self._kp))
@@ -276,7 +276,7 @@ class PID(object):
         self._log.info(_fore + 'last_input:     \t{}'.format(self._last_input))
         self._log.info(_fore + 'last_time:      \t{}'.format(self._last_time))
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def reset(self):
         '''
         Reset the PID controller internals, setting each term to 0 as well
@@ -284,9 +284,9 @@ class PID(object):
         (derivative calculation).
 
         Note that after the setpoint has been set to zero if the motors
-        have been running the last input and output values remain at 
-        their previous values. This storing of previous state causes 
-        problems when starting up again. The reset() function cleans 
+        have been running the last input and output values remain at
+        their previous values. This storing of previous state causes
+        problems when starting up again. The reset() function cleans
         any stored state.
         '''
         self._log.info(Fore.YELLOW + 'reset.')
@@ -298,7 +298,7 @@ class PID(object):
         self._last_input   = 0.0
         self._last_time    = self._current_time()
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _clip(self, value):
         '''
         Clip the value between the lower and upper limits. If either limit

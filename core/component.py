@@ -10,11 +10,10 @@
 # modified: 2021-06-29
 #
 
-#from abc import ABC, abstractmethod
 from core.logger import Logger
 
-# ..............................................................................
-class Component(object): # ABC
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+class Component(object):
     '''
     A basic component providing support for enable or disable, suppress or
     release, and close flags. The enable/disable and suppress/release differ
@@ -45,7 +44,8 @@ class Component(object): # ABC
         self._enabled    = enabled
         self._closed     = False
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+
     @property
     def enabled(self):
         '''
@@ -63,7 +63,8 @@ class Component(object): # ABC
         else:
             self._log.warning('cannot enable: already closed.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+
     @property
     def disabled(self):
         '''
@@ -82,7 +83,8 @@ class Component(object): # ABC
         else:
             self._log.warning('already disabled.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+
     @property
     def suppressed(self):
         '''
@@ -104,7 +106,8 @@ class Component(object): # ABC
         self._suppressed = True
         self._log.info('suppressed.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+
     @property
     def closed(self):
         return self._closed

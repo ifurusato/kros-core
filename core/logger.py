@@ -19,7 +19,7 @@ init()
 
 from core.util import Util
 
-# ..............................................................................
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Logger:
 
     _suppress = False
@@ -51,7 +51,7 @@ class Logger:
         self.__ERROR_TOKEN = 'ERROR'
         self.__FATAL_TOKEN = 'FATAL'
         self._mf = '{}{} : {}{}'
-        self.mutex = mutex if mutex is not None else threading.Lock() 
+        self.mutex = mutex if mutex is not None else threading.Lock()
         # some of this could be set via configuration
         self._include_timestamp = True
 #       _format='%(asctime)s.%(msecs)03d %(levelname)s {%(module)s} [%(funcName)s] %(message)s',
@@ -82,7 +82,7 @@ class Logger:
                 self.__log.addHandler(self._sh)
         self.level = level
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def suppress(self):
         '''
         Suppresses all log messages except critical errors and log-to-file
@@ -90,6 +90,7 @@ class Logger:
         '''
         type(self)._suppress = True
 
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def release(self):
         '''
         Releases (un-suppresses) all log messages except critical errors
@@ -97,7 +98,7 @@ class Logger:
         '''
         type(self)._suppress = False
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def level(self):
         '''
@@ -105,7 +106,7 @@ class Logger:
         '''
         return self._level
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @level.setter
     def level(self, level):
         '''
@@ -118,7 +119,7 @@ class Logger:
         if self._sh:
             self._sh.setLevel(level.value)
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def is_at_least(self, level):
         '''
         Returns True if the current log level is less than or equals the
@@ -129,7 +130,7 @@ class Logger:
         '''
         return self._level.value >= level.value
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def suppressed(self):
         '''
@@ -137,17 +138,17 @@ class Logger:
         '''
         return type(self)._suppress
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def mutex(self):
         return self._mutex
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @mutex.setter
     def mutex(self, mutex):
         self._mutex = mutex
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def debug(self, message):
         '''
         Prints a debug message.
@@ -158,7 +159,7 @@ class Logger:
             with self._mutex:
                 self.__log.debug(self._mf.format(Logger.__color_debug, self.__DEBUG_TOKEN, message, Logger.__color_reset))
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def info(self, message):
         '''
         Prints an informational message.
@@ -169,7 +170,7 @@ class Logger:
             with self._mutex:
                 self.__log.info(self._mf.format(Logger.__color_info, self.__INFO_TOKEN, message, Logger.__color_reset))
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def notice(self, message):
         '''
         Functionally identical to info() except it prints the message brighter.
@@ -180,7 +181,7 @@ class Logger:
             with self._mutex:
                 self.__log.info(self._mf.format(Logger.__color_notice, self.__INFO_TOKEN, message, Logger.__color_reset))
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def warning(self, message):
         '''
         Prints a warning message.
@@ -191,7 +192,7 @@ class Logger:
             with self._mutex:
                 self.__log.warning(self._mf.format(Logger.__color_warning, self.__WARN_TOKEN, message, Logger.__color_reset))
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def error(self, message):
         '''
         Prints an error message.
@@ -202,7 +203,7 @@ class Logger:
             with self._mutex:
                 self.__log.error(self._mf.format(Logger.__color_error, self.__ERROR_TOKEN, Style.NORMAL + message, Logger.__color_reset))
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def critical(self, message):
         '''
         Prints a critical or otherwise application-fatal message.
@@ -210,7 +211,7 @@ class Logger:
         with self._mutex:
             self.__log.critical(self._mf.format(Logger.__color_critical, self.__FATAL_TOKEN, Style.BRIGHT + message, Logger.__color_reset))
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def file(self, message):
         '''
         This is just info() but without any formatting.
@@ -218,8 +219,7 @@ class Logger:
         with self._mutex:
             self.__log.info(message)
 
-    # headings .................................................................
-
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def heading(self, title, message=None, info=None):
         '''
         Print a formatted, titled message to info(), inspired by maven console messaging.
@@ -249,6 +249,7 @@ class Logger:
         # print spacer
         self.info('')
 
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _get_title_bar(self, message, MAX_WIDTH):
         _carrier_width = len(message) + 4
         _hyphen_width = math.floor( ( MAX_WIDTH - _carrier_width ) / 2 )
@@ -261,7 +262,7 @@ class Logger:
             return Fore.WHITE + Style.BRIGHT + Util.repeat('-', _hyphen_width) + '< ' + Fore.CYAN + Style.NORMAL\
                     + message + Fore.WHITE + Style.BRIGHT + ' >' + Util.repeat('-', _hyphen_width-1)
 
-# ..............................................................................
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Level(Enum):
     DEBUG    = ( logging.DEBUG,    'DEBUG'    ) # 10
     INFO     = ( logging.INFO,     'INFO'     ) # 20
@@ -269,16 +270,18 @@ class Level(Enum):
     ERROR    = ( logging.ERROR,    'ERROR'    ) # 40
     CRITICAL = ( logging.CRITICAL, 'CRITICAL' ) # 50
 
-    # ..................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def __new__(cls, *args, **kwds):
         obj = object.__new__(cls)
         obj._value_ = args[0]
         return obj
 
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     # ignore the first param since it's already set by __new__
     def __init__(self, num, label):
         self._label = label
 
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @staticmethod
     def from_string(label):
         if label.upper()   == 'DEBUG':

@@ -7,7 +7,7 @@
 #
 # author:   Murray Altheim
 # created:  2021-02-16
-# modified: 2021-06-26
+# modified: 2021-07-22
 #
 
 from threading import Thread
@@ -23,7 +23,7 @@ from core.orient import Orientation, Speed, Direction
 from core.event import Event
 from hardware.motor import Motor
 
-# ..............................................................................
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Motors(Component):
     '''
     A mocked dual motor controller with encoders.
@@ -78,17 +78,20 @@ class Motors(Component):
                 else n
         self._log.info('motors ready.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def thunderborg(self):
+        '''
+        Temporary: do no use this brain.
+        '''
         return self._tb
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def name(self):
         return 'motors'
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def max_velocity(self):
         return self._max_velocity
@@ -97,7 +100,7 @@ class Motors(Component):
     def max_velocity(self, max_velocity):
         self._max_velocity = max_velocity
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def start_loop(self):
         '''
         Start the loop.
@@ -113,7 +116,7 @@ class Motors(Component):
         else:
             self._log.warning('cannot enable loop: thread already exists.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def stop_loop(self):
         '''
         Stop the loop.
@@ -125,11 +128,11 @@ class Motors(Component):
         else:
             self._log.warning('already disabled.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def loop_is_running(self):
         return self._loop_enabled
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _loop(self, f_is_enabled):
         '''
         The motors loop, which executes while the flag argument lambda is True.
@@ -160,11 +163,11 @@ class Motors(Component):
             time.sleep(self._loop_delay_sec)
         self._log.info('exited display loop.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def print_motor_status(self):
         self._log.info('motors:')
 
-        # port .............................................
+        # port ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
         self._log.info(Fore.RED + '\t{}'.format('port') \
                 + Fore.CYAN + ' {}enabled: '.format((' ' * max(0, (10 - len('port')))))
@@ -184,7 +187,7 @@ class Motors(Component):
                 + Fore.CYAN + 'suppressed: '
                 + Fore.YELLOW + '{}'.format(self._port_motor.jerk_limiter.suppressed))
 
-        # starboard ........................................
+        # starboard ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
         self._log.info(Fore.GREEN + '\t{}'.format('stbd') \
                 + Fore.CYAN + ' {}enabled: '.format((' ' * max(0, (10 - len('stbd')))))
@@ -204,7 +207,7 @@ class Motors(Component):
                 + Fore.CYAN + 'suppressed: '
                 + Fore.YELLOW + '{}'.format(self._stbd_motor.jerk_limiter.suppressed))
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def print_info(self, count):
         if self.stopped:
             self._log.info(('[{:04d}] '.format(count) if count else '')
@@ -237,7 +240,7 @@ class Motors(Component):
                         + Fore.CYAN  + ' :: decelerate: ' + Fore.BLUE + '{:.0%}'.format(self._decelerate_ratio)
                         + Fore.CYAN + ' :: movement: {}'.format(self._characterise_movement()))
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _characterise_movement(self):
         '''
         Return a pair of strings in a list, characterising the current and
@@ -249,10 +252,8 @@ class Motors(Component):
             return _before
         else:
             return '{} -> → {}'.format(_before, _after)
-#       return [ self._get_movement_description(self._port_motor.velocity, self._stbd_motor.velocity),
-#                self._get_movement_description(self._port_target_velocity, self._stbd_target_velocity) ]
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _get_movement_description(self, port_velocity, stbd_velocity):
         _avg_velocity = ( port_velocity + stbd_velocity ) / 2.0
 
@@ -286,14 +287,14 @@ class Motors(Component):
             else:
                 return 'astern indeterminate (2)'
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def get_motor(self, orientation):
         if orientation is Orientation.PORT:
             return self._port_motor
         else:
             return self._stbd_motor
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def dispatch_velocity_event(self, payload):
         self._reset_deceleration()
         _event = payload.event
@@ -338,7 +339,7 @@ class Motors(Component):
         else:
             raise ValueError('unrecognised velocity event {}'.format(_event.label))
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def dispatch_chadburn_event(self, payload):
         '''
         A dispatcher for chadburn events: full, half, slow and dead slow
@@ -350,50 +351,6 @@ class Motors(Component):
         _value = payload.value
         _speed = _event.speed
         _direction = _event.direction
-#        # ahead ................................................................
-#        if _event is Event.AHEAD:
-#            # use existing value in payload
-#            _direction = Direction.AHEAD
-#            self._log.info(self._color + 'AHEAD.')
-#        elif _event is Event.DEAD_SLOW_AHEAD:
-#            _direction = Direction.AHEAD
-#            _speed = Speed.DEAD_SLOW
-#            self._log.info(self._color + 'DEAD SLOW AHEAD.')
-#        elif _event is Event.SLOW_AHEAD:
-#            _direction = Direction.AHEAD
-#            _speed = Speed.SLOW
-#            self._log.info(self._color + 'SLOW AHEAD.')
-#        elif _event is Event.HALF_AHEAD:
-#            _direction = Direction.AHEAD
-#            _speed = Speed.HALF
-#            self._log.info(self._color + 'HALF AHEAD.')
-#        elif _event is Event.FULL_AHEAD:
-#            _direction = Direction.AHEAD
-#            _speed = Speed.FULL
-#            self._log.info(self._color + 'FULL AHEAD.')
-#        # astern ...............................................................
-#        elif _event is Event.ASTERN:
-#            # use existing value in payload
-#            _direction = Direction.ASTERN
-#            self._log.info(self._color + 'ASTERN.')
-#        elif _event is Event.FULL_ASTERN:
-#            _direction = Direction.ASTERN
-#            _speed = Speed.FULL
-#            self._log.info(self._color + 'FULL ASTERN.')
-#        elif _event is Event.HALF_ASTERN:
-#            _direction = Direction.ASTERN
-#            _speed = Speed.HALF
-#            self._log.info(self._color + 'HALF ASTERN.')
-#        elif _event is Event.SLOW_ASTERN:
-#            _direction = Direction.ASTERN
-#            _speed = Speed.SLOW
-#            self._log.info(self._color + 'SLOW ASTERN.')
-#        elif _event is Event.DEAD_SLOW_ASTERN:
-#            _direction = Direction.ASTERN
-#            _speed = Speed.DEAD_SLOW
-#            self._log.info(self._color + 'DEAD SLOW ASTERN.')
-#        else:
-#            raise ValueError('unrecognised chadburn event {}'.format(_event.label))
         if _speed is not Speed.STOP and not self.loop_is_running():
             self.start_loop()
         # ........
@@ -402,7 +359,7 @@ class Motors(Component):
         self.set_motor_velocity(Orientation.PORT, _value)
         self.set_motor_velocity(Orientation.STBD, _value)
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def dispatch_theta_event(self, payload):
         '''
         A dispatcher for theta (rotation/turning) events: turn ahead, turn to,
@@ -421,6 +378,7 @@ class Motors(Component):
         elif _event is Event.EVEN:
             self._even()
 
+        # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
         # port .............................................
         elif _event is Event.PORT_THETA:
             pass
@@ -445,6 +403,7 @@ class Motors(Component):
             self._log.info('SPIN_PORT event.')
             self._spin(Orientation.PORT)
 
+        # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
         # stbd .............................................
         elif _event is Event.STBD_THETA:
             pass
@@ -471,7 +430,7 @@ class Motors(Component):
         else:
             raise ValueError('unrecognised theta event {}'.format(_event.label))
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def dispatch_stop_event(self, payload):
         '''
         A dispatcher for deceleration events: halt, _brake and stop.
@@ -489,7 +448,7 @@ class Motors(Component):
         else:
             raise ValueError('unrecognised stop event {}'.format(_event.label))
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def dispatch_infrared_event(self, payload):
         '''
         A dispatcher for infrared events from port side, port, center, starboard, or starboard side.
@@ -515,7 +474,7 @@ class Motors(Component):
         else:
             raise ValueError('unrecognised bumper event {}'.format(_event.label))
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def dispatch_bumper_event(self, payload):
         '''
         A dispatcher for bumper events from port, center or starboard.
@@ -536,7 +495,7 @@ class Motors(Component):
         else:
             raise ValueError('unrecognised bumper event {}'.format(_event.label))
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _spin(self, orientation):
         '''
         Spin to either port (counter-clockwise) or starboard (clockwise) by
@@ -555,7 +514,7 @@ class Motors(Component):
         self.set_motor_velocity(Orientation.PORT, _port_velocity)
         self.set_motor_velocity(Orientation.STBD, _stbd_velocity)
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _even(self):
         '''
         Set the target velocity of both motors to the average of their target
@@ -571,7 +530,7 @@ class Motors(Component):
             self.set_motor_velocity(Orientation.PORT, _average_velocity)
             self.set_motor_velocity(Orientation.STBD, _average_velocity)
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _increment_motor_velocity(self, orientation, increment):
         '''
         Increment the target velocity of the specified motor by the supplied increment
@@ -587,7 +546,7 @@ class Motors(Component):
                     self._stbd_motor.velocity, increment, _updated_target_velocity))
         self.set_motor_velocity(orientation, _updated_target_velocity)
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _update_target_velocity(self, value, increment):
         '''
         Updates the value by the increment, clipping the result based on
@@ -596,7 +555,7 @@ class Motors(Component):
         value += increment
         return -1.0 * self._velocity_clip(-1.0 * value) if value < 0 else self._velocity_clip(value)
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def get_motor_velocity(self, orientation):
         '''
         A convenience method that returns the target velocity of the
@@ -607,6 +566,7 @@ class Motors(Component):
         else:
             return self._stbd_motor.velocity
 
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def set_motor_velocity(self, orientation, target_velocity):
         '''
         A convenience method that sets the target velocity and motor
@@ -617,7 +577,7 @@ class Motors(Component):
         else:
             self._stbd_motor.set_motor_velocity(target_velocity)
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _halt(self):
         '''
         Quickly (but not immediately) stops both motors.
@@ -635,7 +595,7 @@ class Motors(Component):
             self._log.debug('already halted.')
         return True
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _brake(self):
         '''
         Slowly coasts both motors to a stop.
@@ -653,7 +613,7 @@ class Motors(Component):
             self._log.warning('already braked.')
         return True
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _decelerate(self, count):
         '''
         Applies the value to incrementally slow the motor target velocity
@@ -694,14 +654,14 @@ class Motors(Component):
                     + ' {:5.2f}'.format(self._stbd_motor.current_power)
                     + Fore.CYAN  + '\t:: decelerate: ' + Fore.BLUE + '{:.0%}'.format(self._decelerate_ratio))
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _reset_deceleration(self):
         '''
         Halts any automated deceleration.
         '''
         self._decelerate_ratio = 0.0
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _stop(self):
         '''
         Stops both motors immediately, with no slewing.
@@ -719,20 +679,20 @@ class Motors(Component):
             self._log.warning('already stopped.')
         return True
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def stopped(self):
         return self._port_motor.velocity == 0 and self._stbd_motor.velocity == 0
 #       return self._port_motor.stopped and self._stbd_motor.stopped
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def is_in_motion(self):
         '''
         Returns true if either motor is moving.
         '''
         return self._port_motor.is_in_motion() or self._stbd_motor.is_in_motion()
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def enable(self):
         '''
         Enables the motors. This issues a warning if already enabled, but no
@@ -747,7 +707,7 @@ class Motors(Component):
         Component.enable(self)
         self._log.info('enabled.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def disable(self):
         '''
         Disable the motors, halting first if in motion.
@@ -764,7 +724,7 @@ class Motors(Component):
         else:
             self._log.debug('already disabled.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def close(self):
         '''
         Halts, turn everything off and stop doing anything.
@@ -774,7 +734,7 @@ class Motors(Component):
             self._port_motor.close()
             self._stbd_motor.close()
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @staticmethod
     def cancel():
         self._log.info('cancelling motors...')

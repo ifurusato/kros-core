@@ -9,6 +9,10 @@
 # created:  2020-01-14
 # modified: 2021-04-22
 #
+# Class used to control ThunderBorg motor controller (from PiBorg), and responds
+# to a request for a battery reading with a fixed value.
+#
+
 """
 This module is designed to communicate with a nonexistent (mock) ThunderBorg.
 
@@ -17,7 +21,7 @@ It only provides for setting and getting the power setting of motors 1 and 2.
 
 from core.logger import Level, Logger
 
-# Class used to control ThunderBorg
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class ThunderBorg(object):
     """
 This module is designed to communicate with the ThunderBorg
@@ -29,7 +33,7 @@ This module is designed to communicate with the ThunderBorg
         self._motor1_power = 0.0
         self._motor2_power = 0.0
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def SetMotor2(self, power):
         """
 SetMotor2(power)
@@ -44,7 +48,7 @@ SetMotor2(1)     -> motor 2 moving forward at 100% power
         self._log.info('SetMotor2() power: {:5.2f}'.format(power))
         self._motor2_power = power
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def GetMotor2(self):
         """
 power = GetMotor2()
@@ -58,7 +62,7 @@ e.g.
         """
         return self._motor2_power
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def SetMotor1(self, power):
         """
 SetMotor1(power)
@@ -73,7 +77,7 @@ SetMotor1(1)     -> motor 1 moving forward at 100% power
         self._log.info('SetMotor1() power: {:5.2f}'.format(power))
         self._motor1_power = power
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def GetMotor1(self):
         """
 power = GetMotor1()
@@ -87,7 +91,7 @@ e.g.
         """
         return self._motor1_power
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def SetMotors(self, power):
         """
 SetMotors(power)
@@ -102,7 +106,7 @@ SetMotors(1)     -> all motors are moving forward at 100% power
         self.SetMotor1(power)
         self.SetMotor2(power)
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def MotorsOff(self):
         """
 MotorsOff()
@@ -112,13 +116,14 @@ Sets all motors to stopped, useful when ending a program
         self.SetMotor1(0.0)
         self.SetMotor2(0.0)
 
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def GetBatteryReading(self):
         """
 voltage = GetBatteryReading()
 
 Reads the current battery level from the main input.
 Returns the value as a voltage based on the 3.3 V rail as a reference.
-        """ 
+        """
         return 19.09
 
 #EOF

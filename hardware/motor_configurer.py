@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright 2020 by Murray Altheim. All rights reserved. This file is part of
-# the Robot Operating System project and is released under the "Apache Licence, 
+# the Robot Operating System project and is released under the "Apache Licence,
 # Version 2.0". Please see the LICENSE file included as part of this package.
 #
 # author:   Murray Altheim
@@ -20,13 +20,13 @@ from core.i2c_scanner import I2CScanner
 from core.orient import Orientation, Speed
 from hardware.motors import Motors
 
-# ..............................................................................
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class MotorConfigurer():
 
     THUNDERBORG_ADDRESS = 0x15
 
     '''
-    Configures either a ThunderBorg motor controller for a pair of motors. 
+    Configures either a ThunderBorg motor controller for a pair of motors.
     If the ThunderBorg does not appear on the I²C bus the motors are mocked.
 
     :param config:       the application configuration
@@ -71,7 +71,7 @@ class MotorConfigurer():
         self._configure_speed()
         self._log.info('ready.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _configure_speed(self):
         '''
         Sets the value of Speed's entries to the values provided in the
@@ -84,12 +84,12 @@ class MotorConfigurer():
             _speed.value = _value
             self._log.debug('speed: {}; set value: {}'.format(_speed, _speed.value))
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _import_thunderborg(self):
         if self._motors_enabled and not self._enable_mock:
             self._log.info('configure thunderborg & motors...')
             try:
-    
+
                 if self._i2c_scanner.has_address([MotorConfigurer.THUNDERBORG_ADDRESS]):
                     self._log.info('importing ThunderBorg...')
                     import hardware.ThunderBorg3 as ThunderBorg
@@ -115,7 +115,7 @@ class MotorConfigurer():
                 self._tb = ThunderBorg.ThunderBorg(Level.INFO)  # create a new ThunderBorg object
                 self._tb.Init()                       # set the board up (checks the board is connected)
                 self._log.info('successfully instantiated ThunderBorg.')
-    
+
                 if not self._tb.foundChip:
                     boards = ThunderBorg.ScanForThunderBorg()
                     if len(boards) == 0:
@@ -128,7 +128,7 @@ class MotorConfigurer():
                                 boards[0]))
                     raise Exception('unable to instantiate ThunderBorg [1].')
                 self._tb.SetLedShowBattery(True)
-    
+
                 # initialise ThunderBorg ...........................
                 self._log.debug('getting battery reading...')
                 # get battery voltage to determine max motor power
@@ -151,7 +151,7 @@ class MotorConfigurer():
                 # convert float to ratio format
                 self._log.info('battery level: {:>5.2f}V; motor voltage: {:>5.2f}V; maximum power ratio: {}'.format(voltage_in, voltage_out, \
                         str(Fraction(self._max_power_ratio).limit_denominator(max_denominator=20)).replace('/',':')))
-    
+
             except OSError as e:
                 if self._enable_mock:
                     self._log.info('using mock ThunderBorg.')
@@ -168,11 +168,10 @@ class MotorConfigurer():
                     self._log.error('unable to import mock ThunderBorg: {}'.format(e))
                     traceback.print_exc(file=sys.stdout)
                     raise Exception('unable to instantiate ThunderBorg [2].')
-#                   sys.exit(1)
         else:
             self._import_mock_thunderborg()
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _import_mock_thunderborg(self):
         self._log.info('configure thunderborg & motors...')
         try:
@@ -201,13 +200,12 @@ class MotorConfigurer():
                 self._log.error('unable to import ThunderBorg: {}'.format(e))
                 traceback.print_exc(file=sys.stdout)
                 raise Exception('unable to instantiate ThunderBorg [2].')
-#               sys.exit(1)
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def get_motors(self):
         '''
         Return the configured motors.
         '''
         return self._motors
-            
+
 #EOF

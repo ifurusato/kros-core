@@ -7,7 +7,7 @@
 #
 # author:   Murray Altheim
 # created:  2020-09-19
-# modified: 2020-09-19
+# modified: 2021-07-18
 #
 
 import pytest
@@ -21,7 +21,7 @@ from core.rate import Rate
 from mock.potentiometer import Potentiometer
 from mock.pot_publisher import MockPotentiometer
 
-# ..............................................................................
+# ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 @pytest.mark.unit
 def test_ioe_potentiometer():
 
@@ -36,8 +36,8 @@ def test_ioe_potentiometer():
         _pot = Potentiometer(_config, Level.INFO)
     except Exception as e:
         _pot = MockPotentiometer(Level.INFO)
-#   _pot.set_output_limits(0.00, 0.150) 
-    _pot.set_output_limits(-0.90, 0.90) 
+#   _pot.set_output_limits(0.00, 0.150)
+    _pot.set_output_limits(-0.90, 0.90)
 
     _log.info('starting test...')
     _hz = 10
@@ -51,8 +51,7 @@ def test_ioe_potentiometer():
         _log.info(Fore.YELLOW + 'scaled value: {:9.6f}'.format(_scaled_value))
         _rate.wait()
 
-
-# main .........................................................................
+# ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 def main(argv):
 
     try:
@@ -62,7 +61,6 @@ def main(argv):
     except Exception:
         print(Fore.RED + Style.BRIGHT + 'error starting ros: {}'.format(traceback.format_exc()) + Style.RESET_ALL)
 
-# call main ....................................................................
 if __name__== "__main__":
     main(sys.argv[1:])
 

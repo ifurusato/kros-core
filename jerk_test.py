@@ -7,7 +7,7 @@
 #
 # author:   Murray Altheim
 # created:  2020-01-14
-# modified: 2021-04-22
+# modified: 2021-07-20
 #
 
 import pytest, unittest
@@ -83,7 +83,6 @@ def main():
     finally:
         pass
 
-# ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 if __name__ == "__main__":
     main()
 

@@ -24,7 +24,7 @@ from core.event import Event, Group
 from core.fsm import FiniteStateMachine, State
 from core.message_bus import MessageBus
 
-# ..............................................................................
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Subscriber(Component, FiniteStateMachine):
 
     LOG_INDENT = ( ' ' * 60 ) + Fore.CYAN + ': ' + Fore.CYAN
@@ -67,31 +67,31 @@ class Subscriber(Component, FiniteStateMachine):
         self._message_bus.register_subscriber(self)
         self._log.info(self._color + 'ready.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def set_log_level(self, level):
         self._log.level = level
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def name(self):
         return self._name
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def config(self):
         return self._config
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def message_bus(self):
         return self._message_bus
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def is_gc(self):
         return False
 
-    # events  ..................................................................
+    # events ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
     @property
     def events(self):
@@ -140,7 +140,7 @@ class Subscriber(Component, FiniteStateMachine):
         else:
             return '[NONE]'
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def acceptable(self, message):
         '''
         A filter that returns True if the message's event type is acceptable
@@ -149,7 +149,7 @@ class Subscriber(Component, FiniteStateMachine):
         '''
         return message.event is Event.ANY or message.event in self._events
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @final
     async def consume(self):
         '''
@@ -177,7 +177,7 @@ class Subscriber(Component, FiniteStateMachine):
         _ackd = _peeked_message.acknowledged_by(self)
         if not _ackd and self.acceptable(_peeked_message):
             _event = asyncio.Event()
-            self._log.debug(Fore.RED + 'begin event tracking for message:' + Fore.WHITE 
+            self._log.debug(Fore.RED + 'begin event tracking for message:' + Fore.WHITE
                     + ' {}; event: {}'.format(_peeked_message.name, _peeked_message.event.label))
 
             # acknowledge we've seen the message
@@ -239,7 +239,7 @@ class Subscriber(Component, FiniteStateMachine):
 
         self._log.debug(self._color + Style.DIM + 'consume() complete on {}.'.format(self.name))
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _done_callback(self, task):
         '''
         Signal the message bus callback has completed.
@@ -247,11 +247,11 @@ class Subscriber(Component, FiniteStateMachine):
         self._message_bus.clear_tasks()
         self._log.info('callback on message consume complete; {}'.format(task.get_name()))
 
-#   # ..........................................................................
+#   # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 #   def _get_timestamp(self):
 #       return dt.utcfromtimestamp(dt.utcnow().timestamp()).isoformat() #.replace(':','_').replace('-','_').replace('.','_')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def process_message(self, message):
         '''
         Process the message, i.e., pass its Payload along to the Arbitrator,
@@ -270,7 +270,7 @@ class Subscriber(Component, FiniteStateMachine):
         message.process(self)
         self._log.debug(self._color + Style.DIM + 'processed message {}'.format(message.name))
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def _arbitrate_message(self, message):
         '''
         Pass the message on to the Arbitrator and acknowledge that it has been
@@ -282,10 +282,10 @@ class Subscriber(Component, FiniteStateMachine):
         if self._message_bus.verbose:
             self._log.info(self._color + Style.DIM + 'arbitrated payload for event {}; value: {}'.format(message.payload.event.name, message.payload.value))
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def _cleanup_message(self, message):
         '''
-        Cleanup tasks related to completing work on a message (by this subscriber). 
+        Cleanup tasks related to completing work on a message (by this subscriber).
 
         This currently sets the message's 'expire' flag as True and tells the
         message bus to clear any completed tasks. It's not really async but is
@@ -305,7 +305,7 @@ class Subscriber(Component, FiniteStateMachine):
 #       self._message_bus.clear_tasks()
         self._log.debug(self._color + Style.DIM + 'end cleanup of message: {}'.format(message.name))
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _print_message_info(self, title, message, elapsed):
         '''
         Print an informational string followed by details about the message.
@@ -330,7 +330,7 @@ class Subscriber(Component, FiniteStateMachine):
                     + Subscriber.LOG_INDENT + 'acked by:\t{}\n'.format(message.print_acks()) \
                     + Subscriber.LOG_INDENT + Util.get_formatted_time('msg age: ', message.age) + '; ' + Util.get_formatted_time('elapsed: ', elapsed))
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def start(self):
         '''
         The necessary state machine call to start the publisher, which performs
@@ -344,17 +344,17 @@ class Subscriber(Component, FiniteStateMachine):
         else:
             self._log.debug('subscriber {} already started.'.format(self.name))
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def disable(self):
         Component.disable(self)
         FiniteStateMachine.disable(self)
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def close(self):
         Component.close(self)
         FiniteStateMachine.close(self)
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def __key(self):
         return (self.name, self._color)
 
@@ -364,7 +364,7 @@ class Subscriber(Component, FiniteStateMachine):
     def __eq__(self, obj):
         return isinstance(obj, Subscriber) and obj.name == self.name
 
-# GarbageCollector .............................................................
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class GarbageCollector(Subscriber):
     CLASS_NAME = 'gc'
     '''
@@ -381,12 +381,12 @@ class GarbageCollector(Subscriber):
         Subscriber.__init__(self, GarbageCollector.CLASS_NAME, config, message_bus=message_bus, color=color, suppressed=False, enabled=False, level=level)
         self.add_event(Event.ANY)
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def is_gc(self):
         return True
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def acceptable(self, message):
         '''
         A filter that returns True if the message is either expired and/or
@@ -394,19 +394,15 @@ class GarbageCollector(Subscriber):
         '''
         _elapsed_ms = (dt.now() - message.timestamp).total_seconds() * 1000.0
         if self._message_bus.is_expired(message) and message.fully_acknowledged:
-#           self._print_message_info('garbage collecting expired, fully-acknowledged message:', message, _elapsed_ms)
             return True
         elif self._message_bus.is_expired(message):
-#           self._print_message_info('garbage collecting expired message:', message, _elapsed_ms)
             return True
         elif message.fully_acknowledged:
-#           self._print_message_info('garbage collecting fully-acknowledged message:', message, _elapsed_ms)
             return True
         else:
-#           self._print_message_info('garbage collector ignoring unprocessed message:', message, _elapsed_ms)
             return False
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def consume(self):
         '''
         Overrides the method on Subscriber to first peek, and then if acceptable
@@ -437,7 +433,7 @@ class GarbageCollector(Subscriber):
                     + Fore.WHITE + ' {}; event: {} (queue: {:d} elements)'.format(
                     _peeked_message.name, _peeked_message.event.label, self._message_bus.queue_size))
 
-# GarbageCollectedError ........................................................
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class GarbageCollectedError(Exception):
     '''
     The garbage collector refused to process the message that has already been
@@ -445,7 +441,7 @@ class GarbageCollectedError(Exception):
     '''
     pass
 
-# QueueEmptyOnPeekError ........................................................
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class QueueEmptyOnPeekError(Exception):
     '''
     An awaited peek at the queue failed to return a message.

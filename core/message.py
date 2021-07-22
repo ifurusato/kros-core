@@ -10,7 +10,7 @@
 # modified: 2021-03-16
 #
 # NOTE: to guarantee exactly-once delivery each message must contain a list
-# of the identifiers for all current subscribers, with each subscriber 
+# of the identifiers for all current subscribers, with each subscriber
 # acknowledgement removing it from that list.
 #
 
@@ -21,12 +21,11 @@ init()
 
 from core.logger import Logger, Level
 from core.event import Event
-#rom core.subscriber import Subscriber
 
-# ..............................................................................
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Message(object):
     '''
-    Don't create one of these directly: use the MessageFactory class.
+    IMPORTANT: Don't create one of these directly: use the MessageFactory class.
     '''
 
     ID_CHARACTERS = string.ascii_uppercase + string.digits
@@ -47,7 +46,7 @@ class Message(object):
         self._processors    = {} # list of processor names who've processed message
         self._subscribers   = {} # list of subscriber names who've acknowledged message
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def set_subscribers(self, subscribers):
         '''
         Set the list of expected subscribers to this message.
@@ -55,7 +54,7 @@ class Message(object):
         for subscriber in subscribers:
             self._subscribers[subscriber] = False
 
-    # instance_name ............................................................
+    # instance_name ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
     @property
     def name(self):
@@ -64,25 +63,25 @@ class Message(object):
         '''
         return self._instance_name
 
-    # message_id    ............................................................
+    # message_id ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
     @property
     def message_id(self):
         return self._message_id
 
-    # timestamp     ............................................................
+    # timestamp ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
     @property
     def timestamp(self):
         return self._timestamp
 
-    # payload       ............................................................
+    # payload ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
     @property
     def payload(self):
         return self._payload
 
-    # event         ............................................................
+    # event ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
     @property
     def event(self):
@@ -91,7 +90,7 @@ class Message(object):
         '''
         return self._payload.event
 
-    # value         ............................................................
+    # value ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
     @property
     def value(self):
@@ -107,14 +106,14 @@ class Message(object):
         '''
         self._payload.value = value
 
-    # age      .................................................................
+    # age ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
     @property
     def age(self):
         _age_ms = (dt.now() - self._timestamp).total_seconds() * 1000.0
         return int(_age_ms)
 
-    # expired       ............................................................
+    # expired ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
     @property
     def expired(self):
@@ -123,7 +122,7 @@ class Message(object):
     def expire(self):
         self._expired = True
 
-    # sent         .............................................................
+    # sent ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
     @property
     def sent(self):
@@ -139,7 +138,7 @@ class Message(object):
         '''
         self._sent += 1
 
-    # processed     ............................................................
+    # processed ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
     def print_procd(self):
         '''
@@ -166,7 +165,7 @@ class Message(object):
         else:
             self._processors[processor] = True
 
-    # garbage collection   .....................................................
+    # garbage collection ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
     @property
     def gcd(self):
@@ -182,7 +181,7 @@ class Message(object):
             raise Exception('already garbage collected.')
         self._gc = True
 
-    # acknowledged  ............................................................
+    # acknowledged ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
     def print_acks(self):
         '''
@@ -207,7 +206,6 @@ class Message(object):
                 _count += 1
         return _count
 
-    # ..........................................................................
     @property
     def fully_acknowledged(self):
         '''
@@ -245,7 +243,7 @@ class Message(object):
         else:
             self._subscribers[subscriber] = True
 
-# ..............................................................................
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Payload(object):
     '''
     A Message's payload, containing the Event (with priority) and an optional value.
@@ -254,19 +252,19 @@ class Payload(object):
         self._event = event
         self._value = value
 
-    # priority      ............................................................
+    # priority ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
     @property
     def priority(self):
         return self._event.priority
 
-    # event         ............................................................
+    # event ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
     @property
     def event(self):
         return self._event
 
-    # value         ............................................................
+    # value ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
     @property
     def value(self):
@@ -276,13 +274,13 @@ class Payload(object):
     def value(self, value):
         self._value = value
 
-    # equals        ............................................................
+    # equals ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def __eq__(self, other):
         if other is None:
             return False
         return self.event == other.event and self.value == other.value
 
-#   # not equals    ............................................................
+    # not equals ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 #  def __ne__(self, other):
 #       return not self == other
 

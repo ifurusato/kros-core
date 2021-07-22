@@ -19,20 +19,23 @@ except ImportError:
 
 from core.logger import Level, Logger
 
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class ConfigLoader():
     '''
-        Has just one method: configure() reads a YAML file.
+    A loader for a YAML configuration file.
     '''
     def __init__(self, level=Level.INFO):
         self._log = Logger('configloader', level)
         self._log.info('ready.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def configure(self, filename='config.yaml'):
         '''
         Read and return configuration from the specified YAML file.
 
         Pretty-prints the configuration object if the log level is set to DEBUG.
+
+        :param filename:  the optional name of the YAML file to load. Default: config.yaml
         '''
         self._log.info('reading from YAML configuration file {}...'.format(filename))
         _config = yaml.safe_load(open(filename, 'r'))

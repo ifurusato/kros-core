@@ -26,7 +26,7 @@ from behave.behaviour import Behaviour
 from core.publisher import Publisher
 from behave.trigger_behaviour import TriggerBehaviour
 
-# ...............................................................
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Idle(Behaviour, Publisher):
 
     _LISTENER_LOOP_NAME = '__idle_listener_loop'
@@ -56,20 +56,21 @@ class Idle(Behaviour, Publisher):
         self._counter = itertools.count()
         self._log.info('ready.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def release(self):
         Component.release(self)
         self._log.debug('released.')
 
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def suppress(self):
         Component.suppress(self)
         self._log.debug('suppressed.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def get_trigger_behaviour(self, event):
         return TriggerBehaviour.TOGGLE
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def trigger_event(self):
         '''
@@ -80,7 +81,7 @@ class Idle(Behaviour, Publisher):
         '''
         return Event.IDLE
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def start(self):
         '''
         The necessary state machine call to start the publisher, which performs
@@ -89,7 +90,7 @@ class Idle(Behaviour, Publisher):
         if self.state is not State.STARTED:
             Publisher.start(self)
 
-    # ................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def enable(self):
         Publisher.enable(self)
         if self.enabled:
@@ -104,7 +105,7 @@ class Idle(Behaviour, Publisher):
         else:
             self._log.warning('failed to enable idle publisher.')
 
-    # ................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def _idle_listener_loop(self, f_is_enabled):
         self._log.info('starting idle listener loop:\t' + Fore.YELLOW + 'idle threshold: {:d} sec'.format(self._idle_threshold_sec)
                 + ( '; (suppressed, type \'u\' to release)' if self.suppressed else '.') )
@@ -141,7 +142,7 @@ class Idle(Behaviour, Publisher):
 
         self._log.info('idle loop complete.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def execute(self, message):
         '''
         The method called upon each loop iteration.
@@ -164,7 +165,7 @@ class Idle(Behaviour, Publisher):
             else:
                 raise ValueError('expected IDLE event not: {}'.format(message.event.label))
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def disable(self):
         '''
         Disable this publisher.

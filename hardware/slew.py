@@ -21,7 +21,7 @@ init()
 from core.logger import Level, Logger
 from core.component import Component
 
-# ..............................................................................
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class SlewLimiter(Component):
     '''
     A general purpose slew limiter that limits the rate of change of a value,
@@ -39,7 +39,7 @@ class SlewLimiter(Component):
         Component.__init__(self, self._log, suppressed=suppressed, enabled=enabled)
         self._millis  = lambda: int(round(time.time() * 1000))
         self._seconds = lambda: int(round(time.time()))
-        # Slew configuration .........................................
+        # slew configuration
         _cfg = config['kros'].get('motors').get('slew')
         self._minimum_output = _cfg.get('minimum_output')
         self._maximum_output = _cfg.get('maximum_output')
@@ -58,7 +58,7 @@ class SlewLimiter(Component):
         else:
             self._log.info('ready (enabled: {}; suppressed: {})'.format(self.enabled, self.suppressed))
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def set_rate_limit(self, slew_rate):
         '''
         Sets the slew rate limit to the argument, in value/second. This
@@ -69,20 +69,20 @@ class SlewLimiter(Component):
         self._slew_rate = slew_rate
         self._log.info('slew rate limit set to {}; {:>6.4f}/cycle.'.format(slew_rate.label, self._slew_rate.limit))
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def enable(self):
         self._log.info('starting slew limiter with rate limit of {:5.3f}/cycle.'.format(self._slew_rate.limit))
         self._start_time = self._millis()
         Component.enable(self)
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def reset(self, value):
         '''
         Resets the elapsed timer.
         '''
         self._start_time = self._millis()
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def limit(self, current_value, target_value):
         '''
         The returned result is the maximum amount of change between the current value
@@ -145,7 +145,7 @@ class SlewLimiter(Component):
         # clip the output between min and max set in config (if negative we fix it before and after)
         return -1.0 * self._clip(-1.0 * _value) if _value < 0.0 else self._clip(_value)
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _clip_by(self, value, min_value, max_value):
         '''
         Like the existing _clip lambda except the limits are passed
@@ -153,7 +153,7 @@ class SlewLimiter(Component):
         '''
         return min_value if value <= min_value else max_value if value >= max_value else value
 
-# ..............................................................................
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class SlewRate(Enum): #        tested to 50.0 velocity:
     EXTREMELY_SLOW   = ( 0,  0.009,   0.16, 00.0001 ) # 5.1 sec
     VERY_SLOW        = ( 1,   0.02,   0.22, 00.0002 ) # 3.1 sec
@@ -174,10 +174,12 @@ class SlewRate(Enum): #        tested to 50.0 velocity:
         self._pid   = pid
         self._limit = limit
 
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def label(self):
         return self.name
 
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @staticmethod
     def from_string(value):
         for r in SlewRate:
@@ -185,14 +187,17 @@ class SlewRate(Enum): #        tested to 50.0 velocity:
                 return r
         return SlewRate.NORMAL
 
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def ratio(self):
         return self._ratio
 
+#   # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 #   @property
 #   def pid(self):
 #       return self._pid
 
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def limit(self):
         return self._limit

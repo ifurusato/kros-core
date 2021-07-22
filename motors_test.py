@@ -7,7 +7,7 @@
 #
 # author:   Murray Altheim
 # created:  2020-10-05
-# modified: 2021-02-07
+# modified: 2021-07-17
 #
 # Tests the port and starboard motors for encoder ticks. This includes a quick
 # and dirty velocity to power converter to convert a rotary encoder output to
@@ -28,11 +28,9 @@ from core.i2c_scanner import I2CScanner
 from mock.motor import Motor
 from mock.motor_configurer import MotorConfigurer
 
-# settings ................
-
 _log = Logger('test', Level.INFO)
 
-# ..............................................................................
+# ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 @pytest.mark.unit
 def test_velocity_to_power_conversion():
     # velocity to power conversion test:
@@ -40,19 +38,19 @@ def test_velocity_to_power_conversion():
         p = Motor.velocity_to_power(v)
         _log.info('velocity: {:5.2f};'.format(v) + Fore.YELLOW + ' power: {:5.2f};'.format(p))
 
-# ..............................................................................
+# ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 def callback_method_A(value):
     global action_A
     action_A = not action_A
     _log.info('callback method fired;\t' + Fore.YELLOW + 'action A: {}'.format(action_A))
 
-# ..............................................................................
+# ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 def callback_method_B(value):
     global action_B
     action_B = not action_B
     _log.info('callback method fired;\t' + Fore.YELLOW + 'action B: {}'.format(action_B))
 
-# ..............................................................................
+# ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 @pytest.mark.unit
 def test_motors():
 
@@ -64,7 +62,7 @@ def test_motors():
         _loader = ConfigLoader(Level.INFO)
         filename = 'config.yaml'
         _config = _loader.configure(filename)
-    
+
         _log.info('creating message factory...')
         _message_factory = MessageFactory(Level.INFO)
         _log.info('creating message bus...')
@@ -77,7 +75,6 @@ def test_motors():
         _motors = _motor_configurer.get_motors()
 
         _motors.enable()
-    
 
     except KeyboardInterrupt:
         _log.info('Ctrl-C caught; exiting...')
@@ -93,7 +90,7 @@ def test_motors():
     _elapsed_ms = round(( dt.now() - _start_time ).total_seconds() * 1000.0)
     _log.info(Fore.YELLOW + 'complete: elapsed: {:d}ms'.format(_elapsed_ms))
 
-# ..............................................................................
+# ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 def main():
     try:
         test_motors()

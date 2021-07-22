@@ -42,7 +42,7 @@ class BehaviourManager(Subscriber):
         self._active_behaviour = None
         self._behaviours       = {}
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _register_behaviour(self, behaviour):
         '''
         Register a Behaviour with the manager, referenced by its trigger
@@ -55,7 +55,7 @@ class BehaviourManager(Subscriber):
         self.add_event(behaviour.trigger_event)
         self._log.info('added behaviour \'{}\' linked to trigger event \'{}\' to manager.'.format(behaviour.name, behaviour.trigger_event))
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def get_behavior_for_trigger_event(self, event):
         '''
         Return the behaviour corresponding to the (trigger) event type, null
@@ -63,7 +63,7 @@ class BehaviourManager(Subscriber):
         '''
         return self._behaviours.get(event)
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def start(self):
         '''
         The necessary state machine call to start the publisher, which performs
@@ -74,7 +74,7 @@ class BehaviourManager(Subscriber):
             self._log.debug('started behaviour {}'.format(_behaviour.name))
         Subscriber.start(self)
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def enable(self):
         self._log.debug('enable behaviours...')
         if not self.enabled:
@@ -82,27 +82,7 @@ class BehaviourManager(Subscriber):
             for _key, _behaviour in self._behaviours.items():
                 _behaviour.enable()
 
-    # ..........................................................................
-    def disable(self):
-        self._log.debug('disable behaviours...')
-        if self.enabled:
-            for _key, _behaviour in self._behaviours.items():
-                _behaviour.disable()
-            Subscriber.disable(self)
-
-    # ..........................................................................
-    def close(self):
-        '''
-        Permanently close and disable the message bus.
-        '''
-        if self.enabled:
-            self.disable()
-        if not self.closed:
-            for _key, _behaviour in self._behaviours.items():
-                _behaviour.close()
-            Subscriber.close(self)
-
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def process_message(self, message):
         '''
         Process the message.
@@ -120,7 +100,7 @@ class BehaviourManager(Subscriber):
         self._log.debug('complete: awaited subscriber process_message {}.'.format(_event.name))
         self._log.debug('post-processing message {}'.format(message.name))
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _alter_behaviour(self, event):
         '''
         Alters the Behaviour associated with the event.
@@ -163,13 +143,33 @@ class BehaviourManager(Subscriber):
                 self._log.info('done.')
             elif _compare == -1:
                 # the current active behaviour is a higher priority so we ignore the request to alter it
-                self._log.info('requested behaviour ' + Fore.YELLOW + '{}'.format(event.label) + Fore.CYAN 
+                self._log.info('requested behaviour ' + Fore.YELLOW + '{}'.format(event.label) + Fore.CYAN
                         + ' is LOWER priority than existing behaviour ' + Fore.YELLOW + '{}'.format(self._active_behaviour.name)
                         + Fore.CYAN + ' (no change)')
             else: # _compare == 0:
                 # same priority, no change
-                self._log.info('requested behaviour ' + Fore.YELLOW + '{}'.format(event.label) + Fore.CYAN 
-                        + ' has the SAME priority as existing behaviour ' + Fore.YELLOW + '{}'.format(self._active_behaviour.name) 
+                self._log.info('requested behaviour ' + Fore.YELLOW + '{}'.format(event.label) + Fore.CYAN
+                        + ' has the SAME priority as existing behaviour ' + Fore.YELLOW + '{}'.format(self._active_behaviour.name)
                         + Fore.CYAN + ' (no change)')
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def disable(self):
+        self._log.debug('disable behaviours...')
+        if self.enabled:
+            for _key, _behaviour in self._behaviours.items():
+                _behaviour.disable()
+            Subscriber.disable(self)
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def close(self):
+        '''
+        Permanently close and disable the message bus.
+        '''
+        if self.enabled:
+            self.disable()
+        if not self.closed:
+            for _key, _behaviour in self._behaviours.items():
+                _behaviour.close()
+            Subscriber.close(self)
 
 #EOF

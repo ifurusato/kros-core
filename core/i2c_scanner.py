@@ -14,7 +14,7 @@
 # see: https://www.raspberrypi.org/forums/viewtopic.php?t=114401
 # see: https://raspberrypi.stackexchange.com/questions/62612/is-there-anyway-to-scan-i2c-using-pure-python-libraries:q
 #
-# If you're getting a "Permission denied" message due to smbus, add the pi user to the i2c group using: 
+# If you're getting a "Permission denied" message due to smbus, add the pi user to the i2c group using:
 #
 #  % sudo adduser pi i2c
 #
@@ -27,6 +27,7 @@ init()
 
 from core.logger import Level, Logger
 
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class I2CScanner():
     '''
     Scans the I²C bus, returning a list of devices.
@@ -47,7 +48,7 @@ class I2CScanner():
             self._log.warning('initialised. This script requires smbus. Will operate without but return an empty result.')
             self._bus = None
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def get_hex_addresses(self):
         '''
         Returns a hexadecimal version of the list.
@@ -55,7 +56,7 @@ class I2CScanner():
         self._scan_addresses()
         return self._hex_list
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def get_int_addresses(self):
         '''
         Returns an integer version of the list.
@@ -63,7 +64,7 @@ class I2CScanner():
         self._scan_addresses()
         return self._int_list
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def has_address(self, addresses):
         '''
         Performs the address scan (if necessary) and returns true if a device
@@ -75,7 +76,7 @@ class I2CScanner():
                 return True
         return False
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _scan_addresses(self):
         '''
         Scans the bus and returns the available device addresses. After being
@@ -105,14 +106,14 @@ class I2CScanner():
                 self._log.info("found no devices (no smbus available).")
         return self._int_list
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def print_device_list(self):
         self._addrDict = dict(list(map(lambda x, y:(x,y), self.get_int_addresses(), self.get_hex_addresses())))
         for _address in self.get_int_addresses():
             _device_name = self.get_device_for_address(_address)
             self._log.info('found device at I²C address 0x{:02X}: '.format(_address) + Fore.YELLOW + '{}'.format(_device_name))
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def get_device_for_address(self, address):
         '''
         Returns the lookup device name from the device registry found in
@@ -121,9 +122,9 @@ class I2CScanner():
         _device = self._config['devices'].get(address)
         return 'Unknown' if _device is None else _device
 
-    # end class ................................................................
+    # end class ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
-# main .........................................................................
+# ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
 THUNDERBORG_ADDRESS = 0x15
 
@@ -158,9 +159,7 @@ def main():
 #       from z_motors import Motors
 #       from z_motor import Motor
 
-
 if __name__== "__main__":
     main()
 
 #EOF
-

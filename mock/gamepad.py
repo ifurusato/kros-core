@@ -10,8 +10,9 @@
 # modified: 2020-08-06
 #
 # This class interprets the signals arriving from the 8BitDo N30 Pro gamepad,
-# a paired Bluetooth device. Note that supporting classes are found at the
-# bottom of this file.
+# a paired Bluetooth device.
+#
+# GamepadControl, GamepadScan, and GamepadConnectException at bottom.
 #
 
 import os, sys, time, asyncio
@@ -50,7 +51,7 @@ from core.rate import Rate
       https://core-electronics.com.au/tutorials/using-usb-and-bluetooth-controllers-with-python.html
 '''
 
-# ..............................................................................
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Gamepad():
 
     _NOT_AVAILABLE_ERROR = 'gamepad device not found (not configured, paired, powered or otherwise available)'
@@ -91,7 +92,7 @@ class Gamepad():
         self._thread  = None
         self._gamepad = None
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def connect(self):
         '''
         Scan for likely gamepad device, and if found, connect.
@@ -105,11 +106,11 @@ class Gamepad():
         else:
             self._connect()
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def has_connection(self):
         return self._gamepad != None
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _connect(self):
         self._log.info('connecting gamepad...')
         try:
@@ -122,7 +123,7 @@ class Gamepad():
             self._gamepad = None
             raise GamepadConnectException('unable to connect to input device path {}: {}'.format(self._device_path, e))
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def enable(self):
         if not self._closed:
             self._log.info('enabled gamepad.')
@@ -137,19 +138,19 @@ class Gamepad():
             self._log.warning('cannot enable gamepad: already closed.')
             self._enabled = False
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def in_loop(self):
         '''
         Returns true if the main loop is active (the thread is alive).
         '''
         return self._thread != None and self._thread.is_alive()
 
-    # ......................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @staticmethod
     def convert_range(value):
         return ( (value - 127.0) / 255.0 ) * -2.0
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def _gamepad_loop(self, callback, f_is_enabled):
         self._log.info('starting event loop...')
         __enabled = True
@@ -195,12 +196,12 @@ class Gamepad():
             self._rate.wait()
         self._log.info('exited event loop.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def enabled(self):
         return self._enabled
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def disable(self):
         if self._closed:
             self._log.warning('can\'t disable: already closed.')
@@ -217,7 +218,7 @@ class Gamepad():
 #               time.sleep(0.1)
         self._log.info('disabled.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def close(self):
         '''
         Permanently close and disable the gamepad.
@@ -230,7 +231,7 @@ class Gamepad():
         else:
             self._log.info('already closed.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _handleEvent(self, event):
         '''
         Handles the incoming event by filtering on event type and code.
@@ -313,7 +314,7 @@ class Gamepad():
             return _message
         return None
 
-# ..............................................................................
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class GamepadControl(Enum):
     '''
     An enumeration of the controls available on the 8BitDo N30 Pro Gamepad,
@@ -360,23 +361,27 @@ class GamepadControl(Enum):
         self._label = label
         self._event = event
 
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def code(self):
         return self._code
 
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def name(self):
         return self._name
 
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def label(self):
         return self._label
 
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def event(self):
         return self._event
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @staticmethod
     def get_by_code(self, code):
         for ctrl in GamepadControl:
@@ -384,7 +389,7 @@ class GamepadControl(Enum):
                 return ctrl
         return None
 
-# ..............................................................................
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class GamepadScan(object):
     '''
     Returns the device with the most recently changed status from /dev/input/event{n}
@@ -400,7 +405,7 @@ class GamepadScan(object):
         self._log.info('device path: {}'.format(self._device_path))
         self._log.info('ready')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _get_ctime(self, path):
         try:
             _device_stat = os.stat(path)
@@ -408,7 +413,7 @@ class GamepadScan(object):
         except OSError:
             return -1.0
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def get_latest_device(self):
         '''
         Build a dictionary of available devices, return the one with the
@@ -432,7 +437,7 @@ class GamepadScan(object):
         self._log.info('most recent device: {}'.format(_latest_device))
         return _latest_device
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def check_gamepad_device(self):
         '''
         Checks that the configured device matches the device with the most
@@ -446,12 +451,11 @@ class GamepadScan(object):
             self._log.info(Style.BRIGHT + 'does not match:     {}'.format(_latest_device))
             return False
 
-# ..............................................................................
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class GamepadConnectException(Exception):
     '''
     Exception raised when unable to connect to Gamepad.
     '''
     pass
-
 
 # EOF

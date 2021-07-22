@@ -9,7 +9,7 @@
 # created:  2020-08-05
 # modified: 2020-08-08
 #
-# This is a test class using the 8BitDo N30 Pro Gamepad, a paired Bluetooth 
+# This is a test class using the 8BitDo N30 Pro Gamepad, a paired Bluetooth
 # device to control the KR01.
 #
 

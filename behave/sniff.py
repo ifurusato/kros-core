@@ -22,7 +22,7 @@ from core.subscriber import Subscriber
 from behave.behaviour import Behaviour
 from behave.trigger_behaviour import TriggerBehaviour
 
-# ...............................................................
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Sniff(Behaviour):
     '''
     Implements a sniffing behaviour, whatever that is.
@@ -40,11 +40,11 @@ class Sniff(Behaviour):
         self._motors = motors
         self._log.info('ready.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def get_trigger_behaviour(self, event):
         return TriggerBehaviour.TOGGLE
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def trigger_event(self):
         '''
@@ -52,19 +52,19 @@ class Sniff(Behaviour):
         '''
         return Event.SNIFF
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def callback(self):
         self._log.info('🌺 sniff callback.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def name(self):
         return 'sniff'
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def execute(self, message):
         '''
-        The method called upon each loop iteration. 
+        The method called upon each loop iteration.
 
         :param message:  an optional Message passed along by the message bus
         '''
@@ -83,6 +83,6 @@ class Sniff(Behaviour):
             if self.enabled:
                 self._log.info('🌺 sniff enabled, execution on message {}; '.format(message.name) + Fore.YELLOW + ' event: {};'.format(_event.label))
             else:
-                self._log.info('🌺 sniff disabled, execution on message {}; '.format(message.name) + Fore.YELLOW + ' event: {};'.format(_event.label)) 
+                self._log.info('🌺 sniff disabled, execution on message {}; '.format(message.name) + Fore.YELLOW + ' event: {};'.format(_event.label))
 
 #EOF

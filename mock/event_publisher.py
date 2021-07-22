@@ -230,7 +230,7 @@ class EventPublisher(Publisher):
                             continue
                         elif 65 <= och <= 90: # then we're uppercased alpha
                             self._ir_direction *= -1 # toggle direction
-                            self._log.info('🐙 toggle increment direction: {:d}'.format(self._ir_direction))
+                            self._log.info('toggle increment direction: {:d}'.format(self._ir_direction))
                             och += 32
                         # otherwise handle as event
                         _event = self.get_event_for_char(och)

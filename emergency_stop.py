@@ -6,8 +6,8 @@
 # see the LICENSE file included as part of this package.
 #
 # author:   Murray Altheim
-# created:  2020-10-05
-# modified: 2021-02-07
+# created:  2021-07-18
+# modified: 2021-07-18
 #
 # Tests the port and starboard motors for encoder ticks. This includes a quick
 # and dirty velocity to power converter to convert a rotary encoder output to
@@ -28,14 +28,11 @@ from core.i2c_scanner import I2CScanner
 from hardware.motor import Motor
 from hardware.motor_configurer import MotorConfigurer
 
-# settings ................
-
-_log = Logger('test', Level.INFO)
-
-# ..............................................................................
+# ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 @pytest.mark.unit
 def test_motors():
 
+    _log = Logger('test', Level.INFO)
     _start_time = dt.now()
 
     try:
@@ -44,7 +41,7 @@ def test_motors():
         _loader = ConfigLoader(Level.INFO)
         filename = 'config.yaml'
         _config = _loader.configure(filename)
-    
+
         _log.info('creating message factory...')
         _message_factory = MessageFactory(Level.INFO)
         _log.info('creating message bus...')
@@ -68,7 +65,7 @@ def test_motors():
     _elapsed_ms = round(( dt.now() - _start_time ).total_seconds() * 1000.0)
     _log.info(Fore.YELLOW + 'complete: elapsed: {:d}ms'.format(_elapsed_ms))
 
-# ..............................................................................
+# ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 def main():
     try:
         test_motors()
@@ -78,6 +75,7 @@ def main():
     finally:
         pass
 
+# ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 if __name__== "__main__":
     main()
 

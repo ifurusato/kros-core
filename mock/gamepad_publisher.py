@@ -73,7 +73,7 @@ class GamepadPublisher(Publisher):
 #           except Exception as e:
             except ModuleNotFoundError as e:
                 self._log.error('{} thrown establishing gamepad: {}\n{}'.format(type(e), e, traceback.format_exc()))
-        # attempt connection ..................................
+        # attempt connection .....................
         if self._gamepad is not None:
             self._log.info(Fore.YELLOW + 'enabling gamepad...')
             try:

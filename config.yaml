@@ -42,7 +42,6 @@ kros:
             kd:                  0.00000         # derivative gain
             minimum_output:    -10.0             # lower output limit
             maximum_output:     10.0             # upper output limit
-            enable_slew:        False            # we now use the slew limiter from Motor instead
             sample_freq_hz:     20
             hyst_queue_len:     20               # size of queue used for running average for hysteresis
             pot_ctrl:           False            # if True enable potentiometer for setting PID terms

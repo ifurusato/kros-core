@@ -21,7 +21,7 @@ from core.orient import Orientation
 from core.event import Event, Group
 from core.subscriber import Subscriber
 
-# ..............................................................................
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class BumperSubscriber(Subscriber):
 
     CLASS_NAME = 'bumper'
@@ -33,14 +33,14 @@ class BumperSubscriber(Subscriber):
     :param config:       the application configuration
     :param message_bus:  the message bus
     :param color:        the color for messages
-    :param level:        the logging level 
+    :param level:        the logging level
     '''
     def __init__(self, config, message_bus, motors, color=Fore.YELLOW, level=Level.INFO):
         Subscriber.__init__(self, BumperSubscriber.CLASS_NAME, config, message_bus=message_bus, color=color, suppressed=False, enabled=False, level=level)
         self._motors = motors
         self.add_events(Event.by_group(Group.BUMPER))
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def _arbitrate_message(self, message):
         '''
         Pass the message on to the Arbitrator and acknowledge that it has been
@@ -51,7 +51,7 @@ class BumperSubscriber(Subscriber):
         message.acknowledge_sent()
         self._log.info(self._color + Style.NORMAL + 'arbitrated payload for event {}; value: {}'.format(message.payload.event.name, message.payload.value))
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def process_message(self, message):
         '''
         Process the message.

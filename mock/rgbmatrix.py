@@ -9,6 +9,8 @@
 # created:  2020-03-16
 # modified: 2020-05-23
 #
+# DisplayType at bottom.
+#
 
 import sys, time, colorsys
 from threading import Thread
@@ -37,13 +39,11 @@ except ImportError:
 from core.logger import Level, Logger
 from core.i2c_scanner import I2CScanner
 from core.orient import Orientation
-
 from mock.color import Color
 from mock.rgbmatrix5x5 import MockRGBMatrix5x5
-#from lib.feature import Feature
 
-# ..............................................................................
-class RgbMatrix(object): # was (Feature)
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+class RgbMatrix(object):
     '''
     This class provides access to a pair of Pimoroni 5x5 RGB LED Matrix displays,
     labeled port and starboard. It also includes several canned demonstrations,
@@ -94,11 +94,11 @@ class RgbMatrix(object): # was (Feature)
         self._colors = [ Color.GREEN, Color.YELLOW_GREEN, Color.YELLOW, Color.ORANGE, Color.RED ]
         self._log.info('ready.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def name(self):
         return 'RgbMatrix'
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _get_target(self):
         if self._display_type is DisplayType.BLINKY:
             return [ RgbMatrix._blinky, None ]
@@ -119,7 +119,7 @@ class RgbMatrix(object): # was (Feature)
         elif self._display_type is DisplayType.WIPE_LEFT:
             return [ RgbMatrix._wipe, WipeDirection.LEFT ]
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def enable(self):
         global enabled
         if not self._closed and not self._closing:
@@ -138,18 +138,18 @@ class RgbMatrix(object): # was (Feature)
         else:
             self._log.warning('cannot enable: already closed.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def clear(self):
         if self._rgbmatrix5x5_PORT:
             self._clear(self._rgbmatrix5x5_PORT)
         self._clear(self._rgbmatrix5x5_STBD)
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def is_disabled(self):
         global enabled
         return not enabled
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def disable(self):
         global enabled
         self._log.debug('disabling...')
@@ -167,7 +167,7 @@ class RgbMatrix(object): # was (Feature)
             self._thread_STBD = None
         self._log.debug('disabled.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _cpu(self, rgbmatrix5x5, arg):
         '''
         A port of the CPU example from the Matrix 11x7.
@@ -196,7 +196,7 @@ class RgbMatrix(object): # was (Feature)
                 self._log.info('cpu ended.')
                 sys.exit(0)
 
-    # ......................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _set_graph(self, rgbmatrix5x5, values, low=None, high=None, x=0, y=0):
         '''
         Plot a series of values into the display buffer.
@@ -243,7 +243,7 @@ class RgbMatrix(object): # was (Feature)
             except IndexError:
                 return
 
-    # ......................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _grow_buffer(self, x, y):
         '''
         Grows a copy of the buffer until the new shape fits inside it.
@@ -255,7 +255,7 @@ class RgbMatrix(object): # was (Feature)
         y_pad = max(0, y - self._buf.shape[1])
         return numpy.pad(self._buf, ((0, x_pad), (0, y_pad)), 'constant')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _rainbow(self, rgbmatrix5x5, arg):
         '''
         Display a rainbow pattern.
@@ -282,7 +282,7 @@ class RgbMatrix(object): # was (Feature)
         self._clear(rgbmatrix5x5)
         self._log.info('rainbow ended.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _sworl(self, rgbmatrix5x5, arg):
         '''
         Display a sworl pattern, whatever that is.
@@ -316,7 +316,7 @@ class RgbMatrix(object): # was (Feature)
         finally:
             self.set_color(Color.BLACK)
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _wipe(self, rgbmatrix5x5, direction):
         '''
         Display a wipe in the specified direction.
@@ -326,7 +326,7 @@ class RgbMatrix(object): # was (Feature)
         if direction is WipeDirection.UP or direction is WipeDirection.DOWN:
             self._wipe_vertical(rgbmatrix5x5, direction)
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _wipe_horizontal(self, rgbmatrix5x5, direction):
         '''
         Note: not implemented yet.
@@ -334,11 +334,11 @@ class RgbMatrix(object): # was (Feature)
         global enabled
         raise NotImplementedError()
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def set_wipe_color(self, color):
         self._wipe_color = color
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _wipe_vertical(self, rgbmatrix, direction):
         '''
         Note: UP has not been implemented yet.
@@ -376,11 +376,11 @@ class RgbMatrix(object): # was (Feature)
         finally:
             self.set_color(Color.BLACK)
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def set_solid_color(self, color):
         self._color = color
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def show_color(self, color, orientation):
         self.set_solid_color(color)
         if orientation is Orientation.PORT or orientation is Orientation.BOTH and self._rgbmatrix5x5_PORT:
@@ -388,7 +388,7 @@ class RgbMatrix(object): # was (Feature)
         if orientation is Orientation.STBD or orientation is Orientation.BOTH:
             self._set_color(self._rgbmatrix5x5_STBD, self._color)
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def get_rgbmatrix(self, orientation):
         '''
         Return the port or starboard RGB matrix.
@@ -400,7 +400,7 @@ class RgbMatrix(object): # was (Feature)
         else:
             return None
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def show_hue(self, hue, orientation):
         '''
         Set the color of the display to the hue specified as a value from 0.0 - 1.0.
@@ -418,7 +418,7 @@ class RgbMatrix(object): # was (Feature)
             self._rgbmatrix5x5_STBD.set_all(r, g, b)
             self._rgbmatrix5x5_STBD.show()
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _solid(self, rgbmatrix5x5, arg):
         '''
         Display a specified static, solid color on only the starboard display.
@@ -431,7 +431,7 @@ class RgbMatrix(object): # was (Feature)
         while enabled:
             time.sleep(0.2)
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _dark(self, rgbmatrix5x5, arg):
         '''
         Display a dark static color.
@@ -442,7 +442,7 @@ class RgbMatrix(object): # was (Feature)
         while enabled:
             time.sleep(0.2)
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @staticmethod
     def make_gaussian(fwhm):
         x = numpy.arange(0, 5, 1, float)
@@ -452,7 +452,7 @@ class RgbMatrix(object): # was (Feature)
         gauss = numpy.exp(-4 * numpy.log(2) * ((x - x0) ** 2 + (y - y0) ** 2) / fwhm ** 2)
         return gauss
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _blinky(self, rgbmatrix5x5, arg):
         '''
         Display a pair of blinky spots.
@@ -496,7 +496,7 @@ class RgbMatrix(object): # was (Feature)
         self._clear(rgbmatrix5x5)
         self._log.info('blinky ended.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _scan(self, rgbmatrix5x5, arg):
         '''
         KITT- or Cylon-like eyeball scanning.
@@ -529,7 +529,7 @@ class RgbMatrix(object): # was (Feature)
         self._clear(rgbmatrix5x5)
         self._log.debug('scan ended.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _random(self, rgbmatrix5x5, arg):
         '''
         Display an ever-changing random pattern.
@@ -558,7 +558,7 @@ class RgbMatrix(object): # was (Feature)
         self._clear(rgbmatrix5x5)
         self._log.info('random ended.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def set_color(self, color):
         '''
         Set the color of both RGB Matrix displays.
@@ -567,7 +567,7 @@ class RgbMatrix(object): # was (Feature)
             self._set_color(self._rgbmatrix5x5_PORT, color)
         self._set_color(self._rgbmatrix5x5_STBD, color)
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _set_color(self, rgbmatrix5x5, color):
         '''
         Set the color of the RGB Matrix.
@@ -575,18 +575,18 @@ class RgbMatrix(object): # was (Feature)
         rgbmatrix5x5.set_all(color.red, color.green, color.blue)
         rgbmatrix5x5.show()
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _clear(self, rgbmatrix5x5):
         '''
         Clears the RGB Matrix by setting its color to black.
         '''
         self._set_color(rgbmatrix5x5, Color.BLACK)
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def set_display_type(self, display_type):
         self._display_type = display_type
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def close(self):
         if self._closing:
             self._log.warning('already closing.')
@@ -597,7 +597,7 @@ class RgbMatrix(object): # was (Feature)
         self._closed = True
         self._log.info('closed.')
 
-# ..............................................................................
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class DisplayType(Enum):
     BLINKY    = 1
     CPU       = 2

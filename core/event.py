@@ -13,7 +13,7 @@ from enum import Enum
 
 from core.orient import Speed, Direction
 
-# ..............................................................................
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Group(Enum):
     NONE      = 0
     SYSTEM    = 1
@@ -29,7 +29,7 @@ class Group(Enum):
 #   CLOCK     = 11
     OTHER     = 12
 
-# ..............................................................................
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Event(Enum):
     '''
     Events are used as part of a message Payload, which includes the Event
@@ -38,7 +38,7 @@ class Event(Enum):
     Messages are prioritised by their Event type, where the priority operates
     in reverse-order: the smaller the number the higher the priority.
     '''
-    # name                     n   label                  priority   group 
+    # name                     n   label                  priority   group
     # system events .........................................................................
     NOOP                   = ( 0, "no operation",            1000,   Group.SYSTEM )
     BATTERY_LOW            = ( 10, "battery low",               1,   Group.SYSTEM )
@@ -131,7 +131,6 @@ class Event(Enum):
     NO_ACTION              = ( 999, "no action",              999,   Group.OTHER )
     ANY                    = ( 1000, "any",                  1000,   Group.OTHER )
 
-    # ..................................
     def __new__(cls, *args, **kwds):
         obj = object.__new__(cls)
         obj._value_ = args[0]
@@ -146,7 +145,7 @@ class Event(Enum):
         self._direction = direction
         self._speed     = speed
 
-    # ................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @staticmethod
     def is_motor_event(event):
         '''
@@ -159,17 +158,17 @@ class Event(Enum):
                 or ( event.group is Group.THETA ) \
                 or ( event.group is Group.CHADBURN )
 
-    # ..................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @staticmethod
     def is_bumper_event(event):
         return event.group is Group.BUMPER
 
-    # ..................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @staticmethod
     def is_infrared_event(event):
         return event.group is Group.INFRARED
 
-    # ................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @staticmethod
     def is_ifs_event(event):
         '''
@@ -178,7 +177,8 @@ class Event(Enum):
         '''
         return Event.is_bumper_event(event) or Event.is_infrared_event(event)
 
-    # ................................................................
+    # properties ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+
     @property
     def num(self):
         return self._num
@@ -191,6 +191,43 @@ class Event(Enum):
     def priority(self):
         return self._priority
 
+    @property
+    def group(self):
+        return self._group
+
+    @property
+    def direction(self):
+        return self._direction
+
+    @property
+    def speed(self):
+        return self._speed
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    @staticmethod
+    def by_group(gid):
+        '''
+        Return all Events belonging to the requested Group.
+        '''
+        _list = []
+        for _event in Event:
+            if _event.group is gid:
+                _list.append(_event)
+        return _list
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    @staticmethod
+    def by_groups(gids):
+        '''
+        Return the accumulated Events belonging to all the requested Groups.
+        '''
+        _list = []
+        for _gid in gids:
+            _events = Event.by_group(_gid)
+            _list.append(_events)
+        return _list
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def compare_to_priority_of(self, event):
         '''
         Returns 1 if the Event of the argument is a higher priority
@@ -207,44 +244,14 @@ class Event(Enum):
         else:
             return 0
 
-    @property
-    def group(self):
-        return self._group
-
-    @staticmethod
-    def by_group(gid):
-        '''
-        Return all Events belonging to the requested Group.
-        '''
-        _list = []
-        for _event in Event:
-            if _event.group is gid:
-                _list.append(_event)
-        return _list
-
-    @staticmethod
-    def by_groups(gids):
-        '''
-        Return the accumulated Events belonging to all the requested Groups.
-        '''
-        _list = []
-        for _gid in gids:
-            _events = Event.by_group(_gid)
-            _list.append(_events)
-        return _list
-
-    @property
-    def direction(self):
-        return self._direction
-
-    @property
-    def speed(self):
-        return self._speed
-
-    # the normal value returned for an enum
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def __str__(self):
+        '''
+        Return the string value returned for an enum.
+        '''
         return self.name
 
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @staticmethod
     def from_string(value):
         for e in Event:

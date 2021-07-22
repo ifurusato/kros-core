@@ -21,7 +21,7 @@ from core.orient import Orientation
 from core.event import Event, Group
 from core.subscriber import Subscriber
 
-# ..............................................................................
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class MotorSubscriber(Subscriber):
     '''
     A mocked dual motor controller with encoders.
@@ -30,14 +30,14 @@ class MotorSubscriber(Subscriber):
     :param config:       the application configuration
     :param message_bus:  the message bus
     :param color:        the color for messages
-    :param level:        the logging level 
+    :param level:        the logging level
     '''
     def __init__(self, config, message_bus, motors, color=Fore.MAGENTA, level=Level.INFO):
         Subscriber.__init__(self, 'motor', config, message_bus, color=color, suppressed=False, enabled=False, level=level)
         self._motors = motors
         self.add_events(Event.by_groups([Group.STOP, Group.VELOCITY, Group.THETA, Group.CHADBURN]))
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def _arbitrate_message(self, message):
         '''
         Pass the message on to the Arbitrator and acknowledge that it has been
@@ -49,7 +49,7 @@ class MotorSubscriber(Subscriber):
 #       if self._message_bus.verbose:
         self._log.info(self._color + Style.NORMAL + 'arbitrated payload for event {}; value: {}'.format(message.payload.event.name, message.payload.value))
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def process_message(self, message):
         '''
         Process the message.

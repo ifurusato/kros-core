@@ -19,7 +19,7 @@ from core.orient import Orientation
 from hardware.slew import SlewLimiter
 from hardware.jerk import JerkLimiter
 
-# ..............................................................................
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Motor(Component):
     '''
     Controls a motor that uses a Hall Effect encoder to determine the robot's
@@ -58,20 +58,20 @@ class Motor(Component):
         self._slew_limiter      = SlewLimiter(config, orientation, suppressed=_suppress_slew_limiter, enabled=_enable_slew_limiter, level=level)
         _suppress_jerk_limiter  = _cfg.get('suppress_jerk_limiter')
         _enable_jerk_limiter    = _cfg.get('enable_jerk_limiter')
-        self._jerk_limiter      = JerkLimiter(config, orientation, suppressed=_suppress_jerk_limiter, enabled=_enable_jerk_limiter, level=level) 
+        self._jerk_limiter      = JerkLimiter(config, orientation, suppressed=_suppress_jerk_limiter, enabled=_enable_jerk_limiter, level=level)
         self._log.info('ready.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def slew_limiter(self):
         return self._slew_limiter
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def jerk_limiter(self):
         return self._jerk_limiter
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def orientation(self):
         '''
@@ -79,36 +79,36 @@ class Motor(Component):
         '''
         return self._orientation
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def velocity(self):
         return self._velocity
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @velocity.setter
     def velocity(self, velocity):
         self._velocity = velocity
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def target_velocity(self):
         return self._target_velocity
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @target_velocity.setter
     def target_velocity(self, target_velocity):
         self._target_velocity = target_velocity
 
-    # ..............................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def steps(self):
         return self._steps
 
-    # ..............................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def reset_steps(self):
         self._steps = 0
 
-    # max power ratio ..............................................................
+    # max power rate ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
     @property
     def max_power_ratio(self):
@@ -119,7 +119,7 @@ class Motor(Component):
         self._max_power_ratio = max_power_ratio
         self._log.info('motor power limit: {:<5.2f}'.format(self._motor_power_limit))
 
-    # ..............................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _callback_step_count(self, pulse):
         '''
         This callback is used to capture encoder steps.
@@ -130,36 +130,7 @@ class Motor(Component):
             self._steps = self._steps + pulse
 
 
-    # ..........................................................................
-    def enable(self):
-        if not self.enabled:
-            self._slew_limiter.enable()
-            self._jerk_limiter.enable()
-            Component.enable(self)
-
-    # ..........................................................................
-    def disable(self):
-        if self.enabled:
-            self._slew_limiter.disable()
-            self._jerk_limiter.disable()
-            Component.disable(self)
-
-    # ..........................................................................
-    def close(self):
-        if self.enabled:
-            self.disable()
-        if self._max_power > 0 or self._max_driving_power > 0:
-            self._log.info('on closing: max power: {:>5.2f}; max adjusted power: {:>5.2f}.'.format(self._max_power, self._max_driving_power))
-        # just do it
-        if self._orientation is Orientation.PORT:
-            self._log.info(Fore.YELLOW + 'set motor PORT to zero.')
-            self._tb.SetMotor1(0.0)
-        else:
-            self._log.info(Fore.YELLOW + 'set motor STBD to zero.')
-            self._tb.SetMotor2(0.0)
-        self._log.info('closed.')
-
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @staticmethod
     def cancel():
         '''
@@ -167,14 +138,14 @@ class Motor(Component):
         '''
         print('motors cancelled.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def is_in_motion(self):
         '''
         Returns True if the motor is moving.
         '''
         return self.current_power > 0.0
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def update_motor_velocity(self):
         '''
         If the current velocity doesn't match the target, set the target
@@ -183,7 +154,7 @@ class Motor(Component):
         if self.velocity != self.target_velocity:
             self.set_motor_velocity(self.target_velocity)
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def set_motor_velocity(self, target_velocity):
         '''
         Set the target velocity and motor power.
@@ -194,7 +165,7 @@ class Motor(Component):
         _power = self._convert_to_power(self.target_velocity)
         self.set_motor_power(_power)
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _convert_to_power(self, velocity):
         '''
         TODO done by the Motor class or PID controller?
@@ -207,7 +178,7 @@ class Motor(Component):
             # with limit at 0.99, min will be always less than 0.99
             return min( velocity / 100.0, self._motor_power_limit )
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def set_motor_power(self, target_power):
         '''
         Sets the motor power to a number between -1.0 to 1.0, with the actual
@@ -237,7 +208,7 @@ class Motor(Component):
         else:
             self._tb.SetMotor2(_driving_power)
 
-    # ................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def current_power(self):
         '''
@@ -260,7 +231,7 @@ class Motor(Component):
         else:
             return value
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def stopped(self):
         '''
@@ -278,5 +249,34 @@ class Motor(Component):
         else:
             self._tb.SetMotor2(0.0)
         pass
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def enable(self):
+        if not self.enabled:
+            self._slew_limiter.enable()
+            self._jerk_limiter.enable()
+            Component.enable(self)
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def disable(self):
+        if self.enabled:
+            self._slew_limiter.disable()
+            self._jerk_limiter.disable()
+            Component.disable(self)
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def close(self):
+        if self.enabled:
+            self.disable()
+        if self._max_power > 0 or self._max_driving_power > 0:
+            self._log.info('on closing: max power: {:>5.2f}; max adjusted power: {:>5.2f}.'.format(self._max_power, self._max_driving_power))
+        # just do it
+        if self._orientation is Orientation.PORT:
+            self._log.info(Fore.YELLOW + 'set motor PORT to zero.')
+            self._tb.SetMotor1(0.0)
+        else:
+            self._log.info(Fore.YELLOW + 'set motor STBD to zero.')
+            self._tb.SetMotor2(0.0)
+        self._log.info('closed.')
 
 #EOF

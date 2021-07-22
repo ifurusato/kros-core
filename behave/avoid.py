@@ -25,7 +25,7 @@ from behave.behaviour import Behaviour
 from core.publisher import Publisher
 from behave.trigger_behaviour import TriggerBehaviour
 
-# ...............................................................
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Avoid(Behaviour, Publisher):
 
     _AVOID_PUBLISHER_LOOP = '__avoid_publisher_loop'
@@ -59,11 +59,11 @@ class Avoid(Behaviour, Publisher):
         self.add_events([ Group.INFRARED, Group.BUMPER ])
         self._log.info('ready.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def get_trigger_behaviour(self, event):
         return TriggerBehaviour.TOGGLE # or RELEASE
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def trigger_event(self):
         '''
@@ -71,7 +71,7 @@ class Avoid(Behaviour, Publisher):
         '''
         return Event.AVOID
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def start(self):
         '''
         The necessary state machine call to start the publisher, which performs
@@ -80,7 +80,7 @@ class Avoid(Behaviour, Publisher):
         if self.state is not State.STARTED:
             Publisher.start(self)
 
-    # ................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def enable(self):
         Publisher.enable(self)
         if self.enabled:
@@ -95,19 +95,19 @@ class Avoid(Behaviour, Publisher):
         else:
             self._log.warning('failed to enable avoid publisher.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def callback(self):
         self._log.info('👾 avoid callback.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def name(self):
         return 'avoid'
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _queue_directive(self, event, delay_ms=0):
         '''
-        Queue a directive as a message bearing the event and value. If 
+        Queue a directive as a message bearing the event and value. If
         the delay is provided this is converted to ticks, which acts as
         a countdown timer on the loop to delay popping the next message
         from the queue.
@@ -117,12 +117,11 @@ class Avoid(Behaviour, Publisher):
         '''
         _ticks = int( delay_ms / ( self._avoid_loop_delay_sec * 1000 ))
         _message = self._message_factory.create_message(event, _ticks)
-        self._log.info('💠 _creating publish task for message: {} for {:d} ticks (delay: {}ms)'.format(_message.event.label, _message.payload.value, delay_ms))
-#               + Fore.GREEN + ' / total: {:5.2f} sec)'.format( _ticks * self._avoid_loop_delay_sec ))
+        self._log.info('creating publish task for message: {} for {:d} ticks (delay: {}ms)'.format(_message.event.label, _message.payload.value, delay_ms))
         self._queue.put(_message, False)
-        self._log.debug('_created publish task.')
+        self._log.debug('created publish task.')
 
-    # ................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def _avoid_publisher_loop(self, f_is_enabled):
         '''
         We get a message from the queue and publish it.
@@ -130,7 +129,7 @@ class Avoid(Behaviour, Publisher):
         Then we loop. The published message's value is the number
         of loop ticks to wait until getting the next message.
 
-        We continue to loop but without getting another message 
+        We continue to loop but without getting another message
         until the delay_tick_counter reaches zero.
         '''
         self._log.info('starting avoid listener loop:\t' + Fore.YELLOW + 'min distance: {:5.2f} cm'.format(self._min_distance)
@@ -180,15 +179,15 @@ class Avoid(Behaviour, Publisher):
 
         self._log.info('avoid loop complete.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def __publish_message(self, message):
-        self._log.info('👾👾 __publishing message: {}'.format(message.event.label))
+        self._log.info('👾 __publishing message: {}'.format(message.event.label))
 #       await Publisher.publish(self, message)
         await self._message_bus.publish_message(message)
         await asyncio.sleep(0.05)
-        self._log.info('👾👾 __published message: {}'.format(message.event.label))
+        self._log.info('👾 __published message: {}'.format(message.event.label))
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def execute(self, message):
         '''
         The method called upon each loop iteration. This receives a message and
@@ -215,7 +214,7 @@ class Avoid(Behaviour, Publisher):
 
                 # process value
                 if _value < self._min_distance:
-                    self._log.info(Fore.YELLOW + '👾💛 avoid: value below threshold; event: {}; value: {}'.format(_event.label, _value))
+                    self._log.info(Fore.YELLOW + '👾 avoid: value below threshold; event: {}; value: {}'.format(_event.label, _value))
 
 #                   # David Anderson's IR bumper behaviour .........................................
 #                   void bumper_behavior()      /* Collision recovery as concurrent task */
@@ -232,9 +231,9 @@ class Avoid(Behaviour, Publisher):
                         # bump.cmd = BACKUP_SLOW;     // request reverse low speed
                         # bump.arg = 0;               // straight back
                         # bump.flag = TRUE;           // signal arbitrator
-                        # msleep(1000);               // suspend and back up for 1 second 
+                        # msleep(1000);               // suspend and back up for 1 second
 
- 
+
                         # Ballistic segment 2 ........................
                         # bump.cmd = HALF_SPEED;      // then request forward � speed
                         # if (bump == LEFT)           // and turn away from the bump
@@ -244,26 +243,26 @@ class Avoid(Behaviour, Publisher):
                         if _event is Event.BUMPER_PORT:
                             self._log.info('👾 avoid; event: {}; value: {}'.format(_event.label, _value))
                             self._queue_directive(Event.TURN_AHEAD_STBD, _turn_ahead_delay)
-        
+
                         elif _event is Event.BUMPER_STBD:
                             self._log.info('👾 avoid; event: {}; value: {}'.format(_event.label, _value))
                             self._queue_directive(Event.TURN_AHEAD_PORT, _turn_ahead_delay)
-        
+
                         elif _event is Event.BUMPER_CNTR:
                             self._log.info('👾 avoid; event: {}; value: {}'.format(_event.label, _value))
                             self._queue_directive(Event.TURN_AHEAD_PORT, _turn_ahead_delay) # same as starboard
                         # msleep(500);                // suspend and turn for 1/2 second
- 
+
                         # Ballistic segment 3 ........................
                         # bump.cmd = top_speed;       // request full speed
-                        self._queue_directive(Event.FULL_AHEAD, 4000) 
+                        self._queue_directive(Event.FULL_AHEAD, 4000)
                         # bump.arg = 0;               // straight forward
                         # bump.flag = TRUE;           // signal arbitrator
                         # msleep(250);               // suspend and back up for 1/4 second
- 
+
                         # Ballistic segments complete
                         # bump.flag = FALSE;          // then reset arbitration flag and loop
- 
+
                         #  } else {                         // else if no bumps,
                         #       bump.flag = FALSE;	        // reset flag and	
                         #       msleep(10);                 // loop at 100Hz, looking for bumps
@@ -308,11 +307,8 @@ class Avoid(Behaviour, Publisher):
 #                           }
 #                       }
 #                   }
-
-
                 else:
                     self._log.info('👾💜 avoid (no action): value above threshold; event: {}; value: {}'.format(_event.label, _value))
-
             else:
                 self._log.info('👾 avoid disabled, execution on message {}; '.format(message.name) + Fore.YELLOW + ' event: {}; value: {}'.format(_event.label, _value))
 

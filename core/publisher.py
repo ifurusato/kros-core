@@ -21,15 +21,17 @@ from core.fsm import FiniteStateMachine
 from core.message_bus import MessageBus
 from core.message_factory import MessageFactory
 
-# Publisher ....................................................................
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Publisher(Component, FiniteStateMachine):
     '''
-    Extends FiniteStateMachine as a message/event publisher to the message bus.
+    Extends Component and FiniteStateMachine as a message/event publisher to
+    the message bus.
 
     :param name:             the unique name for the publisher
-    :param config:       the application configuration
+    :param config:           the application configuration
     :param message_bus:      the asynchronous message bus
     :param message_factory:  the factory for messages
+    :param suppressed:       the supprsssed flag (optional, default False)
     :param level:            the logging level
     '''
     def __init__(self, name, config, message_bus, message_factory, suppressed=False, level=Level.INFO):
@@ -54,21 +56,21 @@ class Publisher(Component, FiniteStateMachine):
         self._message_bus.register_publisher(self)
         self._log.info('ready.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def set_log_level(self, level):
         self._log.level = level
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def name(self):
         return self._name
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def message_bus(self):
         return self._message_bus
 
-    # ................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def publish(self, message):
         '''
         Asynchronously publishes the message to the message bus.
@@ -80,7 +82,7 @@ class Publisher(Component, FiniteStateMachine):
         await asyncio.sleep(0.05)
         self._log.info(Fore.WHITE + '{} published message: {} (event: {})'.format(self.name, message.name, message.event.label))
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def start(self):
         '''
         The necessary state machine call to start the publisher, which performs
@@ -88,7 +90,7 @@ class Publisher(Component, FiniteStateMachine):
         '''
         FiniteStateMachine.start(self)
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def __eq__(self, obj):
         return isinstance(obj, Publisher) and obj.name == self.name
 

@@ -19,7 +19,7 @@ from core.message import Message
 from core.message_bus import MessageBus
 from core.event import Event
 
-# ..............................................................................
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class MessageFactory(object):
     '''
     A factory for Messages.
@@ -33,7 +33,7 @@ class MessageFactory(object):
         self._message_bus = message_bus
         self._log.info('ready.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def create_message(self, event, value):
         '''
         Create and return a new message with the supplied event and value.

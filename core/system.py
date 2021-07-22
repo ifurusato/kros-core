@@ -17,7 +17,7 @@ init()
 
 from core.logger import Level, Logger
 
-# ..............................................................................
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class System(object):
     '''
     A collection of system control/info/statistical methods.
@@ -26,14 +26,14 @@ class System(object):
         self._log = Logger('system', level)
         self._log.info('ready.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def set_nice(self):
         # set KROS as high priority process
         self._log.info('setting process as high priority...')
         proc = psutil.Process(os.getpid())
         proc.nice(10)
 
-    # ................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def print_sys_info(self):
         _M = 1000000
         _vm = psutil.virtual_memory()
@@ -48,7 +48,7 @@ class System(object):
         if temperature:
             self._log.info('cpu temperature:\t' + Fore.YELLOW + '{:5.2f}°C'.format(temperature))
 
-    # ................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def read_cpu_temperature(self):
         temp_file = Path('/sys/class/thermal/thermal_zone0/temp')
         if temp_file.is_file():

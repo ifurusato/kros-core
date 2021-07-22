@@ -59,8 +59,8 @@ led_1_path = '/sys/class/leds/led1/brightness'
 class KROS(Component, FiniteStateMachine):
     '''
     Extends Component and Finite State Machine (FSM) as a basis of a K-Series
-    Robot Operating System (KROS) or behaviour-based system (BBS), including 
-    spawning the various tasks and starting up the Subsumption Architecture, 
+    Robot Operating System (KROS) or behaviour-based system (BBS), including
+    spawning the various tasks and starting up the Subsumption Architecture,
     used for communication between Components over a common message bus.
 
     The MessageBus receives Event-containing messages from sensors and other
@@ -69,7 +69,7 @@ class KROS(Component, FiniteStateMachine):
     by passing it on to the Controller.
 
     There is also a krosd linux daemon, which can be used to start, enable
-    and disable kros. 
+    and disable kros.
 
     :param mutex:   the optional logging mutex, passed on from krosd
     '''
@@ -78,7 +78,7 @@ class KROS(Component, FiniteStateMachine):
         This initialises KROS and calls the YAML configurer.
         '''
         _name = 'kros'
-        self._mutex = mutex if mutex is not None else threading.Lock() 
+        self._mutex = mutex if mutex is not None else threading.Lock()
         self._level = level
         self._log = Logger(_name, self._level, mutex=self._mutex)
         self._print_banner()
@@ -103,19 +103,19 @@ class KROS(Component, FiniteStateMachine):
     def configure(self, arguments):
         '''
         Provided with a set of configuration arguments, configures KROS based on
-        both KD01/KR01 standard hardware as well as optional features, the 
+        both KD01/KR01 standard hardware as well as optional features, the
         latter based on devices showing up (by address) on the I²C bus. Optional
         devices are only enabled at startup time via registration of their feature
         availability.
         '''
-        self._log.heading('configuration', 'configuring kros...', 
+        self._log.heading('configuration', 'configuring kros...',
             '[1/2]' if arguments.start else '[1/1]')
         self._log.info('application log level: {}'.format(self._log.level.name))
 
         # read YAML configuration ..............................................
         _loader = ConfigLoader(self._level)
         _config_filename = arguments.config_file
-        _filename = _config_filename if _config_filename is not None else 'config.yaml' 
+        _filename = _config_filename if _config_filename is not None else 'config.yaml'
         self._config = _loader.configure(_filename)
 
         # configuration from command line arguments ............................
@@ -148,12 +148,12 @@ class KROS(Component, FiniteStateMachine):
         # establish basic subsumption components ...............................
 
         self._log.info('configure subsumption components...')
-       
+
         self._message_bus = MessageBus(self._config, self._level)
         self._message_factory = MessageFactory(self._message_bus, self._level)
 
         self._controller = Controller(self._message_bus, self._level)
-    
+
     #    _gp_controller = GamepadController(self._level)
     #    _message_bus.register_controller(_gp_controller)
 
@@ -164,7 +164,7 @@ class KROS(Component, FiniteStateMachine):
 
         self._log.info('configure pid motor controller...')
         self._pid_motor_ctrl = PIDMotorController(self._config, self._message_bus, self._motors, self._level)
-    
+
         # create publishers ....................................................
 
 #       self._clock  = Clock(self._config, self._message_bus, self._message_factory, level=self._level)
@@ -172,15 +172,15 @@ class KROS(Component, FiniteStateMachine):
         self._pot_publisher = PotentiometerPublisher(self._config, self._message_bus, self._message_factory, level=self._level)
 #       self._publisher2  = FloodPublisher(self._message_bus, self._message_factory)
 #       self._publisher3  = GamepadPublisher(self._config, self._message_bus, self._message_factory)
-    
+
         # create subscribers ...................................................
         self._motor_subscriber    = MotorSubscriber(self._config, self._message_bus, self._motors, level=self._level)
         self._bumper_subscriber   = BumperSubscriber(self._config, self._message_bus, self._motors, level=self._level)
 #       self._infrared_subscriber = InfraredSubscriber(self._config, self._message_bus, self._motors, level=self._level) # reacts to IR sensors
         self._garbage_collector   = GarbageCollector(self._config, self._message_bus, level=self._level)
-    
+
 #       _subscriberX = Subscriber('x', self._config, self._message_bus, color=Fore.MAGENTA, suppressed=False, enabled=True, level=self._level)
-#       _subscriberX.add_events([ Event.ROAM, Event.FULL_AHEAD ]) 
+#       _subscriberX.add_events([ Event.ROAM, Event.FULL_AHEAD ])
 
         # create behaviours ....................................................
         self._behaviour_mgr = BehaviourManager(self._config, self._message_bus, self._level) # a specialised subscriber
@@ -191,7 +191,7 @@ class KROS(Component, FiniteStateMachine):
         self._moth  = Moth(self._config, self._message_bus, self._message_factory, self._motors, self._level)
         self._sniff = Sniff(self._config, self._message_bus, self._message_factory, self._motors, self._level)
         self._idle  = Idle(self._config, self._message_bus, self._message_factory, self._level)
-    
+
     #   _message_bus.print_publishers()
     #   _message_bus.print_subscribers()
 
@@ -209,7 +209,7 @@ class KROS(Component, FiniteStateMachine):
     @property
     def configuration(self):
         return self._config
-    
+
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def get_property(self, section, property_name):
         '''
@@ -299,7 +299,7 @@ class KROS(Component, FiniteStateMachine):
             # disable Pi LEDs since they may be distracting
             self._set_pi_leds(False)
 
-        # begin main loop ..............................
+        # begin main loop ..................................
 
         self._log.notice('Press Ctrl-C to exit.')
         self._log.info('begin main os loop.\r')
@@ -320,7 +320,7 @@ class KROS(Component, FiniteStateMachine):
 
         self._log.info('started.')
 
-        # end main ...................................
+        # end main loop ....................................
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def close(self):
@@ -337,11 +337,11 @@ class KROS(Component, FiniteStateMachine):
             if self._behaviour_mgr:
                 self._behaviour_mgr.close()
             if self._gamepad:
-                self._gamepad.close() 
+                self._gamepad.close()
             if self._motors:
                 self._motors.close()
             if self._ifs:
-                self._ifs.close() 
+                self._ifs.close()
             if self._disable_leds:
                 # restore normal function of LEDs
                 self._set_pi_leds(True)
@@ -438,7 +438,7 @@ def main(argv):
             _log.info(Style.DIM + 'finally closing kros...')
             _kros.close()
 
-# call main ....................................................................
+# ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 if __name__== "__main__":
     main(sys.argv[1:])
 

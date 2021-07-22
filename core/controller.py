@@ -19,7 +19,7 @@ from core.logger import Logger, Level
 from core.component import Component
 from core.event import Event
 
-# ..............................................................................
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Controller(Component):
     '''
     A default controller class that receives callbacks (to the 'callback'
@@ -37,25 +37,25 @@ class Controller(Component):
         self._message_bus.register_controller(self)
         self._log.info('ready.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def set_log_level(self, level):
         self._log.level = level
 
-    # ................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def name(self):
         return 'def-controller'
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def get_current_message(self):
         return self._current_message
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _clear_current_message(self):
         self._log.debug('clear current message  {}.'.format(self._current_message))
         self._current_message = None
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def callback(self, payload):
         '''
         Responds to the Event contained within the Payload.
@@ -79,7 +79,6 @@ class Controller(Component):
                 self._log.info(Fore.CYAN + 'state change from event: ' + Style.BRIGHT + ' {}'.format(self._previous_payload.event.label)
                         + Style.NORMAL + ' to event: {} ' + Style.BRIGHT + ' {}'.format(payload.event.label)
                         + Fore.BLACK + Style.NORMAL + ' [{:d}/{:d}]'.format(self._state_change_count, self._event_count))
-#           return
 
         self._previous_payload = payload
         self._state_change_count = next(self._state_change_counter)
@@ -89,7 +88,7 @@ class Controller(Component):
         self._log.info(Fore.CYAN + 'act on event: ' + Style.BRIGHT + ' {}'.format(_event.label)
                 + Fore.BLACK + Style.NORMAL + ' [{:d}/{:d}]'.format(self._state_change_count, self._event_count))
 
-        # system events ........................................................
+        # system events ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
         if _event is Event.NOOP:                           # 0, "no operation"
            self._log.info('event: "no operation"')
         elif _event is Event.BATTERY_LOW:                  # 10, "battery low"
@@ -103,11 +102,11 @@ class Controller(Component):
         elif _event is Event.EMERGENCY_ASTERN:             # 14, "emergency astern"
            self._log.info('event: "emergency astern"')
 
-        # gamepad events .......................................................
+        # gamepad events ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
         elif _event is Event.GAMEPAD:                      # 40, "gamepad"
            self._log.info('event: "gamepad"')
 
-        # stopping and halting .................................................
+        # stopping and halting ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
         elif _event is Event.STOP:                         # 50, "stop"
            self._log.info('event: "stop"')
         elif _event is Event.HALT:                         # 51, "halt"
@@ -119,7 +118,7 @@ class Controller(Component):
         elif _event is Event.BUTTON:                       # 54, "button"
            self._log.info('event: "button"')
 
-    # bumper ................................................................................
+        # bumper ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
         elif _event is Event.BUMPER_PORT:                  # 110, "bumper port"
            self._log.info('event: "bumper port"')
         elif _event is Event.BUMPER_CNTR:                  # 111, "bumper center"
@@ -127,7 +126,7 @@ class Controller(Component):
         elif _event is Event.BUMPER_STBD:                  # 112, "bumper stbd"
            self._log.info('event: "bumper stbd"')
 
-    # infrared ..............................................................................
+        # infrared events ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
         elif _event is Event.INFRARED_PORT_SIDE:           # 120, "infrared port side"
            self._log.info('event: "infrared port side"')
         elif _event is Event.INFRARED_PORT:                # 121, "infrared port"
@@ -139,7 +138,7 @@ class Controller(Component):
         elif _event is Event.INFRARED_STBD_SIDE:           # 124, "infrared stbd side"
            self._log.info('event: "infrared stbd side"')
 
-    # velocity directives ...................................................................
+        # velocity directives ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
         elif _event is Event.VELOCITY:                     # 200, "velocity"
            self._log.info('event: "velocity"')
         elif _event is Event.PORT_VELOCITY:                # 201, "port velocity"
@@ -159,7 +158,7 @@ class Controller(Component):
         elif _event is Event.DECREASE_VELOCITY:            # 208, "decrease velocity"
            self._log.info('event: "decrease velocity"')
 
-    # theta directives ......................................................................
+        # theta directives ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
         elif _event is Event.THETA:                        # 300, "theta"
            self._log.info('event: "theta"')
         elif _event is Event.PORT_THETA:                   # 301, "port theta"
@@ -176,7 +175,7 @@ class Controller(Component):
            self._log.info('event: "increase stbd theta"')
         elif _event is Event.DECREASE_STBD_THETA:          # 307, "decrease stbd theta"
            self._log.info('event: "decrease stbd theta"')
-    # port turns ...........
+        # port turns ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
         elif _event is Event.TURN_AHEAD_PORT:              # 310, "turn ahead port"
            self._log.info('event: "turn ahead port"')
         elif _event is Event.TURN_TO_PORT:                 # 311, "turn to port"
@@ -185,7 +184,7 @@ class Controller(Component):
            self._log.info('event: "turn astern port"')
         elif _event is Event.SPIN_PORT:                    # 313, "spin port"
            self._log.info('event: "spin port"')
-    # starboard turns ......
+        # starboard turns ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
         elif _event is Event.SPIN_STBD:                    # 320, "spin stbd"
            self._log.info('event: "spin stbd"')
         elif _event is Event.TURN_ASTERN_STBD:             # 321, "turn astern stbd"
@@ -195,8 +194,8 @@ class Controller(Component):
         elif _event is Event.TURN_AHEAD_STBD:              # 323, "turn ahead stbd"
            self._log.info('event: "turn ahead stbd"')
 
-    # chadburn event ........................................................................
-    # astern ...............
+        # chadburn events ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+        # astern
         elif _event is Event.FULL_ASTERN:                  # 400, "full astern"
            self._log.info('event: "full astern"')
         elif _event is Event.HALF_ASTERN:                  # 401, "half astern"
@@ -207,7 +206,7 @@ class Controller(Component):
            self._log.info('event: "dead slow astern"')
         elif _event is Event.ASTERN:                       # 404, "astern"
            self._log.info('event: "astern"')
-    # ahead ................
+        # ahead
         elif _event is Event.AHEAD:                        # 410, "ahead"
            self._log.info('event: "ahead"')
         elif _event is Event.DEAD_SLOW_AHEAD:              # 411, "dead slow ahead"
@@ -219,7 +218,7 @@ class Controller(Component):
         elif _event is Event.FULL_AHEAD:                   # 414, "full ahead"
            self._log.info('event: "full ahead"')
 
-    # high level behaviours .................................................................
+        # high level behaviours ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
         elif _event is Event.AVOID:                        # 500, "roam"
            self._log.info('event: "avoid"')
         elif _event is Event.ROAM:                         # 501, "roam"
@@ -241,13 +240,13 @@ class Controller(Component):
         elif _event is Event.IDLE:                         # 509, "idle"
            self._log.info('event: "idle"')
 
-    # other events (> 900) ..................................................................
+        # other events (>900) ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
         elif _event is Event.NO_ACTION:                    # 999, "no action"
            self._log.info('event: "no action"')
         elif _event is Event.ANY:                          # 1000, "any"
            self._log.info('event: "any"')
 
-        # unrecognised event  ..................................................
+        # unrecognised event ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
         else:
             self._log.error('unrecognised event: {}'.format(_event))
 
@@ -255,7 +254,7 @@ class Controller(Component):
         _elapsed_ms = int(_delta.total_seconds() * 1000)
         self._log.debug(Fore.MAGENTA + Style.DIM + 'elapsed: {}ms'.format(_elapsed_ms) + Style.DIM)
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def print_statistics(self):
         self._log.info('{}:'.format(self.name) + Fore.YELLOW + '\t{} events; {} state changes.'.format(self._event_count, self._state_change_count))
 

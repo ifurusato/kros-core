@@ -24,7 +24,7 @@ from core.fsm import State
 from behave.behaviour import Behaviour
 from behave.trigger_behaviour import TriggerBehaviour
 
-# ..............................................................................
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Roam(Behaviour):
     '''
     Implements a roaming behaviour. The end result of this Behaviour is to
@@ -34,12 +34,12 @@ class Roam(Behaviour):
     the maximum speed (no limit).
 
     This is a Subscriber to INFRARED_CNTR events, altering the usage of the
-    center analog IR sensor to no longer function solely for obstacle 
-    avoidance, but instead set the robot's target velocity as a proportion to 
-    the perceived distance. I.e., if the sensor sees nothing at its maximum 
-    range the robot's forward target velocity will be set to its maximum. As 
-    the sensed distance is lessened the target velocity is likewise, until the 
-    robot reaches a minimum distance in which it halts and then goes into an 
+    center analog IR sensor to no longer function solely for obstacle
+    avoidance, but instead set the robot's target velocity as a proportion to
+    the perceived distance. I.e., if the sensor sees nothing at its maximum
+    range the robot's forward target velocity will be set to its maximum. As
+    the sensed distance is lessened the target velocity is likewise, until the
+    robot reaches a minimum distance in which it halts and then goes into an
     obstacle avoidance behaviour (handled elsewhere).
 
     An option is to set the maximum distance to roam, so that the robot
@@ -71,7 +71,7 @@ class Roam(Behaviour):
         self._last_dt      = None
         self._log.info('ready.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def distance(self):
         '''
@@ -85,16 +85,16 @@ class Roam(Behaviour):
         self._log.info('🌼 setting distance to: {}'.format(distance))
         self._distance = distance
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def speed_limit(self):
         return self._speed_limit
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def get_trigger_behaviour(self, event):
         return TriggerBehaviour.RELEASE
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def trigger_event(self):
         '''
@@ -102,7 +102,7 @@ class Roam(Behaviour):
         '''
         return Event.ROAM
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def callback(self):
         if self.suppressed:
             self._log.info(Style.DIM + '🌼 roam callback suppressed.')
@@ -112,20 +112,20 @@ class Roam(Behaviour):
             if self._last_dt:
                 _elapsed_ms = (_dt_now - self._last_dt).total_seconds() * 1000.0
                 if self.speed_limit == self._max_speed:
-                    self._log.info('🌼 roam callback execute; {};'.format(Util.get_formatted_time('message age:', _elapsed_ms)) 
+                    self._log.info('🌼 roam callback execute; {};'.format(Util.get_formatted_time('message age:', _elapsed_ms))
                             + Fore.BLUE + ' distance: {};'.format(self.distance)
                             + Style.DIM + ' speed limit: {:5.2f};'.format(self.speed_limit))
                 else:
-                    self._log.info('🌼 roam callback execute; {};'.format(Util.get_formatted_time('message age:', _elapsed_ms)) 
+                    self._log.info('🌼 roam callback execute; {};'.format(Util.get_formatted_time('message age:', _elapsed_ms))
                             + Fore.BLUE + ' distance: {};'.format(self.distance)
                             + Fore.GREEN + ' speed limit: {:5.2f};'.format(self.speed_limit))
             self._last_dt = _dt_now
         self._log.debug('🌼 roam callback complete.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def execute(self, message):
         '''
-        The method called upon each loop iteration. 
+        The method called upon each loop iteration.
 
         :param message:  an optional Message passed along by the message bus
         '''
@@ -145,14 +145,14 @@ class Roam(Behaviour):
                     self._set_motor_speed_limit(Orientation.STBD)
                 else:
                     self._speed_limit = self._max_speed
-                self._log.info('🌼 processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {};'.format(_event.label) 
+                self._log.info('🌼 processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {};'.format(_event.label)
                         + Fore.BLUE + ' distance: {:5.2f};'.format(self.distance)
-                        + Fore.GREEN + ' max speed: {:5.2f};'.format(self.speed_limit) 
+                        + Fore.GREEN + ' max speed: {:5.2f};'.format(self.speed_limit)
                         + Fore.MAGENTA + ' enabled? {}'.format(self.enabled))
             else:
                 raise ValueError('expected INFRARED_CNTER event not: {}'.format(message.event.label))
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _set_motor_speed_limit(self, orientation):
         '''
         This sets the motor speed limit based on the speed limit, if not None.
@@ -169,10 +169,10 @@ class Roam(Behaviour):
         self._motors.set_motor_velocity(orientation, _target_velocity)
         self._log.info('set motor speed limit for {} motor to: {:5.2f} (limited by {:5.2f})'.format(orientation.name, _target_velocity, self.speed_limit))
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _convert_to_max_speed(self, distance):
         '''
-        Converts a range of distances to a range of speeds. 
+        Converts a range of distances to a range of speeds.
         When the distance is greater than or equal to max_distance, returns max_speed.
         When the distance is less than min_distance, returns min_speed.
         Otherwise returns a ratio of distance to speed.
