@@ -60,9 +60,10 @@ kros:
             maximum_output:     90.0            # upper limit of permitted velocity output values
             rate:               'FAST'          # select value of enum: EXTREMELY_SLOW, VERY_SLOW, SLOWER, SLOW, NORMAL, FAST, VERY_FAST
             hysteresis:          2.0            # how close do we get to the target velocity?
-            use_elapsed_time:    True          # used elapsed time or percentage
+            use_elapsed_time:    True           # used elapsed time or percentage
         jerk:
             jerk_rate_limit:     0.3            # limit of permitted change per iteration
+            jerk_tolerance:      10             # percentage limit of permitted change per iteration
     gamepad:
         enabled: False
         device_path: '/dev/input/event5'         # the path to the bluetooth gamepad on the pi (see find_gamepad.py)
@@ -108,13 +109,39 @@ pi:
 devices:
     0x0E: 'RGB Potentiometer'
     0x0F: 'RGB Encoder' # default, moved to 0x16
+    0x10: 'PA1010D GPS'
     0x15: 'ThunderBorg'
     0x16: 'RGB Encoder'
     0x18: 'IO Expander'
+    0x28: 'BNO055'
+    0x29: 'VL53L1X'
+    0x36: 'UltraBorg'
+    0x39: 'HT0740'
+    0x40: 'INA260' # port?
+    0x41: 'INA260' # stbd?
     0x48: 'ADS1015'
-    0x4A: 'Unknown'
+    0x69: 'ICM20948'
     0x74: '5x5 RGB Matrix'
     0x77: '5x5 RGB Matrix (or 11x7 LED Matrix)'
+
+# HT0740 0x38 or 0x39 or 0x3A or 0x3B
+# BNO055 0x28 or 0x29
+# BNO085 0x4A or 0x4B
+# ICM20948 0x68 or 0x69
+# INA260 0x40 or 0x41 or 0x44 or 0x45
+#
+# 0x4A may be an ADS1115, an INA260 or a BNO085.
+#
+# ☻ i2cdetect -y 1
+#      0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f
+# 00:          -- -- -- -- -- -- -- -- -- -- -- 0e -- 
+# 10: -- -- -- -- -- 15 -- -- 18 -- -- -- -- -- -- -- 
+# 20: -- -- -- -- -- -- -- -- 28 29 -- -- -- -- -- -- 
+# 30: -- -- -- -- -- -- 36 -- -- 39 -- -- -- -- -- -- 
+# 40: 40 41 -- -- -- -- -- -- 48 -- -- -- -- -- -- -- 
+# 50: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
+# 60: -- -- -- -- -- -- -- -- -- 69 -- -- -- -- -- -- 
+# 70: -- -- -- -- 74 -- -- 77     
 
         # GPIO pins configured for A1, B1, A2 and B2
 #       motor_encoder_a1_port:  22               # port A

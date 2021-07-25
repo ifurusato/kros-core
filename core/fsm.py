@@ -66,7 +66,8 @@ class FiniteStateMachine(object):
             else:
                 raise IllegalStateError('invalid transition in {} from {} to {} (expected INITIAL).'.format(self._task_name, self._state.name, next_state.name))
         if self._state is State.INITIAL:
-            if any([ next_state is State.STARTED, next_state is State.CLOSED ]):
+            # we permit DISABLED for when we've never really got started, as a proper transition to CLOSED
+            if any([ next_state is State.STARTED, next_state is State.DISABLED, next_state is State.CLOSED ]):
                 pass
             else:
                 raise IllegalStateError('invalid transition in {} from {} to {} (expected STARTED).'.format(self._task_name, self._state.name, next_state.name))

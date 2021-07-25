@@ -52,9 +52,6 @@ from behave.idle import Idle
 from hardware.motor_configurer import MotorConfigurer
 from hardware.pid_motor_ctrl import PIDMotorController
 
-led_0_path = '/sys/class/leds/led0/brightness'
-led_1_path = '/sys/class/leds/led1/brightness'
-
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class KROS(Component, FiniteStateMachine):
     '''
@@ -238,10 +235,8 @@ class KROS(Component, FiniteStateMachine):
         Enables or disables the Raspberry Pi's board LEDs.
         '''
         sudo_name = self.get_property('pi', 'sudo_name')
-        # led_0_path:   '/sys/class/leds/led0/brightness'
         _led_0_path = self._config['pi'].get('led_0_path')
         _led_0 = Path(_led_0_path)
-        # led_1_path:   '/sys/class/leds/led1/brightness'
         _led_1_path = self._config['pi'].get('led_1_path')
         _led_1 = Path(_led_1_path)
         if _led_0.is_file() and _led_0.is_file():
