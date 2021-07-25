@@ -36,7 +36,8 @@ kros:
         suppress_slew_limiter:  False
         enable_jerk_limiter:    True
         suppress_jerk_limiter:  False
-        pid-controller:
+        use_pid_controller:     False            # if True use PID controller, otherwise direct drive
+        pid_controller:
             kp:                  0.09500         # proportional gain
             ki:                  0.00000         # integral gain
             kd:                  0.00000         # derivative gain

@@ -68,6 +68,7 @@ class Motors(Component):
         self._halt_ratio           = _cfg.get('halt_ratio')        # ratio for quick _halt behaviour
         self._brake_ratio          = _cfg.get('brake_ratio')       # ratio for slower braking behaviour
         self._spin_speed           = Speed.from_string(_cfg.get('spin_speed')) # motor speed when spinning
+        self._use_pid_controller   = _cfg.get('use_pid_controller') # when True use PID control, otherwise direct drive
         # variables
         self._port_target_velocity = 0.0 # the port motor target velocity for slewing
         self._stbd_target_velocity = 0.0 # the starboard motor target velocity for slewing
@@ -149,15 +150,8 @@ class Motors(Component):
             if not isclose(self._decelerate_ratio, 0.0, abs_tol=0.1):
                 # if decelerating then apply that to target velocities first
                 self._decelerate(_event_count)
-
             self._port_motor.update_motor_velocity()
             self._stbd_motor.update_motor_velocity()
-
-#           if self._port_motor.velocity != self._port_target_velocity:
-#               self.set_motor_velocity(Orientation.PORT, self._port_target_velocity)
-#           if self._stbd_motor.velocity != self._stbd_target_velocity:
-#               self.set_motor_velocity(Orientation.STBD, self._stbd_target_velocity)
-
             # print stats...
             self.print_info(_event_count)
             time.sleep(self._loop_delay_sec)
@@ -295,6 +289,37 @@ class Motors(Component):
             return self._stbd_motor
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def _update_target_velocity(self, value, increment):
+        '''
+        Updates the value by the increment, clipping the result based on
+        the maximum velocity limit.
+        '''
+        value += increment
+        return -1.0 * self._velocity_clip(-1.0 * value) if value < 0 else self._velocity_clip(value)
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def get_motor_velocity(self, orientation):
+        '''
+        A convenience method that returns the target velocity of the
+        specified motor.
+        '''
+        if orientation is Orientation.PORT:
+            return self._port_motor.velocity
+        else:
+            return self._stbd_motor.velocity
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def set_motor_velocity(self, orientation, target_velocity):
+        '''
+        A convenience method that sets the target velocity and motor
+        power of the specified motor.
+        '''
+        if orientation is Orientation.PORT:
+            self._port_motor.set_motor_velocity(target_velocity)
+        else:
+            self._stbd_motor.set_motor_velocity(target_velocity)
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def dispatch_velocity_event(self, payload):
         self._reset_deceleration()
         _event = payload.event
@@ -377,8 +402,6 @@ class Motors(Component):
             pass
         elif _event is Event.EVEN:
             self._even()
-
-        # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
         # port .............................................
         elif _event is Event.PORT_THETA:
             pass
@@ -402,8 +425,6 @@ class Motors(Component):
         elif _event is Event.SPIN_PORT:
             self._log.info('SPIN_PORT event.')
             self._spin(Orientation.PORT)
-
-        # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
         # stbd .............................................
         elif _event is Event.STBD_THETA:
             pass
@@ -545,37 +566,6 @@ class Motors(Component):
             self._log.info('increment stbd motor velocity:' + Fore.GREEN + ' {:5.2f} + {:5.2f} ➔ {:<5.2f}'.format(\
                     self._stbd_motor.velocity, increment, _updated_target_velocity))
         self.set_motor_velocity(orientation, _updated_target_velocity)
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def _update_target_velocity(self, value, increment):
-        '''
-        Updates the value by the increment, clipping the result based on
-        the maximum velocity limit.
-        '''
-        value += increment
-        return -1.0 * self._velocity_clip(-1.0 * value) if value < 0 else self._velocity_clip(value)
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def get_motor_velocity(self, orientation):
-        '''
-        A convenience method that returns the target velocity of the
-        specified motor.
-        '''
-        if orientation is Orientation.PORT:
-            return self._port_motor.velocity
-        else:
-            return self._stbd_motor.velocity
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def set_motor_velocity(self, orientation, target_velocity):
-        '''
-        A convenience method that sets the target velocity and motor
-        power of the specified motor.
-        '''
-        if orientation is Orientation.PORT:
-            self._port_motor.set_motor_velocity(target_velocity)
-        else:
-            self._stbd_motor.set_motor_velocity(target_velocity)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _halt(self):

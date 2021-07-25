@@ -46,7 +46,7 @@ class PIDController(object):
         '''
         if config is None:
             raise ValueError('null configuration argument.')
-        self._config = config['kros'].get('motors').get('pid-controller')
+        self._config = config['kros'].get('motors').get('pid_controller')
         if message_bus is None:
             raise ValueError('null message bus argument.')
         self._message_bus = message_bus
