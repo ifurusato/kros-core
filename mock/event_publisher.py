@@ -59,13 +59,20 @@ class EventPublisher(Publisher):
 
     Finally, there is also has a "flood" mode that auto-generates random
       event-bearing messages at a random interval.
+
+    :param config:            the application configuration
+    :param message_bus:       the asynchronous message bus
+    :param message_factory:   the factory for creating messages
+    :param motor_controller:  the motor controller
+    :param system:            access to system information
+    :param level:             the log level
     '''
-    def __init__(self, config, message_bus, message_factory, motors, system, level=Level.INFO):
+    def __init__(self, config, message_bus, message_factory, motor_controller, system, level=Level.INFO):
         Publisher.__init__(self, 'event', config, message_bus, message_factory, level=level)
-        self._motors   = motors
-        self._system   = system
-        self._level    = level
-        self._counter  = itertools.count()
+        self._motor_ctrl      = motor_controller
+        self._system          = system
+        self._level           = level
+        self._counter         = itertools.count()
         self._triggered_ir_port_side = self._triggered_ir_port  = self._triggered_ir_cntr  = self._triggered_ir_stbd  = \
         self._triggered_ir_stbd_side = self._triggered_bmp_port = self._triggered_bmp_cntr = self._triggered_bmp_stbd = 0
         self._getch           = _Getch()
@@ -91,10 +98,6 @@ class EventPublisher(Publisher):
             self._log.info('gamepad disabled.')
         self._gamepad_released = False # suppressed/released toggle
         self._log.info('ready.')
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-#   def set_motors(self, motors):
-#       self._motors = motors
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _connect_gamepad(self):
@@ -199,8 +202,8 @@ class EventPublisher(Publisher):
                             self._log.heading('System Information','Memory, CPU and Message Bus Information.')
                             self._system.print_sys_info()
                             self._message_bus.print_system_status()
-                            self._motors.print_motor_status()
-                            self._motors.print_info(None)
+                            self._motor_ctrl.print_motor_status()
+                            self._motor_ctrl.print_info(None)
                             continue
                         elif och == 111: # 'o'
                             self._message_bus.clear_tasks()
@@ -392,13 +395,13 @@ class EventPublisher(Publisher):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _toggle_motors(self):
-        if self._motors:
+        if self._motor_ctrl:
             self._log.info('toggle motors...')
-            if self._motors.loop_is_running():
-                self._motors.stop_loop()
+            if self._motor_ctrl.loop_is_running():
+                self._motor_ctrl.stop_loop()
             else:
-                self._motors.start_loop()
-            self._log.debug('loop is running? ' + Fore.YELLOW + '{}'.format(self._motors.loop_is_running()))
+                self._motor_ctrl.start_loop()
+            self._log.debug('loop is running? ' + Fore.YELLOW + '{}'.format(self._motor_ctrl.loop_is_running()))
         else:
             self._log.warning('no motors available.')
 

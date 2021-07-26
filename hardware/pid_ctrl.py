@@ -14,7 +14,7 @@
 # the PID class.
 #
 
-import sys, time
+import sys
 from collections import deque as Deque
 from colorama import init, Fore, Style
 init()
@@ -28,10 +28,9 @@ from hardware.pid import PID
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class PIDController(object):
     '''
-    Provides a configurable PID motor controller via a threaded
-    fixed-time loop. This also maintains a value for the current
-    motor velocity by sampling the step count from the motors on
-    the same interval as the PID calls.
+    Provides a configurable PID motor controller. This also maintains a value
+    for the current motor velocity by sampling the step count from the motors
+    on the same interval as the PID calls.
     '''
 
     def __init__(self, config, message_bus, motor, setpoint=0.0, sample_time=0.01, level=Level.INFO):

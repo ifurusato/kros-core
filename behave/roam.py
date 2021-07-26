@@ -23,6 +23,7 @@ from core.orient import Orientation
 from core.fsm import State
 from behave.behaviour import Behaviour
 from behave.trigger_behaviour import TriggerBehaviour
+from hardware.motor_controller import MotorController
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Roam(Behaviour):
@@ -47,15 +48,17 @@ class Roam(Behaviour):
     then as it nears its target distance, decelerates to a halt at the
     target.
 
-    :param config:         the application configuration
-    :param message_bus:    the asynchronous message bus
+    :param config:          the application configuration
+    :param message_bus:     the asynchronous message bus
     :param message_factory: the factory for messages
-    :param motors:         the motor controller
-    :param level:          the optional log level
+    :param motor_ctrl:      the motor controller
+    :param level:           the optional log level
     '''
-    def __init__(self, config, message_bus, message_factory, motors, level=Level.INFO):
+    def __init__(self, config, message_bus, message_factory, motor_ctrl, level=Level.INFO):
         Behaviour.__init__(self, 'roam', config, message_bus, message_factory, level)
-        self._motors       = motors
+        if not isinstance(motor_ctrl, MotorController):
+            raise ValueError('wrong type for motor_ctrl argument: {}'.format(type(motor_ctrl)))
+        self._motor_ctrl = motor_ctrl
         self._distance     = None
         _cfg = config['kros'].get('behaviour').get('roam')
         self._min_distance = _cfg.get('min_distance')
@@ -160,13 +163,13 @@ class Roam(Behaviour):
         speed ahead never astern (reversing).
         '''
         self._log.info('setting motor speed limit...')
-        _velocity = self._motors.get_motor_velocity(orientation)
+        _velocity = self._motor_ctrl.get_motor_velocity(orientation)
         _target_velocity = Util.clip(_velocity, self._min_speed, self.speed_limit)
         # TEMP test
         _clipped = Util.clip(_velocity, self._min_speed, self.speed_limit)
         if _target_velocity != _clipped:
             raise Exception('clipped {} != clipped {}'.format(_target_velocity, _clipped))
-        self._motors.set_motor_velocity(orientation, _target_velocity)
+        self._motor_ctrl.set_motor_velocity(orientation, _target_velocity)
         self._log.info('set motor speed limit for {} motor to: {:5.2f} (limited by {:5.2f})'.format(orientation.name, _target_velocity, self.speed_limit))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈

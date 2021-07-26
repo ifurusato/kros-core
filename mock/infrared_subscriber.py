@@ -20,6 +20,7 @@ from core.logger import Logger, Level
 from core.orient import Orientation
 from core.event import Event, Group
 from core.subscriber import Subscriber
+from hardware.motor_controller import MotorController
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class InfraredSubscriber(Subscriber):
@@ -29,15 +30,17 @@ class InfraredSubscriber(Subscriber):
     '''
     A subscriber to infrared events.
 
-    :param name:         the subscriber name (for logging)
     :param config:       the application configuration
     :param message_bus:  the message bus
-    :param color:        the color for messages
+    :param motor_ctrl:   the motor controller
+    :param color:        the color for log messages
     :param level:        the logging level
     '''
-    def __init__(self, config, message_bus, motors, color=Fore.GREEN, level=Level.INFO):
+    def __init__(self, config, message_bus, motor_ctrl, color=Fore.GREEN, level=Level.INFO):
         Subscriber.__init__(self, InfraredSubscriber.CLASS_NAME, config, message_bus=message_bus, color=color, suppressed=False, enabled=False, level=level)
-        self._motors = motors
+        if not isinstance(motor_ctrl, MotorController):
+            raise ValueError('wrong type for motor_ctrl argument: {}'.format(type(motor_ctrl)))
+        self._motor_ctrl = motor_ctrl
         self.add_events(Event.by_group(Group.INFRARED))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -63,7 +66,7 @@ class InfraredSubscriber(Subscriber):
         _event = message.event
         self._log.debug('pre-processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.label) + Style.RESET_ALL)
         if Event.is_infrared_event(_event):
-            self._motors.dispatch_infrared_event(message.payload)
+            self._motor_ctrl.dispatch_infrared_event(message.payload)
         else:
             self._log.warning('unrecognised infrared event on message {}'.format(message.name) + ''.format(message.event.label))
         await Subscriber.process_message(self, message)

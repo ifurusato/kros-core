@@ -20,6 +20,7 @@ from core.event import Event
 from core.subscriber import Subscriber
 from behave.behaviour import Behaviour
 from behave.trigger_behaviour import TriggerBehaviour
+from hardware.motor_controller import MotorController
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Moth(Behaviour):
@@ -30,15 +31,17 @@ class Moth(Behaviour):
     :param config:          the application configuration
     :param message_bus:     the asynchronous message bus
     :param message_factory: the factory for messages
-    :param motors:          the motor controller
+    :param motor_ctrl:      the motor controller
     :param level:           the optional log level
     '''
-    def __init__(self, config, message_bus, message_factory, motors, level=Level.INFO):
+    def __init__(self, config, message_bus, message_factory, motor_ctrl, level=Level.INFO):
         Behaviour.__init__(self, 'moth', config, message_bus, message_factory, level)
         _cfg = self._config['kros'].get('behaviour').get('moth')
         self._anti_moth = _cfg.get('anti_moth')
         self._log.info('anti-moth: {}'.format(self._anti_moth))
-        self._motors = motors
+        if not isinstance(motor_ctrl, MotorController):
+            raise ValueError('wrong type for motor_ctrl argument: {}'.format(type(motor_ctrl)))
+        self._motor_ctrl = motor_ctrl
         self._log.info('ready.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈

@@ -20,6 +20,7 @@ from core.logger import Logger, Level
 from core.orient import Orientation
 from core.event import Event, Group
 from core.subscriber import Subscriber
+from hardware.motor_controller import MotorController
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class MotorSubscriber(Subscriber):
@@ -32,9 +33,11 @@ class MotorSubscriber(Subscriber):
     :param color:        the color for messages
     :param level:        the logging level
     '''
-    def __init__(self, config, message_bus, motors, color=Fore.MAGENTA, level=Level.INFO):
+    def __init__(self, config, message_bus, motor_ctrl, color=Fore.MAGENTA, level=Level.INFO):
         Subscriber.__init__(self, 'motor', config, message_bus, color=color, suppressed=False, enabled=False, level=level)
-        self._motors = motors
+        if not isinstance(motor_ctrl, MotorController):
+            raise ValueError('wrong type for motor_ctrl argument: {}'.format(type(motor_ctrl)))
+        self._motor_ctrl = motor_ctrl
         self.add_events(Event.by_groups([Group.STOP, Group.VELOCITY, Group.THETA, Group.CHADBURN]))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -61,13 +64,13 @@ class MotorSubscriber(Subscriber):
         _event = message.event
         self._log.info('pre-processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.label) + Style.RESET_ALL)
         if _event.group is Group.STOP:
-            self._motors.dispatch_stop_event(message.payload)
+            self._motor_ctrl.dispatch_stop_event(message.payload)
         elif _event.group is Group.VELOCITY:
-            self._motors.dispatch_velocity_event(message.payload)
+            self._motor_ctrl.dispatch_velocity_event(message.payload)
         elif _event.group is Group.THETA:
-            self._motors.dispatch_theta_event(message.payload)
+            self._motor_ctrl.dispatch_theta_event(message.payload)
         elif _event.group is Group.CHADBURN:
-            self._motors.dispatch_chadburn_event(message.payload)
+            self._motor_ctrl.dispatch_chadburn_event(message.payload)
         else:
             self._log.warning('unrecognised message {}'.format(message.name) + ''.format(message.event.label))
         await Subscriber.process_message(self, message)

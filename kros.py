@@ -50,7 +50,7 @@ from behave.sniff import Sniff
 from behave.idle import Idle
 
 from hardware.motor_configurer import MotorConfigurer
-from hardware.pid_motor_ctrl import PIDMotorController
+from hardware.motor_controller import MotorController
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class KROS(Component, FiniteStateMachine):
@@ -90,7 +90,7 @@ class KROS(Component, FiniteStateMachine):
         self._arbitrator    = None
         self._controller    = None
         self._gamepad       = None
-        self._motors        = None
+        self._motor_ctrl    = None
         self._ifs           = None
         self._disable_leds  = False
         self._closing       = False
@@ -154,26 +154,25 @@ class KROS(Component, FiniteStateMachine):
     #    _gp_controller = GamepadController(self._level)
     #    _message_bus.register_controller(_gp_controller)
 
-        # add motor controller
+        # add motor controller ................................................
         self._motor_configurer = MotorConfigurer(self._config, self._message_bus, _i2c_scanner, level=self._level)
         self._motors = self._motor_configurer.get_motors()
-#       self._publisher1.set_motors(self._motors)
-
+        # TODO pass motor_configurer directly to MotorController
         self._log.info('configure pid motor controller...')
-        self._pid_motor_ctrl = PIDMotorController(self._config, self._message_bus, self._motors, self._level)
+        self._motor_ctrl = MotorController(self._config, self._message_bus, self._motors, self._level)
 
         # create publishers ....................................................
 
 #       self._clock  = Clock(self._config, self._message_bus, self._message_factory, level=self._level)
-        self._publisher1  = EventPublisher(self._config, self._message_bus, self._message_factory, self._motors, self._system, level=self._level)
+        self._publisher1  = EventPublisher(self._config, self._message_bus, self._message_factory, self._motor_ctrl, self._system, level=self._level)
         self._pot_publisher = PotentiometerPublisher(self._config, self._message_bus, self._message_factory, level=self._level)
 #       self._publisher2  = FloodPublisher(self._message_bus, self._message_factory)
 #       self._publisher3  = GamepadPublisher(self._config, self._message_bus, self._message_factory)
 
         # create subscribers ...................................................
-        self._motor_subscriber    = MotorSubscriber(self._config, self._message_bus, self._motors, level=self._level)
-        self._bumper_subscriber   = BumperSubscriber(self._config, self._message_bus, self._motors, level=self._level)
-#       self._infrared_subscriber = InfraredSubscriber(self._config, self._message_bus, self._motors, level=self._level) # reacts to IR sensors
+        self._motor_subscriber    = MotorSubscriber(self._config, self._message_bus, self._motor_ctrl, level=self._level)
+        self._bumper_subscriber   = BumperSubscriber(self._config, self._message_bus, self._motor_ctrl, level=self._level)
+        self._infrared_subscriber = InfraredSubscriber(self._config, self._message_bus, self._motor_ctrl, level=self._level) # reacts to IR sensors
         self._garbage_collector   = GarbageCollector(self._config, self._message_bus, level=self._level)
 
 #       _subscriberX = Subscriber('x', self._config, self._message_bus, color=Fore.MAGENTA, suppressed=False, enabled=True, level=self._level)
@@ -183,10 +182,10 @@ class KROS(Component, FiniteStateMachine):
         self._behaviour_mgr = BehaviourManager(self._config, self._message_bus, self._level) # a specialised subscriber
 #       self._behaviour_mgr = None
         # create and register behaviours (listed in priority order)
-        self._avoid = Avoid(self._config, self._message_bus, self._message_factory, self._motors, self._level)
-        self._roam  = Roam(self._config, self._message_bus, self._message_factory, self._motors, self._level)
-        self._moth  = Moth(self._config, self._message_bus, self._message_factory, self._motors, self._level)
-        self._sniff = Sniff(self._config, self._message_bus, self._message_factory, self._motors, self._level)
+        self._avoid = Avoid(self._config, self._message_bus, self._message_factory, self._motor_ctrl, self._level)
+        self._roam  = Roam(self._config, self._message_bus, self._message_factory, self._motor_ctrl, self._level)
+        self._moth  = Moth(self._config, self._message_bus, self._message_factory, self._motor_ctrl, self._level)
+        self._sniff = Sniff(self._config, self._message_bus, self._message_factory, self._motor_ctrl, self._level)
         self._idle  = Idle(self._config, self._message_bus, self._message_factory, self._level)
 
     #   _message_bus.print_publishers()
@@ -299,8 +298,8 @@ class KROS(Component, FiniteStateMachine):
         self._log.notice('Press Ctrl-C to exit.')
         self._log.info('begin main os loop.\r')
 
-        if self._motors:
-            self._motors.enable()
+        if self._motor_ctrl:
+            self._motor_ctrl.enable()
 
         # now in main application loop until quit or Ctrl-C...
         self._log.info(Fore.YELLOW + 'enabling message bus...')
@@ -333,8 +332,8 @@ class KROS(Component, FiniteStateMachine):
                 self._behaviour_mgr.close()
             if self._gamepad:
                 self._gamepad.close()
-            if self._motors:
-                self._motors.close()
+            if self._motor_ctrl:
+                self._motor_ctrl.close()
             if self._ifs:
                 self._ifs.close()
             if self._disable_leds:
