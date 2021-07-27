@@ -43,18 +43,15 @@ class Subscriber(Component, FiniteStateMachine):
     '''
     def __init__(self, name, config, message_bus, color=Fore.CYAN, suppressed=False, enabled=False, level=Level.INFO):
         self._log = Logger('sub:{}'.format(name), level)
-        if isinstance(name, str):
-            self._name = name
-        else:
+        if not isinstance(name, str):
             raise ValueError('wrong type for name argument: {}'.format(type(name)))
-        if isinstance(config, dict):
-            self._config = config
-        else:
+        self._name = name
+        if not isinstance(config, dict):
             raise ValueError('wrong type for config argument: {}'.format(type(name)))
-        if isinstance(message_bus, MessageBus):
-            self._message_bus = message_bus
-        else:
+        self._config = config
+        if not isinstance(message_bus, MessageBus):
             raise ValueError('wrong type for message bus argument: {}'.format(type(message_bus)))
+        self._message_bus = message_bus
         if not isinstance(suppressed, bool):
             raise ValueError('wrong type for suppressed argument: {}'.format(type(suppressed)))
         if not isinstance(enabled, bool):

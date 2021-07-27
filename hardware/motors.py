@@ -50,33 +50,13 @@ class Motors(Component):
             raise Exception('no config argument provided.')
         self._config = config
         if tb is None:
-            raise Exception('no tb argument provided.')
+            raise Exception('no thunderborg argument provided.')
+#       elif not isinstance(tb, ThunderBorg):
+#           raise ValueError('wrong type for name argument: {}'.format(type(name)))
         self._tb = tb
         self._port_motor = Motor(self._config, self._tb, Orientation.PORT, level)
         self._stbd_motor = Motor(self._config, self._tb, Orientation.STBD, level)
-        # temporary until we move functionality to motors
-        self._color                = Fore.MAGENTA
-#       self._loop_thread          = None
-        self._loop_enabled         = False
-        self._event_counter        = itertools.count()
-        # configured constants
-        _cfg = config['kros'].get('motors')
-        self._loop_delay_sec       = _cfg.get('loop_delay_sec')    # main loop delay
-        self._max_velocity         = _cfg.get('max_velocity')      # limit to motor velocity
-        self._accel_increment      = _cfg.get('accel_increment')   # normal incremental acceleration
-        self._decel_increment      = _cfg.get('decel_increment')   # normal incremental deceleration
-        self._halt_ratio           = _cfg.get('halt_ratio')        # ratio for quick halt behaviour
-        self._brake_ratio          = _cfg.get('brake_ratio')       # ratio for slower braking behaviour
-#       self._spin_speed           = Speed.from_string(_cfg.get('spin_speed')) # motor speed when spinning
-        self._use_pid_controller   = _cfg.get('use_pid_controller') # when True use PID control, otherwise direct drive
-        # variables
-        self._port_target_velocity = 0.0 # the port motor target velocity for slewing
-        self._stbd_target_velocity = 0.0 # the starboard motor target velocity for slewing
-        self._decelerate_ratio     = 0.0 # variable used in loop
-        # lambdas
-        self._velocity_clip = lambda n: ( -1.0 * self._max_velocity ) if n <= ( -1.0 * self._max_velocity ) \
-                else self._max_velocity if n >= self._max_velocity \
-                else n
+#       self._color = Fore.MAGENTA
         self._log.info('motors ready.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -93,21 +73,33 @@ class Motors(Component):
         return 'motors'
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    @property
-    def max_velocity(self):
-        return self._max_velocity
-
-    @max_velocity.setter
-    def max_velocity(self, max_velocity):
-        self._max_velocity = max_velocity
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-
     def get_velocity(self, orientation):
         if orientation is Orientation.PORT:
-            return self._max_velocity
+            return self._port_motor.velocity
         elif orientation is Orientation.STBD:
-            return self._max_velocity
+            return self._stbd_motor.velocity
+        else:
+            raise ValueError('unrecognised value for orientation.')
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def set_velocity(self, orientation, velocity):
+        '''
+        This is very likely a temporary convenience method (in transition)
+        as this is not the preferred way of setting motor velocity.
+        '''
+        if orientation is Orientation.PORT:
+            self._port_motor.velocity = velocity
+        elif orientation is Orientation.STBD:
+            self._stbd_motor.velocity = velocity
+        else:
+            raise ValueError('unrecognised value for orientation.')
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def get_current_power(self, orientation):
+        if orientation is Orientation.PORT:
+            return self._port_motor.current_power
+        elif orientation is Orientation.STBD:
+            return self._stbd_motor.current_power
         else:
             raise ValueError('unrecognised value for orientation.')
 
