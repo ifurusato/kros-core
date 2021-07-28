@@ -24,7 +24,6 @@ from core.event import Event
 from core.message_bus import MessageBus
 from hardware.motor_configurer import MotorConfigurer
 from hardware.motor import Motor
-from hardware.pid_motor_ctrl import PIDMotorController
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class MotorController(Component):
