@@ -41,7 +41,7 @@ class Motor(Component):
         self._tb = tb
         self._orientation = orientation
         self._log = Logger('motor:{}'.format(orientation.label), level)
-        Component.__init__(self, self._log, suppressed=False, enabled=False)
+        Component.__init__(self, self._log, suppressed=False, enabled=True)
         self._log.info('initialising {} motor with {} as motor controller...'.format(orientation, type(self._tb)))
         # configuration
         # get motors configuration section (we don't actually use this in the mock)
@@ -160,7 +160,7 @@ class Motor(Component):
         Set the target velocity and motor power.
         '''
         self.target_velocity = self._slew_limiter.limit(self.velocity, target_velocity)
-        self._log.debug('{} motor target velocity: {:5.2f} ➔ {:<5.2f} = {:<5.2f}'.format(self._orientation, self.velocity, target_velocity, self.target_velocity))
+        self._log.info('{} motor target velocity: {:5.2f} ➔ {:<5.2f} = {:<5.2f}'.format(self._orientation, self.velocity, target_velocity, self.target_velocity))
         # translate velocity to power...
         _power = self._convert_to_power(self.target_velocity)
         self.set_motor_power(_power)
@@ -189,8 +189,8 @@ class Motor(Component):
         '''
         if target_power is None:
             raise ValueError('null target_power argument.')
-        elif not self.enabled and target_power > 0.0: # though we'll let the power be set to zero
-            self._log.warning('motor disabled, ignoring setting of {:<5.2f}'.format(target_power))
+        elif ( not self.enabled ) and target_power > 0.0: # though we'll let the power be set to zero
+            self._log.warning('motor enabled {}, ignoring setting of {:<5.2f}'.format(self.enabled, target_power))
             return
         _current_power = self.current_power
         target_power = self._jerk_limiter.limit(self.current_power, target_power)
@@ -252,14 +252,18 @@ class Motor(Component):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def enable(self):
+        self._log.info('🎀 enable.')
         if not self.enabled:
+            self._log.info('🎀 enable.')
             self._slew_limiter.enable()
             self._jerk_limiter.enable()
             Component.enable(self)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def disable(self):
+        self._log.info('🎀 disable.')
         if self.enabled:
+            self._log.info('🎀 disable.')
             self._slew_limiter.disable()
             self._jerk_limiter.disable()
             Component.disable(self)

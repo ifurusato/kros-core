@@ -13,7 +13,7 @@
 
 from core.logger import Level, Logger
 from core.config_loader import ConfigLoader
-from core.i2c_scanner import I2CScanner
+from hardware.i2c_scanner import I2CScanner
 
 def main():
 

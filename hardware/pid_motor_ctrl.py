@@ -16,7 +16,6 @@ init()
 from core.logger import Logger, Level
 from core.orient import Orientation
 from core.message_bus import MessageBus
-from hardware.motors import Motors
 from hardware.pid_ctrl import PIDController
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -25,18 +24,19 @@ class PIDMotorController(object):
     A simple composite pattern consisting of two PIDControllers, one for
     control of the port motor, another for the starboard motor.
     '''
-    def __init__(self, config, message_bus, motors, level=Level.INFO):
+    def __init__(self, config, message_bus, port_motor, stbd_motor, level=Level.INFO):
         super().__init__()
         if not isinstance(config, dict):
             raise ValueError('wrong type for config argument: {}'.format(type(name)))
-        self._config = config
         self._log = Logger("pmc", level)
         if not isinstance(message_bus, MessageBus):
             raise ValueError('unrecognised message bus argument: {}'.format(type(message_bus)))
-        self._message_bus = message_bus
-        self._motors   = motors
-        self._port_pid = PIDController(self._config, self._message_bus, self._motors.get_motor(Orientation.PORT), level=level)
-        self._stbd_pid = PIDController(self._config, self._message_bus, self._motors.get_motor(Orientation.STBD), level=level)
+        if not isinstance(port_motor, Motor):
+            raise ValueError('unrecognised port motor argument: {}'.format(type(message_bus)))
+        if not isinstance(stbd_motor, Motor):
+            raise ValueError('unrecognised stbd motor argument: {}'.format(type(message_bus)))
+        self._port_pid = PIDController(config, message_bus, port_motor, level=level)
+        self._stbd_pid = PIDController(config, message_bus, stbd_motor, level=level)
         self._log.info('ready.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈

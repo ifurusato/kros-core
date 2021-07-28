@@ -21,9 +21,9 @@ init()
 from core.config_loader import ConfigLoader
 from core.logger import Logger, Level
 from core.message_bus import MessageBus
-from core.i2c_scanner import I2CScanner
 from core.orient import Orientation
 
+from hardware.i2c_scanner import I2CScanner
 from hardware.motor_configurer import MotorConfigurer
 
 # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈

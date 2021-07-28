@@ -19,7 +19,7 @@ init()
 from core.logger import Logger, Level
 from core.config_loader import ConfigLoader
 from core.orient import Orientation
-from hardware.jerk import JerkLimiter
+from hardware.slew import SlewLimiter
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class TestJerk(unittest.TestCase):
@@ -33,13 +33,13 @@ class TestJerk(unittest.TestCase):
         # read YAML configuration
         _config = ConfigLoader().configure()
 
-        _jerk = JerkLimiter(_config, orientation=Orientation.PORT, level=Level.INFO)
+        _slew = SlewLimiter(_config, orientation=Orientation.PORT, level=Level.INFO)
 
         _log.info('specific results ........................')
-        _jerk.print_test_result(-0.3, 0.1)
-        _jerk.print_test_result(-0.2, 0.1)
-        _jerk.print_test_result(-0.1, 0.2)
-        _jerk.print_test_result(0.5, 0.8)
+        _slew.print_test_result(-0.3, 0.1)
+        _slew.print_test_result(-0.2, 0.1)
+        _slew.print_test_result(-0.1, 0.2)
+        _slew.print_test_result(0.5, 0.8)
 
         _neg  =  -0.90
         _zero =   0.0
@@ -51,7 +51,7 @@ class TestJerk(unittest.TestCase):
         print('')
         _log.info('ramp up!   ..............................')
         for _power in numpy.arange(_neg, _over, _step, float):
-            _value = _jerk.print_test_result(_last_value, _power)
+            _value = _slew.print_test_result(_last_value, _power)
             if _value >= _min and _value <= _max:
                 _log.info('+ VALUE: {:<5.2f}'.format(_value))
                 self.assertTrue(_value >= _min)
@@ -62,7 +62,7 @@ class TestJerk(unittest.TestCase):
         print('')
         _log.info('ramp down!   ............................')
         for _power in numpy.arange(_max, _neg, -1 * _step, float):
-            _value = _jerk.print_test_result(_last_value, _power)
+            _value = _slew.print_test_result(_last_value, _power)
             if _value >= _min and _value <= _max:
                 _log.info('- VALUE: {:<5.2f}'.format(_value))
                 self.assertTrue(_value >= _min)

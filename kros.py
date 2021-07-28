@@ -29,7 +29,7 @@ from core.fsm import FiniteStateMachine
 from core.message_bus import MessageBus
 from core.message_factory import MessageFactory
 from core.config_loader import ConfigLoader
-from core.i2c_scanner import I2CScanner
+from hardware.i2c_scanner import I2CScanner
 
 from core.controller import Controller
 from core.publisher import Publisher
@@ -155,11 +155,9 @@ class KROS(Component, FiniteStateMachine):
     #    _message_bus.register_controller(_gp_controller)
 
         # add motor controller ................................................
-        self._motor_configurer = MotorConfigurer(self._config, self._message_bus, _i2c_scanner, level=self._level)
-        self._motors = self._motor_configurer.get_motors()
-        # TODO pass motor_configurer directly to MotorController
-        self._log.info('configure pid motor controller...')
-        self._motor_ctrl = MotorController(self._config, self._message_bus, self._motors, self._level)
+        self._log.info('configure motor controller...')
+        _motor_configurer = MotorConfigurer(self._config, self._message_bus, _i2c_scanner, level=self._level)
+        self._motor_ctrl = MotorController(self._config, self._message_bus, _motor_configurer, self._level)
 
         # create publishers ....................................................
 

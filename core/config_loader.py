@@ -20,7 +20,7 @@ except ImportError:
 from core.logger import Level, Logger
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-class ConfigLoader():
+class ConfigLoader(object):
     '''
     A loader for a YAML configuration file.
     '''

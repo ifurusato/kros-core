@@ -19,7 +19,8 @@ from core.logger import Level, Logger
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Rate():
     '''
-    Loops at a fixed rate, specified in hertz (Hz).
+    By calling wait() faster than the set frequency, results in looping at a
+    fixed rate, specified in hertz (Hz).
 
     :param hertz:   the frequency of the loop in Hertz
     :param level:   the log level

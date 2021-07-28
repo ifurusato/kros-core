@@ -37,7 +37,7 @@ except ImportError:
     print(Fore.RED + 'This script requires the rgbmatrix5x5 module. Some features will be disabled.\nInstall with: sudo pip3 install smbus' + Style.RESET_ALL)
 
 from core.logger import Level, Logger
-from core.i2c_scanner import I2CScanner
+from hardware.i2c_scanner import I2CScanner
 from core.orient import Orientation
 from mock.color import Color
 from mock.rgbmatrix5x5 import MockRGBMatrix5x5

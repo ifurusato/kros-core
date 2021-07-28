@@ -24,7 +24,8 @@ from core.message_bus import MessageBus
 from core.message_factory import MessageFactory
 from core.logger import Logger, Level
 from core.config_loader import ConfigLoader
-from core.i2c_scanner import I2CScanner
+from core.orient import Orientation
+from hardware.i2c_scanner import I2CScanner
 from hardware.motor import Motor
 from hardware.motor_configurer import MotorConfigurer
 
@@ -42,18 +43,20 @@ def test_motors():
         filename = 'config.yaml'
         _config = _loader.configure(filename)
 
-        _log.info('creating message factory...')
-        _message_factory = MessageFactory(Level.INFO)
+#       _log.info('creating message factory...')
+#       _message_factory = MessageFactory(Level.INFO)
         _log.info('creating message bus...')
-        _message_bus = MessageBus(Level.WARN)
+        _message_bus = MessageBus(_config, Level.WARN)
         _i2c_scanner = I2CScanner(_config, Level.WARN)
 
         # add motor controller
         _motor_configurer = MotorConfigurer(_config, _message_bus, _i2c_scanner, level=Level.INFO)
-        _motors = _motor_configurer.get_motors()
-        _motors.enable()
-        _motors.thunderborg.SetMotor1(0.0)
-        _motors.thunderborg.SetMotor2(0.0)
+        _port_motor = _motor_configurer.get_motor(Orientation.PORT)
+        _stbd_motor = _motor_configurer.get_motor(Orientation.STBD)
+        _motor_configurer.thunderborg.SetMotor1(0.0)
+        _motor_configurer.thunderborg.SetMotor2(0.0)
+        _port_motor.enable()
+        _stbd_motor.enable()
 
     except KeyboardInterrupt:
         _log.info('Ctrl-C caught; exiting...')

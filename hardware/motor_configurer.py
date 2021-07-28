@@ -16,15 +16,12 @@ from colorama import init, Fore, Style
 init()
 
 from core.logger import Logger, Level
-from core.i2c_scanner import I2CScanner
 from core.orient import Orientation, Speed
-from hardware.motors import Motors
+from hardware.i2c_scanner import I2CScanner
+from hardware.motor import Motor
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class MotorConfigurer():
-
-    THUNDERBORG_ADDRESS = 0x15
-
     '''
     Configures either a ThunderBorg motor controller for a pair of motors.
     If the ThunderBorg does not appear on the I²C bus the motors are mocked.
@@ -44,15 +41,15 @@ class MotorConfigurer():
         self._i2c_scanner = i2c_scanner
         self._log.debug('getting battery reading...')
         # configure from command line argument properties
-        _cfg = self._config['kros'].get('arguments')
-        self._motors_enabled = _cfg.get('motors_enabled')
+        _args = self._config['kros'].get('arguments')
+        self._motors_enabled = _args.get('motors_enabled')
         self._log.info(Fore.YELLOW + 'motors enabled? {}'.format(self._motors_enabled))
         if not self._motors_enabled: # overrides _enable_mock
             self._enable_mock = True
         else:
-            self._enable_mock = _cfg.get('mock_enabled')
+            self._enable_mock = _args.get('mock_enabled')
         self._log.info(Fore.YELLOW + 'enabled mocks? {}'.format(self._enable_mock))
-        # Import the ThunderBorg library, then configure and return the Motors.
+        # Import the ThunderBorg library, then configure and return the motors
         self._max_power_ratio = None
         self._import_thunderborg()
         if self._max_power_ratio is None: # this should have been set by the ThunderBorg code.
@@ -61,12 +58,15 @@ class MotorConfigurer():
         # now import motors
         try:
             self._log.info('configuring motors...')
-            self._motors = Motors(self._config, self._tb, level=Level.INFO)
-            self._motors.get_motor(Orientation.PORT).max_power_ratio = self._max_power_ratio
-            self._motors.get_motor(Orientation.STBD).max_power_ratio = self._max_power_ratio
+            self._port_motor = Motor(self._config, self._tb, Orientation.PORT, level)
+            self._stbd_motor = Motor(self._config, self._tb, Orientation.STBD, level)
+            self._port_motor.max_power_ratio = self._max_power_ratio
+            self._stbd_motor.max_power_ratio = self._max_power_ratio
+
         except OSError as oe:
             self._log.error('failed to configure motors: {}'.format(oe))
-            self._motors = None
+            self._port_motor = None
+            self._stbd_motor = None
             raise Exception('unable to instantiate ThunderBorg [3].')
         self._configure_speed()
         self._log.info('ready.')
@@ -89,9 +89,9 @@ class MotorConfigurer():
         if self._motors_enabled and not self._enable_mock:
             self._log.info('configure thunderborg & motors...')
             try:
-
-                if self._i2c_scanner.has_address([MotorConfigurer.THUNDERBORG_ADDRESS]):
-                    self._log.info('importing ThunderBorg...')
+                _thunderborg_address = self._config['kros'].get('motors').get('thunderborg_address')
+                if self._i2c_scanner.has_address([_thunderborg_address]):
+                    self._log.info('importing ThunderBorg at address 0x[:02X]...'.format(_thunderborg_address))
                     import hardware.ThunderBorg3 as ThunderBorg
                     self._log.info('successfully imported ThunderBorg.')
                 else:
@@ -202,10 +202,18 @@ class MotorConfigurer():
                 raise Exception('unable to instantiate ThunderBorg [2].')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def get_motors(self):
+    @property
+    def thunderborg(self):
         '''
-        Return the configured motors.
+        Temporary: do no use this brain.
         '''
-        return self._motors
+        return self._tb
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def get_motor(self, orientation):
+        if orientation is Orientation.PORT:
+            return self._port_motor
+        else:
+            return self._stbd_motor
 
 #EOF

@@ -50,7 +50,7 @@ class SlewLimiter(Component):
         self._slew_hysteresis  = _cfg.get('hysteresis')
         self._log.info('hysteresis: {:5.2f}'.format(self._slew_hysteresis))
         self._stats_queue      = None
-        self._start_time       = None
+        self._start_time       = self._millis()
         # lambdas
         self._clip = lambda n: self._minimum_output if n <= self._minimum_output else self._maximum_output if n >= self._maximum_output else n
         if not self.suppressed and self.enabled:
@@ -152,6 +152,14 @@ class SlewLimiter(Component):
         into the method.
         '''
         return min_value if value <= min_value else max_value if value >= max_value else value
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def print_test_result(self, current_value, target_value):
+        _result = self.limit(current_value, target_value)
+        self._log.info(Fore.GREEN + 'current: {:5.2f}; '.format(current_value)
+                + Fore.MAGENTA + 'target: {:5.2f}; '.format(target_value)
+                + Fore.YELLOW  + 'result: {:5.2f}.'.format(_result))
+        return _result
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class SlewRate(Enum): #        tested to 50.0 velocity:

@@ -24,9 +24,9 @@ from core.message_bus import MessageBus
 from core.message_factory import MessageFactory
 from core.logger import Logger, Level
 from core.config_loader import ConfigLoader
-from core.i2c_scanner import I2CScanner
 from mock.motor import Motor
 from mock.motor_configurer import MotorConfigurer
+from hardware.i2c_scanner import I2CScanner
 
 _log = Logger('test', Level.INFO)
 

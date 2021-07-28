@@ -28,7 +28,7 @@ init()
 from core.logger import Level, Logger
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-class I2CScanner():
+class I2CScanner(object):
     '''
     Scans the I²C bus, returning a list of devices.
     '''
@@ -125,18 +125,15 @@ class I2CScanner():
     # end class ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
 # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-
-THUNDERBORG_ADDRESS = 0x15
-
 def main():
 
     level = Level.INFO
     log = Logger('main', level)
-    log.info('scanning for I2C devices...')
+    log.info('scanning for I²C devices...')
     scanner = I2CScanner(Level.INFO)
 
     _addresses = scanner.get_int_addresses()
-    log.info('available I2C device(s):')
+    log.info('available I²C device(s):')
     if len(_addresses) == 0:
         log.warning('no devices found.')
         return
@@ -149,15 +146,6 @@ def main():
         print(Fore.CYAN + '-- address: {}'.format(_addresses[i]) + Style.RESET_ALL)
 
     print('')
-
-    if THUNDERBORG_ADDRESS in _addresses:
-        print(Fore.CYAN + '-- thunderborg found at address {}: using motors/motor'.format(THUNDERBORG_ADDRESS) + Style.RESET_ALL)
-#       from motors import Motors
-#       from motor import Motor
-    else:
-        print(Fore.MAGENTA + '-- thunderborg not found at address {}: using motors/motor'.format(THUNDERBORG_ADDRESS) + Style.RESET_ALL)
-#       from z_motors import Motors
-#       from z_motor import Motor
 
 if __name__== "__main__":
     main()
