@@ -31,7 +31,7 @@ class JerkLimiter(Component):
     the controller, so due to its position in the controller process it
     is acting in the capacity of minimising jerk.
 
-    This uses the ros:motors:jerk: section of the YAML configuration.
+    This uses the ros:motor:jerk: section of the YAML configuration.
 
     :param config:           application configuration
     :param orientation:      used only for the logger label
@@ -40,7 +40,7 @@ class JerkLimiter(Component):
     def __init__(self, config, orientation, suppressed=False, enabled=True, level=Level.INFO):
         self._log = Logger('jerk:{}'.format(orientation.label), level)
         Component.__init__(self, self._log, suppressed=suppressed, enabled=enabled)
-        _cfg = config['kros'].get('motors')
+        _cfg = config['kros'].get('motor')
         _maximum_output = _cfg.get('motor_power_limit') # power limit to motor
         _minimum_output = _maximum_output * -1
         self._jerk_rate_limit = _cfg.get('jerk').get('jerk_rate_limit') # deprecated

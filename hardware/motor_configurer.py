@@ -58,8 +58,8 @@ class MotorConfigurer():
         # now import motors
         try:
             self._log.info('configuring motors...')
-            self._port_motor = Motor(self._config, self._tb, Orientation.PORT, level)
-            self._stbd_motor = Motor(self._config, self._tb, Orientation.STBD, level)
+            self._port_motor = Motor(self._config, self._tb, self._message_bus, Orientation.PORT, level)
+            self._stbd_motor = Motor(self._config, self._tb, self._message_bus, Orientation.STBD, level)
             self._port_motor.max_power_ratio = self._max_power_ratio
             self._stbd_motor.max_power_ratio = self._max_power_ratio
 
@@ -78,7 +78,7 @@ class MotorConfigurer():
         YAML configuration.
         '''
         self._log.info('configure motor speed...')
-        _cfg = self._config['kros'].get('motors').get('speed')
+        _cfg = self._config['kros'].get('motor').get('speed')
         for _speed in Speed:
             _value = _cfg.get(_speed.name)
             _speed.value = _value
@@ -89,7 +89,7 @@ class MotorConfigurer():
         if self._motors_enabled and not self._enable_mock:
             self._log.info('configure thunderborg & motors...')
             try:
-                _thunderborg_address = self._config['kros'].get('motors').get('thunderborg_address')
+                _thunderborg_address = self._config['kros'].get('motor').get('thunderborg_address')
                 if self._i2c_scanner.has_address([_thunderborg_address]):
                     self._log.info('importing ThunderBorg at address 0x[:02X]...'.format(_thunderborg_address))
                     import hardware.ThunderBorg3 as ThunderBorg

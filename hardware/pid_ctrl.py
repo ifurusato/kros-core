@@ -8,10 +8,7 @@
 # author:   Murray Altheim
 # created:  2020-04-20
 # modified: 2020-09-26
-# modified: 2021-07-14
-#
-# This controller uses a threaded loop and uses a pair of PID controllers from
-# the PID class.
+# modified: 2021-07-29
 #
 
 import sys
@@ -22,6 +19,7 @@ init()
 from core.logger import Logger, Level
 from core.orient import Orientation
 from core.message import Message
+from core.message_bus import MessageBus
 from core.event import Event
 from hardware.pid import PID
 
@@ -45,18 +43,15 @@ class PIDController(object):
         '''
         if config is None:
             raise ValueError('null configuration argument.')
-        self._config = config['kros'].get('motors').get('pid_controller')
-        if message_bus is None:
-            raise ValueError('null message bus argument.')
+        self._config = config['kros'].get('motor').get('pid_controller')
+        if not isinstance(message_bus, MessageBus):
+            raise ValueError('wrong type for message bus argument: {}'.format(type(message_bus)))
         self._message_bus = message_bus
         if motor is None:
             raise ValueError('null motor argument.')
         self._motor = motor
         self._orientation = motor.orientation
         self._log = Logger('pid-ctrl:{}'.format(self._orientation.label), level)
-        if sys.version_info < (3,0):
-            self._log.error('PID class requires Python 3.')
-            sys.exit(1)
         # PID configuration ................................
         _period_sec = 1.0 / self._config.get('sample_freq_hz')
         _kp         = self._config.get('kp') # proportional gain

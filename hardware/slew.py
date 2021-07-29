@@ -40,7 +40,7 @@ class SlewLimiter(Component):
         self._millis  = lambda: int(round(time.time() * 1000))
         self._seconds = lambda: int(round(time.time()))
         # slew configuration
-        _cfg = config['kros'].get('motors').get('slew')
+        _cfg = config['kros'].get('motor').get('slew')
         self._minimum_output = _cfg.get('minimum_output')
         self._maximum_output = _cfg.get('maximum_output')
         self._log.info('minimum output: {:5.2f}; maximum output: {:5.2f}'.format(self._minimum_output, self._maximum_output))

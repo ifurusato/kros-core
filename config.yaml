@@ -22,7 +22,7 @@ kros:
             in_max:         3.3                  # maximum analog value from IO Expander
             out_min:       -255.0                # minimum scaled output value
             out_max:        255.0                # maximum scaled output value
-    motors:
+    motor:
         motor_power_limit:       0.901           # upper and lower (x -1) limit set on power sent to motor
         enable_slew_limiter:    True             # initial enabled state for slew limiter
         suppress_slew_limiter:  False            # initial suppressed state for slew limiter

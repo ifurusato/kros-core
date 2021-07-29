@@ -404,6 +404,9 @@ def main(argv):
     signal.signal(signal.SIGINT, signal_handler)
 
     try:
+        if sys.version_info < (3,0):
+            self._log.error('This application requires Python 3.')
+            sys.exit(1)
         _args = parse_args()
         if _args == None:
             print('')

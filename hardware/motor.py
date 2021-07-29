@@ -16,6 +16,8 @@ init()
 from core.logger import Level, Logger
 from core.component import Component
 from core.orient import Orientation
+from core.message_bus import MessageBus
+from hardware.pid_ctrl import PIDController
 from hardware.slew import SlewLimiter
 from hardware.jerk import JerkLimiter
 
@@ -26,26 +28,37 @@ class Motor(Component):
     velocity and distance traveled. This uses a mock when the motor controller
     is unavailable.
 
-    This uses the kros:motors: section of the configuration.
+    This Motor class takes an input as velocity (-100.0 to 100.0) which is
+    pre-processed by a SlewLimiter (which buffers sudden changes to the target
+    velocity), then is passed along to a PIDController, which converts the
+    velocity to power (-1.0 to 1.0), which is then passed through a JerkLimiter
+    to avoid sudden (and potentially dangerous) changes to the motor. All three
+    are optional; when the PIDController is disabled a simple velocity-to-power
+    function is used.
+
+    This uses the kros:motor: section of the configuration.
 
     :param config:      application configuration
     :param tb:          reference to the mocked ThunderBorg motor controller
     :param orientation: motor orientation
     :param level:       log level
     '''
-    def __init__(self, config, tb, orientation, level=Level.INFO):
+    def __init__(self, config, tb, message_bus, orientation, level=Level.INFO):
         if config is None:
             raise ValueError('null config argument.')
         if tb is None:
             raise ValueError('null thunderborg argument.')
         self._tb = tb
+        if not isinstance(message_bus, MessageBus):
+            raise ValueError('wrong type for message bus argument: {}'.format(type(message_bus)))
+        self._message_bus = message_bus
         self._orientation = orientation
         self._log = Logger('motor:{}'.format(orientation.label), level)
         Component.__init__(self, self._log, suppressed=False, enabled=True)
         self._log.info('initialising {} motor with {} as motor controller...'.format(orientation, type(self._tb)))
         # configuration
-        # get motors configuration section (we don't actually use this in the mock)
-        _cfg = config['kros'].get('motors')
+        # get motor configuration section (we don't actually use this in the mock)
+        _cfg = config['kros'].get('motor')
         self._motor_power_limit = _cfg.get('motor_power_limit') # power limit to motor
         self._steps             = 0     # step counter
         self._max_power         = 0.0   # capture maximum power applied
@@ -53,9 +66,13 @@ class Motor(Component):
         self._max_power_ratio   = 0.0   # will be set by MotorConfigurer
         self._velocity          = 0     # currently a proxy for actual velocity
         self._target_velocity   = 0.0   # the target velocity of the motor
+        # pid controller .............................................
+        self._pid_controller = PIDController(config, self._message_bus, self, setpoint=0.0, sample_time=0.01, level=level)
+        # slew limiter ...............................................
         _suppress_slew_limiter  = _cfg.get('suppress_slew_limiter')
         _enable_slew_limiter    = _cfg.get('enable_slew_limiter')
         self._slew_limiter      = SlewLimiter(config, orientation, suppressed=_suppress_slew_limiter, enabled=_enable_slew_limiter, level=level)
+        # jerk limiter ...............................................
         _suppress_jerk_limiter  = _cfg.get('suppress_jerk_limiter')
         _enable_jerk_limiter    = _cfg.get('enable_jerk_limiter')
         self._jerk_limiter      = JerkLimiter(config, orientation, suppressed=_suppress_jerk_limiter, enabled=_enable_jerk_limiter, level=level)
@@ -63,12 +80,26 @@ class Motor(Component):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
+    def pid_controller(self):
+        '''
+        Returns the PID controller used by this motor.
+        '''
+        return self._pid_controller
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    @property
     def slew_limiter(self):
+        '''
+        Returns the slew limiter used by this motor.
+        '''
         return self._slew_limiter
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def jerk_limiter(self):
+        '''
+        Returns the jerk limiter used by this motor.
+        '''
         return self._jerk_limiter
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -128,15 +159,6 @@ class Motor(Component):
             self._steps = self._steps - pulse
         else:
             self._steps = self._steps + pulse
-
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    @staticmethod
-    def cancel():
-        '''
-        Stop both motors immediately. This can be called from either motor.
-        '''
-        print('motors cancelled.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def is_in_motion(self):
@@ -246,27 +268,27 @@ class Motor(Component):
         self._log.info('stop.')
         if self._orientation is Orientation.PORT:
             self._tb.SetMotor1(0.0)
-        else:
+        elif self._orientation is Orientation.STBD:
             self._tb.SetMotor2(0.0)
+        else:
+            raise ValueError('unrecognised orientation.')
         pass
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def enable(self):
-        self._log.info('🎀 enable.')
         if not self.enabled:
-            self._log.info('🎀 enable.')
             self._slew_limiter.enable()
             self._jerk_limiter.enable()
             Component.enable(self)
+        self._log.info('enabled.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def disable(self):
-        self._log.info('🎀 disable.')
         if self.enabled:
-            self._log.info('🎀 disable.')
             self._slew_limiter.disable()
             self._jerk_limiter.disable()
             Component.disable(self)
+        self._log.info('disabled.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def close(self):
