@@ -31,7 +31,7 @@ class MotorConfigurer():
     :param level:        the logging level
     '''
     def __init__(self, config, message_bus, i2c_scanner, level=Level.INFO):
-        self._log = Logger("mock-motor-conf", level)
+        self._log = Logger("motor-config", level)
         if config is None:
             raise ValueError('null configuration argument.')
         self._config = config
@@ -43,12 +43,12 @@ class MotorConfigurer():
         # configure from command line argument properties
         _args = self._config['kros'].get('arguments')
         self._motors_enabled = _args.get('motors_enabled')
-        self._log.info(Fore.YELLOW + 'motors enabled? {}'.format(self._motors_enabled))
+        self._log.info('motors enabled? {}'.format(self._motors_enabled))
         if not self._motors_enabled: # overrides _enable_mock
             self._enable_mock = True
         else:
             self._enable_mock = _args.get('mock_enabled')
-        self._log.info(Fore.YELLOW + 'enabled mocks? {}'.format(self._enable_mock))
+        self._log.info('mocks enabled? {}'.format(self._enable_mock))
         # Import the ThunderBorg library, then configure and return the motors
         self._max_power_ratio = None
         self._import_thunderborg()

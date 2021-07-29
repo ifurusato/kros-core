@@ -2,10 +2,16 @@
 # of the Robot Operating System project, released under the MIT License. Please
 # see the LICENSE file included as part of this package.
 #
-# YAML configuration for K-Series Robot Operating System (KROS) ................
+# ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+#       YAML configuration for K-Series Robot Operating System (KROS)
+# ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
 kros:
-    use_external_clock: True                     # if True use external clock
+    use_external_clock:          True            # if True use external clock
+    component:
+        enable_event_publisher:  True            # keyboard robot simulator (kinda necessary for running CLI)
+        enable_pot_publisher:   False            # digital velocity control potentiometer publisher
+        enable_behaviours:      False            # if True use BehaviourManager and Behaviours
     ticker:
         loop_freq_hz:            0.05            # main loop frequency
     message_bus:
@@ -13,21 +19,21 @@ kros:
         publish_delay_sec:       0.05            # publishing delay loop
     hardware:
         potentiometer:                           # IO Expander-based Potentiometer board
-            i2c_address:   0x0E                  # I²C address for the device
-            brightness:     1.0                  # brightness of the RGB LED (0.0-1.0)
-            pin_red:          1                  # red pin
-            pin_green:        7                  # green pin
-            pin_blue:         2                  # blue pin
-            in_min:         0.0                  # minimum analog value from IO Expander
-            in_max:         3.3                  # maximum analog value from IO Expander
-            out_min:       -255.0                # minimum scaled output value
-            out_max:        255.0                # maximum scaled output value
+            i2c_address:        0x0E             # I²C address for the device
+            brightness:          1.0             # brightness of the RGB LED (0.0-1.0)
+            pin_red:             1               # red pin
+            pin_green:           7               # green pin
+            pin_blue:            2               # blue pin
+            in_min:              0.0             # minimum analog value from IO Expander
+            in_max:              3.3             # maximum analog value from IO Expander
+            out_min:          -255.0             # minimum scaled output value
+            out_max:           255.0             # maximum scaled output value
     motor:
         motor_power_limit:       0.901           # upper and lower (x -1) limit set on power sent to motor
-        enable_slew_limiter:    True             # initial enabled state for slew limiter
+        enable_slew_limiter:     True            # initial enabled state for slew limiter
         suppress_slew_limiter:  False            # initial suppressed state for slew limiter
         enable_jerk_limiter:    False            # initial enabled state for jerk limiter
-        suppress_jerk_limiter:  True             # initial suppressed state for jerk limiter
+        suppress_jerk_limiter:   True            # initial suppressed state for jerk limiter
         thunderborg_address:    0x15             # I²C address for thunderborg motor controller
         motor_controller:
             loop_delay_sec:      0.2             # main loop delay in seconds
@@ -49,14 +55,14 @@ kros:
             pot_ctrl:           False            # if True enable potentiometer for setting PID terms
         speed:                                   # configured motor speed for chadburn events
             STOP:                0.0
-            DEAD_SLOW:           20.0
-            SLOW:                30.0
-            HALF:                40.0
-            TWO_THIRDS:          50.0
-            THREE_QUARTER:       60.0
-            FULL:                70.0
-            EMERGENCY:           90.0
-            MAXIMUM:            100.000001
+            DEAD_SLOW:          20.0
+            SLOW:               30.0
+            HALF:               40.0
+            TWO_THIRDS:         50.0
+            THREE_QUARTER:      60.0
+            FULL:               70.0
+            EMERGENCY:          90.0
+            MAXIMUM:           100.000001
         slew:
             minimum_output:    -90.0            # lower limit of permitted velocity output values
             maximum_output:     90.0            # upper limit of permitted velocity output values
@@ -65,7 +71,7 @@ kros:
             use_elapsed_time:    True           # used elapsed time or percentage
         jerk:
             jerk_rate_limit:     0.3            # limit of permitted change per iteration
-            jerk_tolerance:      10             # percentage limit of permitted change per iteration
+            jerk_tolerance:     10              # percentage limit of permitted change per iteration
     gamepad:
         enabled: False
         device_path: '/dev/input/event5'         # the path to the bluetooth gamepad on the pi (see find_gamepad.py)
@@ -77,32 +83,32 @@ kros:
         roam:
             min_distance:       20.0             # minimum distance in cm
             max_distance:      200.0             # maximum distance in cm
-            min_speed: 0.0                       # minimum motor speed
-            max_speed: 100.0                     # maximum motor speed
+            min_speed:           0.0             # minimum motor speed
+            max_speed:         100.0             # maximum motor speed
         moth:
-            anti_moth: False                     # moth or anti-moth
+            anti_moth:          False            # moth or anti-moth
         sniff:
-            nada: False                          # nada
+            nada:               False            # nada
         idle:
-            idle_threshold_sec: 10               # how many seconds before we trigger an idle behaviour
+            idle_threshold_sec:  10              # how many seconds before we trigger an idle behaviour
             idle_loop_delay_sec: 1.0             # main loop delay in seconds
     mock:
         pot_publisher:
             loop_delay_sec:      0.05            # loop delay
             hysteresis:          3.0             # hysteresis near zero
         event_publisher:
-            ir_init_value: 100                   # initial value of mocked center IR
-            ir_min: 10                           # minimum center IR value
-            ir_max: 200                          # maximum center IR value
-            ir_incr: 20                          # IR step increment
+            ir_init_value:     100               # initial value of mocked center IR
+            ir_min:             10               # minimum center IR value
+            ir_max:            200               # maximum center IR value
+            ir_incr:            20               # IR step increment
             gamepad_publish_delay_sec: 0.01      # delay after Gamepad event
             publish_delay_sec: 0.01              # delay after IFS event
             noop_loop_delay_sec: 0.01            # delay on noop loop
     arguments:                                   # CLI arguments are copied here
-        nada: False                              # nada
-        mock_enabled: False                      # permit mocks if real hardware is unavailable
+        nada:                   False            # nada
+        mock_enabled:           False            # permit mocks if real hardware is unavailable
 pi:
-    disable_leds: False                          # disable and re-enable Pi LEDs during operation?
+    disable_leds:               False            # disable and re-enable Pi LEDs during operation?
     led_0_path:   '/sys/class/leds/led0/brightness'
     led_1_path:   '/sys/class/leds/led1/brightness'
     sudo_name:    'sudo'
@@ -136,14 +142,14 @@ devices:
 #
 # ☻ i2cdetect -y 1
 #      0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f
-# 00:          -- -- -- -- -- -- -- -- -- -- -- 0e -- 
-# 10: -- -- -- -- -- 15 -- -- 18 -- -- -- -- -- -- -- 
-# 20: -- -- -- -- -- -- -- -- 28 29 -- -- -- -- -- -- 
-# 30: -- -- -- -- -- -- 36 -- -- 39 -- -- -- -- -- -- 
-# 40: 40 41 -- -- -- -- -- -- 48 -- -- -- -- -- -- -- 
-# 50: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
-# 60: -- -- -- -- -- -- -- -- -- 69 -- -- -- -- -- -- 
-# 70: -- -- -- -- 74 -- -- 77     
+# 00:          -- -- -- -- -- -- -- -- -- -- -- 0e --
+# 10: -- -- -- -- -- 15 -- -- 18 -- -- -- -- -- -- --
+# 20: -- -- -- -- -- -- -- -- 28 29 -- -- -- -- -- --
+# 30: -- -- -- -- -- -- 36 -- -- 39 -- -- -- -- -- --
+# 40: 40 41 -- -- -- -- -- -- 48 -- -- -- -- -- -- --
+# 50: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+# 60: -- -- -- -- -- -- -- -- -- 69 -- -- -- -- -- --
+# 70: -- -- -- -- 74 -- -- 77
 
         # GPIO pins configured for A1, B1, A2 and B2
 #       motor_encoder_a1_port:  22               # port A

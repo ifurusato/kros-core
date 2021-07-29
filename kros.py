@@ -159,11 +159,15 @@ class KROS(Component, FiniteStateMachine):
         _motor_configurer = MotorConfigurer(self._config, self._message_bus, _i2c_scanner, level=self._level)
         self._motor_ctrl = MotorController(self._config, self._message_bus, _motor_configurer, self._level)
 
-        # create publishers ....................................................
+        _cfg = self._config['kros'].get('component')
 
-#       self._clock  = Clock(self._config, self._message_bus, self._message_factory, level=self._level)
-        self._publisher1  = EventPublisher(self._config, self._message_bus, self._message_factory, self._motor_ctrl, self._system, level=self._level)
-        self._pot_publisher = PotentiometerPublisher(self._config, self._message_bus, self._message_factory, level=self._level)
+        # create publishers ....................................................
+        _enable_event_publisher = _cfg.get('enable_event_publisher')
+        if _enable_event_publisher:
+            self._event_publisher = EventPublisher(self._config, self._message_bus, self._message_factory, self._motor_ctrl, self._system, level=self._level)
+        _enable_pot_publisher = _cfg.get('enable_pot_publisher')
+        if _enable_pot_publisher:
+            self._pot_publisher = PotentiometerPublisher(self._config, self._message_bus, self._message_factory, level=self._level)
 #       self._publisher2  = FloodPublisher(self._message_bus, self._message_factory)
 #       self._publisher3  = GamepadPublisher(self._config, self._message_bus, self._message_factory)
 
@@ -173,18 +177,17 @@ class KROS(Component, FiniteStateMachine):
         self._infrared_subscriber = InfraredSubscriber(self._config, self._message_bus, self._motor_ctrl, level=self._level) # reacts to IR sensors
         self._garbage_collector   = GarbageCollector(self._config, self._message_bus, level=self._level)
 
-#       _subscriberX = Subscriber('x', self._config, self._message_bus, color=Fore.MAGENTA, suppressed=False, enabled=True, level=self._level)
-#       _subscriberX.add_events([ Event.ROAM, Event.FULL_AHEAD ])
-
         # create behaviours ....................................................
-        self._behaviour_mgr = BehaviourManager(self._config, self._message_bus, self._level) # a specialised subscriber
-#       self._behaviour_mgr = None
-        # create and register behaviours (listed in priority order)
-        self._avoid = Avoid(self._config, self._message_bus, self._message_factory, self._motor_ctrl, self._level)
-        self._roam  = Roam(self._config, self._message_bus, self._message_factory, self._motor_ctrl, self._level)
-        self._moth  = Moth(self._config, self._message_bus, self._message_factory, self._motor_ctrl, self._level)
-        self._sniff = Sniff(self._config, self._message_bus, self._message_factory, self._motor_ctrl, self._level)
-        self._idle  = Idle(self._config, self._message_bus, self._message_factory, self._level)
+        _enable_behaviours = _cfg.get('enable_behaviours')
+        if _enable_behaviours:
+            self._behaviour_mgr = BehaviourManager(self._config, self._message_bus, self._level) # a specialised subscriber
+#           self._behaviour_mgr = None
+            # create and register behaviours (listed in priority order)
+            self._avoid = Avoid(self._config, self._message_bus, self._message_factory, self._motor_ctrl, self._level)
+            self._roam  = Roam(self._config, self._message_bus, self._message_factory, self._motor_ctrl, self._level)
+            self._moth  = Moth(self._config, self._message_bus, self._message_factory, self._motor_ctrl, self._level)
+            self._sniff = Sniff(self._config, self._message_bus, self._message_factory, self._motor_ctrl, self._level)
+            self._idle  = Idle(self._config, self._message_bus, self._message_factory, self._level)
 
     #   _message_bus.print_publishers()
     #   _message_bus.print_subscribers()
@@ -404,9 +407,6 @@ def main(argv):
     signal.signal(signal.SIGINT, signal_handler)
 
     try:
-        if sys.version_info < (3,0):
-            self._log.error('This application requires Python 3.')
-            sys.exit(1)
         _args = parse_args()
         if _args == None:
             print('')
