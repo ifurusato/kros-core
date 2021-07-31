@@ -214,7 +214,7 @@ class EventPublisher(Publisher):
                             continue
                         elif och == 3 or och == 113: # 'q'
                             self.disable()
-                            self._log.info(Fore.YELLOW + 'exit on \'q\' or Ctrl-C...')
+                            self._log.info('exiting on \'q\' or Ctrl-C...')
                             continue
                         elif och == 47 or och == 63: # '/' or '?' for help
                             self.print_help()

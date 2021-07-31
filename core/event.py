@@ -11,7 +11,7 @@
 
 from enum import Enum
 
-from core.orient import Speed, Direction
+from core.speed import Speed, Direction
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Group(Enum):

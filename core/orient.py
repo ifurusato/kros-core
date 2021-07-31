@@ -46,74 +46,9 @@ class Orientation(Enum):
         return self._label
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-class Direction(Enum):
-    AHEAD   = 0
-    ASTERN  = 1
-
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Rotation(Enum):
     COUNTER_CLOCKWISE = 0
     CLOCKWISE         = 1
-
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-class Speed(Enum):
-    STOP          = ( 1, "stop",                  0.0 )
-    DEAD_SLOW     = ( 2, "dead slow",            20.0 )
-    SLOW          = ( 3, "slow",                 30.0 )
-    HALF          = ( 4, "half speed",           50.0 )
-    TWO_THIRDS    = ( 5, "two thirds speed",     66.7 )
-    THREE_QUARTER = ( 6, "three quarter speed",  75.0 )
-    FULL          = ( 7, "full speed",           90.0 )
-    EMERGENCY     = ( 8, "emergency speed",     100.0 )
-    MAXIMUM       = ( 9, "maximum speed",       100.000001 )
-
-    # ignore the first param since it's already set by __new__
-    def __init__(self, num, label, value):
-        self._label = label
-        self._value = value
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    @property
-    def label(self):
-        return self._label
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    @property
-    def value(self):
-        return self._value
-
-    @value.setter
-    def value(self, value):
-        self._value = value
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    @staticmethod
-    def get_slower_than(speed):
-        '''
-        Provided a value between 0-100, return the next lower Speed.
-        '''
-        if speed < Speed.DEAD_SLOW.value:
-            return Speed.STOP
-        elif speed < Speed.SLOW.value:
-            return Speed.DEAD_SLOW
-        elif speed < Speed.HALF.value:
-            return Speed.SLOW
-        elif speed < Speed.TWO_THIRDS.value:
-            return Speed.HALF
-        elif speed < Speed.THREE_QUARTER.value:
-            return Speed.TWO_THIRDS
-        elif speed < Speed.FULL.value:
-            return Speed.THREE_QUARTER
-        else:
-            return Speed.FULL
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    @staticmethod
-    def from_string(value):
-        for s in Speed:
-            if value.upper() == s.name:
-                return s
-        raise NotImplementedError
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Cardinal(Enum):

@@ -11,7 +11,7 @@
 #
 
 from threading import Thread
-import asyncio, itertools, random, time
+import asyncio, itertools, random, time, traceback
 from math import isclose
 from datetime import datetime as dt
 from colorama import init, Fore, Style
@@ -19,7 +19,8 @@ init()
 
 from core.logger import Logger, Level
 from core.component import Component
-from core.orient import Orientation, Speed, Direction
+from core.orient import Orientation
+from core.speed import Speed, Direction
 from core.event import Event
 from core.message_bus import MessageBus
 from hardware.motor_configurer import MotorConfigurer
@@ -50,8 +51,8 @@ class MotorController(Component):
         self._log = Logger('motor-conf', level)
         Component.__init__(self, self._log, suppressed=False, enabled=False)
         self._log.info('initialising motors...')
-        if config is None:
-            raise Exception('no config argument provided.')
+        if not isinstance(config, dict):
+            raise ValueError('wrong type for config argument: {}'.format(type(name)))
         self._config = config
         if not isinstance(message_bus, MessageBus):
             raise ValueError('wrong type for message bus argument: {}'.format(type(message_bus)))
@@ -70,8 +71,6 @@ class MotorController(Component):
         _cfg = config['kros'].get('motor').get('motor_controller')
         self._loop_delay_sec       = _cfg.get('loop_delay_sec')    # main loop delay
         self._log.info('loop delay:\t{:5.2f}s'.format(self._loop_delay_sec))
-        self._max_velocity         = _cfg.get('max_velocity')      # limit to motor velocity
-        self._log.info('max velocity:\t{:<5.2f}'.format(self._max_velocity))
         self._accel_increment      = _cfg.get('accel_increment')   # normal incremental acceleration
         self._decel_increment      = _cfg.get('decel_increment')   # normal incremental deceleration
         self._log.info('accelerate increment: {:5.2f}; decelerate increment: {:5.2f}'.format(self._accel_increment, self._decel_increment))
@@ -87,28 +86,14 @@ class MotorController(Component):
         else:
             self._log.info('using direct motor control.')
         # variables
-        self._port_motor.target_velocity = 0.0 # the port motor target velocity
-        self._stbd_motor.target_velocity = 0.0 # the starboard motor target velocity
         self._decelerate_ratio     = 0.0 # variable used in loop
         # lambdas
-        self._velocity_clip = lambda n: ( -1.0 * self._max_velocity ) if n <= ( -1.0 * self._max_velocity ) \
-                else self._max_velocity if n >= self._max_velocity \
-                else n
         self._log.info('motors ready.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def name(self):
         return 'motor-ctrl'
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    @property
-    def max_velocity(self):
-        return self._max_velocity
-
-    @max_velocity.setter
-    def max_velocity(self, max_velocity):
-        self._max_velocity = max_velocity
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def start_loop(self):
@@ -141,8 +126,10 @@ class MotorController(Component):
                     pass
                 self._port_motor.update_motor_velocity()
                 self._stbd_motor.update_motor_velocity()
+                # TODO add execute any callbacks here
+
                 # print stats...
-    #           self.print_info(_event_count)
+                self.print_info(_event_count)
                 time.sleep(self._loop_delay_sec)
         except Exception as e:
             self._log.error('error in loop: {}\n{}'.format(e, traceback.format_exc()))
@@ -215,6 +202,12 @@ class MotorController(Component):
                 + Fore.CYAN + 'suppressed: '
                 + Fore.YELLOW + '{}'.format(self._port_motor.slew_limiter.suppressed))
 
+        self._log.info(Fore.RED + '\t{}'.format('pid') \
+                + Fore.CYAN + ' {}enabled: '.format((' ' * max(0, (10 - len('port')))))
+                + Fore.YELLOW + '{}\t'.format(self._port_motor.pid_controller.enabled)
+                + Fore.CYAN + 'suppressed: '
+                + Fore.YELLOW + '{}'.format(self._port_motor.pid_controller.suppressed))
+
         self._log.info(Fore.RED + '\t{}'.format('jerk') \
                 + Fore.CYAN + ' {}enabled: '.format((' ' * max(0, (10 - len('port')))))
                 + Fore.YELLOW + '{}\t'.format(self._port_motor.jerk_limiter.enabled)
@@ -234,6 +227,12 @@ class MotorController(Component):
                 + Fore.YELLOW + '{}\t'.format(self._stbd_motor.slew_limiter.enabled)
                 + Fore.CYAN + 'suppressed: '
                 + Fore.YELLOW + '{}'.format(self._stbd_motor.slew_limiter.suppressed))
+
+        self._log.info(Fore.GREEN + '\t{}'.format('pid') \
+                + Fore.CYAN + ' {}enabled: '.format((' ' * max(0, (10 - len('stbd')))))
+                + Fore.YELLOW + '{}\t'.format(self._stbd_motor.pid_controller.enabled)
+                + Fore.CYAN + 'suppressed: '
+                + Fore.YELLOW + '{}'.format(self._stbd_motor.pid_controller.suppressed))
 
         self._log.info(Fore.GREEN + '\t{}'.format('jerk') \
                 + Fore.CYAN + ' {}enabled: '.format((' ' * max(0, (10 - len('stbd')))))
@@ -287,15 +286,6 @@ class MotorController(Component):
                 return 'turn astern to port'
             else:
                 return 'astern indeterminate (2)'
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def _update_target_velocity(self, value, increment):
-        '''
-        Updates the value by the increment, clipping the result based on
-        the maximum velocity limit.
-        '''
-        value += increment
-        return -1.0 * self._velocity_clip(-1.0 * value) if value < 0 else self._velocity_clip(value)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def set_motor_velocity(self, orientation, target_velocity):
@@ -544,14 +534,15 @@ class MotorController(Component):
     def _increment_motor_velocity(self, orientation, increment):
         '''
         Increment the target velocity of the specified motor by the supplied increment
-        (which can be a positive or negative value).
+        (which can be a positive or negative value). No clipping is done here, so it's
+        possible to set a value higher than the motor will accept.
         '''
         if orientation is Orientation.PORT:
-            _updated_target_velocity = self._update_target_velocity(self._port_motor.target_velocity, increment)
+            _updated_target_velocity = self._port_motor.target_velocity + increment
             self._log.info('increment port motor velocity:' + Fore.RED + ' {:5.2f} + {:5.2f} ➔ {:<5.2f}'.format(\
                     self._port_motor.velocity, increment, _updated_target_velocity))
         else:
-            _updated_target_velocity = self._update_target_velocity(self._stbd_motor.target_velocity, increment)
+            _updated_target_velocity = self._stbd_motor.target_velocity + increment
             self._log.info('increment stbd motor velocity:' + Fore.GREEN + ' {:5.2f} + {:5.2f} ➔ {:<5.2f}'.format(\
                     self._stbd_motor.velocity, increment, _updated_target_velocity))
         self.set_motor_velocity(orientation, _updated_target_velocity)

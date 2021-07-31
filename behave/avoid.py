@@ -237,7 +237,7 @@ class Avoid(Behaviour, Publisher):
 
 
                         # Ballistic segment 2 ........................
-                        # bump.cmd = HALF_SPEED;      // then request forward � speed
+                        # bump.cmd = HALF_SPEED;      // then request forward at half speed
                         # if (bump == LEFT)           // and turn away from the bump
                         # bump.arg = RIGHT_TURN;
                         # else bump.arg = LEFT_TURN;

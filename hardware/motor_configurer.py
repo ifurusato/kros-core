@@ -16,7 +16,8 @@ from colorama import init, Fore, Style
 init()
 
 from core.logger import Logger, Level
-from core.orient import Orientation, Speed
+from core.orient import Orientation
+from core.speed import Speed
 from hardware.i2c_scanner import I2CScanner
 from hardware.motor import Motor
 
@@ -35,6 +36,9 @@ class MotorConfigurer():
         if config is None:
             raise ValueError('null configuration argument.')
         self._config = config
+        if Speed.FULL.ahead == 0.0:
+            self._log.info('importing speed enum values from configuration...')
+            Speed.configure(self._config)
         self._message_bus = message_bus
         if not isinstance(i2c_scanner, I2CScanner):
             raise ValueError('expected I2CScanner, not {}.'.format(type(i2c_scanner)))
@@ -68,21 +72,7 @@ class MotorConfigurer():
             self._port_motor = None
             self._stbd_motor = None
             raise Exception('unable to instantiate ThunderBorg [3].')
-        self._configure_speed()
         self._log.info('ready.')
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def _configure_speed(self):
-        '''
-        Sets the value of Speed's entries to the values provided in the
-        YAML configuration.
-        '''
-        self._log.info('configure motor speed...')
-        _cfg = self._config['kros'].get('motor').get('speed')
-        for _speed in Speed:
-            _value = _cfg.get(_speed.name)
-            _speed.value = _value
-            self._log.debug('speed: {}; set value: {}'.format(_speed, _speed.value))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _import_thunderborg(self):

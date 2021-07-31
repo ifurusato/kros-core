@@ -69,7 +69,8 @@ class MessageBus(Component):
         self._subscribers            = []
         self._loop                   = None
         self._last_message_timestamp = None
-        self._clip_event_list = False # used for printing only
+        self._clip_event_list        = False # used for printing only
+        self._closing                = False
         self._log.info('ready.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -189,9 +190,12 @@ class MessageBus(Component):
         '''
         Clear the message bus of any messages.
         '''
-        self._log.info('clearing queue of {:d} message{}.'.format(self._queue.qsize(), '' if self._queue.qsize() == 1 else 's'))
+        self._log.debug('clearing queue of {:d} message{}.'.format(self._queue.qsize(), '' if self._queue.qsize() == 1 else 's'))
         self._queue.clear()
-        self._log.info('queue contains {:d} message{} after clearing.'.format(self._queue.qsize(), '' if self._queue.qsize() == 1 else 's'))
+        if self._queue.qsize() == 0:
+            self._log.info('queue is empty.')
+        else:
+            self._log.info('queue contains {:d} message{} after clearing.'.format(self._queue.qsize(), '' if self._queue.qsize() == 1 else 's'))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
@@ -460,7 +464,7 @@ class MessageBus(Component):
         if loop.is_running() and not loop.is_closed():
             asyncio.create_task(self.shutdown(loop), name='shutdown-on-exception')
         else:
-            self._log.info("loop already shut down.")
+            self._log.warning("loop already shut down.")
 
     # shutdown ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
@@ -546,7 +550,22 @@ class MessageBus(Component):
             self.clear_tasks()
             self._log.info('disabled.')
         else:
-            self._log.warning('already disabled.')
+            self._log.debug('already disabled.')
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def close(self):
+        if self.closed:
+            self._log.warning('already closed.')
+        elif self._closing:
+            self._log.warning('already closing.')
+        else:
+            if self.enabled:
+                self.disable()
+            self._closing = True
+            self._log.info('closing...')
+            Component.close(self)
+            self._closing = False
+#           self._log.info('closed.')
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class PeekableQueue(Queue):

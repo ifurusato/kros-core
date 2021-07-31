@@ -308,12 +308,10 @@ class KROS(Component, FiniteStateMachine):
 
         if self._message_bus and self._message_bus.enabled:
             self._message_bus.close()
-        self._log.info('closed.')
+        self._log.info('main loop closed.')
 
         # enable arbitrator tasks (normal functioning of robot)
 #       self._arbitrator.start()
-
-        self._log.info('started.')
 
         # end main loop ....................................
 
@@ -322,27 +320,29 @@ class KROS(Component, FiniteStateMachine):
         '''
         This sets the KROS back to normal following a session.
         '''
-        if self._closing:
+        if self.closed:
+            self._log.info('already closed.')
+        elif self._closing:
             self._log.info('already closing.')
-            return
         else:
             self._closing = True
-            self._log.info(Style.BRIGHT + 'closing...')
+            self._log.info('closing...')
             Component.disable(self)
+            if self._message_bus:
+                self._message_bus.close()
+            if self._motor_ctrl:
+                self._motor_ctrl.close()
             if self._behaviour_mgr:
                 self._behaviour_mgr.close()
             if self._gamepad:
                 self._gamepad.close()
-            if self._motor_ctrl:
-                self._motor_ctrl.close()
             if self._ifs:
                 self._ifs.close()
-            if self._disable_leds:
-                # restore normal function of LEDs
+            if self._disable_leds: # restore normal function of Pi LEDs
                 self._set_pi_leds(True)
             Component.close(self)
             self._closing = False
-            self._log.info('closed.')
+#           self._log.info('application closed.')
             sys.exit(0)
 
 # ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
@@ -430,7 +430,7 @@ def main(argv):
     finally:
         _log.info('exit.')
         if _kros:
-            _log.info(Style.DIM + 'finally closing kros...')
+            _log.info('finally calling close...')
             _kros.close()
 
 # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈

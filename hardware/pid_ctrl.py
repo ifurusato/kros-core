@@ -17,6 +17,7 @@ from colorama import init, Fore, Style
 init()
 
 from core.logger import Logger, Level
+from core.component import Component
 from core.orient import Orientation
 from core.message import Message
 from core.message_bus import MessageBus
@@ -24,14 +25,13 @@ from core.event import Event
 from hardware.pid import PID
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-class PIDController(object):
+class PIDController(Component):
     '''
     Provides a configurable PID motor controller. This also maintains a value
     for the current motor velocity by sampling the step count from the motors
     on the same interval as the PID calls.
     '''
-
-    def __init__(self, config, message_bus, motor, setpoint=0.0, sample_time=0.01, level=Level.INFO):
+    def __init__(self, config, message_bus, motor, setpoint=0.0, sample_time=0.01, suppressed=False, enabled=True, level=Level.INFO):
         '''
         :param config:       The application configuration, read from a YAML file.
         :param message_bus:  The application message bus.
@@ -43,7 +43,7 @@ class PIDController(object):
         '''
         if config is None:
             raise ValueError('null configuration argument.')
-        self._config = config['kros'].get('motor').get('pid_controller')
+        self._config = config
         if not isinstance(message_bus, MessageBus):
             raise ValueError('wrong type for message bus argument: {}'.format(type(message_bus)))
         self._message_bus = message_bus
@@ -52,16 +52,18 @@ class PIDController(object):
         self._motor = motor
         self._orientation = motor.orientation
         self._log = Logger('pid-ctrl:{}'.format(self._orientation.label), level)
+        Component.__init__(self, self._log, suppressed=suppressed, enabled=enabled)
         # PID configuration ................................
-        _period_sec = 1.0 / self._config.get('sample_freq_hz')
-        _kp         = self._config.get('kp') # proportional gain
-        _ki         = self._config.get('ki') # integral gain
-        _kd         = self._config.get('kd') # derivative gain
-        _min_output = self._config.get('mininum_output')
-        _max_output = self._config.get('maximum_output')
+        _cfg = config['kros'].get('motor').get('pid_controller')
+        _period_sec = 1.0 / _cfg.get('sample_freq_hz')
+        _kp         = _cfg.get('kp') # proportional gain
+        _ki         = _cfg.get('ki') # integral gain
+        _kd         = _cfg.get('kd') # derivative gain
+        _min_output = _cfg.get('mininum_output')
+        _max_output = _cfg.get('maximum_output')
         self._pid = PID(self._orientation.label, _kp, _ki, _kd, _min_output, _max_output, sample_time=_period_sec, level=level)
         # used for hysteresis, if queue too small will zero-out motor power too quickly
-        _queue_len = self._config.get('hyst_queue_len')
+        _queue_len = _cfg.get('hyst_queue_len')
         self._deque = Deque([], maxlen=_queue_len)
         self._power        = 0.0
         self._last_power   = 0.0
@@ -206,29 +208,29 @@ class PIDController(object):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def enable(self):
-        if not self._closed:
-            if self._enabled:
+        if self.closed:
+            self._log.warning('cannot enable PID loop: already closed.')
+        else:
+            if self.enabled:
                 self._log.warning('PID loop already enabled.')
             else:
                 self._message_bus.add_handler(Message, self.handle)
-                self._enabled = True
-        else:
-            self._log.warning('cannot enable PID loop: already closed.')
+                Component.enable(self)
 
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def disable(self):
-        if not self._enabled:
-            self._log.warning('already disabled.')
-        elif self._closed:
-            self._log.warning('already closed.')
-        else:
-            self._enabled = False
-            self._log.info('disabled.')
+#   # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+#   def disable(self):
+#       if not self._enabled:
+#           self._log.warning('already disabled.')
+#       elif self._closed:
+#           self._log.warning('already closed.')
+#       else:
+#           self._enabled = False
+#           self._log.info('disabled.')
 
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def close(self):
-        self.disable()
-        self._closed = True
-        self._log.info('closed.')
+#   # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+#   def close(self):
+#       self.disable()
+#       self._closed = True
+#       self._log.info('closed.')
 
 #EOF
