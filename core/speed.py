@@ -25,41 +25,37 @@ class Direction(Enum):
 class Speed(Enum):
     '''
     Provides an enumeration of both ahead (forward) and astern (reverse)
-    Chadburn-style speeds.
+    Chadburn-style speeds, as corresponding to an abstract velocity.
 
     The default values for astern and ahead are set to zero; these much be
     set from the YAML application configuration via the configure() method.
     '''
-    STOP          = ( 1, "stop",                  0.0,   0.0 )
-    DEAD_SLOW     = ( 2, "dead slow",             0.0,   0.0 )
-    SLOW          = ( 3, "slow",                  0.0,   0.0 )
-    HALF          = ( 4, "half speed",            0.0,   0.0 )
-    TWO_THIRDS    = ( 5, "two thirds speed",      0.0,   0.0 )
-    THREE_QUARTER = ( 6, "three quarter speed",   0.0,   0.0 )
-    FULL          = ( 7, "full speed",            0.0,   0.0 )
-    EMERGENCY     = ( 8, "emergency speed",       0.0,   0.0 )
-    MAXIMUM       = ( 9, "maximum speed",         0.0,   0.0 )
-
-#   STOP          = ( 1, "stop",                  0.0,   0.0 )
-#   DEAD_SLOW     = ( 2, "dead slow",           -20.7,  20.0 )
-#   SLOW          = ( 3, "slow",                -30.7,  30.0 )
-#   HALF          = ( 4, "half speed",          -50.7,  50.0 )
-#   TWO_THIRDS    = ( 5, "two thirds speed",    -66.7,  66.0 )
-#   THREE_QUARTER = ( 6, "three quarter speed", -75.7,  75.0 )
-#   FULL          = ( 7, "full speed",          -90.7,  90.0 )
-#   EMERGENCY     = ( 8, "emergency speed",     -99.7,  99.9 )
-#   MAXIMUM       = ( 9, "maximum speed",      -100.0, 100.0 )
+    #                    label             velocity  astern  ahead
+    STOP          = ( 1, "stop",                  0,    0.0,   0.0 )
+    DEAD_SLOW     = ( 2, "dead slow",            20,    0.0,   0.0 )
+    SLOW          = ( 3, "slow",                 30,    0.0,   0.0 )
+    HALF          = ( 4, "half speed",           50,    0.0,   0.0 )
+    TWO_THIRDS    = ( 5, "two thirds speed",     67,    0.0,   0.0 )
+    THREE_QUARTER = ( 6, "three quarter speed",  75,    0.0,   0.0 )
+    FULL          = ( 7, "full speed",           90,    0.0,   0.0 )
+    MAXIMUM       = ( 9, "maximum speed",       100,    0.0,   0.0 )
 
     # ignore the first param since it's already set by __new__
-    def __init__(self, num, label, astern, ahead):
-        self._label  = label
-        self._astern = astern
-        self._ahead  = ahead
+    def __init__(self, num, label, velocity, astern, ahead):
+        self._label    = label
+        self._velocity = velocity
+        self._astern   = astern
+        self._ahead    = ahead
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def label(self):
         return self._label
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    @property
+    def velocity(self):
+        return self._velocity
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property

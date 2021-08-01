@@ -90,18 +90,6 @@ class MotorConfigurer():
                     import mock.thunderborg as ThunderBorg
                     self._log.info('successfully imported mock ThunderBorg.')
 
-                    # get battery voltage to determine max motor power (moved earlier in config)
-#                   voltage_in = 19.0
-#                   self._log.info('voltage in: {:>5.2f}V'.format(voltage_in))
-#                   voltage_out = 9.0
-#                   self._log.info('voltage out: {:>5.2f}V'.format(voltage_out))
-#                   self._max_power_ratio = voltage_out / float(voltage_in)
-                    # actually, for the mock just set it to 1:1
-#                   self._max_power_ratio = 1.0
-                    # convert float to ratio format
-#                   self._log.info('battery level: {:>5.2f}V; motor voltage: {:>5.2f}V; maximum power ratio: {}'.format(voltage_in, voltage_out, \
-#                           str(Fraction(self._max_power_ratio).limit_denominator(max_denominator=20)).replace('/',':')))
-
                 self._tb = ThunderBorg.ThunderBorg(Level.INFO)  # create a new ThunderBorg object
                 self._tb.Init()                       # set the board up (checks the board is connected)
                 self._log.info('successfully instantiated ThunderBorg.')
