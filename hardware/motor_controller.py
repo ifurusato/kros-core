@@ -124,8 +124,8 @@ class MotorController(Component):
                     # if decelerating then apply that to target velocities first
                     self.decelerate(_event_count)
                     pass
-                self._port_motor.update_motor_velocity()
-                self._stbd_motor.update_motor_velocity()
+                self._port_motor.update_target_velocity()
+                self._stbd_motor.update_target_velocity()
                 # TODO add execute any callbacks here
 
                 # print stats...
@@ -294,9 +294,9 @@ class MotorController(Component):
         power of the specified motor.
         '''
         if orientation is Orientation.PORT:
-            self._port_motor.set_motor_velocity(target_velocity)
+            self._port_motor.target_velocity = target_velocity
         else:
-            self._stbd_motor.set_motor_velocity(target_velocity)
+            self._stbd_motor.target_velocity = target_velocity
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def dispatch_velocity_event(self, payload):

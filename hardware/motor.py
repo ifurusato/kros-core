@@ -147,6 +147,13 @@ class Motor(Component):
         '''
         return self.__target_velocity
 
+    @target_velocity.setter
+    def target_velocity(self, target_velocity):
+        '''
+        Set the target velocity of the Motor.
+        '''
+        self.__target_velocity = target_velocity
+
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def steps(self):
@@ -185,7 +192,7 @@ class Motor(Component):
         return self.current_power > 0.0
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def update_motor_velocity(self):
+    def update_target_velocity(self):
         '''
         If the current velocity doesn't match the target, set the target
         velocity and motor power as an attempt to align them.
@@ -196,65 +203,41 @@ class Motor(Component):
         All of the dunderscored methods are intended as internal methods.
         '''
         # so: if the current velocity doesn't match the target, we...
-        if self._velocity() != self.target_velocity:
+        self._log.info('💊 {} velocity: {:5.2f} ➔ {:<5.2f}'.format(self._orientation, self.velocity, self.__target_velocity))
+        if self._velocity() != self.__target_velocity:
 
             # set the target velocity variable modified by the slew limiter, if active
-            # otherwise just directly to the velocity clipper
-            self.__set_target_velocity(self.target_velocity)
+            if self._slew_limiter.is_active:
+                self.__target_velocity = self._slew_limiter.limit(self.velocity, self.__target_velocity)
 
-            # if active, we pass that target velocity to the PID controller
+            # use velocity clipper as a sanity checker
+            self.__target_velocity = -1.0 * self._velocity_clip(-1.0 * self.__target_velocity) if self.__target_velocity < 0 else self._velocity_clip(self.__target_velocity)
+            self._log.info('💊 {} motor target velocity: {:5.2f} ➔ {:<5.2f}'.format(self._orientation, self.velocity, self.__target_velocity))
 
-            # we take the power output of the PID controller and pass it to the jerk limiter, if active
-
-            # otherwise just directly on to the power clipper
-
-            # translate velocity to power...
-            _power = self.__convert_to_power(self.target_velocity)
+            # we now convert velocity to power, either via the PID controller
+            # when active, otherwise the proportional interpolator from the 
+            # Speed Enum.
+            if self._pid_controller.is_active:
+                # if active, we pass target velocity to the PID controller
+                raise Exception('unimplemented.')
+            else:
+                _power = Speed.get_proportional_power(self.__target_velocity)
+            # otherwise just directly on to set the motor power
             self.__set_motor_power(_power)
-
-            # then pass it through the power clipper to the motor
 
         for callback in self._callbacks:
             self._log.info(Fore.BLUE + 'executing callback...')
             callback()
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def __set_target_velocity(self, target_velocity):
-        '''
-        Set the target velocity based on the argument. If the SlewLimiter is active
-        it acts as a filter, otherwise this directly sets the target velocity. All
-        results are passed through the velocity clipper.
-
-        When the SlewLimiter is not active this may end up just re-setting the
-        same target velocity as the existing value.
-        '''
-        if self._slew_limiter.is_active:
-            value = self._slew_limiter.limit(self.velocity, target_velocity)
-        else:
-            value = target_velocity
-        self.target_velocity = -1.0 * self._velocity_clip(-1.0 * value) if value < 0 else self._velocity_clip(value)
-        self._log.info('{} motor target velocity: {:5.2f} ➔ {:<5.2f} := {:<5.2f}'.format(self._orientation, self.velocity, target_velocity, self.target_velocity))
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def __convert_to_power(self, velocity):
-        '''
-        This is the means by which we convert velocity to power when the
-        PID controller is not active. It's simply a linear conversion,
-        90 becomes 0.9
-        '''
-        if velocity < 0:
-            # with limit at -0.99, min would always be -0.99
-            return max( velocity / 100.0, -1 * self._motor_power_limit )
-        else:
-            # with limit at 0.99, min will be always less than 0.99
-            return min( velocity / 100.0, self._motor_power_limit )
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def __set_motor_power(self, target_power):
         '''
         Sets the motor power to a number between -1.0 to 1.0, with the actual
         limits set by the max_power_ratio, which alters the value to match
-        the power/motor voltage ratio.
+        the power/motor voltage ratio. 
+
+        If the JerkLimiter is active this acts as a sanity check on 
+        overly-rapid changes to motor power.
 
         :param target_power:  the target motor power
         '''
