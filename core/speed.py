@@ -6,10 +6,11 @@
 # see the LICENSE file included as part of this package.
 #
 # author:   Murray Altheim
-# created:  2019-12-23
-# modified: 2021-04-22
+# created:  2021-07-29
+# modified: 2021-08-02
 #
-# A collection of navigation/orientation-related enums.
+# A collection of Enums related to Direction and Speed, as well as various
+# static utility supporting methods.
 #
 
 from enum import Enum
@@ -87,6 +88,52 @@ class Speed(Enum):
             if value.upper() == s.name:
                 return s
         raise NotImplementedError
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    @staticmethod
+    def get_proportional_power(velocity):
+        '''
+        Returns the proportional (interpolated) power corresponding to the velocity
+        argument. This linear interpolates first across the x axis (velocity, 
+        ranging from -100 to +100), then linear interpolates across the y axis 
+        (power, ranging from -1.0 to +1.0) to obtain the power value.
+
+        The returned value is limited by the positive and negative range expressed
+        in the YAML configuration. 
+        '''
+        _x_range = Speed.xrange(velocity) # returns the bounding two Speeds
+        _s0 = _x_range[0]
+        _s1 = _x_range[1]
+        # percentage of way that v is along _s0.velocity to _s1.velocity is: _s0 + velocity / ( _v1 - _v0 )
+        if _s0.velocity == _s1.velocity:
+            _pp = Speed.lerp( _s0.ahead , _s1.ahead, 1.0 )
+            if velocity < 0:
+                _pp *= -1
+#           _log.info(Fore.RED + 'v={};\tX range: ({} to {});          \t\t'.format(velocity, _s0.ahead, _s1.ahead) + Fore.YELLOW + 'power: {:5.2f}'.format(_pp))
+        else:
+            if velocity < 0:
+                _pc = ( (-1 * _s0.velocity) - velocity ) / ( _s1.velocity - _s0.velocity )
+            else:
+                _pc = ( velocity - _s0.velocity ) / ( _s1.velocity - _s0.velocity )
+            _xt = Speed.lerp(_s0.velocity, _s1.velocity, _pc)
+            _pp = Speed.lerp( _s0.ahead , _s1.ahead, _pc )
+            if velocity < 0:
+                _pp *= -1
+#           _log.info(Fore.GREEN + 'v={};\tX range: ({} to {}); xt: {:5.2f}; {:.0%}   \t'.format(velocity, _s0.ahead, _s1.ahead, _xt, _pc) + Fore.YELLOW + 'power: {:5.2f}'.format(_pp))
+        return _pp
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    @staticmethod
+    def lerp(v0: float, v1: float, t: float) -> float:
+        return (1 - t) * v0 + t * v1
+    
+    @staticmethod
+    def inv_lerp(a: float, b: float, v: float) -> float:
+        return (v - a) / (b - a)
+    
+    @staticmethod
+    def remap(i_min: float, imax: float, o_min: float, o_max: float, v: float) -> float:
+        return lerp(o_min, o_max, inv_lerp(i_min, imax, v))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @staticmethod
