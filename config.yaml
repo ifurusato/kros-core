@@ -57,22 +57,22 @@ kros:
             pot_ctrl:           False            # if True enable potentiometer for setting PID terms
         speed:                                   # configured motor speeds for chadburn events
             astern:
-                MAXIMUM:           -90.1
-                FULL:              -70.1
-                THREE_QUARTER:     -60.1
-                TWO_THIRDS:        -50.1
-                HALF:              -40.1
-                SLOW:              -30.1
-                DEAD_SLOW:         -20.1
+                MAXIMUM:           -90.0
+                FULL:              -80.0
+                THREE_QUARTER:     -60.0
+                TWO_THIRDS:        -54.0
+                HALF:              -40.0
+                SLOW:              -33.0
+                DEAD_SLOW:         -22.0
                 STOP:                0.0
             ahead:
                 STOP:                0.0
                 DEAD_SLOW:          20.0
-                SLOW:               30.0
+                SLOW:               33.0
                 HALF:               40.0
-                TWO_THIRDS:         50.0
+                TWO_THIRDS:         55.0
                 THREE_QUARTER:      60.0
-                FULL:               70.0
+                FULL:               80.0
                 MAXIMUM:            90.0
         slew:
             minimum_output:    -90.0            # lower limit of permitted velocity output values

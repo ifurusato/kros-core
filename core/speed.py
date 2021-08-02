@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#}!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
 # Copyright 2020-2021 by Murray Altheim. All rights reserved. This file is part
@@ -76,12 +76,59 @@ class Speed(Enum):
         self._ahead = ahead
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def __str__(self):
+        return 'Speed.{}:{}v={:d};\t{:5.2f}->{:5.2f}.'.format(self.name, (' ' * max(0, (16 - len(self.name)))),
+                self._velocity, self._astern, self._ahead)
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @staticmethod
     def from_string(value):
         for s in Speed:
             if value.upper() == s.name:
                 return s
         raise NotImplementedError
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    @staticmethod
+    def xrange(x):
+#       print('x {}'.format(x))
+        if abs(x) >= Speed.MAXIMUM.velocity:
+            return [ Speed.MAXIMUM, Speed.MAXIMUM ]
+        r = []
+        if x < 0:
+            x *= -1
+#           print('-? {}'.format(x))
+            for s in Speed:
+                # counting up from zero, first time we're less than value use that as our high value
+#               print(Fore.BLACK+'-sa x: {}; s: {}'.format(x, s)+Style.RESET_ALL)
+                if x <= s.velocity:
+#                   print('-a {}'.format(s))
+                    r.append(s)
+                    break
+            for s in reversed(Speed):
+                # counting down from max, first time we're greater than v use that as our low value
+#               print(Fore.BLACK+'-sb {}'.format(s)+Style.RESET_ALL)
+                if x >= s.velocity:
+#                   print('-b x: {}; s: {}'.format(x, s))
+                    r.append(s)
+                    break
+        else:
+#           print('+? {}'.format(x))
+            for s in reversed(Speed):
+#               print(Fore.BLACK+'+sa {}'.format(s)+Style.RESET_ALL)
+                if x >= s.velocity:
+#                   print('+a {}'.format(s))
+                    r.append(s)
+                    break
+            for s in Speed:
+#               print(Fore.BLACK+'+sb {}'.format(s)+Style.RESET_ALL)
+                if x <= s.velocity:
+#                   print('+b {}'.format(s))
+                    r.append(s)
+                    break
+        if len(r) == 1:
+            raise Exception('only 1: speed: {}'.format(r))
+        return r
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @staticmethod
