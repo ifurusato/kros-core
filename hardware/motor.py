@@ -16,6 +16,7 @@ init()
 from core.logger import Level, Logger
 from core.component import Component
 from core.orient import Orientation
+from core.speed import Speed
 from core.message_bus import MessageBus
 from hardware.pid_ctrl import PIDController
 from hardware.slew import SlewLimiter
@@ -69,7 +70,7 @@ class Motor(Component):
         self._motor_power_limit = _cfg.get('motor_power_limit') # power limit to motor
         self._log.info('motor power limit: {:<5.2f}'.format(self._motor_power_limit))
         self.__steps             = 0     # step counter
-        self.__max_power         = 0.0   # capture maximum power applied
+        self.__max_applied_power = 0.0   # capture maximum power applied
         self.__max_power_ratio   = 0.0   # will be set by MotorConfigurer
         self.__target_velocity   = 0.0   # the target velocity of the motor
         self.__max_driving_power = 0.0
@@ -152,6 +153,8 @@ class Motor(Component):
         '''
         Set the target velocity of the Motor.
         '''
+        if not isinstance(target_velocity, float):
+            raise ValueError('expected float, not {}'.format(type(target_velocity)))
         self.__target_velocity = target_velocity
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -203,7 +206,7 @@ class Motor(Component):
         All of the dunderscored methods are intended as internal methods.
         '''
         # so: if the current velocity doesn't match the target, we...
-        self._log.info('💊 {} velocity: {:5.2f} ➔ {:<5.2f}'.format(self._orientation, self.velocity, self.__target_velocity))
+        self._log.info('💊 {} velocity: {:5.2f} ➔ {:5.2f}'.format(self._orientation, self.velocity, self.__target_velocity))
         if self._velocity() != self.__target_velocity:
 
             # set the target velocity variable modified by the slew limiter, if active
@@ -230,6 +233,14 @@ class Motor(Component):
             callback()
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def set_motor_power(self, target_power):
+        '''
+        Direct-drive the motor via a target power argument, whose value must be
+        between -1.0 and 1.0.
+        '''
+        self.__set_motor_power(target_power)
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def __set_motor_power(self, target_power):
         '''
         Sets the motor power to a number between -1.0 to 1.0, with the actual
@@ -247,19 +258,22 @@ class Motor(Component):
             self._log.warning('motor enabled {}, ignoring setting of {:<5.2f}'.format(self.enabled, target_power))
             return
         _current_power = self.current_power
+        # even if disabled or suppressed, JerkLimiter still clips
         target_power = self._jerk_limiter.limit(self.current_power, target_power)
-        self._log.info('current: {:5.2f}; target: {:5.2f}; max power ratio: {:5.2f}'.format(
+        self._log.debug('current: {:5.2f}; target: {:5.2f}; max power ratio: {:5.2f}'.format(
                 _current_power, target_power, self.max_power_ratio))
         # okay, let's go .........................
+        self.__max_applied_power = max(target_power, self.__max_applied_power)
         _driving_power = float(target_power * self.max_power_ratio)
-        self.__max_power = max(target_power, self.__max_power)
         self.__max_driving_power = max(abs(_driving_power), self.__max_driving_power)
         # display actual power to motor
-#       self._log.info(Fore.MAGENTA + Style.BRIGHT + 'power argument: {:>5.2f}'.format(target_power) + Style.NORMAL \
-#               + '\tcurrent power: {:>5.2f}; driving power: {:>5.2f}.'.format(_current_power, _driving_power))
+        self._log.info(Fore.MAGENTA + Style.BRIGHT + 'power argument: {:>5.2f}'.format(target_power) + Style.NORMAL \
+                + '\tcurrent power: {:>5.2f}; driving power: {:>5.2f}.'.format(_current_power, _driving_power))
         if self._orientation is Orientation.PORT:
+#           if abs(_driving_power) < 0.3:
             self._tb.SetMotor1(_driving_power)
         else:
+#           if abs(_driving_power) < 0.3:
             self._tb.SetMotor2(_driving_power)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -325,10 +339,10 @@ class Motor(Component):
     def close(self):
         if self.enabled:
             self.disable()
-        if self.__max_power > 0 or self.__max_driving_power > 0:
-            self._log.warning('on closing: max power: {:>5.2f}; max adjusted power: {:>5.2f}.'.format(self.__max_power, self.__max_driving_power))
+        if self.__max_applied_power > 0 or self.__max_driving_power > 0:
+            self._log.warning('on closing: max power: {:>5.2f}; max adjusted power: {:>5.2f}.'.format(self.__max_applied_power, self.__max_driving_power))
         else:
-            self._log.info(Style.DIM + 'on closing: max power: {:>5.2f}; max adjusted power: {:>5.2f}.'.format(self.__max_power, self.__max_driving_power))
+            self._log.info(Style.DIM + 'on closing: max power: {:>5.2f}; max adjusted power: {:>5.2f}.'.format(self.__max_applied_power, self.__max_driving_power))
         # just do it anyway
         self.stop()
         self._log.info('closed.')

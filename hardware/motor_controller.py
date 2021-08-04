@@ -293,6 +293,8 @@ class MotorController(Component):
         A convenience method that sets the target velocity and motor
         power of the specified motor.
         '''
+        if not isinstance(target_velocity, float):
+            raise ValueError('expected float, not {}'.format(type(target_velocity)))
         if orientation is Orientation.PORT:
             self._port_motor.target_velocity = target_velocity
         else:
@@ -359,7 +361,7 @@ class MotorController(Component):
             self.start_loop()
         # ........
         self._log.debug('set chadburn velocity: {}  {}.'.format(_speed.label, _direction))
-        _value = _speed.value if _direction is Direction.AHEAD else -1 * _speed.value
+        _value = _speed.ahead if _direction is Direction.AHEAD else _speed.astern
         self.set_motor_velocity(Orientation.PORT, _value)
         self.set_motor_velocity(Orientation.STBD, _value)
 
@@ -504,11 +506,11 @@ class MotorController(Component):
         self._log.info('theta SPIN {}.'.format(orientation.name))
         self.reset_deceleration()
         if orientation is Orientation.PORT:
-            _port_velocity = -1.0 * self._spin_speed.value
-            _stbd_velocity = self._spin_speed.value
+            _port_velocity = self._spin_speed.astern
+            _stbd_velocity = self._spin_speed.ahead
         elif orientation is Orientation.STBD:
-            _port_velocity = self._spin_speed.value
-            _stbd_velocity = -1.0 * self._spin_speed.value
+            _port_velocity = self._spin_speed.ahead
+            _stbd_velocity = self._spin_speed.astern
         else:
             raise Exception('unrecognised spin direction: {}'.format(orientation))
         self.set_motor_velocity(Orientation.PORT, _port_velocity)

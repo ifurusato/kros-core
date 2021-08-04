@@ -92,13 +92,15 @@ class SlewLimiter(Component):
 
         If suppressed or disabled this returns the target value argument.
         '''
+        self._log.info('⛎ current value: {}; target value: {}.'.format(type(current_value), type(target_value)))
+
         if not self.enabled:
             self._log.debug('disabled; returning target value {:+06.2f}.'.format(target_value))
             return target_value
         elif self.suppressed:
             self._log.debug('suppressed; returning target value {:+06.2f}.'.format(target_value))
             return target_value
-        self._log.debug('slew from current {:+06.2f} to target value {:+06.2f}.'.format(current_value, target_value))
+#       self._log.debug('slew from current {:+06.2f} to target value {:+06.2f}.'.format(current_value, target_value))
         if self._use_elapsed_time:
             _now = self._millis()
             _elapsed = _now - self._start_time

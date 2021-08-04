@@ -10,7 +10,7 @@ kros:
     use_external_clock:          True            # if True use external clock
     component:
         enable_event_publisher:  True            # keyboard robot simulator (kinda necessary for running CLI)
-        enable_pot_publisher:   False            # digital velocity control potentiometer publisher
+        enable_pot_publisher:    True            # digital velocity control potentiometer publisher
         enable_behaviours:      False            # if True use BehaviourManager and Behaviours
     message_bus:
         max_age_ms:             20.0             # maximum age of a message before expiry
@@ -81,7 +81,6 @@ kros:
             hysteresis:          2.0            # how close do we get to the target velocity?
             use_elapsed_time:    True           # used elapsed time or percentage
         jerk:
-            jerk_rate_limit:     0.3            # limit of permitted change per iteration
             jerk_tolerance:     10              # percentage limit of permitted change per iteration
     gamepad:
         enabled: False

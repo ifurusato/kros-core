@@ -27,11 +27,13 @@ class MotorConfigurer():
     Configures either a ThunderBorg motor controller for a pair of motors.
     If the ThunderBorg does not appear on the I²C bus the motors are mocked.
 
-    :param config:       the application configuration
-    :param message_bus:  the message bus handling event-laden messages
-    :param level:        the logging level
+    :param config:          the application configuration
+    :param message_bus:     the message bus handling event-laden messages
+    :param i2c_scanner:     the I2C bus scanner
+    :param motors_enabled:  an optional flag to enable motors (default false)
+    :param level:           the logging level
     '''
-    def __init__(self, config, message_bus, i2c_scanner, level=Level.INFO):
+    def __init__(self, config, message_bus, i2c_scanner, motors_enabled=False, level=Level.INFO):
         self._log = Logger("motor-config", level)
         if config is None:
             raise ValueError('null configuration argument.')
@@ -46,13 +48,14 @@ class MotorConfigurer():
         self._log.debug('getting battery reading...')
         # configure from command line argument properties
         _args = self._config['kros'].get('arguments')
-        self._motors_enabled = _args.get('motors_enabled')
-        self._log.info('motors enabled? {}'.format(self._motors_enabled))
+        self._motors_enabled = _args.get('motors_enabled') or motors_enabled
+        self._log.info(Fore.YELLOW + 'motors enabled? {}'.format(self._motors_enabled))
         if not self._motors_enabled: # overrides _enable_mock
+#           sys.exit(0)
             self._enable_mock = True
         else:
             self._enable_mock = _args.get('mock_enabled')
-        self._log.info('mocks enabled? {}'.format(self._enable_mock))
+        self._log.info(Fore.YELLOW + 'mocks enabled? {}'.format(self._enable_mock))
         # Import the ThunderBorg library, then configure and return the motors
         self._max_power_ratio = None
         self._import_thunderborg()

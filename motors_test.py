@@ -17,38 +17,22 @@
 import pytest
 import sys, numpy, time, traceback
 from datetime import datetime as dt
+from math import isclose
 from colorama import init, Fore, Style
 init()
 
 from core.message_bus import MessageBus
 from core.message_factory import MessageFactory
+from core.orient import Orientation
+from core.rate import Rate
 from core.logger import Logger, Level
 from core.config_loader import ConfigLoader
-from mock.motor import Motor
-from mock.motor_configurer import MotorConfigurer
 from hardware.i2c_scanner import I2CScanner
+from hardware.motor_configurer import MotorConfigurer
+from hardware.motor import Motor
+from hardware.potentiometer import Potentiometer
 
 _log = Logger('test', Level.INFO)
-
-# ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-@pytest.mark.unit
-def test_velocity_to_power_conversion():
-    # velocity to power conversion test:
-    for v in numpy.arange(0.0, 60.0, 2.0):
-        p = Motor.velocity_to_power(v)
-        _log.info('velocity: {:5.2f};'.format(v) + Fore.YELLOW + ' power: {:5.2f};'.format(p))
-
-# ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-def callback_method_A(value):
-    global action_A
-    action_A = not action_A
-    _log.info('callback method fired;\t' + Fore.YELLOW + 'action A: {}'.format(action_A))
-
-# ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-def callback_method_B(value):
-    global action_B
-    action_B = not action_B
-    _log.info('callback method fired;\t' + Fore.YELLOW + 'action B: {}'.format(action_B))
 
 # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 @pytest.mark.unit
@@ -59,22 +43,52 @@ def test_motors():
     try:
 
         # read YAML configuration
-        _loader = ConfigLoader(Level.INFO)
+        _level = Level.INFO
+        _loader = ConfigLoader(_level)
         filename = 'config.yaml'
         _config = _loader.configure(filename)
 
-        _log.info('creating message factory...')
-        _message_factory = MessageFactory(Level.INFO)
         _log.info('creating message bus...')
-        _message_bus = MessageBus(Level.WARN)
+        _message_bus = MessageBus(_config, _level)
+        _log.info('creating message factory...')
+        _message_factory = MessageFactory(_message_bus, _level)
 
-        _i2c_scanner = I2CScanner(_config, Level.WARN)
+        _i2c_scanner = I2CScanner(_config, _level)
 
         # add motor controller
-        _motor_configurer = MotorConfigurer(_config, _message_bus, _i2c_scanner, enable_mock=False, level=Level.INFO)
-        _motors = _motor_configurer.get_motors()
+        _motor_configurer = MotorConfigurer(_config, _message_bus, _i2c_scanner, motors_enabled=True, level=_level)
+        _port_motor = _motor_configurer.get_motor(Orientation.PORT)
+        _stbd_motor = _motor_configurer.get_motor(Orientation.STBD)
 
-        _motors.enable()
+        _port_motor.enable()
+        _stbd_motor.enable()
+
+        # configure digital potentiometer for motor speed
+        _pot = Potentiometer(_config, _level)
+        _pot.set_output_limits(-0.90, 0.90)
+        _pot.set_output_limits(-0.90, 0.90)
+
+#       sys.exit(0)
+        _last_scaled_value = 0.0
+        _log.info('starting test...')
+        _hz = 10
+        _rate = Rate(_hz, Level.ERROR)
+        while True:
+            _scaled_value = _pot.get_scaled_value(False)
+            if _scaled_value != _last_scaled_value: # if not the same as last time
+                # math.isclose(3, 15, abs_tol=0.03 * 255) # 3% on a 0-255 scale
+                if isclose(_scaled_value, 0.0, abs_tol=0.05):
+                    _pot.set_black()
+                    _port_motor.set_motor_power(0.0)
+                    _stbd_motor.set_motor_power(0.0)
+                    _log.info(Fore.BLACK + 'scaled value: {:9.6f}'.format(_scaled_value))
+                else:
+                    _pot.set_rgb(_pot.value)
+                    _port_motor.set_motor_power(_scaled_value)
+                    _stbd_motor.set_motor_power(_scaled_value)
+                    _log.info(Fore.YELLOW + 'scaled value: {:9.6f}'.format(_scaled_value))
+            _last_scaled_value = _scaled_value
+            _rate.wait()
 
     except KeyboardInterrupt:
         _log.info('Ctrl-C caught; exiting...')

@@ -18,7 +18,7 @@ init()
 from core.config_loader import ConfigLoader
 from core.logger import Level, Logger
 from core.rate import Rate
-from mock.potentiometer import Potentiometer
+from hardware.potentiometer import Potentiometer
 from mock.pot_publisher import MockPotentiometer
 
 # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈

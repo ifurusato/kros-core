@@ -12,6 +12,7 @@
 # A jerk limiter that limits the rate of acceleration of a motor power.
 #
 
+import sys
 from math import isclose
 from colorama import init, Fore, Style
 init()
@@ -43,15 +44,16 @@ class JerkLimiter(Component):
         _cfg = config['kros'].get('motor')
         _maximum_output = _cfg.get('motor_power_limit') # power limit to motor
         _minimum_output = _maximum_output * -1
-        self._jerk_rate_limit = _cfg.get('jerk').get('jerk_rate_limit') # deprecated
         _jerk_tolerance_pc = _cfg.get('jerk').get('jerk_tolerance') # expressed as percent (0-100)
         if _jerk_tolerance_pc < 0 or _jerk_tolerance_pc > 100:
             raise ValueError('jerk tolerance must be expressed as a percentage value (0-100).')
-        # math.isclose(3, 15, abs_tol=0.03 * 255) # 3% on a 0-255 scale
-        self._tolerance = (( _jerk_tolerance_pc / 100 ) * abs(_maximum_output - _minimum_output))
+#       self._tolerance = (( _jerk_tolerance_pc / 100 ) * abs(_maximum_output - _minimum_output))
+        self._tolerance = ( _jerk_tolerance_pc / 100 ) * _maximum_output
+        self._jerk_rate_limit = self._tolerance * 1.3 # defined as the tolerance
         self._clip = lambda n: _minimum_output if n <= _minimum_output else _maximum_output if n >= _maximum_output else n
         self._log.info('jerk limit: {:5.2f}; tolerance: {:5.2f}; minimum output: {:5.2f}; maximum output: {:5.2f}'.format(
                 self._jerk_rate_limit, self._tolerance, _minimum_output, _maximum_output))
+#       sys.exit(0)
         if not self.suppressed and self.enabled:
             self._log.info('ready.')
         else:
@@ -72,31 +74,39 @@ class JerkLimiter(Component):
         and maximum output values set in configuration.
 
         This filter works for either negative or positive values, clipping
-        changes larger than the jerk value.
-
-        If suppressed or disabled this returns the target value argument.
+        changes larger than the jerk value. If suppressed or disabled this 
+        still returns the target value argument, clipped.
         '''
+        _value = target_value
         if not self.enabled:
             self._log.debug('disabled; returning target value {:+06.2f}.'.format(target_value))
-            return target_value
         elif self.suppressed:
             self._log.debug('suppressed; returning target value {:+06.2f}.'.format(target_value))
-            return target_value
-        self._log.debug('limit current {:+06.2f} to target value {:+06.2f}.'.format(current_value, target_value))
-        _value = target_value
-        if isclose(current_value, target_value, abs_tol=self._tolerance): # if close to each other
-            pass
-        elif target_value > current_value: # increasing ..........
-            if not isclose(current_value, target_value, abs_tol=self._tolerance):
-                # only allow the current value plus the jerk limit
-                _value = current_value + self._jerk_rate_limit
-        else: # decreasing .......................................
-            if abs(current_value - target_value) > self._jerk_rate_limit:
-                # only allow the current value minus the jerk limit
-                _value = current_value - self._jerk_rate_limit
+        else:
+            # math.isclose(3, 15, abs_tol=0.03 * 255) # 3% on a 0-255 scale
+            if isclose(current_value, target_value, abs_tol=self._tolerance): # if close to each other
+                self._log.info('🍋 limit current {:+06.2f} to target value {:+06.2f}.'.format(current_value, target_value))
+                pass
+            elif target_value > current_value: # increasing ..........
+                if not isclose(current_value, target_value, abs_tol=self._tolerance):
+                    # only allow the current value plus the jerk limit
+                    _value = current_value + self._jerk_rate_limit
+                    self._log.info('🍏 limit current {:+06.2f} -> target value {:+06.2f}: value: {:5.2f}'.format(current_value, target_value, _value))
+                else:
+                    self._log.info(Fore.BLACK + '🍏 limit current {:+06.2f} -> target value {:+06.2f}.'.format(current_value, target_value))
+
+            else: # decreasing .......................................
+                if abs(current_value - target_value) > self._jerk_rate_limit:
+                    # only allow the current value minus the jerk limit
+                    _value = current_value - self._jerk_rate_limit
+                    self._log.info('🍎 limit current {:+06.2f} -> target value {:+06.2f}: value: {:5.2f}'.format(current_value, target_value, _value))
+                else:
+                    self._log.info(Fore.BLACK + '🍎 limit current {:+06.2f} -> target value {:+06.2f}.'.format(current_value, target_value))
+
         # clip within save limits
         _value = -1.0 * self._clip(-1.0 * _value) if _value < 0.0 else self._clip(_value)
-        self._log.warning('jerk limit current {:+06.2f} to target value {:+06.2f}, returning value: {:5.2f}'.format(current_value, target_value, _value))
+        self._log.debug(Style.DIM + '🍆 limit current {:+06.2f} -> target value {:+06.2f}, returning '.format(current_value, target_value)
+                + Fore.YELLOW + Style.NORMAL + 'value: {:5.2f}'.format(_value))
         return _value
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
