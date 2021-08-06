@@ -99,8 +99,8 @@ class Controller(Component):
            self._log.info('event: "high temperature"')
         elif _event is Event.COLLISION_DETECT:             # 13, "collision detect"
            self._log.info('event: "collision detect"')
-        elif _event is Event.EMERGENCY_ASTERN:             # 14, "emergency astern"
-           self._log.info('event: "emergency astern"')
+#       elif _event is Event.EMERGENCY_ASTERN:             # 14, "emergency astern"
+#          self._log.info('event: "emergency astern"')
 
         # gamepad events ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
         elif _event is Event.GAMEPAD:                      # 40, "gamepad"

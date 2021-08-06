@@ -67,9 +67,11 @@ class Potentiometer(object):
             self._ioe.set_mode(self._pin_red,   io.PWM, invert=True)
             self._ioe.set_mode(self._pin_green, io.PWM, invert=True)
             self._ioe.set_mode(self._pin_blue,  io.PWM, invert=True)
+        except FileNotFoundError:
+            raise DeviceNotFound("unable to initialise potentiometer: no device found.")
         except Exception as e:
 #           self._log.warning(Fore.BLACK + "unable to initialise IO Expander: {}\n{}".format(e, traceback.format_exc()))
-            raise DeviceNotFound("unable to initialise potentiometer.")
+            raise DeviceNotFound("{} error initialising potentiometer.".format(type(e)))
 
         self._log.info("running LED with {} brightness steps.".format(int(self._period * self._brightness)))
         self._log.info("ready.")

@@ -32,7 +32,7 @@ class BumperSubscriber(Subscriber):
 
     :param config:       the application configuration
     :param message_bus:  the message bus
-    :param motor_ctrl:   the motor conrtroller
+    :param motor_ctrl:   the motor controller
     :param color:        the color for log messages
     :param level:        the logging level
     '''

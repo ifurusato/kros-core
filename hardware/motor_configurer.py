@@ -50,6 +50,8 @@ class MotorConfigurer():
         _args = self._config['kros'].get('arguments')
         self._motors_enabled = _args.get('motors_enabled') or motors_enabled
         self._log.info(Fore.YELLOW + 'motors enabled? {}'.format(self._motors_enabled))
+        # default until successful in configuring ThunderBorg:
+        self._config['kros'].get('arguments')['using_mocks'] = True
         if not self._motors_enabled: # overrides _enable_mock
 #           sys.exit(0)
             self._enable_mock = True
@@ -96,7 +98,6 @@ class MotorConfigurer():
                 self._tb = ThunderBorg.ThunderBorg(Level.INFO)  # create a new ThunderBorg object
                 self._tb.Init()                       # set the board up (checks the board is connected)
                 self._log.info('successfully instantiated ThunderBorg.')
-
                 if not self._tb.foundChip:
                     boards = ThunderBorg.ScanForThunderBorg()
                     if len(boards) == 0:
@@ -132,6 +133,8 @@ class MotorConfigurer():
                 # convert float to ratio format
                 self._log.info('battery level: {:>5.2f}V; motor voltage: {:>5.2f}V; maximum power ratio: {}'.format(voltage_in, voltage_out, \
                         str(Fraction(self._max_power_ratio).limit_denominator(max_denominator=20)).replace('/',':')))
+                # flag we are successfully using the real ThunderBorg
+                self._config['kros'].get('arguments')['using_mocks'] = False
 
             except OSError as e:
                 if self._enable_mock:

@@ -30,7 +30,7 @@ from core.config_loader import ConfigLoader
 from hardware.i2c_scanner import I2CScanner
 from hardware.motor_configurer import MotorConfigurer
 from hardware.motor import Motor
-from hardware.potentiometer import Potentiometer
+from hardware.potentiometer import Potentiometer, DeviceNotFound
 
 _log = Logger('test', Level.INFO)
 
@@ -92,8 +92,10 @@ def test_motors():
 
     except KeyboardInterrupt:
         _log.info('Ctrl-C caught; exiting...')
+    except DeviceNotFound as e:
+        _log.error('no potentiometer found, exiting.')
     except Exception as e:
-        _log.error('error: {}'.format(e))
+        _log.error('{} encountered, exiting: {}'.format(type(e), e))
     finally:
 #       if _port_motor != None:
 #           _port_motor.set_motor_power(0.0)

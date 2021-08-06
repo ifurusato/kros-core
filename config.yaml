@@ -9,8 +9,8 @@
 kros:
     use_external_clock:          True            # if True use external clock
     component:
-        enable_event_publisher:  True            # keyboard robot simulator (kinda necessary for running CLI)
-        enable_pot_publisher:    True            # digital velocity control potentiometer publisher
+        enable_event_publisher: False            # keyboard robot simulator (kinda necessary for running CLI)
+        enable_pot_publisher:   False            # digital velocity control potentiometer publisher
         enable_behaviours:      False            # if True use BehaviourManager and Behaviours
     message_bus:
         max_age_ms:             20.0             # maximum age of a message before expiry
@@ -33,8 +33,8 @@ kros:
     motor:
         motor_power_limit:       0.901           # upper and lower (x -1) limit set on power sent to motor
         maximum_velocity:       90.0             # limit to settable motor velocity
-        enable_slew_limiter:     True            # initial enabled state for slew limiter
-        suppress_slew_limiter:  False            # initial suppressed state for slew limiter
+        enable_slew_limiter:    False            # initial enabled state for slew limiter
+        suppress_slew_limiter:   True            # initial suppressed state for slew limiter
         enable_jerk_limiter:    False            # initial enabled state for jerk limiter
         suppress_jerk_limiter:   True            # initial suppressed state for jerk limiter
         thunderborg_address:    0x15             # I²C address for thunderborg motor controller

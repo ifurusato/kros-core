@@ -22,7 +22,7 @@ from colorama import init, Fore, Style
 init()
 
 from core.logger import Logger, Level
-from core.event import Event
+from core.event import Event, Group
 from core.system import System
 from core.component import Component
 from core.fsm import FiniteStateMachine
@@ -37,6 +37,7 @@ from core.subscriber import Subscriber, GarbageCollector
 
 from mock.event_publisher import EventPublisher
 from mock.pot_publisher import PotentiometerPublisher
+from mock.mock_pot_publisher import MockPotPublisher
 from mock.bumper_subscriber import BumperSubscriber
 from mock.infrared_subscriber import InfraredSubscriber
 from mock.motor_subscriber import MotorSubscriber
@@ -168,10 +169,14 @@ class KROS(Component, FiniteStateMachine):
         _enable_pot_publisher = _cfg.get('enable_pot_publisher')
         if _enable_pot_publisher:
             self._pot_publisher = PotentiometerPublisher(self._config, self._message_bus, self._message_factory, level=self._level)
+        else:
+            self._pot_publisher = MockPotPublisher(self._config, self._message_bus, self._message_factory, level=self._level)
+
 #       self._publisher2  = FloodPublisher(self._message_bus, self._message_factory)
 #       self._publisher3  = GamepadPublisher(self._config, self._message_bus, self._message_factory)
 
         # create subscribers ...................................................
+        self._system_subscriber   = SystemSubscriber(self._config, self, self._message_bus, level=self._level)
         self._motor_subscriber    = MotorSubscriber(self._config, self._message_bus, self._motor_ctrl, level=self._level)
         self._bumper_subscriber   = BumperSubscriber(self._config, self._message_bus, self._motor_ctrl, level=self._level)
         self._infrared_subscriber = InfraredSubscriber(self._config, self._message_bus, self._motor_ctrl, level=self._level) # reacts to IR sensors
@@ -346,6 +351,71 @@ class KROS(Component, FiniteStateMachine):
             sys.exit(0)
 
 # ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+class SystemSubscriber(Subscriber):
+    '''
+    A subscriber to system events.
+
+    :param config:       the application configuration
+    :param message_bus:  the message bus
+    :param level:        the logging level
+    '''
+    def __init__(self, config, kros, message_bus, level=Level.INFO):
+        Subscriber.__init__(self, 'system', config, message_bus=message_bus, suppressed=False, enabled=False, level=level)
+        self._kros = kros
+        self.add_events(Event.by_group(Group.SYSTEM))
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    async def _arbitrate_message(self, message):
+        '''
+        Pass the message on to the Arbitrator and acknowledge that it has been
+        sent (by setting a flag in the message).
+        '''
+        await self._message_bus.arbitrate(message.payload)
+        # increment sent acknowledgement count
+        message.acknowledge_sent()
+        self._log.info(self._color + Style.NORMAL + 'arbitrated payload for event {}; value: {}'.format(message.payload.event.name, message.payload.value))
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    async def process_message(self, message):
+        '''
+        Process the message.
+
+        :param message:  the message to process.
+        '''
+        if message.gcd:
+            raise GarbageCollectedError('cannot process message: message has been garbage collected. [3]')
+        _event = message.event
+        self._log.info('pre-processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.label) + Style.RESET_ALL)
+        if Event.is_system_event(_event):
+            self._log.info('🍠 processing system message {}'.format(message.name))
+            self.dispatch_system_event(message.payload)
+        else:
+            self._log.warning('unrecognised event on message {}'.format(message.name) + ''.format(message.event.label))
+        await Subscriber.process_message(self, message)
+        self._log.debug('post-processing message {}'.format(message.name))
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def dispatch_system_event(self, payload):
+        '''
+        Process an incoming event's payload.
+        '''
+        self._log.info('🍠 processing payload event {}'.format(payload.event.name))
+        if payload.event is Event.SHUTDOWN:
+            self._message_bus.disable()
+            self._kros.disable()
+            pass
+        elif payload.event is Event.BATTERY_LOW:
+            pass
+        elif payload.event is Event.HIGH_TEMPERATURE:
+            pass
+        elif payload.event is Event.COLLISION_DETECT:
+            pass
+        else:
+            raise ValueError('unrecognised system event: {}'.format(payload.event.name))
+
+    # end of class ........
 
 # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 def parse_args():

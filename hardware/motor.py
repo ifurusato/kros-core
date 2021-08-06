@@ -21,6 +21,7 @@ from core.message_bus import MessageBus
 from hardware.pid_ctrl import PIDController
 from hardware.slew import SlewLimiter
 from hardware.jerk import JerkLimiter
+from mock.velocity import MockVelocity
 from hardware.velocity import Velocity
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -60,7 +61,6 @@ class Motor(Component):
         self._log.info('initialising {} motor with {} as motor controller...'.format(orientation.name, type(self._tb).__name__))
         # configuration ..............................................
         _cfg = config['kros'].get('motor')
-
         self._max_velocity       = _cfg.get('maximum_velocity') # limit to motor velocity
         self._log.info('max velocity:\t{:<5.2f}'.format(self._max_velocity))
         self._velocity_clip = lambda n: ( -1.0 * self._max_velocity ) if n <= ( -1.0 * self._max_velocity ) \
@@ -79,7 +79,12 @@ class Motor(Component):
         _enable_slew_limiter     = _cfg.get('enable_slew_limiter')
         self._slew_limiter       = SlewLimiter(config, orientation, suppressed=_suppress_slew_limiter, enabled=_enable_slew_limiter, level=level)
         # provides closed loop velocity feedback .....................
-        self._velocity           = Velocity(config, self, level=level)
+        self._using_mocks = config['kros'].get('arguments').get('using_mocks')
+        if self._using_mocks:
+            self._log.info(Fore.YELLOW + 'using mocks: {}'.format(self._using_mocks))
+            self._velocity       = MockVelocity(orientation, level=level)
+        else:
+            self._velocity       = Velocity(config, self, level=level)
         # pid controller .............................................
         self._pid_controller     = PIDController(config, self._message_bus, self, setpoint=0.0, sample_time=0.01, level=level)
         # jerk limiter ...............................................
@@ -156,6 +161,8 @@ class Motor(Component):
         if not isinstance(target_velocity, float):
             raise ValueError('expected float, not {}'.format(type(target_velocity)))
         self.__target_velocity = target_velocity
+        if self._using_mocks:
+            self._velocity.velocity = target_velocity
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
@@ -206,7 +213,7 @@ class Motor(Component):
         All of the dunderscored methods are intended as internal methods.
         '''
         # so: if the current velocity doesn't match the target, we...
-        self._log.info('💊 {} velocity: {:5.2f} ➔ {:5.2f}'.format(self._orientation, self.velocity, self.__target_velocity))
+        self._log.debug(Fore.BLACK + '{} velocity: {:5.2f} ➔ {:5.2f}'.format(self._orientation, self.velocity, self.__target_velocity))
         if self._velocity() != self.__target_velocity:
 
             # set the target velocity variable modified by the slew limiter, if active
@@ -214,8 +221,10 @@ class Motor(Component):
                 self.__target_velocity = self._slew_limiter.limit(self.velocity, self.__target_velocity)
 
             # use velocity clipper as a sanity checker
-            self.__target_velocity = -1.0 * self._velocity_clip(-1.0 * self.__target_velocity) if self.__target_velocity < 0 else self._velocity_clip(self.__target_velocity)
-            self._log.info('💊 {} motor target velocity: {:5.2f} ➔ {:<5.2f}'.format(self._orientation, self.velocity, self.__target_velocity))
+            self.__target_velocity = -1.0 * self._velocity_clip(-1.0 * self.__target_velocity) \
+                    if self.__target_velocity < 0 \
+                    else self._velocity_clip(self.__target_velocity)
+            self._log.info('{} motor target velocity: {:5.2f} ➔ {:<5.2f}'.format(self._orientation, self.velocity, self.__target_velocity))
 
             # we now convert velocity to power, either via the PID controller
             # when active, otherwise the proportional interpolator from the 
@@ -267,7 +276,7 @@ class Motor(Component):
         _driving_power = float(target_power * self.max_power_ratio)
         self.__max_driving_power = max(abs(_driving_power), self.__max_driving_power)
         # display actual power to motor
-        self._log.info(Fore.MAGENTA + Style.BRIGHT + 'power argument: {:>5.2f}'.format(target_power) + Style.NORMAL \
+        self._log.debug(Fore.MAGENTA + Style.BRIGHT + 'power argument: {:>5.2f}'.format(target_power) + Style.NORMAL \
                 + '\tcurrent power: {:>5.2f}; driving power: {:>5.2f}.'.format(_current_power, _driving_power))
         if self._orientation is Orientation.PORT:
 #           if abs(_driving_power) < 0.3:

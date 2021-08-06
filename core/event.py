@@ -39,13 +39,15 @@ class Event(Enum):
     in reverse-order: the smaller the number the higher the priority.
     '''
     # name                     n   label                  priority   group
+    # misc events ...........................................................................
+    NOOP                   = ( 0, "no operation",            1000,   Group.NONE )
+
     # system events .........................................................................
-    NOOP                   = ( 0, "no operation",            1000,   Group.SYSTEM )
-    BATTERY_LOW            = ( 10, "battery low",               1,   Group.SYSTEM )
-    SHUTDOWN               = ( 11, "shutdown",                  1,   Group.SYSTEM )
+    SHUTDOWN               = ( 10, "shutdown",                  1,   Group.SYSTEM )
+    BATTERY_LOW            = ( 11, "battery low",               1,   Group.SYSTEM )
     HIGH_TEMPERATURE       = ( 12, "high temperature",          1,   Group.SYSTEM )
     COLLISION_DETECT       = ( 13, "collision detect",          2,   Group.SYSTEM )
-    EMERGENCY_ASTERN       = ( 14, "emergency astern",          2,   Group.SYSTEM )
+#   EMERGENCY_ASTERN       = ( 14, "emergency astern",          2,   Group.SYSTEM )
 
     # gamepad events ........................................................................
     GAMEPAD                = ( 40, "gamepad",                  10,   Group.GAMEPAD )
@@ -157,6 +159,11 @@ class Event(Enum):
                 or ( event.group is Group.VELOCITY ) \
                 or ( event.group is Group.THETA ) \
                 or ( event.group is Group.CHADBURN )
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    @staticmethod
+    def is_system_event(event):
+        return event.group is Group.SYSTEM
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @staticmethod
