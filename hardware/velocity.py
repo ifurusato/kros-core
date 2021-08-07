@@ -7,11 +7,11 @@
 #
 # author:   Murray Altheim
 # created:  2020-09-13
-# modified: 2020-09-13
+# modified: 2021-08-07
 #
-# Unlike other enums this one requires configuration as it involves the
-# specifics of the motor encoders and physical geometry of the robot.
-# Unconfigured it always returns 0.0, which is harmless but not useful.
+# This class' configuration involves the physical geometry of the robot and
+# the specifics of the motor encoders. Unconfigured it always returns 0.0,
+# which is harmless but likewise not useful.
 #
 
 import sys, math, time
@@ -23,7 +23,7 @@ from core.message import Message
 from core.event import Event
 from core.logger import Level, Logger
 
-# ..............................................................................
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Velocity(object):
     '''
     Velocity is a property of a motor, and therefore this class is meant
@@ -102,9 +102,8 @@ class Velocity(object):
     def __init__(self, config, motor, level=Level.INFO):
         if not isinstance(config, dict):
             raise ValueError('wrong type for config argument: {}'.format(type(name)))
-        # connect with motor
         if motor is None:
-            raise ValueError('null motor argument.')
+            raise ValueError('null for motor argument.')
         self._motor = motor
         self._log = Logger('velocity:{}'.format(motor.orientation.label), level)
         # add callback from motor's update method
@@ -138,17 +137,11 @@ class Velocity(object):
         self._closed       = False
         self._log.info('ready.')
 
-    # ..............................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def steps_to_cm(self, steps):
         return steps / self._steps_per_cm
 
-#   # ......................................................
-#   def handle_message(self, message):
-#       self._log.warning('handle_message() triggered.')
-#       self.add(message)
-
-    # ..........................................................................
-#   def handle(self, message):
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def tick(self):
         '''
         This receives a TICK message every 50ms (i.e., at 20Hz), calculating
@@ -181,34 +174,30 @@ class Velocity(object):
                 self._log.warning('handle() failed: motor disabled.')
                 self._velocity = 0.0
         else:
-            self._velocity = 0.0 # or None?
-#       return self._velocity
-#       return message
+            self._velocity = 0.0
 
-    # ..............................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def __call__(self):
         '''
         Enables this class to be called as if it were a function, returning
         the current velocity value.
         '''
-#       self._log.info(Fore.BLUE + '__call__() {:+d} steps; RETURN velocity: {:<5.2f}'.format(self._motor.steps, self._velocity))
         return self._velocity
 
-    # ..............................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def max_velocity(self):
         return self._max_velocity
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def enable(self):
         if not self._closed:
             self._enabled = True
-#           self._clock.message_bus.add_handler(Message, self.tick)
             self._log.info('enabled.')
         else:
             self._log.warning('cannot enable: already closed.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def disable(self):
         if self._enabled:
             self._enabled = False
@@ -216,7 +205,7 @@ class Velocity(object):
         else:
             self._log.warning('already disabled.')
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def close(self):
         self.disable()
         self._closed = True

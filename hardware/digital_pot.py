@@ -28,10 +28,10 @@ class DigitalPotentiometer(object):
     '''
     def __init__(self, config, level):
         super().__init__()
-        self._log = Logger('ioe', level)
+        self._log = Logger('digital-pot', level)
         if config is None:
             raise ValueError('no configuration provided.')
-        _cfg = config['kros'].get('hardware').get('potentiometer')
+        _cfg = config['kros'].get('hardware').get('digital_potentiometer')
         # 0x18 for IO Expander, 0x0E for the potentiometer breakout
 #       self._i2c_addr = 0x0E
         self._i2c_addr   = _cfg.get('i2c_address')

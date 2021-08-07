@@ -20,7 +20,7 @@ init()
 from core.logger import Level, Logger
 from core.component import Component
 
-# ..............................................................................
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class JerkLimiter(Component):
     '''
     A jerk limiter that limits the rate of change of a value. This isn't

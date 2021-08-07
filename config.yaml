@@ -16,7 +16,7 @@ kros:
         max_age_ms:             20.0             # maximum age of a message before expiry
         publish_delay_sec:       0.05            # publishing delay loop
     hardware:
-        potentiometer:                           # IO Expander-based Potentiometer board
+        digital_potentiometer:                   # IO Expander-based RGB Potentiometer board
             i2c_address:        0x0E             # I²C address for the device
             brightness:          1.0             # brightness of the RGB LED (0.0-1.0)
             pin_red:             1               # red pin
@@ -26,6 +26,15 @@ kros:
             in_max:              3.3             # maximum analog value from IO Expander
             out_min:          -255.0             # minimum scaled output value
             out_max:           255.0             # maximum scaled output value
+        analog_potentiometer:                        # analog potentiometer connected as voltage divider
+            pin:             14                      # pin connected to wiper
+            in_min:           0                      # minimum analog value from IO Expander
+            in_max:         330                      # maximum analog value from IO Expander
+#           out_min:       -100.0                    # minimum scaled output value
+#           out_max:        100.0                    # maximum scaled output value
+#           out_max:          1.0                    # maximum scaled output value
+            out_min:          0.0                    # minimum scaled output value
+            out_max:          1.0                    # maximum scaled output value
     geometry:                                    # robot geometry (e.g., KR01)
         wheel_diameter: 68.0                     # wheel diameter (mm)
         wheelbase: 160.0                         # wheelbase (mm)

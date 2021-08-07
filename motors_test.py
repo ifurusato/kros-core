@@ -7,11 +7,11 @@
 #
 # author:   Murray Altheim
 # created:  2020-10-05
-# modified: 2021-07-17
+# modified: 2021-08-07
 #
-# Tests the port and starboard motors for encoder ticks. This includes a quick
-# and dirty velocity to power converter to convert a rotary encoder output to
-# motor power.
+# Tests the port and starboard motors for directly by setting their power, from
+# a digital potentiometer, without the intermediaries of velocity, slew, or PID
+# controllers.
 #
 
 import pytest

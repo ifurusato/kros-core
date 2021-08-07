@@ -9,9 +9,11 @@
 # created:  2020-10-05
 # modified: 2021-07-17
 #
-# Tests the port and starboard motors for encoder ticks. This includes a quick
-# and dirty velocity to power converter to convert a rotary encoder output to
-# motor power.
+# Tests the port and starboard motors via the MotorController class, by setting
+# the target velocity using a digital potentiometer. Depending on the application
+# configuration this will enable/disable the slew controller, PID controller, and
+# jerk limiter. When the PID controller is disabled the Motor class uses an
+# interpolated velocity algorithm to convert velocity to motor power.
 #
 
 import pytest
