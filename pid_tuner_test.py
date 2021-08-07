@@ -60,12 +60,10 @@ def test_motors():
         _port_motor = _motor_configurer.get_motor(Orientation.PORT)
         _stbd_motor = _motor_configurer.get_motor(Orientation.STBD)
 
-        _port_motor.enable()
-        _stbd_motor.enable()
-
         # configure digital potentiometer for motor speed
-        _pot = DigitalPotentiometer(_config, out_min=-0.90, out_max=0.90, level=_level)
-#        _pot.set_output_limits(-0.90, 0.90)
+        _pot = DigitalPotentiometer(_config, _level)
+        _pot.set_output_limits(-0.90, 0.90)
+        _pot.set_output_limits(-0.90, 0.90)
 
 #       sys.exit(0)
         _last_scaled_value = 0.0
@@ -78,17 +76,18 @@ def test_motors():
                 # math.isclose(3, 15, abs_tol=0.03 * 255) # 3% on a 0-255 scale
                 if isclose(_scaled_value, 0.0, abs_tol=0.05):
                     _pot.set_black()
+
                     _port_motor.set_motor_power(0.0)
                     _stbd_motor.set_motor_power(0.0)
-                    _log.info(Fore.YELLOW + Style.DIM + 'scaled value: {:9.6f}'.format(_scaled_value))
+
+                    _log.info(Fore.BLACK + 'scaled value: {:9.6f}'.format(_scaled_value))
                 else:
                     _pot.set_rgb(_pot.value)
+
                     _port_motor.set_motor_power(_scaled_value)
                     _stbd_motor.set_motor_power(_scaled_value)
-                    if abs(_scaled_value) > 0.5:
-                        _log.info(Fore.YELLOW + Style.BRIGHT + 'scaled value: {:9.6f}'.format(_scaled_value))
-                    else:
-                        _log.info(Fore.YELLOW + 'scaled value: {:9.6f}'.format(_scaled_value))
+
+                    _log.info(Fore.YELLOW + 'scaled value: {:9.6f}'.format(_scaled_value))
             _last_scaled_value = _scaled_value
             _rate.wait()
 
@@ -99,10 +98,6 @@ def test_motors():
     except Exception as e:
         _log.error('{} encountered, exiting: {}'.format(type(e), e))
     finally:
-#       if _port_motor != None:
-#           _port_motor.set_motor_power(0.0)
-#       if _stbd_motor != None:
-#           _stbd_motor.set_motor_power(0.0)
         pass
 
     _elapsed_ms = round(( dt.now() - _start_time ).total_seconds() * 1000.0)

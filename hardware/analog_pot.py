@@ -38,22 +38,24 @@ class AnalogPotentiometer(object):
     '''
     def __init__(self, config, pin=None, in_min=None, in_max=None, out_min=None, out_max=None, level=Level.INFO):
         super().__init__()
+        if not isinstance(level, Level):
+            raise ValueError('wrong type for level argument: {}'.format(type(level)))
         self._log = Logger('analog-pot', level)
         if not isinstance(config, dict):
             raise ValueError('wrong type for config argument: {}'.format(type(config)))
         _config = config['kros'].get('hardware').get('analog_potentiometer')
-        self._pin     = _config.get('pin') if pin is None else pin
+        self._pin = _config.get('pin') if pin is None else pin
         self._log.info('pin assignment: {:d};'.format(self._pin))
         # e.g., minimum and maximum analog values from IO Expander
-        self._in_min  = float(_config.get('in_min')) if in_min is None else in_min
-        self._in_max  = float(_config.get('in_max')) if in_max is None else in_max
-        self._log.info('in range:  {:>5.2f}-{:<5.2f}'.format(self._in_min, self._in_max))
+        _in_min   = float(_config.get('in_min')) if in_min is None else in_min
+        _in_max   = float(_config.get('in_max')) if in_max is None else in_max
+        self.set_input_limits(_in_min, _in_max)
         # minimum and maximum scaled output values
-        self._out_min = _config.get('out_min') if out_min is None else out_min
-        self._out_max = _config.get('out_max') if out_max is None else out_max
-        self._log.info('out range: {:>5.2f}-{:<5.2f}'.format(self._out_min, self._out_max))
+        _out_min  = _config.get('out_min') if out_min is None else out_min
+        _out_max  = _config.get('out_max') if out_max is None else out_max
+        self.set_output_limits(_out_min, _out_max)
         # configure IO Expander board
-        self._ioe     = io.IOE(i2c_addr=0x18)
+        self._ioe = io.IOE(i2c_addr=0x18)
         self._ioe.set_adc_vref(3.3)  # input voltage of IO Expander, this is 3.3 on Breakout Garden
         # configure pin
         self._ioe.set_mode(self._pin, io.ADC)
@@ -61,8 +63,22 @@ class AnalogPotentiometer(object):
         self._log.info('ready.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def set_out_max(self, out_max):
+    def set_input_limits(self, in_min, in_max):
+        '''
+        Used to change the input minimum and maximum values.
+        '''
+        self._in_min = in_min
+        self._in_max = in_max
+        self._log.info('input range:\t{:>5.2f}-{:<5.2f}'.format(self._in_min, self._in_max))
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def set_output_limits(self, out_min, out_max):
+        '''
+        Used to change the output minimum and maximum values.
+        '''
+        self._out_min = out_min
         self._out_max = out_max
+        self._log.info('output range:\t{:>5.2f}-{:<5.2f}'.format(self._out_min, self._out_max))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def get_value(self):

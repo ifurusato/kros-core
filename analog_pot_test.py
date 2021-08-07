@@ -37,11 +37,11 @@ def test_pot():
 #   _in_max  = 330.0
 #   _out_min = 0.0
 #   _out_max = 1.0
-#   _pot = AnalogPotentiometer(_config, in_min=_in_min, in_max=_in_max, out_min=_out_min, out_max=_out_max, level=Level.INFO)
+#   _apot = AnalogPotentiometer(_config, in_min=_in_min, in_max=_in_max, out_min=_out_min, out_max=_out_max, level=Level.INFO)
 
     _cfg = [ 0, 330, 0.0, 1.0 ]
-    _pot = AnalogPotentiometer(_config, in_min=_cfg[0], in_max=_cfg[1], out_min=_cfg[2], out_max=_cfg[3], level=Level.INFO)
-#   _pot = AnalogPotentiometer(_config, Level.DEBUG)
+    _apot = AnalogPotentiometer(_config, in_min=_cfg[0], in_max=_cfg[1], out_min=_cfg[2], out_max=_cfg[3], level=Level.INFO)
+#   _apot = AnalogPotentiometer(_config, Level.DEBUG)
 
     _value = 0
     # start...
@@ -49,8 +49,8 @@ def test_pot():
     i = 0
     while True:
 #   for i in range(20):
-        _value        = _pot.get_value()
-        _scaled_value = _pot.get_scaled_value()
+        _value        = _apot.get_value()
+        _scaled_value = _apot.get_scaled_value()
         _log.info('[{:d}] analog value: {:03d};'.format(i, _value) + Fore.GREEN + '\tscaled: {:>7.4f};'.format(_scaled_value))
         _rate.wait()
         i += 1

@@ -17,7 +17,7 @@ import ioexpander as io
 from colorama import init, Fore, Style
 init()
 
-from core.logger import Logger
+from core.logger import Logger, Level
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class DigitalPotentiometer(object):
@@ -25,8 +25,18 @@ class DigitalPotentiometer(object):
     Configures an IO Expander Potentiometer breakout, returning an analog
     value scaled to a specified range. For a center-zero pot simply
     specify the minimum value as (-1.0 * out_max).
+
+    Optional min and max values will resort to the application configuration
+    if not provided explicitly as arguments.
+
+    :param config:     The application configuration.
+    :param in_min:     (optional) Minimum input value.
+    :param in_max:     (optional) Maximum input value.
+    :param out_min:    (optional) Minimum output value.
+    :param out_max:    (optional) Maximum output value.
+    :param level:      The log level.
     '''
-    def __init__(self, config, level):
+    def __init__(self, config, in_min=None, in_max=None, out_min=None, out_max=None, level=Level.INFO):
         super().__init__()
         self._log = Logger('digital-pot', level)
         if config is None:
@@ -39,21 +49,20 @@ class DigitalPotentiometer(object):
         self._pin_green  = _cfg.get('pin_green')
         self._pin_blue   = _cfg.get('pin_blue')
         self._log.info("pins: red: {}; green: {}; blue: {}".format(self._pin_red, self._pin_green, self._pin_blue))
-
         self._pot_enc_a  = 12
         self._pot_enc_b  = 3
         self._pot_enc_c  = 11
-        self._max_value  = 3.3                       # maximum voltage (3.3v supply)
-        self._brightness = _cfg.get('brightness') # effectively max fraction of period LED will be on
-        self._period = int(255 / self._brightness)   # add a period large enough to get 0-255 steps at the desired brightness
-
-        _in_min          = _cfg.get('in_min')  # minimum analog value from IO Expander
-        _in_max          = _cfg.get('in_max')  # maximum analog value from IO Expander
+        self._max_value  = 3.3                     # maximum voltage (3.3v supply)
+        self._brightness = _cfg.get('brightness')  # effectively max fraction of period LED will be on
+        self._period = int(255 / self._brightness) # add a period large enough to get 0-255 steps at the desired brightness
+        # minimum and maximum analog values from IO Expander
+        _in_min          = _cfg.get('in_min') if in_min is None else in_min
+        _in_max          = _cfg.get('in_max') if in_max is None else in_max
         self.set_input_limits(_in_min, _in_max)
-        _out_min         = _cfg.get('out_min') # minimum scaled output value
-        _out_max         = _cfg.get('out_max') # maximum scaled output value
+        # minimum and maximum scaled output values
+        _out_min         = _cfg.get('out_min') if out_min is None else out_min
+        _out_max         = _cfg.get('out_max') if out_max is None else out_max
         self.set_output_limits(_out_min, _out_max)
-
         # now configure IO Expander
         try:
             self._ioe = io.IOE(i2c_addr=self._i2c_addr)
@@ -78,13 +87,27 @@ class DigitalPotentiometer(object):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def set_input_limits(self, in_min, in_max):
+        '''
+        Used to change the input minimum and maximum values.
+        '''
+        if not isinstance(in_min, float):
+            raise ValueError('wrong type for in_min argument: {}'.format(type(in_min)))
         self._in_min = in_min
+        if not isinstance(in_max, float):
+            raise ValueError('wrong type for in_max argument: {}'.format(type(in_max)))
         self._in_max = in_max
         self._log.info('input range:\t{:>5.2f}-{:<5.2f}'.format(self._in_min, self._in_max))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def set_output_limits(self, out_min, out_max):
+        '''
+        Used to change the output minimum and maximum values.
+        '''
+        if not isinstance(out_min, float):
+            raise ValueError('wrong type for out_min argument: {}'.format(type(out_min)))
         self._out_min = out_min
+        if not isinstance(out_max, float):
+            raise ValueError('wrong type for out_max argument: {}'.format(type(out_max)))
         self._out_max = out_max
         self._log.info('output range:\t{:>5.2f}-{:<5.2f}'.format(self._out_min, self._out_max))
 
@@ -92,7 +115,7 @@ class DigitalPotentiometer(object):
     @property
     def value(self):
         _value = self._max_value - self._ioe.input(self._pot_enc_c)
-        self._log.debug(Fore.BLACK + 'value: {:<5.2f}'.format(_value))
+        self._log.debug('raw value: {:<5.2f}'.format(_value))
         return _value
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈

@@ -30,9 +30,6 @@ kros:
             pin:             14                      # pin connected to wiper
             in_min:           0                      # minimum analog value from IO Expander
             in_max:         330                      # maximum analog value from IO Expander
-#           out_min:       -100.0                    # minimum scaled output value
-#           out_max:        100.0                    # maximum scaled output value
-#           out_max:          1.0                    # maximum scaled output value
             out_min:          0.0                    # minimum scaled output value
             out_max:          1.0                    # maximum scaled output value
     geometry:                                    # robot geometry (e.g., KR01)
@@ -42,12 +39,12 @@ kros:
     motor:
         motor_power_limit:       0.901           # upper and lower (x -1) limit set on power sent to motor
         maximum_velocity:       90.0             # limit to settable motor velocity
-        enable_slew_limiter:    False            # initial enabled state for slew limiter
-        suppress_slew_limiter:   True            # initial suppressed state for slew limiter
-        enable_pid_controller:   True            # initial enable state for PID controller, otherwise direct drive
+        enable_slew_limiter:     False           # initial enabled state for slew limiter
+        suppress_slew_limiter:    True           # initial suppressed state for slew limiter
+        enable_pid_controller:    True           # initial enable state for PID controller, otherwise direct drive
         suppress_pid_controller: False           # initial suppressed state for PID controller
-        enable_jerk_limiter:    False            # initial enabled state for jerk limiter
-        suppress_jerk_limiter:   True            # initial suppressed state for jerk limiter
+        enable_jerk_limiter:     False           # initial enabled state for jerk limiter
+        suppress_jerk_limiter:    True           # initial suppressed state for jerk limiter
         thunderborg_address:    0x15             # I²C address for thunderborg motor controller
         motor_controller:
             loop_delay_sec:      0.2             # main loop delay in seconds

@@ -33,6 +33,7 @@ from hardware.i2c_scanner import I2CScanner
 from hardware.motor_configurer import MotorConfigurer
 from hardware.motor import Motor
 from hardware.motor_controller import MotorController
+from hardware.analog_pot import AnalogPotentiometer
 from hardware.digital_pot import DigitalPotentiometer, DeviceNotFound
 
 _log = Logger('test', Level.INFO)
@@ -66,13 +67,16 @@ def test_motors():
         _motor_ctrl = MotorController(_config, _message_bus, _motor_configurer, level=_level)
         _motor_ctrl.enable()
 
-        _port_motor.enable()
-        _stbd_motor.enable()
+#       _port_motor.enable()
+#       _stbd_motor.enable()
 
         # configure digital potentiometer for motor speed
-        _pot = DigitalPotentiometer(_config, _level)
-        _pot.set_output_limits(-0.90, 0.90)
-        _pot.set_output_limits(-0.90, 0.90)
+        _dpot = DigitalPotentiometer(_config, out_min=-0.80, out_max=0.80, level=_level)
+#       _dpot.set_output_limits(-0.80, 0.80)
+
+        # configure analog potentiometer for PID controller tuning
+        _cfg = [ 0, 330, 0.0, 1.0 ]
+        _apot = AnalogPotentiometer(_config, in_min=_cfg[0], in_max=_cfg[1], out_min=_cfg[2], out_max=_cfg[3], level=Level.INFO)
 
 #       sys.exit(0)
         _last_scaled_value = 0.0
@@ -80,24 +84,21 @@ def test_motors():
         _hz = 10
         _rate = Rate(_hz, Level.ERROR)
         while True:
-            _scaled_value = _pot.get_scaled_value(False)
-            if _scaled_value != _last_scaled_value: # if not the same as last time
+            _anlg_scaled_value = _apot.get_scaled_value()
+            _dgtl_scaled_value = _dpot.get_scaled_value(False)
+            if _dgtl_scaled_value != _last_scaled_value: # if not the same as last time
                 # math.isclose(3, 15, abs_tol=0.03 * 255) # 3% on a 0-255 scale
-                if isclose(_scaled_value, 0.0, abs_tol=0.05):
-                    _pot.set_black()
+                if isclose(_dgtl_scaled_value, 0.0, abs_tol=0.05):
+                    _dpot.set_black()
                     _motor_ctrl.set_motor_velocity(Orientation.PORT, 0.0)
                     _motor_ctrl.set_motor_velocity(Orientation.STBD, 0.0)
-#                   _port_motor.set_motor_power(0.0)
-#                   _stbd_motor.set_motor_power(0.0)
-                    _log.info(Fore.BLACK + Style.DIM + 'scaled value: {:9.6f} (ZERO)'.format(_scaled_value))
+                    _log.info(Fore.BLACK + Style.DIM + 'digital value: {:9.6f} (ZERO); analog: {:5.2f}'.format(_dgtl_scaled_value, _anlg_scaled_value))
                 else:
-                    _pot.set_rgb(_pot.value)
-                    _motor_ctrl.set_motor_velocity(Orientation.PORT, _scaled_value)
-                    _motor_ctrl.set_motor_velocity(Orientation.STBD, _scaled_value)
-#                   _port_motor.set_motor_power(_scaled_value)
-#                   _stbd_motor.set_motor_power(_scaled_value)
-                    _log.info(Fore.BLACK + Style.BRIGHT + 'scaled value: {:9.6f}'.format(_scaled_value))
-            _last_scaled_value = _scaled_value
+                    _dpot.set_rgb(_dpot.value)
+                    _motor_ctrl.set_motor_velocity(Orientation.PORT, _dgtl_scaled_value)
+                    _motor_ctrl.set_motor_velocity(Orientation.STBD, _dgtl_scaled_value)
+                    _log.info(Fore.BLACK + Style.BRIGHT + 'digital value: {:9.6f}; analog: {:5.2f}'.format(_dgtl_scaled_value, _anlg_scaled_value))
+            _last_scaled_value = _dgtl_scaled_value
             _rate.wait()
 
     except KeyboardInterrupt:
@@ -107,10 +108,6 @@ def test_motors():
     except Exception as e:
         _log.error('{} encountered, exiting: {}'.format(type(e), e))
     finally:
-#       if _port_motor != None:
-#           _port_motor.set_motor_power(0.0)
-#       if _stbd_motor != None:
-#           _stbd_motor.set_motor_power(0.0)
         pass
 
     _elapsed_ms = round(( dt.now() - _start_time ).total_seconds() * 1000.0)
