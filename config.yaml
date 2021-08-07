@@ -35,6 +35,8 @@ kros:
         maximum_velocity:       90.0             # limit to settable motor velocity
         enable_slew_limiter:    False            # initial enabled state for slew limiter
         suppress_slew_limiter:   True            # initial suppressed state for slew limiter
+        enable_pid_controller:   True            # initial enable state for PID controller, otherwise direct drive
+        suppress_pid_controller: False           # initial suppressed state for PID controller
         enable_jerk_limiter:    False            # initial enabled state for jerk limiter
         suppress_jerk_limiter:   True            # initial suppressed state for jerk limiter
         thunderborg_address:    0x15             # I²C address for thunderborg motor controller
@@ -45,14 +47,13 @@ kros:
             halt_ratio:          0.4             # ratio for quick halt behaviour
             brake_ratio:         0.7             # ratio for slower braking behaviour
             spin_speed:       'HALF'             # motor speed when spinning
-            use_pid_controller: False            # if True use PID controller, otherwise direct drive
         pid_controller:
             kp:                  0.09500         # proportional gain
             ki:                  0.00000         # integral gain
             kd:                  0.00000         # derivative gain
             minimum_output:    -10.0             # lower output limit
             maximum_output:     10.0             # upper output limit
-            sample_freq_hz:     20               # equiv to 50ms/0.05s
+            sample_freq_hz:     20               # 20Hz equiv to 50ms/0.05s
             hyst_queue_len:     20               # size of queue used for running average for hysteresis
             pot_ctrl:           False            # if True enable potentiometer for setting PID terms
         speed:                                   # configured motor speeds for chadburn events

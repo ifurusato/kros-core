@@ -18,7 +18,7 @@ init()
 from core.config_loader import ConfigLoader
 from core.logger import Level, Logger
 from core.rate import Rate
-from hardware.potentiometer import Potentiometer
+from hardware.digital_pot import DigitalPotentiometer
 from mock.pot_publisher import MockPotentiometer
 
 # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -33,7 +33,7 @@ def test_ioe_potentiometer():
     _config = _loader.configure('config.yaml')
 
     try:
-        _pot = Potentiometer(_config, Level.INFO)
+        _pot = DigitalPotentiometer(_config, Level.INFO)
     except Exception as e:
         _pot = MockPotentiometer(Level.INFO)
 #   _pot.set_output_limits(0.00, 0.150)

@@ -33,10 +33,11 @@ class PID(object):
     :param min_output:  minimum output limit
     :param max_output:  maximum output limit
     :param setpoint:    initial setpoint
-    :param sample_time: sample time, used as a limit to determine if called too soon
+    :param period:      period (sample time in seconds), used as a limit to determine if called too soon
     :param level:       log level
     '''
-    def __init__(self, label, kp, ki, kd, min_output, max_output, setpoint=0.0, sample_time=0.01, level=Level.INFO):
+    def __init__(self, label, kp, ki, kd, min_output, max_output, setpoint=0.0, period=0.01, level=Level.INFO):
+        self._log = Logger('pid:{}'.format(label), level)
         self._kp         = kp # proportional gain
         self._ki         = ki # integral gain
         self._kd         = kd # derivative gain
@@ -44,17 +45,16 @@ class PID(object):
         self._min_output = min_output
         self._max_output = max_output
         self._limit      = None
-        self._log = Logger('pid:{}'.format(label), level)
         if self._min_output is None or self._max_output is None:
             self._log.info('kp:{:7.4f}; ki:{:7.4f}; kd:{:7.4f}; min={}; max={}'.format(
                     self._kp, self._ki, self._kd, self._min_output, self._max_output))
         else:
             self._log.info('kp:{:7.4f}; ki:{:7.4f}; kd:{:7.4f}; min={:>5.2f}; max={:>5.2f}'.format(
                     self._kp, self._ki, self._kd, self._min_output, self._max_output))
-        if sample_time is None:
-            raise Exception('no sample time argument provided')
-        self._sample_time = sample_time
-        self._log.info('sample time: {:7.4f} sec'.format(self._sample_time))
+        if not isinstance(period, float):
+            raise ValueError('wrong type for period argument: {}'.format(type(period)))
+        self._period_sec = period
+        self._log.info('period: {:7.4f} sec'.format(self._period_sec))
         self._current_time  = time.monotonic # to ensure time deltas are always positive
         self.reset()
         self._log.info('ready.')
@@ -107,9 +107,11 @@ class PID(object):
                 self._setpoint = -1.0 * self._limit
             else:
                 self._setpoint = setpoint
+            self._log.info(Fore.YELLOW + '👥 setpoint limited; setpoint of {:5.2f} from: {:5.2f}'.format(self._setpoint, setpoint))
 #           self._log.info(Fore.RED + Style.BRIGHT + 'set setpoint: {:5.2f}; limited to: {:5.2f} from max vel: {:5.2f}'.format(setpoint, self._setpoint, self._limit))
         else:
             self._setpoint = setpoint
+            self._log.info(Fore.YELLOW + '👥 setpoint: {:5.2f}'.format(self._setpoint))
 #       if self._setpoint is None:
 #           self._log.info('setpoint: None')
 #       else:
@@ -137,15 +139,16 @@ class PID(object):
     def __call__(self, target, dt=None):
         '''
         Call the PID controller with a target value and calculate and return
-        a control output if sample_time seconds has passed since the last
-        update. If no new output is calculated, return the previous output
-        instead (or None if no value has been calculated yet).
+        a control output if period (sample time in seconds) has passed since
+        the last update. If no new output is calculated, return the previous
+        output instead (or None if no value has been calculated yet).
 
         :param target: the target value for the setpoint.
         :param dt: If set, uses this value for timestep instead of real time.
                    This can be used in simulations when simulation time is
                    different from real time.
         '''
+        self._log.info(Fore.RED + Style.BRIGHT + '🐙 __call__() target: {:5.2f}; dt: {}'.format(target, dt))
         _now = self._current_time()
         if dt is None:
             dt = _now - self._last_time
@@ -155,10 +158,10 @@ class PID(object):
         # display dt in milliseconds
 #       self._log.info(Fore.MAGENTA + Style.BRIGHT + '>> dt: {:7.4f}ms;'.format(dt * 1000.0))
 
-        if dt < self._sample_time and not math.isclose(dt, self._sample_time) and self._last_output is not None:
-            # only update every sample_time seconds
-            self._log.info(Fore.RED + Style.BRIGHT + '__call__() dt {:9.7f} < sample time: {:9.7f}; last output: {:5.2f}'.format(\
-                    dt, self._sample_time, self._last_output) + Style.RESET_ALL)
+        if dt < self._period_sec and not math.isclose(dt, self._period_sec) and self._last_output is not None:
+            # only update every period
+            self._log.info(Fore.RED + Style.BRIGHT + '__call__() dt {:9.7f} < period: {:9.7f}; last output: {:5.2f}'.format(\
+                    dt, self._period_sec, self._last_output) + Style.RESET_ALL)
             return self._last_output
 
         # compute error terms
@@ -176,7 +179,7 @@ class PID(object):
 
         kp, ki, kd = self.constants
         cp, ci, cd = self.components
-        self._log.info(Fore.WHITE + 'dt={:7.4f}ms '.format(dt * 1000.0) \
+        self._log.info('🐙 dt={:7.4f}ms '.format(dt * 1000.0) \
                 + Fore.CYAN + Style.DIM + 'target={:5.2f}; error={:6.3f};'.format(target, _error) \
                 + Fore.MAGENTA + ' KP={:<8.5f}; KD={:<8.5f};'.format(kp, kd) \
                 + Fore.CYAN + Style.BRIGHT + ' P={:8.5f}; I={:8.5f}; D={:8.5f}; sp={:6.3f};'.format(cp, ci, cd, self._setpoint) \
@@ -190,11 +193,11 @@ class PID(object):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
-    def sample_time(self):
+    def period(self):
         '''
-        Return the sample time as a property.
+        Return the period (sample time in seconds) as a property.
         '''
-        return self._sample_time
+        return self._period_sec
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
@@ -267,7 +270,7 @@ class PID(object):
         self._log.info(_fore + 'max_output:     \t{}'.format(self._max_output))
         self._log.info(_fore + 'setpoint:       \t{}'.format(self._setpoint))
         self._log.info(_fore + 'setpoint limit: \t{}'.format(self._limit))
-        self._log.info(_fore + 'sample_time:    \t{}'.format(self._sample_time))
+        self._log.info(_fore + 'period:         \t{}'.format(self._period_sec))
 
         self._log.info(_fore + 'proportional:   \t{}'.format(self._proportional))
         self._log.info(_fore + 'integral:       \t{}'.format(self._integral))

@@ -83,10 +83,13 @@ class Motor(Component):
         if self._using_mocks:
             self._log.info(Fore.YELLOW + 'using mocks: {}'.format(self._using_mocks))
             self._velocity       = MockVelocity(orientation, level=level)
+            raise Exception('using mocked velocity.')
         else:
             self._velocity       = Velocity(config, self, level=level)
         # pid controller .............................................
-        self._pid_controller     = PIDController(config, self._message_bus, self, setpoint=0.0, sample_time=0.01, level=level)
+        _suppress_pid_controller = _cfg.get('suppress_pid_controller')
+        _enable_pid_controller   = _cfg.get('enable_pid_controller')
+        self._pid_controller     = PIDController(config, self._message_bus, self, suppressed=_suppress_pid_controller, enabled=_enable_pid_controller, level=level)
         # jerk limiter ...............................................
         _suppress_jerk_limiter   = _cfg.get('suppress_jerk_limiter')
         _enable_jerk_limiter     = _cfg.get('enable_jerk_limiter')
@@ -122,14 +125,14 @@ class Motor(Component):
         '''
         return self._slew_limiter
 
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    @property
-    def pid_controller(self):
-        '''
-        Returns the PID controller used by this motor.
-        This should be used only to obtain information, not for control.
-        '''
-        return self._pid_controller
+#   # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+#   @property
+#   def pid_controller(self):
+#       '''
+#       Returns the PID controller used by this motor.
+#       This should be used only to obtain information, not for control.
+#       '''
+#       return self._pid_controller
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
@@ -160,8 +163,10 @@ class Motor(Component):
         '''
         if not isinstance(target_velocity, float):
             raise ValueError('expected float, not {}'.format(type(target_velocity)))
+        self._log.info(Fore.GREEN + Style.DIM + 'target velocity: {:5.2f} of {} motor.'.format(target_velocity, self._orientation.name))
         self.__target_velocity = target_velocity
         if self._using_mocks:
+            raise Exception('using velocity mock!')
             self._velocity.velocity = target_velocity
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -213,8 +218,8 @@ class Motor(Component):
         All of the dunderscored methods are intended as internal methods.
         '''
         # so: if the current velocity doesn't match the target, we...
-        self._log.debug(Fore.BLACK + '{} velocity: {:5.2f} ➔ {:5.2f}'.format(self._orientation, self.velocity, self.__target_velocity))
         if self._velocity() != self.__target_velocity:
+            self._log.info('update target velocity of {} motor: {:5.2f} ➔ {:5.2f}'.format(self._orientation, self.velocity, self.__target_velocity))
 
             # set the target velocity variable modified by the slew limiter, if active
             if self._slew_limiter.is_active:
@@ -229,16 +234,16 @@ class Motor(Component):
             # we now convert velocity to power, either via the PID controller
             # when active, otherwise the proportional interpolator from the 
             # Speed Enum.
-            if self._pid_controller.is_active:
-                # if active, we pass target velocity to the PID controller
-                raise Exception('unimplemented.')
-            else:
+            if self._pid_controller.is_active: # if active, pass target velocity to PID controller
+                self._pid_controller.set_velocity(self.__target_velocity)
+            else: # otherwise just directly on to set the motor power
                 _power = Speed.get_proportional_power(self.__target_velocity)
-            # otherwise just directly on to set the motor power
-            self.__set_motor_power(_power)
+                self.__set_motor_power(_power)
+        else:
+            self._log.info('🐸 already at target velocity of {} motor: {:5.2f} ➔ {:5.2f}'.format(self._orientation, self.velocity, self.__target_velocity))
 
         for callback in self._callbacks:
-            self._log.info(Fore.BLUE + 'executing callback...')
+#           self._log.info(Fore.BLUE + 'executing callback...')
             callback()
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈

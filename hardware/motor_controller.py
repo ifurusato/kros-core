@@ -48,7 +48,7 @@ class MotorController(Component):
     :param level:        the logging level
     '''
     def __init__(self, config, message_bus, motor_configurer, level=Level.INFO):
-        self._log = Logger('motor-conf', level)
+        self._log = Logger('motor-ctrl', level)
         Component.__init__(self, self._log, suppressed=False, enabled=False)
         self._log.info('initialising motors...')
         if not isinstance(config, dict):
@@ -80,11 +80,11 @@ class MotorController(Component):
         self._log.info('brake ratio:\t{:<5.2f}'.format(self._brake_ratio))
         self._spin_speed           = Speed.from_string(_cfg.get('spin_speed')) # motor speed when spinning
         self._log.info('spin speed:\t{}'.format(self._spin_speed.name))
-        self._use_pid_controller   = _cfg.get('use_pid_controller') # when True use PID control, otherwise direct drive
-        if self._use_pid_controller:
-            self._log.info('using PID controller.')
-        else:
-            self._log.info('using direct motor control.')
+#       self._use_pid_controller   = _cfg.get('use_pid_controller') # when True use PID control, otherwise direct drive
+#       if self._use_pid_controller:
+#           self._log.info('using PID controller.')
+#       else:
+#           self._log.info('using direct motor control.')
         # variables
         self._decelerate_ratio     = 0.0 # variable used in loop
         # lambdas
@@ -100,6 +100,7 @@ class MotorController(Component):
         '''
         Start the loop.
         '''
+        self._log.info('start motor control loop...           🎈🎈🎈🎈🎈🎈🎈🎈  ')
         if not self.enabled:
             self._log.warning('not enabled.')
             raise Exception('not enabled.')
@@ -116,7 +117,7 @@ class MotorController(Component):
         '''
         The motors loop, which executes while the flag argument lambda is True.
         '''
-        self._log.info('loop start: {}'.format(self._decelerate_ratio))
+        self._log.info('🌳 loop start: {}'.format(self._decelerate_ratio))
         try:
             while f_is_enabled():
                 _event_count = next(self._event_counter)
@@ -149,7 +150,7 @@ class MotorController(Component):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def loop_is_running(self):
-        return self._loop_enabled
+        return self._loop_enabled and self._loop_thread != None and self._loop_thread.is_alive()
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def print_info(self, count):
@@ -293,6 +294,7 @@ class MotorController(Component):
         A convenience method that sets the target velocity and motor
         power of the specified motor.
         '''
+#       self._log.info(Fore.GREEN + Style.NORMAL + 'set velocity: {:5.2f} of {} motor.'.format(target_velocity, orientation.name))
         if not isinstance(target_velocity, float):
             raise ValueError('expected float, not {}'.format(type(target_velocity)))
         if orientation is Orientation.PORT:
@@ -673,10 +675,13 @@ class MotorController(Component):
         '''
         if self.enabled:
             self._log.warning('already enabled.')
-            self._port_motor.enable()
-            self._stbd_motor.enable()
-        Component.enable(self)
-        self._log.info('enabled.')
+        else:
+            if not self.loop_is_running():
+                self._port_motor.enable()
+                self._stbd_motor.enable()
+                Component.enable(self)
+                self.start_loop()
+            self._log.info('enabled.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def disable(self):

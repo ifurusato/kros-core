@@ -20,7 +20,7 @@ init()
 from core.logger import Logger
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-class Potentiometer(object):
+class DigitalPotentiometer(object):
     '''
     Configures an IO Expander Potentiometer breakout, returning an analog
     value scaled to a specified range. For a center-zero pot simply

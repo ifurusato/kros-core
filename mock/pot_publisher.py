@@ -50,8 +50,8 @@ class PotentiometerPublisher(Publisher):
         self._counter              = itertools.count()
         self._last_scaled_value    = 0.0
         try:
-            from hardware.potentiometer import Potentiometer
-            self._pot = Potentiometer(config, level)
+            from hardware.digital_pot import DigitalPotentiometer
+            self._pot = DigitalPotentiometer(config, level)
         except Exception:
             self._log.warning('could not start hardware potentiometer; using mock...')
             self._pot = MockPotentiometer(level)

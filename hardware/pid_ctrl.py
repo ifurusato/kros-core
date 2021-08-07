@@ -30,19 +30,20 @@ class PIDController(Component):
     Provides a configurable PID motor controller. This also maintains a value
     for the current motor velocity by sampling the step count from the motors
     on the same interval as the PID calls.
+
+    :param config:       The application configuration, read from a YAML file.
+    :param message_bus:  The application message bus.
+    :param motor:        The motor to be controlled.
+    :param setpoint:     The initial setpoint or target output
+    :param period:       The sample time in seconds before generating a new output value.
+                         This PID is expected to be called at a constant rate.
+    :param suppressed:   Initial suppressed state.
+    :param enabled:      Initial enabled state.
+    :param level:        The log level, e.g., Level.INFO.
     '''
-    def __init__(self, config, message_bus, motor, setpoint=0.0, sample_time=0.01, suppressed=False, enabled=True, level=Level.INFO):
-        '''
-        :param config:       The application configuration, read from a YAML file.
-        :param message_bus:  The application message bus.
-        :param motor:        The motor to be controlled.
-        :param setpoint:     The initial setpoint or target output
-        :param sample_time:  The time in seconds before generating a new output value.
-                             This PID is expected to be called at a constant rate.
-        :param level:        The log level, e.g., Level.INFO.
-        '''
-        if config is None:
-            raise ValueError('null configuration argument.')
+    def __init__(self, config, message_bus, motor, setpoint=0.0, period=0.01, suppressed=False, enabled=True, level=Level.INFO):
+        if not isinstance(config, dict):
+            raise ValueError('wrong type for config argument: {}'.format(type(config)))
         self._config = config
         if not isinstance(message_bus, MessageBus):
             raise ValueError('wrong type for message bus argument: {}'.format(type(message_bus)))
@@ -55,20 +56,20 @@ class PIDController(Component):
         Component.__init__(self, self._log, suppressed=suppressed, enabled=enabled)
         # PID configuration ................................
         _cfg = config['kros'].get('motor').get('pid_controller')
-        _period_sec = 1.0 / _cfg.get('sample_freq_hz')
         _kp         = _cfg.get('kp') # proportional gain
         _ki         = _cfg.get('ki') # integral gain
         _kd         = _cfg.get('kd') # derivative gain
-        _min_output = _cfg.get('mininum_output')
+        _min_output = _cfg.get('minimum_output')
         _max_output = _cfg.get('maximum_output')
-        self._pid = PID(self._orientation.label, _kp, _ki, _kd, _min_output, _max_output, sample_time=_period_sec, level=level)
+        _freq_hz    = _cfg.get('sample_freq_hz')
+        _period_sec = 1.0 / _freq_hz
+        self._log.info('sample frequency: {:d}Hz; period: {:5.2f} sec.'.format(_freq_hz, _period_sec))
+        self._pid = PID(self._orientation.label, _kp, _ki, _kd, _min_output, _max_output, period=_period_sec, level=level)
         # used for hysteresis, if queue too small will zero-out motor power too quickly
         _queue_len = _cfg.get('hyst_queue_len')
         self._deque = Deque([], maxlen=_queue_len)
         self._power        = 0.0
         self._last_power   = 0.0
-        self._enabled      = False
-        self._closed       = False
         self._log.info('ready.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -144,10 +145,30 @@ class PIDController(Component):
         cp, ci, cd = self._pid.components
         return kp, ki, kd, cp, ci, cd, self._last_power, self._motor.current_power_level, self._power, self._motor.velocity, self._pid.setpoint, self._motor.steps
 
+#   # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+#   @property
+#   def enabled(self):
+#       return self.enabled
+
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    @property
-    def enabled(self):
-        return self._enabled
+    def set_velocity(self, velocity):
+        if self.enabled:
+            self._log.info(Fore.WHITE + Style.DIM + '🍈 set PID velocity for {} motor: {:+d} steps; velocity: {:<5.2f}'.format(self._orientation.label, self._motor.steps, velocity))
+#           self._pid.setpoint = velocity
+            # converts velocity to power...
+            _pid_output = self._pid(velocity)
+            self._power += _pid_output
+            _motor_power = self._power / 100.0
+            self._log.info(Fore.WHITE + Style.DIM + '🍈 set power for {} motor: {:<5.2f} (pid output: {:5.2f})'.format(self._orientation.label, _motor_power, _pid_output))
+#           self._log.info(Fore.WHITE + Style.NORMAL + 'handle() _steps: {:d}; _power: {:>5.2f}/_motor_power: {:>5.2f};\t'.format(self._motor.steps, self._power, _motor_power) \
+#                   + 'pid output: {:5.2f};\t'.format(_pid_output) + Style.BRIGHT + 'velocity: {:5.2f}'.format(velocity))
+            self._motor.set_motor_power(_motor_power)
+            self._last_power = self._power
+#           _mean_setpoint = self._get_mean_setpoint(self._pid.setpoint)
+#           if _mean_setpoint == 0.0:
+#               self._motor.set_motor_power(0.0)
+#           else:
+#               self._motor.set_motor_power(self._power / 100.0)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def handle(self, message):
@@ -158,22 +179,9 @@ class PIDController(Component):
         at zero when it's clear the target velocity is zero. This is a
         perhaps cheap approach to hysteresis.
         '''
-        if self._enabled and ( message.event is Event.CLOCK_TICK or message.event is Event.CLOCK_TOCK ):
-            # calculate velocity from motor encoder's step count
-            _velocity = self._motor.velocity
-#           self._log.info(Fore.BLACK + 'handle({}): {:+d} steps; velocity: {:<5.2f}'.format(self._orientation.label, self._motor.steps, _velocity))
-            _pid_output = self._pid(_velocity)
-            self._power += _pid_output
-            _motor_power = self._power / 100.0
-#           self._log.info(Fore.WHITE + Style.NORMAL + 'handle() _steps: {:d}; _power: {:>5.2f}/_motor_power: {:>5.2f};\t'.format(self._motor.steps, self._power, _motor_power) \
-#                   + 'pid output: {:5.2f};\t'.format(_pid_output) + Style.BRIGHT + 'velocity: {:5.2f}'.format(_velocity))
-            self._motor.set_motor_power(_motor_power)
-            self._last_power = self._power
-#           _mean_setpoint = self._get_mean_setpoint(self._pid.setpoint)
-#           if _mean_setpoint == 0.0:
-#               self._motor.set_motor_power(0.0)
-#           else:
-#               self._motor.set_motor_power(self._power / 100.0)
+        if self.enabled and ( message.event is Event.CLOCK_TICK or message.event is Event.CLOCK_TOCK ):
+            # obtain velocity from motor encoder's step count
+            self.set_velocity(self._motor.velocity)
         return message
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -219,18 +227,18 @@ class PIDController(Component):
 
 #   # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 #   def disable(self):
-#       if not self._enabled:
+#       if not self.enabled:
 #           self._log.warning('already disabled.')
-#       elif self._closed:
+#       elif self.closed:
 #           self._log.warning('already closed.')
 #       else:
-#           self._enabled = False
+#           self.enabled = False
 #           self._log.info('disabled.')
 
 #   # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 #   def close(self):
 #       self.disable()
-#       self._closed = True
+#       self.closed = True
 #       self._log.info('closed.')
 
 #EOF
