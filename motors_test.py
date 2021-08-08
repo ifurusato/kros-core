@@ -81,12 +81,14 @@ def test_motors():
                 if isclose(_scaled_value, 0.0, abs_tol=0.05):
                     _pot.set_black()
 #                   _port_motor.set_motor_power(0.0)
-                    _stbd_motor.set_motor_power(0.0)
+#                   _stbd_motor.set_motor_power(0.0)
+                    _stbd_motor.target_velocity = 0.0
 #                   _log.info(Fore.YELLOW + Style.DIM + 'scaled value: {:9.6f}'.format(_scaled_value))
                 else:
                     _pot.set_rgb(_pot.value)
 #                   _port_motor.set_motor_power(_scaled_value)
-                    _stbd_motor.set_motor_power(_scaled_value)
+#                   _stbd_motor.set_motor_power(_scaled_value)
+                    _stbd_motor.target_velocity = _scaled_value
                     _log.info(Fore.YELLOW + Style.DIM + 'velocity: stbd: {:5.2f}; {:5.2f} steps.'.format(_stbd_motor.velocity, _stbd_motor.steps))
 #                   _log.info(Fore.RED + Style.DIM + 'velocity: port: {:5.2f}; {:5.2f} steps.'.format(_port_motor.velocity, _port_motor.steps))
 #                   if abs(_scaled_value) > 0.5:
