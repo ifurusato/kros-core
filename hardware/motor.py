@@ -74,6 +74,7 @@ class Motor(Component):
         self.__max_power_ratio   = 0.0   # will be set by MotorConfigurer
         self.__target_velocity   = 0.0   # the target velocity of the motor
         self.__max_driving_power = 0.0
+        self._decoder            = None  # motor encoder
         # slew limiter ...............................................
         _suppress_slew_limiter   = _cfg.get('suppress_slew_limiter')
         _enable_slew_limiter     = _cfg.get('enable_slew_limiter')
@@ -86,6 +87,7 @@ class Motor(Component):
             raise Exception('using mocked velocity.')
         else:
             self._velocity       = Velocity(config, self, level=level)
+            self._velocity.enable()
         # pid controller .............................................
         _suppress_pid_controller = _cfg.get('suppress_pid_controller')
         _enable_pid_controller   = _cfg.get('enable_pid_controller')
@@ -145,8 +147,18 @@ class Motor(Component):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
+    def decoder(self):
+        return self._decoder
+
+    @decoder.setter
+    def decoder(self, decoder):
+        self._decoder = decoder
+        self._log.info(Fore.GREEN + '🖐 decoder {} set.'.format(self._decoder))
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    @property
     def velocity(self):
-        return self._velocity()
+        return self._velocity.value
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
@@ -194,10 +206,12 @@ class Motor(Component):
         '''
         This callback is used to capture encoder steps.
         '''
+#       self._log.info(Fore.BLUE + Style.BRIGHT + '_callback_step_count({})'.format(pulse))
         if self._orientation is Orientation.PORT:
-            self.__steps = self.__steps - pulse
-        else:
             self.__steps = self.__steps + pulse
+        else:
+            self.__steps = self.__steps - pulse
+#       self._log.info(Fore.BLUE + '{}: {:+d} steps'.format(self._orientation.label, self.__steps))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def is_in_motion(self):
@@ -217,9 +231,9 @@ class Motor(Component):
 
         All of the dunderscored methods are intended as internal methods.
         '''
-        # so: if the current velocity doesn't match the target, we...
-        if self._velocity() != self.__target_velocity:
-            self._log.info('update target velocity of {} motor: {:5.2f} ➔ {:5.2f}'.format(self._orientation, self.velocity, self.__target_velocity))
+        if self.enabled:
+            _velocity = self._velocity()
+            self._log.info('🐸 update target velocity of {} motor: {:5.2f} ➔ {:5.2f}'.format(self._orientation, self.velocity, self.__target_velocity))
 
             # set the target velocity variable modified by the slew limiter, if active
             if self._slew_limiter.is_active:
@@ -229,7 +243,7 @@ class Motor(Component):
             self.__target_velocity = -1.0 * self._velocity_clip(-1.0 * self.__target_velocity) \
                     if self.__target_velocity < 0 \
                     else self._velocity_clip(self.__target_velocity)
-            self._log.info('{} motor target velocity: {:5.2f} ➔ {:<5.2f}'.format(self._orientation, self.velocity, self.__target_velocity))
+            self._log.info('🐸 {} motor target velocity: {:5.2f} ➔ {:<5.2f}'.format(self._orientation, self.velocity, self.__target_velocity))
 
             # we now convert velocity to power, either via the PID controller
             # when active, otherwise the proportional interpolator from the 
@@ -240,7 +254,8 @@ class Motor(Component):
                 _power = Speed.get_proportional_power(self.__target_velocity)
                 self.__set_motor_power(_power)
         else:
-            self._log.info('🐸 already at target velocity of {} motor: {:5.2f} ➔ {:5.2f}'.format(self._orientation, self.velocity, self.__target_velocity))
+#           self._log.info('🐸 already at target velocity of {} motor: {:5.2f} ➔ {:5.2f} ({})'.format(self._orientation, self.velocity, self.__target_velocity, type(_velocity)))
+            self._log.info('🐸 update target velocity failed: disabled.')
 
         for callback in self._callbacks:
 #           self._log.info(Fore.BLUE + 'executing callback...')

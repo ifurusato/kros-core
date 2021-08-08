@@ -14,12 +14,18 @@ import sys, traceback
 from fractions import Fraction
 from colorama import init, Fore, Style
 init()
+try:
+    import pigpio
+except ImportError:
+    print(Fore.RED + "This script requires the pigpio module.\nInstall with: sudo apt install python3-pigpio" + Style.RESET_ALL)
+    sys.exit(1)
 
 from core.logger import Logger, Level
 from core.orient import Orientation
 from core.speed import Speed
 from hardware.i2c_scanner import I2CScanner
 from hardware.motor import Motor
+from hardware.decoder import Decoder
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class MotorConfigurer():
@@ -29,7 +35,7 @@ class MotorConfigurer():
 
     :param config:          the application configuration
     :param message_bus:     the message bus handling event-laden messages
-    :param i2c_scanner:     the I2C bus scanner
+    :param i2c_scanner:     the I²C bus scanner
     :param motors_enabled:  an optional flag to enable motors (default false)
     :param level:           the logging level
     '''
@@ -77,7 +83,63 @@ class MotorConfigurer():
             self._port_motor = None
             self._stbd_motor = None
             raise Exception('unable to instantiate ThunderBorg [3].')
+
+        _odo_cfg = self._config['kros'].get('motor').get('odometry')
+        _enable_odometry = _odo_cfg.get('enable_odometry')
+        if _enable_odometry: # motor odometry configuration ....................
+            self._reverse_encoder_orientation = _odo_cfg.get('reverse_encoder_orientation')
+            self._log.info('reverse encoder orientation: {}'.format(self._reverse_encoder_orientation))
+            # in case you wire something up backwards (we need this prior to the logger)
+            self._reverse_motor_orientation   = _odo_cfg.get('reverse_motor_orientation')
+            self._log.info('reverse motor orientation:   {}'.format(self._reverse_motor_orientation))
+            # GPIO pins configured for A1, B1, A2 and B2
+            self._motor_encoder_a1_port       = _odo_cfg.get('motor_encoder_a1_port') # default: 22
+            self._log.info('motor encoder a1 port: {:d}'.format(self._motor_encoder_a1_port))
+            self._motor_encoder_b1_port       = _odo_cfg.get('motor_encoder_b1_port') # default: 17
+            self._log.info('motor encoder b1 port: {:d}'.format(self._motor_encoder_b1_port))
+            self._motor_encoder_a2_stbd       = _odo_cfg.get('motor_encoder_a2_stbd') # default: 27
+            self._log.info('motor encoder a2 stbd: {:d}'.format(self._motor_encoder_a2_stbd))
+            self._motor_encoder_b2_stbd       = _odo_cfg.get('motor_encoder_b2_stbd') # default: 18
+            self._log.info('motor encoder b2 stbd: {:d}'.format(self._motor_encoder_b2_stbd))
+            # config pigpio's pi and name its callback thread (ex-API)
+            try:
+                self._pi = pigpio.pi()
+                if self._pi is None:
+                    raise Exception('unable to instantiate pigpio.pi().')
+                elif self._pi._notify is None:
+                    raise Exception('can\'t connect to pigpio daemon; did you start it?')
+                self._pi._notify.name = 'pi.callback'
+                self._log.info('pigpio version {}'.format(self._pi.get_pigpio_version()))
+            except Exception as e:
+                self._log.error('error importing and/or configuring Motor: {}'.format(e))
+                traceback.print_exc(file=sys.stdout)
+                sys.exit(1)
+            # configure motor encoders...
+            self._log.info('configuring motor encoders...')
+            self._configure_encoder(self._port_motor, Orientation.PORT)
+            self._configure_encoder(self._stbd_motor, Orientation.STBD)
+        # end odometry configuration ...........................................
         self._log.info('ready.')
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def _configure_encoder(self, motor, orientation):
+        if self._reverse_encoder_orientation:
+            if orientation is Orientation.PORT:
+                orientation = Orientation.STBD
+            else:
+                orientation = Orientation.PORT
+        if orientation is Orientation.PORT:
+            _encoder_a = self._motor_encoder_a1_port
+            _encoder_b = self._motor_encoder_b1_port
+        elif orientation is Orientation.STBD:
+            _encoder_a = self._motor_encoder_a2_stbd
+            _encoder_b = self._motor_encoder_b2_stbd
+        else:
+            raise ValueError("unrecognised value for orientation.")
+        motor.decoder = Decoder(self._pi, motor.orientation, _encoder_a, _encoder_b, motor._callback_step_count, self._log.level)
+        if self._reverse_encoder_orientation:
+            motor.decoder.set_reversed() 
+        self._log.info('configured {} motor encoder on pin {} and {}.'.format(motor.orientation.name, _encoder_a, _encoder_b))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _import_thunderborg(self):

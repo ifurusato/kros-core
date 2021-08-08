@@ -144,11 +144,12 @@ class Velocity(object):
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def tick(self):
         '''
-        This receives a TICK message every 50ms (i.e., at 20Hz), calculating
+        This should be called regularly every 50ms (i.e., at 20Hz), calculating
         velocity based on the tick/step count of the motor encoder.
         '''
         if self._enabled:
             if self._motor.enabled: # then calculate velocity from motor encoder's step count
+                self._log.info('🕒 tick...')
                 _time_diff_ms = 0.0
                 _steps = self._motor.steps
                 if self._steps_begin != 0:
@@ -171,12 +172,20 @@ class Velocity(object):
                 self._stepcount_timestamp = time.time()
                 self._steps_begin = _steps
             else:
-                self._log.warning('handle() failed: motor disabled.')
+                self._log.warning('👺🕒 tick failed: motor disabled.')
                 self._velocity = 0.0
         else:
             self._velocity = 0.0
+            self._log.warning('👺🕒 tick failed: disabled.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    @property
+    def value(self):
+        '''
+        Returns the current velocity value as a property.
+        '''
+        return self._velocity
+
     def __call__(self):
         '''
         Enables this class to be called as if it were a function, returning

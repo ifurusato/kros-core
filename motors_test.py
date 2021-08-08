@@ -57,10 +57,10 @@ def test_motors():
 
         # add motor controller
         _motor_configurer = MotorConfigurer(_config, _message_bus, _i2c_scanner, motors_enabled=True, level=_level)
-        _port_motor = _motor_configurer.get_motor(Orientation.PORT)
+#       _port_motor = _motor_configurer.get_motor(Orientation.PORT)
         _stbd_motor = _motor_configurer.get_motor(Orientation.STBD)
 
-        _port_motor.enable()
+#       _port_motor.enable()
         _stbd_motor.enable()
 
         # configure digital potentiometer for motor speed
@@ -70,25 +70,29 @@ def test_motors():
 #       sys.exit(0)
         _last_scaled_value = 0.0
         _log.info('starting test...')
-        _hz = 10
+        _hz = 20
         _rate = Rate(_hz, Level.ERROR)
         while True:
+#           _port_motor.update_target_velocity()
+            _stbd_motor.update_target_velocity()
             _scaled_value = _pot.get_scaled_value(False)
             if _scaled_value != _last_scaled_value: # if not the same as last time
                 # math.isclose(3, 15, abs_tol=0.03 * 255) # 3% on a 0-255 scale
                 if isclose(_scaled_value, 0.0, abs_tol=0.05):
                     _pot.set_black()
-                    _port_motor.set_motor_power(0.0)
+#                   _port_motor.set_motor_power(0.0)
                     _stbd_motor.set_motor_power(0.0)
-                    _log.info(Fore.YELLOW + Style.DIM + 'scaled value: {:9.6f}'.format(_scaled_value))
+#                   _log.info(Fore.YELLOW + Style.DIM + 'scaled value: {:9.6f}'.format(_scaled_value))
                 else:
                     _pot.set_rgb(_pot.value)
-                    _port_motor.set_motor_power(_scaled_value)
+#                   _port_motor.set_motor_power(_scaled_value)
                     _stbd_motor.set_motor_power(_scaled_value)
-                    if abs(_scaled_value) > 0.5:
-                        _log.info(Fore.YELLOW + Style.BRIGHT + 'scaled value: {:9.6f}'.format(_scaled_value))
-                    else:
-                        _log.info(Fore.YELLOW + 'scaled value: {:9.6f}'.format(_scaled_value))
+                    _log.info(Fore.YELLOW + Style.DIM + 'velocity: stbd: {:5.2f}; {:5.2f} steps.'.format(_stbd_motor.velocity, _stbd_motor.steps))
+#                   _log.info(Fore.RED + Style.DIM + 'velocity: port: {:5.2f}; {:5.2f} steps.'.format(_port_motor.velocity, _port_motor.steps))
+#                   if abs(_scaled_value) > 0.5:
+#                       _log.info(Fore.YELLOW + Style.BRIGHT + 'scaled value: {:9.6f}'.format(_scaled_value))
+#                   else:
+#                       _log.info(Fore.YELLOW + 'scaled value: {:9.6f}'.format(_scaled_value))
             _last_scaled_value = _scaled_value
             _rate.wait()
 

@@ -107,11 +107,11 @@ class PID(object):
                 self._setpoint = -1.0 * self._limit
             else:
                 self._setpoint = setpoint
-            self._log.info(Fore.YELLOW + '👥 setpoint limited; setpoint of {:5.2f} from: {:5.2f}'.format(self._setpoint, setpoint))
+            self._log.info(Fore.YELLOW + '👥 limited; setpoint of {:5.2f} from: {:5.2f}'.format(self._setpoint, setpoint))
 #           self._log.info(Fore.RED + Style.BRIGHT + 'set setpoint: {:5.2f}; limited to: {:5.2f} from max vel: {:5.2f}'.format(setpoint, self._setpoint, self._limit))
         else:
             self._setpoint = setpoint
-            self._log.info(Fore.YELLOW + '👥 setpoint: {:5.2f}'.format(self._setpoint))
+            self._log.info(Fore.YELLOW + '👥 setpoint of {:5.2f} from: {:5.2f}'.format(self._setpoint, setpoint))
 #       if self._setpoint is None:
 #           self._log.info('setpoint: None')
 #       else:
@@ -148,7 +148,7 @@ class PID(object):
                    This can be used in simulations when simulation time is
                    different from real time.
         '''
-        self._log.info(Fore.RED + Style.BRIGHT + '🐙 __call__() target: {:5.2f}; dt: {}'.format(target, dt))
+        self._log.info(Fore.RED + Style.BRIGHT + '🍅 __call__() setpoint: {:5.2f}; target: {:5.2f}; dt: {}'.format(self._setpoint, target, dt))
         _now = self._current_time()
         if dt is None:
             dt = _now - self._last_time

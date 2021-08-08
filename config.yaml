@@ -53,6 +53,14 @@ kros:
             halt_ratio:          0.4             # ratio for quick halt behaviour
             brake_ratio:         0.7             # ratio for slower braking behaviour
             spin_speed:       'HALF'             # motor speed when spinning
+        odometry:
+            enable_odometry:              True   # if true we enable motor encoders and odometry
+            motor_encoder_a1_port:          22   # port A
+            motor_encoder_b1_port:          23   # port B
+            motor_encoder_a2_stbd:          17   # stbd A
+            motor_encoder_b2_stbd:          18   # stbd B
+            reverse_motor_orientation:   False   # in case you wire up the motors backwards
+            reverse_encoder_orientation: False   # in case you wire up the encoders backwards
         pid_controller:
             kp:                  0.09500         # proportional gain
             ki:                  0.00000         # integral gain
@@ -169,12 +177,6 @@ devices:
 # 70: -- -- -- -- 74 -- -- 77
 
         # GPIO pins configured for A1, B1, A2 and B2
-#       motor_encoder_a1_port:  22               # port A
-#       motor_encoder_b1_port:  23               # port B
-#       motor_encoder_a2_stbd:  17               # stbd A
-#       motor_encoder_b2_stbd:  18               # stbd B
-#       reverse_motor_orientation:   False       # in case you wire something up backwards
-#       reverse_encoder_orientation: False       # ditto
 #       sample_rate: 10                          # how many pulses per encoder measurement?
 #       accel_loop_delay_sec: 0.10
 #       pid-controller:
