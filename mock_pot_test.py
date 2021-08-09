@@ -9,28 +9,19 @@
 # created:  2020-10-05
 # modified: 2021-08-07
 #
-# Tests the port and starboard motors for directly by setting their power, from
-# a digital potentiometer, without the intermediaries of velocity, slew, or PID
-# controllers.
+# Tests the mocked digital potentiometer.
 #
 
 import pytest
-import sys, numpy, time, traceback
+import sys, time, traceback
 from datetime import datetime as dt
 from math import isclose
 from colorama import init, Fore, Style
 init()
 
-from core.message_bus import MessageBus
-from core.message_factory import MessageFactory
-from core.orient import Orientation
 from core.rate import Rate
 from core.logger import Logger, Level
 from core.config_loader import ConfigLoader
-from hardware.i2c_scanner import I2CScanner
-from hardware.motor_configurer import MotorConfigurer
-from hardware.motor import Motor
-from hardware.digital_pot import DigitalPotentiometer, DeviceNotFound
 from mock.potentiometer import MockPotentiometer
 
 _log = Logger('test', Level.INFO)
@@ -52,71 +43,32 @@ def test_motors():
         _loader = ConfigLoader(_level)
         filename = 'config.yaml'
         _config = _loader.configure(filename)
-
         _log.info('creating message bus...')
-        _message_bus = MessageBus(_config, _level)
-        _log.info('creating message factory...')
-        _message_factory = MessageFactory(_message_bus, _level)
 
-        _i2c_scanner = I2CScanner(_config, _level)
+        _pot = MockPotentiometer(_config, key_callback, Level.INFO)
+        _pot.enable()
 
-        # add motor controller
-        _motor_configurer = MotorConfigurer(_config, _message_bus, _i2c_scanner, motors_enabled=True, level=_level)
-#       _port_motor = _motor_configurer.get_motor(Orientation.PORT)
-        _stbd_motor = _motor_configurer.get_motor(Orientation.STBD)
-
-#       _port_motor.enable()
-        _stbd_motor.enable()
-
-        if _i2c_scanner.has_hex_address([0x0E]):
-            # configure digital potentiometer for motor speed
-            _pot = DigitalPotentiometer(_config, out_min=-0.90, out_max=0.90, level=_level)
-#            _pot.set_output_limits(-0.90, 0.90)
-        else:
-            _pot = MockPotentiometer(_config, key_callback, Level.INFO)
-
-#       sys.exit(0)
         _last_scaled_value = 0.0
         _log.info('starting test...')
         _hz = 2
         _rate = Rate(_hz, Level.ERROR)
         while True:
-#           _port_motor.update_target_velocity()
-            _stbd_motor.update_target_velocity()
             _scaled_value = _pot.get_scaled_value(False)
             if _scaled_value != _last_scaled_value: # if not the same as last time
-                # math.isclose(3, 15, abs_tol=0.03 * 255) # 3% on a 0-255 scale
                 if isclose(_scaled_value, 0.0, abs_tol=0.05):
                     _pot.set_black()
-#                   _port_motor.set_motor_power(0.0)
-#                   _stbd_motor.set_motor_power(0.0)
-                    _stbd_motor.target_velocity = 0.0
-#                   _log.info(Fore.YELLOW + Style.DIM + 'scaled value: {:9.6f}'.format(_scaled_value))
+                    _log.info(Fore.YELLOW + Style.DIM + 'velocity: {:5.2f}.'.format(_scaled_value))
                 else:
                     _pot.set_rgb(_pot.value)
-#                   _port_motor.set_motor_power(_scaled_value)
-#                   _stbd_motor.set_motor_power(_scaled_value)
-                    _stbd_motor.target_velocity = _scaled_value
-                    _log.info(Fore.YELLOW + Style.DIM + 'velocity: stbd: {:5.2f}; {:5.2f} steps.'.format(_stbd_motor.velocity, _stbd_motor.steps))
-#                   _log.info(Fore.RED + Style.DIM + 'velocity: port: {:5.2f}; {:5.2f} steps.'.format(_port_motor.velocity, _port_motor.steps))
-#                   if abs(_scaled_value) > 0.5:
-#                       _log.info(Fore.YELLOW + Style.BRIGHT + 'scaled value: {:9.6f}'.format(_scaled_value))
-#                   else:
-#                       _log.info(Fore.YELLOW + 'scaled value: {:9.6f}'.format(_scaled_value))
+                    _log.info(Fore.YELLOW + Style.NORMAL + 'velocity: {:5.2f}.'.format(_scaled_value))
             _last_scaled_value = _scaled_value
             _rate.wait()
 
     except KeyboardInterrupt:
         _log.info('Ctrl-C caught; exiting...')
-    except DeviceNotFound as e:
-        _log.error('no potentiometer found, exiting.')
     except Exception as e:
         _log.error('{} encountered, exiting: {}'.format(type(e), e))
     finally:
-#       if _port_motor != None:
-#           _port_motor.set_motor_power(0.0)
-#       if _stbd_motor != None:
-#           _stbd_motor.set_motor_power(0.0)
         pass
 
     _elapsed_ms = round(( dt.now() - _start_time ).total_seconds() * 1000.0)

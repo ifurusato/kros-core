@@ -84,7 +84,7 @@ class Motor(Component):
         if self._using_mocks:
             self._log.info(Fore.YELLOW + 'using mocks: {}'.format(self._using_mocks))
             self._velocity       = MockVelocity(orientation, level=level)
-            raise Exception('using mocked velocity.')
+#           raise Exception('using mocked velocity.')
         else:
             self._velocity       = Velocity(config, self, level=level)
             self._velocity.enable()

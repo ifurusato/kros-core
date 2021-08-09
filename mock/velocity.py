@@ -33,19 +33,19 @@ class MockVelocity(object):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
-    def target_velocity(self):
+    def value(self):
         return self._velocity
 
-    @target_velocity.setter
-    def target_velocity(self, target_velocity):
-        self._log.info('setting target velocity: {}'.format(target_velocity))
-        self._velocity = target_velocity
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def __call__(self):
-        '''
-        Returns the set target velocity.
-        '''
         return self._velocity
+
+    @property
+    def velocity(self):
+        return self._velocity
+
+    @velocity.setter
+    def velocity(self, velocity):
+        self._log.info('setting velocity: {}'.format(velocity))
+        self._velocity = velocity
 
 #EOF

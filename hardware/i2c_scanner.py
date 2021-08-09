@@ -77,6 +77,18 @@ class I2CScanner(object):
         return False
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def has_hex_address(self, addresses):
+        '''
+        Performs the address scan (if necessary) and returns true if a device
+        is available at any of the specified hexadecimal addresses.
+        '''
+        self._scan_addresses()
+        for address in addresses:
+            if address in self._hex_list:
+                return True
+        return False
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _scan_addresses(self):
         '''
         Scans the bus and returns the available device addresses. After being
