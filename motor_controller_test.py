@@ -75,28 +75,33 @@ def test_motors():
 #       _dpot.set_output_limits(-0.80, 0.80)
 
         # configure analog potentiometer for PID controller tuning
-        _cfg = [ 0, 330, 0.0, 1.0 ]
-        _apot = AnalogPotentiometer(_config, in_min=_cfg[0], in_max=_cfg[1], out_min=_cfg[2], out_max=_cfg[3], level=Level.INFO)
+#       _cfg = [ 0, 330, 0.0, 1.0 ]
+#       _apot = AnalogPotentiometer(_config, in_min=_cfg[0], in_max=_cfg[1], out_min=_cfg[2], out_max=_cfg[3], level=Level.INFO)
 
 #       sys.exit(0)
+        _anlg_scaled_value = 0.0
         _last_scaled_value = 0.0
         _log.info('starting test...')
         _hz = 10
         _rate = Rate(_hz, Level.ERROR)
         while True:
-            _anlg_scaled_value = _apot.get_scaled_value()
+#           _anlg_scaled_value = _apot.get_scaled_value()
             _dgtl_scaled_value = _dpot.get_scaled_value(False)
             if _dgtl_scaled_value != _last_scaled_value: # if not the same as last time
                 # math.isclose(3, 15, abs_tol=0.03 * 255) # 3% on a 0-255 scale
                 if isclose(_dgtl_scaled_value, 0.0, abs_tol=0.05 * 90):
                     _dpot.set_black()
-                    _motor_ctrl.set_motor_velocity(Orientation.PORT, 0.0)
-                    _motor_ctrl.set_motor_velocity(Orientation.STBD, 0.0)
+#                   _motor_ctrl.set_motor_velocity(Orientation.PORT, 0.0)
+#                   _motor_ctrl.set_motor_velocity(Orientation.STBD, 0.0)
+                    _port_motor.target_velocity = 0.0
+                    _stbd_motor.target_velocity = 0.0
                     _log.info(Fore.BLACK + Style.DIM + 'digital value: {:9.6f} (ZERO); analog: {:5.2f}'.format(_dgtl_scaled_value, _anlg_scaled_value))
                 else:
                     _dpot.set_rgb(_dpot.value)
-                    _motor_ctrl.set_motor_velocity(Orientation.PORT, _dgtl_scaled_value)
-                    _motor_ctrl.set_motor_velocity(Orientation.STBD, _dgtl_scaled_value)
+#                   _motor_ctrl.set_motor_velocity(Orientation.PORT, _dgtl_scaled_value)
+#                   _motor_ctrl.set_motor_velocity(Orientation.STBD, _dgtl_scaled_value)
+                    _port_motor.target_velocity = _dgtl_scaled_value
+                    _stbd_motor.target_velocity = _dgtl_scaled_value
                     _log.info(Fore.BLACK + Style.BRIGHT + 'digital value: {:9.6f}; analog: {:5.2f}'.format(_dgtl_scaled_value, _anlg_scaled_value))
             _last_scaled_value = _dgtl_scaled_value
             _rate.wait()

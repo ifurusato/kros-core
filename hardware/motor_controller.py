@@ -87,7 +87,7 @@ class MotorController(Component):
 #           self._log.info('using direct motor control.')
         # variables
         self._decelerate_ratio     = 0.0 # variable used in loop
-        self._verbose              = False # TEMP
+        self._verbose              = True # TEMP
         # lambdas
         self._log.info('motors ready.')
 

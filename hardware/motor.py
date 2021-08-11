@@ -181,7 +181,7 @@ class Motor(Component):
         '''
         if not isinstance(target_velocity, float):
             raise ValueError('expected float, not {}'.format(type(target_velocity)))
-#       self._log.info(Fore.GREEN + Style.DIM + '🍀 SET target velocity: {:5.2f} of {} motor.'.format(target_velocity, self._orientation.name))
+        self._log.info(Fore.GREEN + Style.BRIGHT + '🍀🍀🍀 SET target velocity: {:5.2f} of {} motor.'.format(target_velocity, self._orientation.name))
         self.__target_velocity = target_velocity
         if self._using_mocks:
             raise Exception('using velocity mock!')
