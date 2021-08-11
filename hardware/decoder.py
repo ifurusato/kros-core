@@ -28,7 +28,7 @@
 #   sudo systemctl status pigpiod 
 # 
 
-import sys
+import sys, traceback
 from colorama import init, Fore, Style
 init()
 
@@ -85,28 +85,19 @@ class Decoder(object):
         :param level:        the log Level
         '''
         self._log = Logger('enc:{}'.format(orientation.label), level)
-        self._gpio_a = gpio_a
-        self._gpio_b = gpio_b
+        self._gpio_a    = gpio_a
+        self._gpio_b    = gpio_b
         self._log.info('pin A: {:d}; pin B: {:d}'.format(self._gpio_a,self._gpio_b))
-        self._callback = callback
-        self._level_a = 0
-        self._level_b = 0
+        self._callback  = callback
+        self._level_a   = 0
+        self._level_b   = 0
         self._last_gpio = None
         self._increment = 1
-        self._pi = self._get_pi()
-        if self._pi:
-            self._pi.set_mode(self._gpio_a, pigpio.INPUT)
-            self._pi.set_mode(self._gpio_b, pigpio.INPUT)
-            self._pi.set_pull_up_down(self._gpio_a, pigpio.PUD_UP)
-            self._pi.set_pull_up_down(self._gpio_b, pigpio.PUD_UP)
-#           _edge = pigpio.RISING_EDGE  # default
-#           _edge = pigpio.FALLING_EDGE
-            _edge = pigpio.EITHER_EDGE
-            self.callback_a = self._pi.callback(self._gpio_a, _edge, self._pulse_a)
-            self.callback_b = self._pi.callback(self._gpio_b, _edge, self._pulse_b)
+        self._configure()
+        self._log.info('ready.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def _get_pi(self):
+    def _configure(self):
         try:
             import pigpio
         except ImportError as ie:
@@ -123,6 +114,16 @@ class Decoder(object):
                 raise Exception('can\'t connect to pigpio daemon; did you start it?')
             _pi._notify.name = 'pi.callback'
             self._log.info('pigpio version {}'.format(_pi.get_pigpio_version()))
+            self._log.info('configuring encoder...')
+            _pi.set_mode(self._gpio_a, pigpio.INPUT)
+            _pi.set_mode(self._gpio_b, pigpio.INPUT)
+            _pi.set_pull_up_down(self._gpio_a, pigpio.PUD_UP)
+            _pi.set_pull_up_down(self._gpio_b, pigpio.PUD_UP)
+#           _edge = pigpio.RISING_EDGE  # default
+#           _edge = pigpio.FALLING_EDGE
+            _edge = pigpio.EITHER_EDGE
+            self.callback_a = _pi.callback(self._gpio_a, _edge, self._pulse_a)
+            self.callback_b = _pi.callback(self._gpio_b, _edge, self._pulse_b)
             return _pi
         except Exception as e:
             self._log.error('error importing and/or configuring Motor: {}'.format(e))

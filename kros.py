@@ -50,6 +50,7 @@ from behave.moth import Moth
 from behave.sniff import Sniff
 from behave.idle import Idle
 
+from hardware.battery import BatteryCheck
 from hardware.motor_configurer import MotorConfigurer
 from hardware.motor_controller import MotorController
 
@@ -87,6 +88,7 @@ class KROS(Component, FiniteStateMachine):
         self._system.set_nice()
         # configuration...
         self._config        = None
+        self._message_bus   = None
         self._behaviour_mgr = None
         self._arbitrator    = None
         self._controller    = None
@@ -172,6 +174,9 @@ class KROS(Component, FiniteStateMachine):
         else:
             self._pot_publisher = MockPotPublisher(self._config, self._message_bus, self._message_factory, level=self._level)
 
+        # add battery check publisher
+        self._battery = BatteryCheck(self._config, self._message_bus, self._message_factory, self._level)
+
 #       self._publisher2  = FloodPublisher(self._message_bus, self._message_factory)
 #       self._publisher3  = GamepadPublisher(self._config, self._message_bus, self._message_factory)
 
@@ -193,97 +198,9 @@ class KROS(Component, FiniteStateMachine):
             self._moth  = Moth(self._config, self._message_bus, self._message_factory, self._motor_ctrl, self._level)
             self._sniff = Sniff(self._config, self._message_bus, self._message_factory, self._motor_ctrl, self._level)
             self._idle  = Idle(self._config, self._message_bus, self._message_factory, self._level)
-
     #   _message_bus.print_publishers()
     #   _message_bus.print_subscribers()
-
         self._log.info('configured.')
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def _set_feature_available(self, name, value):
-        '''
-            Sets a feature's availability to the boolean value.
-        '''
-        self._log.debug(Fore.BLUE + Style.BRIGHT + '-- set feature available. name: \'{}\' value: \'{}\'.'.format(name, value))
-        self.set_property('features', name, value)
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    @property
-    def configuration(self):
-        return self._config
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def get_property(self, section, property_name):
-        '''
-        Return the value of the named property of the application
-        configuration, provided its section and property name.
-        '''
-        return self._config[section].get(property_name)
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def set_property(self, section, property_name, property_value):
-        '''
-        Set the value of the named property of the application
-        configuration, provided its section, property name and value.
-        '''
-        self._log.debug(Fore.GREEN + 'set config on section \'{}\' for property key: \'{}\' to value: {}.'.format(\
-                section, property_name, property_value))
-        if section == 'ros':
-            self._config[section].update(property_name = property_value)
-        else:
-            _kros = self._config['ros']
-            _kros[section].update(property_name = property_value)
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def _set_pi_leds(self, enable):
-        '''
-        Enables or disables the Raspberry Pi's board LEDs.
-        '''
-        sudo_name = self.get_property('pi', 'sudo_name')
-        _led_0_path = self._config['pi'].get('led_0_path')
-        _led_0 = Path(_led_0_path)
-        _led_1_path = self._config['pi'].get('led_1_path')
-        _led_1 = Path(_led_1_path)
-        if _led_0.is_file() and _led_0.is_file():
-            if enable:
-                self._log.info('re-enabling LEDs...')
-                os.system('echo 1 | {} tee {}'.format(sudo_name,_led_0_path))
-                os.system('echo 1 | {} tee {}'.format(sudo_name,_led_1_path))
-            else:
-                self._log.debug('disabling LEDs...')
-                os.system('echo 0 | {} tee {}'.format(sudo_name,_led_0_path))
-                os.system('echo 0 | {} tee {}'.format(sudo_name,_led_1_path))
-        else:
-            self._log.warning('could not change state of LEDs: does not appear to be a Raspberry Pi.')
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def _callback_shutdown(self):
-        _enable_self_shutdown = self._config['ros'].get('enable_self_shutdown')
-        if _enable_self_shutdown:
-            self._log.critical('callback: shutting down os...')
-            self.close()
-            sys.exit(0)
-        else:
-            self._log.critical('self-shutdown disabled.')
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def _print_banner(self):
-        '''
-        Display banner on console.
-        '''
-        self._log.info(' ')
-        self._log.info(' ')
-        self._log.info('      ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓ ')
-        self._log.info('      ┃                                                       ┃ ')
-        self._log.info('      ┃    █▒▒   █▒▒  █▒▒▒▒▒▒▒    █▒▒▒▒▒▒    █▒▒▒▒▒▒   █▒▒    ┃ ')
-        self._log.info('      ┃    █▒▒  █▒▒   █▒▒   █▒▒  █▒▒   █▒▒  █▒▒        █▒▒    ┃ ')
-        self._log.info('      ┃    █▒▒▒▒▒▒    █▒▒▒▒▒▒    █▒▒   █▒▒   █▒▒▒▒▒▒   █▒▒    ┃ ')
-        self._log.info('      ┃    █▒▒  █▒▒   █▒▒  █▒▒   █▒▒   █▒▒        █▒▒         ┃ ')
-        self._log.info('      ┃    █▒▒   █▒▒  █▒▒   █▒▒   █▒▒▒▒▒▒    █▒▒▒▒▒▒   █▒▒    ┃ ')
-        self._log.info('      ┃                                                       ┃ ')
-        self._log.info('      ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛ ')
-        self._log.info(' ')
-        self._log.info(' ')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def start(self):
@@ -293,7 +210,7 @@ class KROS(Component, FiniteStateMachine):
         OS loop.
         '''
         self._log.heading('starting', 'starting k-series robot operating system (kros)...', '[2/2]' )
-        super().start()
+        FiniteStateMachine.start(self)
         self._disable_leds = self._config['pi'].get('disable_leds')
         if self._disable_leds:
             # disable Pi LEDs since they may be distracting
@@ -321,6 +238,28 @@ class KROS(Component, FiniteStateMachine):
         # end main loop ....................................
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def _set_pi_leds(self, enable):
+        '''
+        Enables or disables the Raspberry Pi's board LEDs.
+        '''
+        sudo_name = self._config['pi'].get('sudo_name')
+        _led_0_path = self._config['pi'].get('led_0_path')
+        _led_0 = Path(_led_0_path)
+        _led_1_path = self._config['pi'].get('led_1_path')
+        _led_1 = Path(_led_1_path)
+        if _led_0.is_file() and _led_0.is_file():
+            if enable:
+                self._log.info('re-enabling LEDs...')
+                os.system('echo 1 | {} tee {}'.format(sudo_name,_led_0_path))
+                os.system('echo 1 | {} tee {}'.format(sudo_name,_led_1_path))
+            else:
+                self._log.debug('disabling LEDs...')
+                os.system('echo 0 | {} tee {}'.format(sudo_name,_led_0_path))
+                os.system('echo 0 | {} tee {}'.format(sudo_name,_led_1_path))
+        else:
+            self._log.warning('could not change state of LEDs: does not appear to be a Raspberry Pi.')
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def close(self):
         '''
         This sets the KROS back to normal following a session.
@@ -333,6 +272,7 @@ class KROS(Component, FiniteStateMachine):
             self._closing = True
             self._log.info('closing...')
             Component.disable(self)
+            FiniteStateMachine.disable(self)
             if self._message_bus:
                 self._message_bus.close()
             if self._motor_ctrl:
@@ -346,11 +286,31 @@ class KROS(Component, FiniteStateMachine):
             if self._disable_leds: # restore normal function of Pi LEDs
                 self._set_pi_leds(True)
             Component.close(self)
+            FiniteStateMachine.close(self)
             self._closing = False
 #           self._log.info('application closed.')
             sys.exit(0)
 
-# ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def _print_banner(self):
+        '''
+        Display banner on console.
+        '''
+        self._log.info(' ')
+        self._log.info(' ')
+        self._log.info('      ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓ ')
+        self._log.info('      ┃                                                       ┃ ')
+        self._log.info('      ┃    █▒▒   █▒▒  █▒▒▒▒▒▒▒    █▒▒▒▒▒▒    █▒▒▒▒▒▒   █▒▒    ┃ ')
+        self._log.info('      ┃    █▒▒  █▒▒   █▒▒   █▒▒  █▒▒   █▒▒  █▒▒        █▒▒    ┃ ')
+        self._log.info('      ┃    █▒▒▒▒▒▒    █▒▒▒▒▒▒    █▒▒   █▒▒   █▒▒▒▒▒▒   █▒▒    ┃ ')
+        self._log.info('      ┃    █▒▒  █▒▒   █▒▒  █▒▒   █▒▒   █▒▒        █▒▒         ┃ ')
+        self._log.info('      ┃    █▒▒   █▒▒  █▒▒   █▒▒   █▒▒▒▒▒▒    █▒▒▒▒▒▒   █▒▒    ┃ ')
+        self._log.info('      ┃                                                       ┃ ')
+        self._log.info('      ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛ ')
+        self._log.info(' ')
+        self._log.info(' ')
+
+    # end of KROS class  ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class SystemSubscriber(Subscriber):
@@ -364,6 +324,9 @@ class SystemSubscriber(Subscriber):
     def __init__(self, config, kros, message_bus, level=Level.INFO):
         Subscriber.__init__(self, 'system', config, message_bus=message_bus, suppressed=False, enabled=False, level=level)
         self._kros = kros
+        self._message_bus = message_bus
+        # exit KROS on dire systems event?
+        self._exit_on_dire_event = config['kros'].get('exit_on_dire_event')
         self.add_events(Event.by_group(Group.SYSTEM))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -405,17 +368,38 @@ class SystemSubscriber(Subscriber):
         if payload.event is Event.SHUTDOWN:
             self._message_bus.disable()
             self._kros.disable()
-            pass
+            pass # TODO
         elif payload.event is Event.BATTERY_LOW:
+            self._log.critical('battery voltage low!')
+            if self._exit_on_dire_event:
+                self._log.critical('shutting down KROS...')
+                self._message_bus.disable()
+                self._kros.disable()
+            else:
+                self._log.critical('WARNING! WARNING! WARNING! battery voltage low! Time to shut down KROS.')
             pass
         elif payload.event is Event.HIGH_TEMPERATURE:
+            self._log.critical('high temperature encoutered!')
+            if self._exit_on_dire_event:
+#               self._message_bus.disable()
+#               self._kros.disable()
+                pass # TODO
+            else:
+                self._log.critical('WARNING! WARNING! WARNING! high temperature encountered! Time to go into idle mode.')
             pass
         elif payload.event is Event.COLLISION_DETECT:
+            self._log.critical('collision detection!')
+            if self._exit_on_dire_event:
+#               self._message_bus.disable()
+#               self._kros.disable()
+                pass # TODO
+            else:
+                self._log.critical('WARNING! WARNING! WARNING! collision detection! Stop everything now.')
             pass
         else:
             raise ValueError('unrecognised system event: {}'.format(payload.event.name))
 
-    # end of class ........
+    # end of SystemSubscriber class  ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
 
 # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 def parse_args():

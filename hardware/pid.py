@@ -107,11 +107,11 @@ class PID(object):
                 self._setpoint = -1.0 * self._limit
             else:
                 self._setpoint = setpoint
-            self._log.info(Fore.YELLOW + '👥 limited; setpoint of {:5.2f} from: {:5.2f}'.format(self._setpoint, setpoint))
+#           self._log.info(Fore.YELLOW + '👥 limited; setpoint of {:5.2f} from: {:5.2f}'.format(self._setpoint, setpoint))
 #           self._log.info(Fore.RED + Style.BRIGHT + 'set setpoint: {:5.2f}; limited to: {:5.2f} from max vel: {:5.2f}'.format(setpoint, self._setpoint, self._limit))
         else:
             self._setpoint = setpoint
-            self._log.info(Fore.YELLOW + '👥 setpoint of {:5.2f} from: {:5.2f}'.format(self._setpoint, setpoint))
+#           self._log.info(Fore.YELLOW + '👥 setpoint of {:5.2f} from: {:5.2f}'.format(self._setpoint, setpoint))
 #       if self._setpoint is None:
 #           self._log.info('setpoint: None')
 #       else:
@@ -148,7 +148,7 @@ class PID(object):
                    This can be used in simulations when simulation time is
                    different from real time.
         '''
-        self._log.info(Fore.RED + Style.BRIGHT + '🍅 __call__() setpoint: {:5.2f}; target: {:5.2f}; dt: {}'.format(self._setpoint, target, dt))
+#       self._log.info(Fore.RED + Style.BRIGHT + '🍅 __call__() setpoint: {:5.2f}; target: {:5.2f}; dt: {}'.format(self._setpoint, target, dt))
         _now = self._current_time()
         if dt is None:
             dt = _now - self._last_time
@@ -160,8 +160,8 @@ class PID(object):
 
         if dt < self._period_sec and not math.isclose(dt, self._period_sec) and self._last_output is not None:
             # only update every period
-            self._log.info(Fore.RED + Style.BRIGHT + '__call__() dt {:9.7f} < period: {:9.7f}; last output: {:5.2f}'.format(\
-                    dt, self._period_sec, self._last_output) + Style.RESET_ALL)
+#           self._log.info(Fore.RED + Style.BRIGHT + '__call__() dt {:9.7f} < period: {:9.7f}; last output: {:5.2f}'.format(\
+#                   dt, self._period_sec, self._last_output) + Style.RESET_ALL)
             return self._last_output
 
         # compute error terms
@@ -179,11 +179,11 @@ class PID(object):
 
         kp, ki, kd = self.constants
         cp, ci, cd = self.components
-        self._log.info('🐙 dt={:7.4f}ms '.format(dt * 1000.0) \
-                + Fore.CYAN + Style.DIM + 'target={:5.2f}; error={:6.3f};'.format(target, _error) \
-                + Fore.MAGENTA + ' KP={:<8.5f}; KD={:<8.5f};'.format(kp, kd) \
-                + Fore.CYAN + Style.BRIGHT + ' P={:8.5f}; I={:8.5f}; D={:8.5f}; sp={:6.3f};'.format(cp, ci, cd, self._setpoint) \
-                + Style.BRIGHT + ' out: {:<8.5f}'.format(output))
+#       self._log.info('🐙 dt={:7.4f}ms '.format(dt * 1000.0) \
+#               + Fore.CYAN + Style.DIM + 'target={:5.2f}; error={:6.3f};'.format(target, _error) \
+#               + Fore.MAGENTA + ' KP={:<8.5f}; KD={:<8.5f};'.format(kp, kd) \
+#               + Fore.CYAN + Style.BRIGHT + ' P={:8.5f}; I={:8.5f}; D={:8.5f}; sp={:6.3f};'.format(cp, ci, cd, self._setpoint) \
+#               + Style.BRIGHT + ' out: {:<8.5f}'.format(output))
 
         # keep track of state
         self._last_output = output

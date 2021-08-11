@@ -9,8 +9,6 @@
 # created:  2020-09-19
 # modified: 2021-07-21
 #
-# DeviceNotFound at bottom.
-#
 
 import sys, colorsys
 import ioexpander as io
@@ -18,6 +16,7 @@ from colorama import init, Fore, Style
 init()
 
 from core.logger import Logger, Level
+from hardware.i2c_scanner import DeviceNotFound
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class DigitalPotentiometer(object):
@@ -30,10 +29,10 @@ class DigitalPotentiometer(object):
     if not provided explicitly as arguments.
 
     :param config:     The application configuration.
-    :param in_min:     (optional) Minimum input value.
-    :param in_max:     (optional) Maximum input value.
-    :param out_min:    (optional) Minimum output value.
-    :param out_max:    (optional) Maximum output value.
+    :param in_min:     (optional, int or float) Minimum input value.
+    :param in_max:     (optional, int or float) Maximum input value.
+    :param out_min:    (optional, int or float) Minimum output value.
+    :param out_max:    (optional, int or float) Maximum output value.
     :param level:      The log level.
     '''
     def __init__(self, config, in_min=None, in_max=None, out_min=None, out_max=None, level=Level.INFO):
@@ -89,10 +88,16 @@ class DigitalPotentiometer(object):
     def set_input_limits(self, in_min, in_max):
         '''
         Used to change the input minimum and maximum values.
+        This accepts either int or float arguments.
         '''
+        if isinstance(in_min, int):
+            in_min = float(in_min)
         if not isinstance(in_min, float):
             raise ValueError('wrong type for in_min argument: {}'.format(type(in_min)))
         self._in_min = in_min
+
+        if isinstance(in_max, int):
+            in_max = float(in_max)
         if not isinstance(in_max, float):
             raise ValueError('wrong type for in_max argument: {}'.format(type(in_max)))
         self._in_max = in_max
@@ -102,10 +107,16 @@ class DigitalPotentiometer(object):
     def set_output_limits(self, out_min, out_max):
         '''
         Used to change the output minimum and maximum values.
+        This accepts either int or float arguments.
         '''
+        if isinstance(out_min, int):
+            out_min = float(out_min)
         if not isinstance(out_min, float):
             raise ValueError('wrong type for out_min argument: {}'.format(type(out_min)))
         self._out_min = out_min
+
+        if isinstance(out_max, int):
+            out_max = float(out_max)
         if not isinstance(out_max, float):
             raise ValueError('wrong type for out_max argument: {}'.format(type(out_max)))
         self._out_max = out_max
@@ -160,12 +171,5 @@ class DigitalPotentiometer(object):
             where e.g.:  a = 0.0, b = 1.0, min = 0, max = 330.
         '''
         return (( self._out_max - self._out_min ) * ( value - self._in_min ) / ( self._in_max - self._in_min )) + self._out_min
-
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-class DeviceNotFound(Exception):
-    '''
-    Thrown when an expected device cannot be found.
-    '''
-    pass
 
 #EOF

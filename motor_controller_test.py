@@ -29,12 +29,12 @@ from core.orient import Orientation
 from core.rate import Rate
 from core.logger import Logger, Level
 from core.config_loader import ConfigLoader
-from hardware.i2c_scanner import I2CScanner
+from hardware.i2c_scanner import I2CScanner, DeviceNotFound
 from hardware.motor_configurer import MotorConfigurer
 from hardware.motor import Motor
 from hardware.motor_controller import MotorController
 from hardware.analog_pot import AnalogPotentiometer
-from hardware.digital_pot import DigitalPotentiometer, DeviceNotFound
+from hardware.digital_pot import DigitalPotentiometer
 
 _log = Logger('test', Level.INFO)
 
@@ -71,7 +71,7 @@ def test_motors():
 #       _stbd_motor.enable()
 
         # configure digital potentiometer for motor speed
-        _dpot = DigitalPotentiometer(_config, out_min=-0.80, out_max=0.80, level=_level)
+        _dpot = DigitalPotentiometer(_config, level=_level)
 #       _dpot.set_output_limits(-0.80, 0.80)
 
         # configure analog potentiometer for PID controller tuning
@@ -88,7 +88,7 @@ def test_motors():
             _dgtl_scaled_value = _dpot.get_scaled_value(False)
             if _dgtl_scaled_value != _last_scaled_value: # if not the same as last time
                 # math.isclose(3, 15, abs_tol=0.03 * 255) # 3% on a 0-255 scale
-                if isclose(_dgtl_scaled_value, 0.0, abs_tol=0.05):
+                if isclose(_dgtl_scaled_value, 0.0, abs_tol=0.05 * 90):
                     _dpot.set_black()
                     _motor_ctrl.set_motor_velocity(Orientation.PORT, 0.0)
                     _motor_ctrl.set_motor_velocity(Orientation.STBD, 0.0)

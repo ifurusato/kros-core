@@ -149,7 +149,6 @@ class Velocity(object):
         '''
         if self._enabled:
             if self._motor.enabled: # then calculate velocity from motor encoder's step count
-                self._log.info('🕒 tick...')
                 _time_diff_ms = 0.0
                 _steps = self._motor.steps
                 if self._steps_begin != 0:
@@ -166,17 +165,17 @@ class Velocity(object):
                     _cm_per_sec = self.steps_to_cm(_steps_per_sec)
                     self._velocity = _cm_per_sec
                     self._max_velocity = max(self._velocity, self._max_velocity)
-                    self._log.info(Fore.BLUE + '{:+d} steps, {:+d}/{:5.2f} diff/corrected; time diff: {:>5.2f}ms; error: {:>5.2f}%;\t'.format(\
-                            self._motor.steps, _diff_steps, _corrected_diff_steps, _time_diff_ms, _time_error_percent * 100.0) \
-                            + Fore.YELLOW + 'velocity: {:>5.2f} steps/sec; {:<5.2f}cm/sec'.format(_steps_per_sec, self._velocity))
+#                   self._log.info(Fore.BLUE + '{:+d} steps, {:+d}/{:5.2f} diff/corrected; time diff: {:>5.2f}ms; error: {:>5.2f}%;\t'.format(\
+#                           self._motor.steps, _diff_steps, _corrected_diff_steps, _time_diff_ms, _time_error_percent * 100.0) \
+#                           + Fore.YELLOW + 'velocity: {:>5.2f} steps/sec; {:<5.2f}cm/sec'.format(_steps_per_sec, self._velocity))
                 self._stepcount_timestamp = time.time()
                 self._steps_begin = _steps
             else:
-                self._log.warning('👺🕒 tick failed: motor disabled.')
                 self._velocity = 0.0
+                self._log.warning('tick failed: motor disabled.')
         else:
             self._velocity = 0.0
-            self._log.warning('👺🕒 tick failed: disabled.')
+            self._log.warning('tick failed: disabled.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property

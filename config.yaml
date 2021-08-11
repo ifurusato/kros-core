@@ -7,135 +7,166 @@
 # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
 kros:
-    use_external_clock:          True            # if True use external clock
+    use_external_clock:               True       # if True use external clock
+    exit_on_dire_event:              False       # if True exit if encountering a dire event
     component:
-        enable_event_publisher: False            # keyboard robot simulator (kinda necessary for running CLI)
-        enable_pot_publisher:   False            # digital velocity control potentiometer publisher
-        enable_behaviours:      False            # if True use BehaviourManager and Behaviours
+        enable_event_publisher:      False        # keyboard robot simulator (kinda necessary for running CLI)
+        enable_pot_publisher:        False        # digital velocity control potentiometer publisher
+        enable_behaviours:           False        # if True use BehaviourManager and Behaviours
     message_bus:
-        max_age_ms:             20.0             # maximum age of a message before expiry
-        publish_delay_sec:       0.05            # publishing delay loop
+        max_age_ms:                  20.0        # maximum age of a message before expiry
+        publish_delay_sec:            0.05       # publishing delay loop
     hardware:
         digital_potentiometer:                   # IO Expander-based RGB Potentiometer board
-            i2c_address:        0x0E             # I²C address for the device
-            brightness:          1.0             # brightness of the RGB LED (0.0-1.0)
-            pin_red:             1               # red pin
-            pin_green:           7               # green pin
-            pin_blue:            2               # blue pin
-            in_min:              0.0             # minimum analog value from IO Expander
-            in_max:              3.3             # maximum analog value from IO Expander
-            out_min:          -255.0             # minimum scaled output value
-            out_max:           255.0             # maximum scaled output value
-        analog_potentiometer:                        # analog potentiometer connected as voltage divider
-            pin:             14                      # pin connected to wiper
-            in_min:           0                      # minimum analog value from IO Expander
-            in_max:         330                      # maximum analog value from IO Expander
-            out_min:          0.0                    # minimum scaled output value
-            out_max:          1.0                    # maximum scaled output value
+            i2c_address:             0x0E        # I²C address for the device
+            brightness:               1.0        # brightness of the RGB LED (0.0-1.0)
+            pin_red:                  1          # red pin
+            pin_green:                7          # green pin
+            pin_blue:                 2          # blue pin
+            in_min:                   0.0        # minimum analog value from IO Expander
+            in_max:                   3.3        # maximum analog value from IO Expander
+            out_min:                -80.0        # minimum scaled output value
+            out_max:                 80.0        # maximum scaled output value
+#           out_min:               -255.0        # minimum scaled output value
+#           out_max:                255.0        # maximum scaled output value
+        analog_potentiometer:                    # analog potentiometer connected as voltage divider
+            pin:                     14          # pin connected to wiper
+            in_min:                   0          # minimum analog value from IO Expander
+            in_max:                 330          # maximum analog value from IO Expander
+            out_min:                  0.0        # minimum scaled output value
+            out_max:                  1.0        # maximum scaled output value
+        battery:
+            enable_battery_messaging:    True    # if True we enable low battery messages to be sent
+            enable_channel_a_messaging:  True    # if True we enable low regulator on channel A messages to be sent
+            enable_channel_b_messaging:  False   # if True we enable low regulator on channel B messages to be sent
+            battery_channel:          0          # AD channel for raw battery voltage
+            five_volt_a_channel:      1          # AD channel for power supply A
+            five_volt_b_channel:      2          # AD channel for power supply B
+            raw_battery_threshold:   17.74       # raw and 5v regulator thresholds set from known measurements:
+            low_5v_threshold:         4.75       # really 4.82v
+            loop_delay_sec:           5          # sample loop delay (sec)
     geometry:                                    # robot geometry (e.g., KR01)
-        wheel_diameter: 68.0                     # wheel diameter (mm)
-        wheelbase: 160.0                         # wheelbase (mm)
-        steps_per_rotation: 494                  # encoder steps per wheel rotation
+        wheel_diameter:              68.0        # wheel diameter (mm)
+        wheelbase:                  160.0        # wheelbase (mm)
+        steps_per_rotation:         494          # encoder steps per wheel rotation
     motor:
-        motor_power_limit:       0.901           # upper and lower (x -1) limit set on power sent to motor
-        maximum_velocity:       90.0             # limit to settable motor velocity
-        enable_slew_limiter:     False           # initial enabled state for slew limiter
-        suppress_slew_limiter:    True           # initial suppressed state for slew limiter
-        enable_pid_controller:    True           # initial enable state for PID controller, otherwise direct drive
-        suppress_pid_controller: False           # initial suppressed state for PID controller
-        enable_jerk_limiter:     False           # initial enabled state for jerk limiter
-        suppress_jerk_limiter:    True           # initial suppressed state for jerk limiter
-        thunderborg_address:    0x15             # I²C address for thunderborg motor controller
+        maximum_velocity:            80.0        # limit to settable motor velocity
+        motor_power_limit:            0.40       # upper and lower (x -1) limit set on power sent to motor
+        enable_slew_limiter:        False        # initial enabled state for slew limiter
+        suppress_slew_limiter:       True        # initial suppressed state for slew limiter
+        enable_pid_controller:       True        # initial enable state for PID controller, otherwise direct drive
+        suppress_pid_controller:    False        # initial suppressed state for PID controller
+        enable_jerk_limiter:        False        # initial enabled state for jerk limiter
+        suppress_jerk_limiter:       True        # initial suppressed state for jerk limiter
+        thunderborg_address:         0x15        # I²C address for thunderborg motor controller
         motor_controller:
-            loop_delay_sec:      0.2             # main loop delay in seconds
-            accel_increment:     5.0             # normal incremental acceleration
-            decel_increment:     5.0             # normal incremental deceleration
-            halt_ratio:          0.4             # ratio for quick halt behaviour
-            brake_ratio:         0.7             # ratio for slower braking behaviour
-            spin_speed:       'HALF'             # motor speed when spinning
+            loop_delay_sec:           0.2        # main loop delay in seconds
+            accel_increment:          5.0        # normal incremental acceleration
+            decel_increment:          5.0        # normal incremental deceleration
+            halt_ratio:               0.4        # ratio for quick halt behaviour
+            brake_ratio:              0.7        # ratio for slower braking behaviour
+            spin_speed:            'HALF'        # motor speed when spinning
         odometry:
-            enable_odometry:              True   # if true we enable motor encoders and odometry
-            motor_encoder_a1_port:          22   # port A
-            motor_encoder_b1_port:          23   # port B
-            motor_encoder_a2_stbd:          17   # stbd A
-            motor_encoder_b2_stbd:          18   # stbd B
+            enable_odometry:         True        # if true we enable motor encoders and odometry
+            motor_encoder_a1_port:    22         # port A
+            motor_encoder_b1_port:    23         # port B
+            motor_encoder_a2_stbd:    17         # stbd A
+            motor_encoder_b2_stbd:    18         # stbd B
             reverse_motor_orientation:   False   # in case you wire up the motors backwards
             reverse_encoder_orientation: False   # in case you wire up the encoders backwards
         pid_controller:
-            kp:                  0.09500         # proportional gain
-            ki:                  0.00000         # integral gain
-            kd:                  0.00000         # derivative gain
-            minimum_output:    -10.0             # lower output limit
-            maximum_output:     10.0             # upper output limit
-            sample_freq_hz:     20               # 20Hz equiv to 50ms/0.05s
-            hyst_queue_len:     20               # size of queue used for running average for hysteresis
-            pot_ctrl:           False            # if True enable potentiometer for setting PID terms
+            kp:                       0.09500    # proportional gain
+            ki:                       0.00000    # integral gain
+            kd:                       0.00000    # derivative gain
+            minimum_output:         -10.0        # lower output limit
+            maximum_output:          10.0        # upper output limit
+            sample_freq_hz:          20          # 20Hz equiv to 50ms/0.05s
+            hyst_queue_len:          20          # size of queue used for running average for hysteresis
+            pot_ctrl:              False         # if True enable potentiometer for setting PID terms
         speed:                                   # configured motor speeds for chadburn events
             astern:
-                MAXIMUM:           -90.0
-                FULL:              -80.0
-                THREE_QUARTER:     -60.0
-                TWO_THIRDS:        -54.0
-                HALF:              -40.0
-                SLOW:              -33.0
-                DEAD_SLOW:         -22.0
-                STOP:                0.0
+                MAXIMUM:             -0.90
+                FULL:                -0.80
+                THREE_QUARTER:       -0.60
+                TWO_THIRDS:          -0.55
+                HALF:                -0.40
+                SLOW:                -0.33
+                DEAD_SLOW:           -0.20
+                STOP:                 0.0
             ahead:
-                STOP:                0.0
-                DEAD_SLOW:          20.0
-                SLOW:               33.0
-                HALF:               40.0
-                TWO_THIRDS:         55.0
-                THREE_QUARTER:      60.0
-                FULL:               80.0
-                MAXIMUM:            90.0
+                STOP:                 0.0
+                DEAD_SLOW:            0.20
+                SLOW:                 0.33
+                HALF:                 0.40
+                TWO_THIRDS:           0.55
+                THREE_QUARTER:        0.60
+                FULL:                 0.80
+                MAXIMUM:              0.90
+#           astern:
+#               MAXIMUM:            -90.0
+#               FULL:               -80.0
+#               THREE_QUARTER:      -60.0
+#               TWO_THIRDS:         -54.0
+#               HALF:               -40.0
+#               SLOW:               -33.0
+#               DEAD_SLOW:          -22.0
+#               STOP:                 0.0
+#           ahead:
+#               STOP:                 0.0
+#               DEAD_SLOW:           20.0
+#               SLOW:                33.0
+#               HALF:                40.0
+#               TWO_THIRDS:          55.0
+#               THREE_QUARTER:       60.0
+#               FULL:                80.0
+#               MAXIMUM:             90.0
         slew:
-            minimum_output:    -90.0            # lower limit of permitted velocity output values
-            maximum_output:     90.0            # upper limit of permitted velocity output values
-            rate:               'FAST'          # select value of enum: EXTREMELY_SLOW, VERY_SLOW, SLOWER, SLOW, NORMAL, FAST, VERY_FAST
-            hysteresis:          2.0            # how close do we get to the target velocity?
-            use_elapsed_time:    True           # used elapsed time or percentage
+            minimum_output:         -90.0        # lower limit of permitted velocity output values
+            maximum_output:          90.0        # upper limit of permitted velocity output values
+            rate:                  'FAST'        # select value of enum: EXTREMELY_SLOW, VERY_SLOW, SLOWER, SLOW, NORMAL, FAST, VERY_FAST
+            hysteresis:               2.0        # how close do we get to the target velocity?
+            use_elapsed_time:        True        # used elapsed time or percentage
         jerk:
-            jerk_tolerance:     10              # percentage limit of permitted change per iteration
+            jerk_tolerance:          10          # percentage limit of permitted change per iteration
     gamepad:
-        enabled: False
-        device_path: '/dev/input/event5'         # the path to the bluetooth gamepad on the pi (see find_gamepad.py)
-        loop_delay:              0.01            # main loop delay was sleep(0.01) or 1/100th second, or 10ms. 50ms is the delay for 20Hz, so 10ms is 5x 20Hz or 100Hz.
-        loop_freq_hz:          100               # polling loop frequency (Hz)
+        enabled:                    False
+        device_path:  '/dev/input/event5'        # the path to the bluetooth gamepad on the pi (see find_gamepad.py)
+        loop_delay:                   0.01       # main loop delay was sleep(0.01) or 1/100th second, or 10ms. 50ms is the delay for 20Hz, so 10ms is 5x 20Hz or 100Hz.
+        loop_freq_hz:               100          # polling loop frequency (Hz)
     behaviour:
         avoid:
-            min_distance:       20.0             # minimum distance in cm upon which we trigger avoidance behaviour
+            min_distance:            20.0        # minimum distance in cm upon which we trigger avoidance behaviour
         roam:
-            min_distance:       20.0             # minimum distance in cm
-            max_distance:      200.0             # maximum distance in cm
-            min_speed:           0.0             # minimum motor speed
-            max_speed:         100.0             # maximum motor speed
+            min_distance:            20.0        # minimum distance in cm
+            max_distance:           200.0        # maximum distance in cm
+            min_speed:                0.0        # minimum motor speed
+            max_speed:              100.0        # maximum motor speed
         moth:
-            anti_moth:          False            # moth or anti-moth
+            anti_moth:              False        # moth or anti-moth
         sniff:
-            nada:               False            # nada
+            nada:                   False        # nada
         idle:
-            idle_threshold_sec:  10              # how many seconds before we trigger an idle behaviour
-            idle_loop_delay_sec: 1.0             # main loop delay in seconds
+            idle_threshold_sec:      10          # how many seconds before we trigger an idle behaviour
+            idle_loop_delay_sec:      1.0        # main loop delay in seconds
     mock:
         potentiometer:
-            loop_delay_sec:      0.05            # loop delay
+            loop_delay_sec:           0.05       # loop delay
         pot_publisher:
-            loop_delay_sec:      0.05            # loop delay
-            hysteresis:          3.0             # hysteresis near zero
+            loop_delay_sec:           0.05       # loop delay
+            hysteresis:               3.0        # hysteresis near zero
         event_publisher:
-            ir_init_value:     100               # initial value of mocked center IR
-            ir_min:             10               # minimum center IR value
-            ir_max:            200               # maximum center IR value
-            ir_incr:            20               # IR step increment
+            ir_init_value:          100          # initial value of mocked center IR
+            ir_min:                  10          # minimum center IR value
+            ir_max:                 200          # maximum center IR value
+            ir_incr:                 20          # IR step increment
             gamepad_publish_delay_sec: 0.01      # delay after Gamepad event
-            publish_delay_sec: 0.01              # delay after IFS event
-            noop_loop_delay_sec: 0.01            # delay on noop loop
+            publish_delay_sec:        0.01       # delay after IFS event
+            noop_loop_delay_sec:      0.01       # delay on noop loop
     arguments:                                   # CLI arguments are copied here
-        nada:                   False            # nada
-        mock_enabled:            True            # permit mocks if real hardware is unavailable
+        nada:                       False        # nada
+        mock_enabled:               False        # permit mocks if real hardware is unavailable
 pi:
-    disable_leds:               False            # disable and re-enable Pi LEDs during operation?
+    disable_leds:                   False        # disable and re-enable Pi LEDs during operation?
     led_0_path:   '/sys/class/leds/led0/brightness'
     led_1_path:   '/sys/class/leds/led1/brightness'
     sudo_name:    'sudo'

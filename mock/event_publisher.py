@@ -238,7 +238,7 @@ class EventPublisher(Publisher):
                         # otherwise handle as event
                         _event = self.get_event_for_char(och)
                         if _event is not None:
-                            self._log.info('key \'{}\' ({}) pressed; publishing message for event: {}'.format(ch, och, _event))
+                            self._log.info('key \'{}\' ({}) pressed; key-publishing message for event: {}'.format(ch, och, _event))
                             _message = self._message_factory.create_message(_event, True)
                             # FIXME TODO load message value for various event types correctly...
 #                           if _event is Event.INFRARED_CNTR:

@@ -17,10 +17,22 @@ from enum import Enum
 from colorama import init, Fore, Style
 init()
 
+from core.logger import Logger, Level
+_log = Logger('speed', Level.INFO)
+
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Direction(Enum):
-    AHEAD   = 0
-    ASTERN  = 1
+    AHEAD   = ( 0, 'ahead')
+    ASTERN  = ( 1, 'astern')
+
+    # ignore the first param since it's already set by __new__
+    def __init__(self, num, label):
+        self._label = label
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    @property
+    def label(self):
+        return self._label
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Speed(Enum):
@@ -28,18 +40,20 @@ class Speed(Enum):
     Provides an enumeration of both ahead (forward) and astern (reverse)
     Chadburn-style speeds, as corresponding to an abstract velocity.
 
-    The default values for astern and ahead are set to zero; these much be
-    set from the YAML application configuration via the configure() method.
+    The default values for astern and ahead proportional power are initially
+    set to zero; these must be set from the YAML application configuration
+    via the configure() method.
     '''
-    #                    label             velocity  astern  ahead
-    STOP          = ( 1, "stop",                  0,    0.0,   0.0 )
-    DEAD_SLOW     = ( 2, "dead slow",            20,    0.0,   0.0 )
-    SLOW          = ( 3, "slow",                 30,    0.0,   0.0 )
-    HALF          = ( 4, "half speed",           50,    0.0,   0.0 )
-    TWO_THIRDS    = ( 5, "two thirds speed",     67,    0.0,   0.0 )
-    THREE_QUARTER = ( 6, "three quarter speed",  75,    0.0,   0.0 )
-    FULL          = ( 7, "full speed",           90,    0.0,   0.0 )
-    MAXIMUM       = ( 9, "maximum speed",       100,    0.0,   0.0 )
+    #                                                proportional power
+    #                    label             velocity    astern  ahead
+    STOP          = ( 1, 'stop',                  0,      0.0,   0.0 )
+    DEAD_SLOW     = ( 2, 'dead slow',            20,      0.0,   0.0 )
+    SLOW          = ( 3, 'slow',                 30,      0.0,   0.0 )
+    HALF          = ( 4, 'half speed',           50,      0.0,   0.0 )
+    TWO_THIRDS    = ( 5, 'two thirds speed',     67,      0.0,   0.0 )
+    THREE_QUARTER = ( 6, 'three quarter speed',  75,      0.0,   0.0 )
+    FULL          = ( 7, 'full speed',           90,      0.0,   0.0 )
+    MAXIMUM       = ( 9, 'maximum speed',       100,      0.0,   0.0 )
 
     # ignore the first param since it's already set by __new__
     def __init__(self, num, label, velocity, astern, ahead):
@@ -61,24 +75,39 @@ class Speed(Enum):
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def velocity(self):
+        '''
+        Return the velocity corresponding with this Speed.
+        '''
         return self._velocity
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def astern(self):
+        '''
+        Return the proportional power astern for this Speed.
+        '''
         return self._astern
 
     @astern.setter
     def astern(self, astern):
+        '''
+        Set the proportional power astern for this Speed.
+        '''
         self._astern = astern
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def ahead(self):
+        '''
+        Return the proportional power ahead for this Speed.
+        '''
         return self._ahead
 
     @ahead.setter
     def ahead(self, ahead):
+        '''
+        Set the proportional power ahead for this Speed.
+        '''
         self._ahead = ahead
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -114,7 +143,7 @@ class Speed(Enum):
             _pp = Speed.lerp( _s0.ahead , _s1.ahead, 1.0 )
             if velocity < 0:
                 _pp *= -1
-#           _log.info(Fore.RED + 'v={};\tX range: ({} to {});          \t\t'.format(velocity, _s0.ahead, _s1.ahead) + Fore.YELLOW + 'power: {:5.2f}'.format(_pp))
+            _log.info(Fore.RED + '💜 v={:5.2f};\tX range: ({} to {});          \t\t'.format(velocity, _s0.ahead, _s1.ahead) + Fore.YELLOW + 'power: {:5.2f}'.format(_pp))
         else:
             if velocity < 0:
                 _pc = ( (-1 * _s0.velocity) - velocity ) / ( _s1.velocity - _s0.velocity )
@@ -124,7 +153,7 @@ class Speed(Enum):
             _pp = Speed.lerp( _s0.ahead , _s1.ahead, _pc )
             if velocity < 0:
                 _pp *= -1
-#           _log.info(Fore.GREEN + 'v={};\tX range: ({} to {}); xt: {:5.2f}; {:.0%}   \t'.format(velocity, _s0.ahead, _s1.ahead, _xt, _pc) + Fore.YELLOW + 'power: {:5.2f}'.format(_pp))
+            _log.info(Fore.GREEN + '💜 v={:5.2f};\tX range: ({} to {}); xt: {:5.2f}; {:.0%}   \t'.format(velocity, _s0.ahead, _s1.ahead, _xt, _pc) + Fore.YELLOW + 'power: {:5.2f}'.format(_pp))
         return _pp
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈

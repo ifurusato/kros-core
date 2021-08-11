@@ -27,10 +27,10 @@ from core.orient import Orientation
 from core.rate import Rate
 from core.logger import Logger, Level
 from core.config_loader import ConfigLoader
-from hardware.i2c_scanner import I2CScanner
+from hardware.i2c_scanner import I2CScanner, DeviceNotFound
 from hardware.motor_configurer import MotorConfigurer
 from hardware.motor import Motor
-from hardware.digital_pot import DigitalPotentiometer, DeviceNotFound
+from hardware.digital_pot import DigitalPotentiometer
 
 _log = Logger('test', Level.INFO)
 

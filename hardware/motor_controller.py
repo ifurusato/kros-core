@@ -87,6 +87,7 @@ class MotorController(Component):
 #           self._log.info('using direct motor control.')
         # variables
         self._decelerate_ratio     = 0.0 # variable used in loop
+        self._verbose              = False # TEMP
         # lambdas
         self._log.info('motors ready.')
 
@@ -100,7 +101,7 @@ class MotorController(Component):
         '''
         Start the loop.
         '''
-        self._log.info('start motor control loop...           🎈🎈🎈🎈🎈🎈🎈🎈  ')
+        self._log.info('start motor control loop...')
         if not self.enabled:
             self._log.warning('not enabled.')
             raise Exception('not enabled.')
@@ -121,16 +122,17 @@ class MotorController(Component):
         try:
             while f_is_enabled():
                 _event_count = next(self._event_counter)
-                if not isclose(self._decelerate_ratio, 0.0, abs_tol=0.1):
-                    # if decelerating then apply that to target velocities first
-                    self.decelerate(_event_count)
-                    pass
+#               if not isclose(self._decelerate_ratio, 0.0, abs_tol=0.1):
+#                   # if decelerating then apply that to target velocities first
+#                   self.decelerate(_event_count)
+#                   pass
                 self._port_motor.update_target_velocity()
                 self._stbd_motor.update_target_velocity()
                 # TODO add execute any callbacks here
 
                 # print stats...
-                self.print_info(_event_count)
+                if self._verbose:
+                    self.print_info(_event_count)
                 time.sleep(self._loop_delay_sec)
         except Exception as e:
             self._log.error('error in loop: {}\n{}'.format(e, traceback.format_exc()))
@@ -362,8 +364,8 @@ class MotorController(Component):
         if _speed is not Speed.STOP and not self.loop_is_running():
             self.start_loop()
         # ........
-        self._log.debug('set chadburn velocity: {}  {}.'.format(_speed.label, _direction))
         _value = _speed.ahead if _direction is Direction.AHEAD else _speed.astern
+        self._log.info('♈ set chadburn velocity: {} direction: {}; value: {}'.format(_speed.label, _direction.label, _value))
         self.set_motor_velocity(Orientation.PORT, _value)
         self.set_motor_velocity(Orientation.STBD, _value)
 

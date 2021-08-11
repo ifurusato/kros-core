@@ -66,19 +66,24 @@ class Motor(Component):
         self._velocity_clip = lambda n: ( -1.0 * self._max_velocity ) if n <= ( -1.0 * self._max_velocity ) \
                 else self._max_velocity if n >= self._max_velocity \
                 else n
-        self._callbacks    = []
         self._motor_power_limit = _cfg.get('motor_power_limit') # power limit to motor
         self._log.info('motor power limit: {:<5.2f}'.format(self._motor_power_limit))
+        self._power_clip = lambda n: ( -1.0 * self._motor_power_limit ) if n <= ( -1.0 * self._motor_power_limit ) \
+                else self._motor_power_limit if n >= self._motor_power_limit \
+                else n
+        self.__callbacks         = []
         self.__steps             = 0     # step counter
         self.__max_applied_power = 0.0   # capture maximum power applied
         self.__max_power_ratio   = 0.0   # will be set by MotorConfigurer
         self.__target_velocity   = 0.0   # the target velocity of the motor
-        self.__max_driving_power = 0.0
         self._decoder            = None  # motor encoder
+        self._slew_limiter       = None
+        self._jerk_limiter       = None
         # slew limiter ...............................................
         _suppress_slew_limiter   = _cfg.get('suppress_slew_limiter')
         _enable_slew_limiter     = _cfg.get('enable_slew_limiter')
-        self._slew_limiter       = SlewLimiter(config, orientation, suppressed=_suppress_slew_limiter, enabled=_enable_slew_limiter, level=level)
+        if not _suppress_slew_limiter and _enable_slew_limiter:
+            self._slew_limiter   = SlewLimiter(config, orientation, suppressed=_suppress_slew_limiter, enabled=_enable_slew_limiter, level=level)
         # provides closed loop velocity feedback .....................
         self._using_mocks = config['kros'].get('arguments').get('using_mocks')
         if self._using_mocks:
@@ -88,6 +93,7 @@ class Motor(Component):
         else:
             self._velocity       = Velocity(config, self, level=level)
             self._velocity.enable()
+
         # pid controller .............................................
         _suppress_pid_controller = _cfg.get('suppress_pid_controller')
         _enable_pid_controller   = _cfg.get('enable_pid_controller')
@@ -95,7 +101,8 @@ class Motor(Component):
         # jerk limiter ...............................................
         _suppress_jerk_limiter   = _cfg.get('suppress_jerk_limiter')
         _enable_jerk_limiter     = _cfg.get('enable_jerk_limiter')
-        self._jerk_limiter       = JerkLimiter(config, orientation, suppressed=_suppress_jerk_limiter, enabled=_enable_jerk_limiter, level=level)
+        if not _suppress_jerk_limiter and _enable_jerk_limiter:
+            self._jerk_limiter   = JerkLimiter(config, orientation, suppressed=_suppress_jerk_limiter, enabled=_enable_jerk_limiter, level=level)
         self._log.info('ready.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -103,7 +110,7 @@ class Motor(Component):
         '''
         Used by the Velocity class to obtain a callback on the motor loop.
         '''
-        self._callbacks.append(callback)
+        self.__callbacks.append(callback)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
@@ -153,7 +160,6 @@ class Motor(Component):
     @decoder.setter
     def decoder(self, decoder):
         self._decoder = decoder
-        self._log.info(Fore.GREEN + '🖐 decoder {} set.'.format(self._decoder))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
@@ -175,7 +181,7 @@ class Motor(Component):
         '''
         if not isinstance(target_velocity, float):
             raise ValueError('expected float, not {}'.format(type(target_velocity)))
-        self._log.info(Fore.GREEN + Style.DIM + 'target velocity: {:5.2f} of {} motor.'.format(target_velocity, self._orientation.name))
+#       self._log.info(Fore.GREEN + Style.DIM + '🍀 SET target velocity: {:5.2f} of {} motor.'.format(target_velocity, self._orientation.name))
         self.__target_velocity = target_velocity
         if self._using_mocks:
             raise Exception('using velocity mock!')
@@ -233,31 +239,33 @@ class Motor(Component):
         '''
         if self.enabled:
             _velocity = self._velocity()
-            self._log.info('🐸 update target velocity of {} motor: {:5.2f} ➔ {:5.2f}'.format(self._orientation, self.velocity, self.__target_velocity))
+#           self._log.info('🐸 update target velocity of {} motor: {:5.2f} ➔ {:5.2f}'.format(self._orientation.name, self.velocity, self.__target_velocity))
 
             # set the target velocity variable modified by the slew limiter, if active
-            if self._slew_limiter.is_active:
+        
+            if self._slew_limiter and self._slew_limiter.is_active:
                 self.__target_velocity = self._slew_limiter.limit(self.velocity, self.__target_velocity)
 
             # use velocity clipper as a sanity checker
-            self.__target_velocity = -1.0 * self._velocity_clip(-1.0 * self.__target_velocity) \
-                    if self.__target_velocity < 0 \
-                    else self._velocity_clip(self.__target_velocity)
-            self._log.info('🐸 {} motor target velocity: {:5.2f} ➔ {:<5.2f}'.format(self._orientation, self.velocity, self.__target_velocity))
+#           self.__target_velocity = -1.0 * self._velocity_clip(-1.0 * self.__target_velocity) \
+#                   if self.__target_velocity < 0 \
+#                   else self._velocity_clip(self.__target_velocity)
+            self.__target_velocity = self._velocity_clip(self.__target_velocity)
+#           self._log.info('🐸 {} motor target velocity: {:5.2f} ➔ {:<5.2f}'.format(self._orientation.name, self.velocity, self.__target_velocity))
 
-            # we now convert velocity to power, either via the PID controller
-            # when active, otherwise the proportional interpolator from the 
-            # Speed Enum.
-            if self._pid_controller.is_active: # if active, pass target velocity to PID controller
+            # we now convert velocity to power, either by passing the target velocity to the PID controller (when active)
+            # otherwise directly setting power to the motor via the proportional interpolator from the Speed Enum.
+            if self._pid_controller.is_active: # via PID
                 self._pid_controller.set_velocity(self.__target_velocity)
-            else: # otherwise just directly on to set the motor power
+            else: # via Speed
                 _power = Speed.get_proportional_power(self.__target_velocity)
+#               self._log.info('🐸🐸 POWER: {:5.2f}'.format(_power))
                 self.__set_motor_power(_power)
-        else:
+#       else:
 #           self._log.info('🐸 already at target velocity of {} motor: {:5.2f} ➔ {:5.2f} ({})'.format(self._orientation, self.velocity, self.__target_velocity, type(_velocity)))
-            self._log.info('🐸 update target velocity failed: disabled.')
+#           self._log.info('🐸 update target velocity failed: disabled.')
 
-        for callback in self._callbacks:
+        for callback in self.__callbacks:
 #           self._log.info(Fore.BLUE + 'executing callback...')
             callback()
 
@@ -288,22 +296,24 @@ class Motor(Component):
             return
         _current_power = self.current_power
         # even if disabled or suppressed, JerkLimiter still clips
-        target_power = self._jerk_limiter.limit(self.current_power, target_power)
-        self._log.debug('current: {:5.2f}; target: {:5.2f}; max power ratio: {:5.2f}'.format(
-                _current_power, target_power, self.max_power_ratio))
+        if self._jerk_limiter:
+            target_power = self._jerk_limiter.limit(self.current_power, target_power)
+        # keep track of highest-applied target power
+        self.__max_applied_power = max(abs(target_power), self.__max_applied_power)
+
         # okay, let's go .........................
-        self.__max_applied_power = max(target_power, self.__max_applied_power)
+        # driving power is modified by the max power ratio to reduce battery voltage to motor voltage
         _driving_power = float(target_power * self.max_power_ratio)
-        self.__max_driving_power = max(abs(_driving_power), self.__max_driving_power)
-        # display actual power to motor
-        self._log.debug(Fore.MAGENTA + Style.BRIGHT + 'power argument: {:>5.2f}'.format(target_power) + Style.NORMAL \
-                + '\tcurrent power: {:>5.2f}; driving power: {:>5.2f}.'.format(_current_power, _driving_power))
+        # temporary, just for safety
+        _clipped_driving_power = self._power_clip(_driving_power)
         if self._orientation is Orientation.PORT:
-#           if abs(_driving_power) < 0.3:
-            self._tb.SetMotor1(_driving_power)
+            self._log.debug(Fore.RED + '💟 power: target {:5.2f} converted to driving {:<5.2f} clipped to: {:5.2f}'.format(target_power, _driving_power, _clipped_driving_power))
+            self._tb.SetMotor1(_clipped_driving_power)
+            pass
         else:
-#           if abs(_driving_power) < 0.3:
-            self._tb.SetMotor2(_driving_power)
+            self._log.debug(Fore.GREEN + '💟 power: target {:5.2f} converted to driving {:<5.2f} clipped to: {:5.2f}'.format(target_power, _driving_power, _clipped_driving_power))
+            self._tb.SetMotor2(_clipped_driving_power)
+            pass
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
@@ -351,16 +361,20 @@ class Motor(Component):
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def enable(self):
         if not self.enabled:
-            self._slew_limiter.enable()
-            self._jerk_limiter.enable()
+            if self._slew_limiter:
+                self._slew_limiter.enable()
+            if self._jerk_limiter:
+                self._jerk_limiter.enable()
             Component.enable(self)
         self._log.info('enabled.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def disable(self):
         if self.enabled:
-            self._slew_limiter.disable()
-            self._jerk_limiter.disable()
+            if self._slew_limiter:
+                self._slew_limiter.disable()
+            if self._jerk_limiter:
+                self._jerk_limiter.disable()
             Component.disable(self)
         self._log.info('disabled.')
 
@@ -368,10 +382,7 @@ class Motor(Component):
     def close(self):
         if self.enabled:
             self.disable()
-        if self.__max_applied_power > 0 or self.__max_driving_power > 0:
-            self._log.warning('on closing: max power: {:>5.2f}; max adjusted power: {:>5.2f}.'.format(self.__max_applied_power, self.__max_driving_power))
-        else:
-            self._log.info(Style.DIM + 'on closing: max power: {:>5.2f}; max adjusted power: {:>5.2f}.'.format(self.__max_applied_power, self.__max_driving_power))
+        self._log.info(Style.DIM + 'on closing, maximum applied power: {:>5.2f}'.format(self.__max_applied_power))
         # just do it anyway
         self.stop()
         self._log.info('closed.')
