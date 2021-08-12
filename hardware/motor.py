@@ -36,8 +36,8 @@ class Motor(Component):
     velocity), then is passed along to a PIDController, which converts the
     velocity to power (-1.0 to 1.0), which is then passed through a JerkLimiter
     to avoid sudden (and potentially dangerous) changes to the motor. All three
-    are optional; when the PIDController is disabled a simple velocity-to-power
-    function is used.
+    are optional; when the PIDController is disabled a velocity-to-power
+    dual-axis proportional interpolating function is used.
 
     This uses the kros:motor: section of the configuration.
 
@@ -184,8 +184,8 @@ class Motor(Component):
         self._log.info(Fore.GREEN + Style.BRIGHT + '🍀🍀🍀 SET target velocity: {:5.2f} of {} motor.'.format(target_velocity, self._orientation.name))
         self.__target_velocity = target_velocity
         if self._using_mocks:
-            raise Exception('using velocity mock!')
             self._velocity.velocity = target_velocity
+#           raise Exception('using velocity mock!')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
@@ -232,7 +232,7 @@ class Motor(Component):
         If the current velocity doesn't match the target, set the target
         velocity and motor power as an attempt to align them.
 
-        This method is the one that should be called on a regular basis, 
+        This method is the one that should be called on a regular basis,
         and ties the SlewLimiter, PIDController and JerkLimiter together.
 
         All of the dunderscored methods are intended as internal methods.
@@ -242,7 +242,7 @@ class Motor(Component):
 #           self._log.info('🐸 update target velocity of {} motor: {:5.2f} ➔ {:5.2f}'.format(self._orientation.name, self.velocity, self.__target_velocity))
 
             # set the target velocity variable modified by the slew limiter, if active
-        
+
             if self._slew_limiter and self._slew_limiter.is_active:
                 self.__target_velocity = self._slew_limiter.limit(self.velocity, self.__target_velocity)
 
@@ -282,9 +282,9 @@ class Motor(Component):
         '''
         Sets the motor power to a number between -1.0 to 1.0, with the actual
         limits set by the max_power_ratio, which alters the value to match
-        the power/motor voltage ratio. 
+        the power/motor voltage ratio.
 
-        If the JerkLimiter is active this acts as a sanity check on 
+        If the JerkLimiter is active this acts as a sanity check on
         overly-rapid changes to motor power.
 
         :param target_power:  the target motor power

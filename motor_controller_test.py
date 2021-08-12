@@ -85,6 +85,8 @@ def test_motors():
         _hz = 10
         _rate = Rate(_hz, Level.ERROR)
         while True:
+            _port_motor.update_target_velocity()
+            _stbd_motor.update_target_velocity()
 #           _anlg_scaled_value = _apot.get_scaled_value()
             _dgtl_scaled_value = _dpot.get_scaled_value(False)
             if _dgtl_scaled_value != _last_scaled_value: # if not the same as last time

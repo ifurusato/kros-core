@@ -171,7 +171,8 @@ class KROS(Component, FiniteStateMachine):
         _enable_pot_publisher = _cfg.get('enable_pot_publisher')
         if _enable_pot_publisher:
             self._pot_publisher = PotentiometerPublisher(self._config, self._message_bus, self._message_factory, level=self._level)
-        else:
+        elif not _enable_event_publisher:
+            # we only enable the mock potentiometer publisher if the event publisher isn't available
             self._pot_publisher = MockPotPublisher(self._config, self._message_bus, self._message_factory, level=self._level)
 
         # add battery check publisher

@@ -110,7 +110,7 @@ class BatteryCheck(Publisher):
             self._log.error("This script requires the ads1015 module\nInstall with: pip3 install --user ads1015")
 #           from lib.mock_ads1015 import ADS1015
 #           sys.exit(1)
-            raise ModuleNotFoundError('This script requires the ads1015 module\nInstall with: pip3 install --user ads1015')
+#           raise ModuleNotFoundError('This script requires the ads1015 module\nInstall with: pip3 install --user ads1015')
         except Exception as e:
             raise RuntimeError('error configuring AD converter: {}'.format(traceback.format_exc()))
         self._log.info('ready.')
@@ -213,8 +213,9 @@ class BatteryCheck(Publisher):
     def enable(self):
         Publisher.enable(self)
         if self.enabled:
-
-            if self._message_bus.get_task_by_name(BatteryCheck._LISTENER_LOOP_NAME):
+            if not self._ads1015:
+                self._log.warning('cannot enable battery check: no ADC available.')
+            elif self._message_bus.get_task_by_name(BatteryCheck._LISTENER_LOOP_NAME):
                 self._log.warning('already enabled.')
             else:
                 self._log.info('creating task for battery listener loop...')
@@ -288,8 +289,9 @@ class BatteryCheck(Publisher):
 #                   return
                 self._log.info('[{:03d}] battery check started...'.format(_count))
 
-                self._battery_voltage     = self._ads1015.get_compensated_voltage(channel=self._battery_channel, reference_voltage=self._reference)
-                self._log.info(Fore.GREEN + 'battery channel: {}; reference: {:<5.2f}v; voltage: {:5.2f}v'.format(self._battery_channel, self._reference, self._battery_voltage))
+                self._battery_voltage = self._ads1015.get_compensated_voltage(channel=self._battery_channel, reference_voltage=self._reference)
+                self._log.info(Fore.GREEN + 'battery channel: {}; reference: {:<5.2f}v; voltage: {:5.2f}v'.format(
+                        self._battery_channel, self._reference, self._battery_voltage))
 
 #               _motor_voltage = self._read_tb_voltage()
 #               if self._battery_voltage is None or ( self._tb and _motor_voltage is None ):
@@ -317,7 +319,6 @@ class BatteryCheck(Publisher):
                 if not _message:
                     self._log.info(Style.DIM + 'battery: {:>5.2f}v; regulator A: {:>5.2f}v; regulator B: {:>5.2f}v'.format(\
                             self._battery_voltage, self._regulator_a_voltage, self._regulator_b_voltage))
-
 
                 if _message:
 #                   _message = self._message_factory.create_message(_event, True)

@@ -10,9 +10,9 @@ kros:
     use_external_clock:               True       # if True use external clock
     exit_on_dire_event:              False       # if True exit if encountering a dire event
     component:
-        enable_event_publisher:      False        # keyboard robot simulator (kinda necessary for running CLI)
-        enable_pot_publisher:        False        # digital velocity control potentiometer publisher
-        enable_behaviours:           False        # if True use BehaviourManager and Behaviours
+        enable_event_publisher:      True        # keyboard robot simulator (kinda necessary for running CLI)
+        enable_pot_publisher:        False       # digital velocity control potentiometer publisher
+        enable_behaviours:           False       # if True use BehaviourManager and Behaviours
     message_bus:
         max_age_ms:                  20.0        # maximum age of a message before expiry
         publish_delay_sec:            0.05       # publishing delay loop

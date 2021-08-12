@@ -157,14 +157,14 @@ class MotorController(Component):
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def print_info(self, count):
         if self.stopped:
-            self._log.info(('[{:04d}] '.format(count) if count else '')
-                    + 'velocity: '
-                    + Fore.RED   + 'port: {:<5.2f} -> {:<5.2f} / {:<5.2f}'.format(
-                            self._port_motor.velocity, self._port_motor.target_velocity, self._port_motor.current_power)
-                    + Fore.CYAN  + ' :: '
-                    + Fore.GREEN + 'stbd: {:<5.2f} -> {:<5.2f} / {:<5.2f}'.format(
-                            self._stbd_motor.velocity, self._stbd_motor.target_velocity, self._stbd_motor.current_power)
-                    + Fore.CYAN + ' :: movement: {}'.format(self._characterise_movement()))
+            self._log.debug('[{:04d}] '.format(count) + 'velocity: stopped.')
+#                   + Fore.RED   + 'port: {:<5.2f} -> {:<5.2f} / {:<5.2f}'.format(
+#                           self._port_motor.velocity, self._port_motor.target_velocity, self._port_motor.current_power)
+#                   + Fore.CYAN  + ' :: '
+#                   + Fore.GREEN + 'stbd: {:<5.2f} -> {:<5.2f} / {:<5.2f}'.format(
+#                           self._stbd_motor.velocity, self._stbd_motor.target_velocity, self._stbd_motor.current_power)
+#                   + Fore.CYAN + ' :: stopped.')
+#                   + Fore.CYAN + ' :: movement: {}'.format(self._characterise_movement()))
         else:
             if self._decelerate_ratio == 0.0:
                 self._log.info(('[{:04d}] '.format(count) if count else '')
