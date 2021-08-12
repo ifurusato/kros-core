@@ -78,7 +78,6 @@ def test_motors():
 #       _cfg = [ 0, 330, 0.0, 1.0 ]
 #       _apot = AnalogPotentiometer(_config, in_min=_cfg[0], in_max=_cfg[1], out_min=_cfg[2], out_max=_cfg[3], level=Level.INFO)
 
-#       sys.exit(0)
         _anlg_scaled_value = 0.0
         _last_scaled_value = 0.0
         _log.info('starting test...')

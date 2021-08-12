@@ -47,7 +47,6 @@ class Event(Enum):
     BATTERY_LOW            = ( 11, "battery low",               1,   Group.SYSTEM )
     HIGH_TEMPERATURE       = ( 12, "high temperature",          1,   Group.SYSTEM )
     COLLISION_DETECT       = ( 13, "collision detect",          2,   Group.SYSTEM )
-#   EMERGENCY_ASTERN       = ( 14, "emergency astern",          2,   Group.SYSTEM )
 
     # gamepad events ........................................................................
     GAMEPAD                = ( 40, "gamepad",                  10,   Group.GAMEPAD )

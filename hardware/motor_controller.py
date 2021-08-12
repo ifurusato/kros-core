@@ -10,8 +10,9 @@
 # modified: 2021-07-22
 #
 
+import sys
 from threading import Thread
-import asyncio, itertools, random, time, traceback
+import asyncio, itertools, random, traceback
 from math import isclose
 from datetime import datetime as dt
 from colorama import init, Fore, Style
@@ -22,6 +23,7 @@ from core.component import Component
 from core.orient import Orientation
 from core.speed import Speed, Direction
 from core.event import Event
+from core.rate import Rate
 from core.message_bus import MessageBus
 from hardware.motor_configurer import MotorConfigurer
 from hardware.motor import Motor
@@ -67,10 +69,14 @@ class MotorController(Component):
         self._loop_thread          = None
         self._loop_enabled         = False
         self._event_counter        = itertools.count()
+        self._last_velocity        = None
         # configured constants
         _cfg = config['kros'].get('motor').get('motor_controller')
-        self._loop_delay_sec       = _cfg.get('loop_delay_sec')    # main loop delay
-        self._log.info('loop delay:\t{:5.2f}s'.format(self._loop_delay_sec))
+        self._verbose              = _cfg.get('verbose')
+        self._loop_delay_hz        = _cfg.get('loop_delay_hz')     # main loop delay
+        self._loop_delay_sec       = 1 / self._loop_delay_hz 
+        self._log.info('loop delay:\t{}Hz ({:4.2f}s)'.format(self._loop_delay_hz, self._loop_delay_sec))
+        self._rate                 = Rate(self._loop_delay_hz, Level.ERROR)
         self._accel_increment      = _cfg.get('accel_increment')   # normal incremental acceleration
         self._decel_increment      = _cfg.get('decel_increment')   # normal incremental deceleration
         self._log.info('accelerate increment: {:5.2f}; decelerate increment: {:5.2f}'.format(self._accel_increment, self._decel_increment))
@@ -87,7 +93,6 @@ class MotorController(Component):
 #           self._log.info('using direct motor control.')
         # variables
         self._decelerate_ratio     = 0.0 # variable used in loop
-        self._verbose              = True # TEMP
         # lambdas
         self._log.info('motors ready.')
 
@@ -118,7 +123,7 @@ class MotorController(Component):
         '''
         The motors loop, which executes while the flag argument lambda is True.
         '''
-        self._log.info('🌳 loop start: {}'.format(self._decelerate_ratio))
+        self._log.info('loop start.')
         try:
             while f_is_enabled():
                 _event_count = next(self._event_counter)
@@ -133,10 +138,11 @@ class MotorController(Component):
                 # print stats...
                 if self._verbose:
                     self.print_info(_event_count)
-                time.sleep(self._loop_delay_sec)
+                self._rate.wait()
+
         except Exception as e:
             self._log.error('error in loop: {}\n{}'.format(e, traceback.format_exc()))
-        self._log.info('exited display loop.')
+        self._log.info('exited motor control loop.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def stop_loop(self):
@@ -294,9 +300,12 @@ class MotorController(Component):
     def set_motor_velocity(self, orientation, target_velocity):
         '''
         A convenience method that sets the target velocity and motor
-        power of the specified motor.
+        power of the specified motor. Accepts either ints or floats
+        between -100 and 100.
         '''
 #       self._log.info(Fore.GREEN + Style.NORMAL + 'set velocity: {:5.2f} of {} motor.'.format(target_velocity, orientation.name))
+        if isinstance(target_velocity, int):
+           target_velocity = float(target_velocity)
         if not isinstance(target_velocity, float):
             raise ValueError('expected float, not {}'.format(type(target_velocity)))
         if orientation is Orientation.PORT:
@@ -308,46 +317,55 @@ class MotorController(Component):
     def dispatch_velocity_event(self, payload):
         self.reset_deceleration()
         _event = payload.event
-        self._log.info('dispatch velocity event: {}'.format(_event.label))
+#       self._log.debug('dispatch velocity event: {}'.format(_event.label))
         _value = payload.value
+        _changed = self._last_velocity != _value
         if not self.loop_is_running():
             self.start_loop()
         if _event is Event.VELOCITY:
-            self._log.info(self._color + Style.BRIGHT + 'set velocity;\t'
-                    + Fore.RED + 'port: {:5.2f} / {:5.2f};\t'.format(_value, self._port_motor.velocity)
-                    + Fore.GREEN + 'stbd: {:5.2f} / {:5.2f}'.format(_value, self._stbd_motor.velocity))
+            if _changed:
+                self._log.info(self._color + Style.BRIGHT + 'set velocity;\t'
+                        + Fore.RED + 'port: {:5.2f} / {:5.2f}; '.format(_value, self._port_motor.velocity)
+                        + Fore.GREEN + 'stbd: {:5.2f} / {:5.2f}'.format(_value, self._stbd_motor.velocity))
             self.set_motor_velocity(Orientation.PORT, _value)
             self.set_motor_velocity(Orientation.STBD, _value)
         elif _event is Event.INCREASE_PORT_VELOCITY:
             self._increment_motor_velocity(Orientation.PORT, self._accel_increment)
-            self._log.info(self._color + Style.BRIGHT + 'increase PORT velocity; velocity: {:5.2f}'.format(self._port_motor.velocity))
+            if _changed:
+                self._log.info(self._color + Style.BRIGHT + 'increase PORT velocity; velocity: {:5.2f}'.format(self._port_motor.velocity))
             pass
         elif _event is Event.DECREASE_PORT_VELOCITY:
             self._increment_motor_velocity(Orientation.PORT, -1 * self._decel_increment)
-            self._log.info(self._color + Style.BRIGHT + 'decrease PORT velocity; velocity: {:5.2f}'.format(self._port_motor.velocity))
+            if _changed:
+                self._log.info(self._color + Style.BRIGHT + 'decrease PORT velocity; velocity: {:5.2f}'.format(self._port_motor.velocity))
             pass
         elif _event is Event.INCREASE_STBD_VELOCITY:
             self._increment_motor_velocity(Orientation.STBD, self._accel_increment)
-            self._log.info(self._color + Style.BRIGHT + 'increase STBD velocity; velocity: {:5.2f}'.format(self._stbd_motor.velocity))
+            if _changed:
+                self._log.info(self._color + Style.BRIGHT + 'increase STBD velocity; velocity: {:5.2f}'.format(self._stbd_motor.velocity))
             pass
         elif _event is Event.DECREASE_STBD_VELOCITY:
             self._increment_motor_velocity(Orientation.STBD, -1 * self._decel_increment)
-            self._log.info(self._color + Style.BRIGHT + 'decrease STBD velocity; velocity: {:5.2f}'.format(self._stbd_motor.velocity))
+            if _changed:
+                self._log.info(self._color + Style.BRIGHT + 'decrease STBD velocity; velocity: {:5.2f}'.format(self._stbd_motor.velocity))
             pass
         elif _event is Event.INCREASE_VELOCITY:
             self._increment_motor_velocity(Orientation.PORT, self._accel_increment)
             self._increment_motor_velocity(Orientation.STBD, self._accel_increment)
-            self._log.info(self._color + Style.BRIGHT + 'increase velocity;\t'
-                    + Fore.RED + 'port: {:5.2f};\t'.format(self._port_motor.velocity)
-                    + Fore.GREEN + 'stbd: {:5.2f}'.format(self._stbd_motor.velocity))
+            if _changed:
+                self._log.info(self._color + Style.BRIGHT + 'increase velocity;\t'
+                        + Fore.RED + 'port: {:5.2f};\t'.format(self._port_motor.velocity)
+                        + Fore.GREEN + 'stbd: {:5.2f}'.format(self._stbd_motor.velocity))
         elif _event is Event.DECREASE_VELOCITY:
             self._increment_motor_velocity(Orientation.PORT, -1 * self._decel_increment)
             self._increment_motor_velocity(Orientation.STBD, -1 * self._decel_increment)
-            self._log.info(self._color + Style.BRIGHT + 'decrease velocity;\t'
-                    + Fore.RED + 'port: {:5.2f};\t'.format(self._port_motor.velocity)
-                    + Fore.GREEN + 'stbd: {:5.2f}'.format(self._stbd_motor.velocity))
+            if _changed:
+                self._log.info(self._color + Style.BRIGHT + 'decrease velocity;\t'
+                        + Fore.RED + 'port: {:5.2f};\t'.format(self._port_motor.velocity)
+                        + Fore.GREEN + 'stbd: {:5.2f}'.format(self._stbd_motor.velocity))
         else:
             raise ValueError('unrecognised velocity event {}'.format(_event.label))
+        self._last_velocity = _value
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def dispatch_chadburn_event(self, payload):
@@ -364,7 +382,7 @@ class MotorController(Component):
         if _speed is not Speed.STOP and not self.loop_is_running():
             self.start_loop()
         # ........
-        _value = _speed.ahead if _direction is Direction.AHEAD else _speed.astern
+        _value = _speed.velocity if _direction is Direction.AHEAD else -1 * _speed.velocity
         self._log.info('♈ set chadburn velocity: {} direction: {}; value: {}'.format(_speed.label, _direction.label, _value))
         self.set_motor_velocity(Orientation.PORT, _value)
         self.set_motor_velocity(Orientation.STBD, _value)
@@ -510,11 +528,11 @@ class MotorController(Component):
         self._log.info('theta SPIN {}.'.format(orientation.name))
         self.reset_deceleration()
         if orientation is Orientation.PORT:
-            _port_velocity = self._spin_speed.astern
-            _stbd_velocity = self._spin_speed.ahead
+            _port_velocity = -1 * self._spin_speed.velocity
+            _stbd_velocity = self._spin_speed.velocity
         elif orientation is Orientation.STBD:
-            _port_velocity = self._spin_speed.ahead
-            _stbd_velocity = self._spin_speed.astern
+            _port_velocity = self._spin_speed.velocity
+            _stbd_velocity = -1 * self._spin_speed.velocity
         else:
             raise Exception('unrecognised spin direction: {}'.format(orientation))
         self.set_motor_velocity(Orientation.PORT, _port_velocity)

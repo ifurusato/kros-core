@@ -7,7 +7,7 @@
 #
 # author:   Murray Altheim
 # created:  2020-04-27
-# modified: 2020-05-21
+# modified: 2021-08-12
 #
 # A general purpose slew limiter that limits the rate of change of a value.
 #
@@ -52,7 +52,9 @@ class SlewLimiter(Component):
         self._stats_queue      = None
         self._start_time       = self._millis()
         # lambdas
-        self._clip = lambda n: self._minimum_output if n <= self._minimum_output else self._maximum_output if n >= self._maximum_output else n
+        self._clip = lambda n: self._minimum_output if n <= self._minimum_output \
+                else self._maximum_output if n >= self._maximum_output \
+                else n
         if not self.suppressed and self.enabled:
             self._log.info('ready.')
         else:
@@ -110,13 +112,13 @@ class SlewLimiter(Component):
                 _min = current_value - ( self._slew_rate.limit * _elapsed )
                 _max = current_value + ( self._slew_rate.limit * _elapsed )
                 _value = self._clip_by(target_value, _min, _max)
-                self._log.debug(Fore.BLUE + '+value: {:+06.2f}; target_value: {:+06.2f}), _min: {:+06.2f}), _max: {:+06.2f}); elapsed: {:+06.2f}'.format(
+                self._log.debug(Fore.BLUE + '+value: {:+06.2f}; target: {:+06.2f}), min: {:+06.2f}), max: {:+06.2f}); elapsed: {:+06.2f}'.format(
                         _value, target_value, _min, _max, _elapsed))
             else: # decreasing .......................................
                 _min = current_value - ( self._slew_rate.limit * _elapsed )
                 _max = current_value + ( self._slew_rate.limit * _elapsed )
                 _value = self._clip_by(target_value, _min, _max)
-                self._log.debug(Fore.BLUE + '-value: {:+06.2f}; target_value: {:+06.2f}), _min: {:+06.2f}), _max: {:+06.2f}); elapsed: {:+06.2f}'.format(
+                self._log.debug(Fore.BLUE + '-value: {:+06.2f}; target: {:+06.2f}), min: {:+06.2f}), max: {:+06.2f}); elapsed: {:+06.2f}'.format(
                         _value, target_value, _min, _max, _elapsed))
         else:
             if isclose(target_value, current_value, abs_tol=1e-3):
@@ -128,7 +130,7 @@ class SlewLimiter(Component):
                 if abs(_diff) < self._slew_hysteresis:
                     _diff = self._slew_hysteresis
                 _value = current_value + _diff
-                self._log.debug(Fore.BLUE + '+value: {:+06.2f}; diff: {:06.2f} ({:3.1f}%); target_value: {:+06.2f}'.format(\
+                self._log.debug(Fore.BLUE + '+value: {:+06.2f}; diff: {:06.2f} ({:3.1f}%); target: {:+06.2f}'.format(\
                         _value, _diff, 100.0 * self._slew_rate.ratio, target_value))
             else: # decreasing .......................................
                 # subtract a percentage of difference between current and target to current
@@ -137,12 +139,12 @@ class SlewLimiter(Component):
 #                   _value = target_value
                     _diff = self._slew_hysteresis
                 _value = current_value - _diff
-                self._log.debug(Fore.BLUE + '-value: {:+06.2f}; diff: {:06.2f} ({:3.1f}%); target_value: {:+06.2f}'.format(\
+                self._log.debug(Fore.BLUE + '-value: {:+06.2f}; diff: {:06.2f} ({:3.1f}%); target: {:+06.2f}'.format(\
                         _value, _diff, 100.0 * self._slew_rate.ratio, target_value))
             pass
 
         if ( _value > target_value - self._slew_hysteresis and _value < target_value + self._slew_hysteresis ):
-            self._log.info('value: {:+06.2f}; target_value: {:+06.2f}'.format(_value, target_value))
+            self._log.info('value: {:+06.2f}; target: {:+06.2f}'.format(_value, target_value))
             return target_value
         # clip the output between min and max set in config (if negative we fix it before and after)
         return -1.0 * self._clip(-1.0 * _value) if _value < 0.0 else self._clip(_value)
@@ -201,11 +203,6 @@ class SlewRate(Enum): #        tested to 50.0 velocity:
     @property
     def ratio(self):
         return self._ratio
-
-#   # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-#   @property
-#   def pid(self):
-#       return self._pid
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property

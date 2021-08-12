@@ -49,10 +49,11 @@ class Speed(Enum):
     STOP          = ( 1, 'stop',                  0,      0.0,   0.0 )
     DEAD_SLOW     = ( 2, 'dead slow',            20,      0.0,   0.0 )
     SLOW          = ( 3, 'slow',                 30,      0.0,   0.0 )
-    HALF          = ( 4, 'half speed',           50,      0.0,   0.0 )
-    TWO_THIRDS    = ( 5, 'two thirds speed',     67,      0.0,   0.0 )
-    THREE_QUARTER = ( 6, 'three quarter speed',  75,      0.0,   0.0 )
-    FULL          = ( 7, 'full speed',           90,      0.0,   0.0 )
+    ONE_THIRD     = ( 4, 'one third speed',      40,      0.0,   0.0 )
+    HALF          = ( 5, 'half speed',           50,      0.0,   0.0 )
+    TWO_THIRDS    = ( 6, 'two thirds speed',     67,      0.0,   0.0 )
+    THREE_QUARTER = ( 7, 'three quarter speed',  75,      0.0,   0.0 )
+    FULL          = ( 8, 'full speed',           90,      0.0,   0.0 )
     MAXIMUM       = ( 9, 'maximum speed',       100,      0.0,   0.0 )
 
     # ignore the first param since it's already set by __new__

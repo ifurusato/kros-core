@@ -168,24 +168,30 @@ class KROS(Component, FiniteStateMachine):
         _enable_event_publisher = _cfg.get('enable_event_publisher')
         if _enable_event_publisher:
             self._event_publisher = EventPublisher(self._config, self._message_bus, self._message_factory, self._motor_ctrl, self._system, level=self._level)
-        _enable_pot_publisher = _cfg.get('enable_pot_publisher')
-        if _enable_pot_publisher:
-            self._pot_publisher = PotentiometerPublisher(self._config, self._message_bus, self._message_factory, level=self._level)
-        elif not _enable_event_publisher:
-            # we only enable the mock potentiometer publisher if the event publisher isn't available
-            self._pot_publisher = MockPotPublisher(self._config, self._message_bus, self._message_factory, level=self._level)
+            if _cfg.get('enable_pot_publisher'):
+                self._log.warning('key event and potentiometer publishers both enabled; using only key events.')
+        if not _enable_event_publisher: # we only enable potentiometer publishers if event publisher isn't available
+            if _cfg.get('enable_pot_publisher'):
+                self._pot_publisher = PotentiometerPublisher(self._config, self._message_bus, self._message_factory, level=self._level)
+            else:
+                self._pot_publisher = MockPotPublisher(self._config, self._message_bus, self._message_factory, level=self._level)
 
         # add battery check publisher
-        self._battery = BatteryCheck(self._config, self._message_bus, self._message_factory, self._level)
+        if _cfg.get('enable_battery_publisher'):
+            self._battery = BatteryCheck(self._config, self._message_bus, self._message_factory, self._level)
 
 #       self._publisher2  = FloodPublisher(self._message_bus, self._message_factory)
 #       self._publisher3  = GamepadPublisher(self._config, self._message_bus, self._message_factory)
 
         # create subscribers ...................................................
-        self._system_subscriber   = SystemSubscriber(self._config, self, self._message_bus, level=self._level)
-        self._motor_subscriber    = MotorSubscriber(self._config, self._message_bus, self._motor_ctrl, level=self._level)
-        self._bumper_subscriber   = BumperSubscriber(self._config, self._message_bus, self._motor_ctrl, level=self._level)
-        self._infrared_subscriber = InfraredSubscriber(self._config, self._message_bus, self._motor_ctrl, level=self._level) # reacts to IR sensors
+        if _cfg.get('enable_system_subscriber'):
+            self._system_subscriber   = SystemSubscriber(self._config, self, self._message_bus, level=self._level)
+        if _cfg.get('enable_motor_subscriber'):
+            self._motor_subscriber    = MotorSubscriber(self._config, self._message_bus, self._motor_ctrl, level=self._level)
+        if _cfg.get('enable_bumper_subscriber'):
+            self._bumper_subscriber   = BumperSubscriber(self._config, self._message_bus, self._motor_ctrl, level=self._level)
+        if _cfg.get('enable_infrared_subscriber'):
+            self._infrared_subscriber = InfraredSubscriber(self._config, self._message_bus, self._motor_ctrl, level=self._level) # reacts to IR sensors
         self._garbage_collector   = GarbageCollector(self._config, self._message_bus, level=self._level)
 
         # create behaviours ....................................................

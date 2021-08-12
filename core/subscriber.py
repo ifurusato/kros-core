@@ -234,7 +234,7 @@ class Subscriber(Component, FiniteStateMachine):
                     _peeked_message.name, _peeked_message.event.label, self._message_bus.queue_size))
             _peeked_message.acknowledge(self)
 
-        self._log.debug(self._color + Style.DIM + 'consume() complete on {}.'.format(self.name))
+#       self._log.debug(self._color + Style.DIM + 'consume() complete on {}.'.format(self.name))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _done_callback(self, task):
@@ -242,7 +242,7 @@ class Subscriber(Component, FiniteStateMachine):
         Signal the message bus callback has completed.
         '''
         self._message_bus.clear_tasks()
-        self._log.info('callback on message consume complete; {}'.format(task.get_name()))
+#       self._log.debug('callback on message consume complete; {}'.format(task.get_name()))
 
 #   # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 #   def _get_timestamp(self):
@@ -276,8 +276,8 @@ class Subscriber(Component, FiniteStateMachine):
         await self._message_bus.arbitrate(message.payload)
         # increment sent acknowledgement count
         message.acknowledge_sent()
-        if self._message_bus.verbose:
-            self._log.info(self._color + Style.DIM + 'arbitrated payload for event {}; value: {}'.format(message.payload.event.name, message.payload.value))
+#       if self._message_bus.verbose:
+#           self._log.info(self._color + Style.DIM + 'arbitrated payload for event {}; value: {}'.format(message.payload.event.name, message.payload.value))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def _cleanup_message(self, message):

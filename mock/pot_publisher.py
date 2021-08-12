@@ -129,12 +129,10 @@ class PotentiometerPublisher(Publisher):
                     else:
                         self._pot.set_rgb(self._pot.value)
                         _message = self._message_factory.create_message(Event.VELOCITY, _scaled_value)
-#                   self._log.info(Fore.YELLOW + '😡 [{:03d}] pot value; {:<5.2f}'.format(_count, _scaled_value))
                     # populate message with value and publish...
-                    self._log.info('😡 publishing message: {}; event: {} '.format(_message.name, _message.event.label) 
+                    self._log.debug('publishing message: {}; event: {} '.format(_message.name, _message.event.label) 
                              + Fore.WHITE + ' with value: {:5.2f}'.format(_message.payload.value))
                     await Publisher.publish(self, _message)
-#                   self._log.info('😡 published message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
                 self._last_scaled_value = _scaled_value
             else:
                 self._log.debug('[{:03d}] publisher suppressed.'.format(_count))

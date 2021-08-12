@@ -97,7 +97,8 @@ class Motor(Component):
         # pid controller .............................................
         _suppress_pid_controller = _cfg.get('suppress_pid_controller')
         _enable_pid_controller   = _cfg.get('enable_pid_controller')
-        self._pid_controller     = PIDController(config, self._message_bus, self, suppressed=_suppress_pid_controller, enabled=_enable_pid_controller, level=level)
+        self._pid_controller     = PIDController(config, self._message_bus, self, 
+                suppressed=_suppress_pid_controller, enabled=_enable_pid_controller, level=level)
         # jerk limiter ...............................................
         _suppress_jerk_limiter   = _cfg.get('suppress_jerk_limiter')
         _enable_jerk_limiter     = _cfg.get('enable_jerk_limiter')
@@ -125,14 +126,14 @@ class Motor(Component):
     def max_velocity(self):
         return self._max_velocity
 
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    @property
-    def slew_limiter(self):
-        '''
-        Returns the slew limiter used by this motor.
-        This should be used only to obtain information, not for control.
-        '''
-        return self._slew_limiter
+#   # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+#   @property
+#   def slew_limiter(self):
+#       '''
+#       Returns the slew limiter used by this motor.
+#       This should be used only to obtain information, not for control.
+#       '''
+#       return self._slew_limiter
 
 #   # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 #   @property
@@ -143,14 +144,14 @@ class Motor(Component):
 #       '''
 #       return self._pid_controller
 
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    @property
-    def jerk_limiter(self):
-        '''
-        Returns the jerk limiter used by this motor.
-        This should be used only to obtain information, not for control.
-        '''
-        return self._jerk_limiter
+#   # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+#   @property
+#   def jerk_limiter(self):
+#       '''
+#       Returns the jerk limiter used by this motor.
+#       This should be used only to obtain information, not for control.
+#       '''
+#       return self._jerk_limiter
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
@@ -181,7 +182,7 @@ class Motor(Component):
         '''
         if not isinstance(target_velocity, float):
             raise ValueError('expected float, not {}'.format(type(target_velocity)))
-        self._log.info(Fore.GREEN + Style.BRIGHT + '🍀🍀🍀 SET target velocity: {:5.2f} of {} motor.'.format(target_velocity, self._orientation.name))
+        self._log.debug('set target velocity: {:5.2f} of {} motor.'.format(target_velocity, self._orientation.name))
         self.__target_velocity = target_velocity
         if self._using_mocks:
             self._velocity.velocity = target_velocity
@@ -212,12 +213,10 @@ class Motor(Component):
         '''
         This callback is used to capture encoder steps.
         '''
-#       self._log.info(Fore.BLUE + Style.BRIGHT + '_callback_step_count({})'.format(pulse))
         if self._orientation is Orientation.PORT:
             self.__steps = self.__steps + pulse
         else:
             self.__steps = self.__steps - pulse
-#       self._log.info(Fore.BLUE + '{}: {:+d} steps'.format(self._orientation.label, self.__steps))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def is_in_motion(self):
@@ -238,20 +237,15 @@ class Motor(Component):
         All of the dunderscored methods are intended as internal methods.
         '''
         if self.enabled:
+            for callback in self.__callbacks:
+                callback()
             _velocity = self._velocity()
-#           self._log.info('🐸 update target velocity of {} motor: {:5.2f} ➔ {:5.2f}'.format(self._orientation.name, self.velocity, self.__target_velocity))
-
             # set the target velocity variable modified by the slew limiter, if active
-
             if self._slew_limiter and self._slew_limiter.is_active:
                 self.__target_velocity = self._slew_limiter.limit(self.velocity, self.__target_velocity)
 
             # use velocity clipper as a sanity checker
-#           self.__target_velocity = -1.0 * self._velocity_clip(-1.0 * self.__target_velocity) \
-#                   if self.__target_velocity < 0 \
-#                   else self._velocity_clip(self.__target_velocity)
             self.__target_velocity = self._velocity_clip(self.__target_velocity)
-#           self._log.info('🐸 {} motor target velocity: {:5.2f} ➔ {:<5.2f}'.format(self._orientation.name, self.velocity, self.__target_velocity))
 
             # we now convert velocity to power, either by passing the target velocity to the PID controller (when active)
             # otherwise directly setting power to the motor via the proportional interpolator from the Speed Enum.
@@ -259,15 +253,8 @@ class Motor(Component):
                 self._pid_controller.set_velocity(self.__target_velocity)
             else: # via Speed
                 _power = Speed.get_proportional_power(self.__target_velocity)
-#               self._log.info('🐸🐸 POWER: {:5.2f}'.format(_power))
                 self.__set_motor_power(_power)
-#       else:
-#           self._log.info('🐸 already at target velocity of {} motor: {:5.2f} ➔ {:5.2f} ({})'.format(self._orientation, self.velocity, self.__target_velocity, type(_velocity)))
-#           self._log.info('🐸 update target velocity failed: disabled.')
 
-        for callback in self.__callbacks:
-#           self._log.info(Fore.BLUE + 'executing callback...')
-            callback()
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def set_motor_power(self, target_power):

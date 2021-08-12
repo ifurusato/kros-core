@@ -50,7 +50,7 @@ class MotorSubscriber(Subscriber):
         # increment sent acknowledgement count
         message.acknowledge_sent()
 #       if self._message_bus.verbose:
-        self._log.info(self._color + Style.NORMAL + 'arbitrated payload for event {}; value: {}'.format(message.payload.event.name, message.payload.value))
+#       self._log.debug(self._color + Style.NORMAL + 'arbitrated payload for event {}; value: {}'.format(message.payload.event.name, message.payload.value))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def process_message(self, message):
@@ -62,7 +62,7 @@ class MotorSubscriber(Subscriber):
         if message.gcd:
             raise GarbageCollectedError('cannot process message: message has been garbage collected. [3]')
         _event = message.event
-        self._log.info('pre-processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.label) + Style.RESET_ALL)
+#       self._log.debug('pre-processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.label) + Style.RESET_ALL)
         if _event.group is Group.STOP:
             self._motor_ctrl.dispatch_stop_event(message.payload)
         elif _event.group is Group.VELOCITY:
@@ -74,6 +74,6 @@ class MotorSubscriber(Subscriber):
         else:
             self._log.warning('unrecognised message {}'.format(message.name) + ''.format(message.event.label))
         await Subscriber.process_message(self, message)
-        self._log.debug('post-processing message {}'.format(message.name))
+#       self._log.debug('post-processing message {}'.format(message.name))
 
 #EOF

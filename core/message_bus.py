@@ -122,22 +122,23 @@ class MessageBus(Component):
         if len(_tasks) == 0:
             self._log.debug('no outstanding tasks.')
         else:
-            self._log.debug('clearing {:d} task{}...'.format(len(_tasks), ('' if len(_tasks) == 1 else 's')))
+#           self._log.debug('clearing {:d} task{}...'.format(len(_tasks), ('' if len(_tasks) == 1 else 's')))
             for _task in _tasks:
                 if not _task.cancelled():
-                    self._log.debug('cancelling task:\t' + Fore.YELLOW + '{}...'.format(_task.get_name()))
+#                   self._log.debug('cancelling task:\t' + Fore.YELLOW + '{}...'.format(_task.get_name()))
                     _task.cancel()
                 if _task.done():
-                    self._log.debug('removing completed task:\t' + Fore.YELLOW + '{}...'.format(_task.get_name()))
+#                   self._log.debug('removing completed task:\t' + Fore.YELLOW + '{}...'.format(_task.get_name()))
                     _tasks.remove(_task)
                 else:
-                    self._log.debug('incomplete task:\t' + Fore.BLUE + '{}'.format(_task.get_name()))
-            if self._log.is_at_least(Level.DEBUG):
-                self._log.debug('{:d} task{} remain{}.'.format(len(_tasks),
-                        ('' if len(_tasks) == 1 else 's'),
-                        ('s' if len(_tasks) == 1 else '')))
-                for _task in _tasks:
-                    self._log.debug('unfinished task:\t' + Fore.BLUE + '{}...'.format(_task.get_name()))
+#                   self._log.debug('incomplete task:\t' + Fore.BLUE + '{}'.format(_task.get_name()))
+                    pass
+#           if self._log.is_at_least(Level.DEBUG):
+#               self._log.debug('{:d} task{} remain{}.'.format(len(_tasks),
+#                       ('' if len(_tasks) == 1 else 's'),
+#                       ('s' if len(_tasks) == 1 else '')))
+#               for _task in _tasks:
+#                   self._log.debug('unfinished task:\t' + Fore.BLUE + '{}...'.format(_task.get_name()))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
@@ -167,17 +168,18 @@ class MessageBus(Component):
         IMPORTANT: This is an admin method and should not be considered part of the API.
         '''
         if self._queue.empty():
-            self._log.info('message bus queue is empty.')
+#           self._log.debug('message bus queue is empty.')
+            pass
         else:
             _message = await self._queue.get()
             self._queue.task_done()
-            self._log.info('popped message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
-            if self._queue.empty():
-                self._log.info('message bus queue is now empty.')
+#           self._log.debug('popped message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
+#           if self._queue.empty():
+#               self._log.info('message bus queue is now empty.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def arbitrate(self, payload):
-        self._log.info('💎 arbitrating payload {}...'.format(payload.event.name))
+#       self._log.debug('arbitrating payload {}...'.format(payload.event.name))
         await self._arbitrator.arbitrate(payload)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -190,12 +192,12 @@ class MessageBus(Component):
         '''
         Clear the message bus of any messages.
         '''
-        self._log.debug('clearing queue of {:d} message{}.'.format(self._queue.qsize(), '' if self._queue.qsize() == 1 else 's'))
+#       self._log.info('clearing queue of {:d} message{}.'.format(self._queue.qsize(), '' if self._queue.qsize() == 1 else 's'))
         self._queue.clear()
-        if self._queue.qsize() == 0:
-            self._log.info('queue is empty.')
-        else:
-            self._log.info('queue contains {:d} message{} after clearing.'.format(self._queue.qsize(), '' if self._queue.qsize() == 1 else 's'))
+#       if self._queue.qsize() == 0:
+#           self._log.info('queue is empty.')
+#       else:
+#           self._log.info('queue contains {:d} message{} after clearing.'.format(self._queue.qsize(), '' if self._queue.qsize() == 1 else 's'))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
@@ -358,9 +360,9 @@ class MessageBus(Component):
         self._log.info('starting consume loop with {:d} subscriber{}...'.format(len(self._subscribers), '' if len(self._subscribers) == 1 else 's'))
         while self.enabled:
             for subscriber in self._subscribers:
-                self._log.debug('publishing to subscriber {}...'.format(subscriber.name))
+#               self._log.debug('publishing to subscriber {}...'.format(subscriber.name))
                 await subscriber.consume()
-                self._log.debug('published to subscriber {}...'.format(subscriber.name))
+#               self._log.debug('published to subscriber {}...'.format(subscriber.name))
         self._log.info('completed consume loop with {:d} subscriber{}...'.format(len(self._subscribers), '' if len(self._subscribers) == 1 else 's'))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -429,12 +431,12 @@ class MessageBus(Component):
         NOTE: calls to this function should be await'd.
         '''
 #       if ( message.event is not Event.CLOCK_TICK and message.event is not Event.CLOCK_TOCK ):
-        self._log.info('rx request to publish message: {}'.format(message.name)
-                + ' (event: {}; age: {:d}ms);'.format(message.event.label, message.age))
+#       self._log.debug('rx request to publish message: {}'.format(message.name)
+#               + ' (event: {}; age: {:d}ms);'.format(message.event.label, message.age))
         _put_task = asyncio.create_task(self._queue.put(message), name='publish-message-{}'.format(message.name))
         # the first time the message is published we update the 'last_message_timestamp'
         self.update_last_message_timestamp()
-        self._log.info(Style.DIM + 'created task: {}'.format(_put_task.get_name()))
+#       self._log.debug('created task: {}'.format(_put_task.get_name()))
         await asyncio.sleep(self._publish_delay_sec)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -449,7 +451,7 @@ class MessageBus(Component):
         asyncio.create_task(self._queue.put(message), name='republish-message-{}'.format(message.name))
         # when the message is republished we also update the 'last_message_timestamp'
         self.update_last_message_timestamp()
-        self._log.debug('republished message: {} (event: {}; age: {:d}ms);'.format(message.name, message.event.label, message.age))
+#       self._log.debug('republished message: {} (event: {}; age: {:d}ms);'.format(message.name, message.event.label, message.age))
 
     # exception handling ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
@@ -474,14 +476,14 @@ class MessageBus(Component):
         '''
         if signal:
             self._log.info('received exit signal {}...'.format(signal))
-        self._log.info(Fore.RED + 'nacking outstanding tasks...' + Style.RESET_ALL)
+        self._log.info('nacking outstanding tasks...')
         tasks = [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]
         [task.cancel() for task in tasks]
-        self._log.info(Fore.RED + 'cancelling {:d} outstanding tasks...'.format(len(tasks)) + Style.RESET_ALL)
+        self._log.info('cancelling {:d} outstanding tasks...'.format(len(tasks)))
         _result = await asyncio.gather(*tasks, return_exceptions=True)
-        self._log.info(Fore.RED + 'stopping loop...; result: {}'.format(_result) + Style.RESET_ALL)
+        self._log.info('stopping loop...; result: {}'.format(_result))
         self._loop.stop()
-        self._log.info(Fore.RED + 'shutting down...' + Style.RESET_ALL)
+        self._log.info('shutting down...')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def get_task_by_name(self, name):
@@ -512,7 +514,7 @@ class MessageBus(Component):
         Calling this method will basically start the OS, blocking until disabled.
         '''
         if not self._loop:
-            self._log.debug('creating asyncio task loop...')
+#           self._log.debug('creating asyncio task loop...')
             self._loop = asyncio.get_event_loop()
             if self._log.level is Level.DEBUG:
                 self._loop.set_debug(True) # also set asyncio debug
@@ -524,7 +526,7 @@ class MessageBus(Component):
             self._loop.set_exception_handler(self.handle_exception)
             self._loop.create_task(self._start_consuming(), name='__event_loop__')
         if not self._loop.is_running():
-            self._log.debug('starting asyncio task loop...')
+#           self._log.debug('starting asyncio task loop...')
             self._loop.run_forever()
         return self._loop
 

@@ -234,7 +234,7 @@ class BatteryCheck(Publisher):
        Checks the battery voltage (default on channel 0), returning a message
        if the battery is low, otherwise None.
        '''
-       self._log.info('❄️  checking battery voltage {:5.2f} against threshold {:5.2f}...'.format(self._battery_voltage, self._raw_battery_threshold))
+#      self._log.debug('checking battery voltage {:5.2f} against threshold {:5.2f}...'.format(self._battery_voltage, self._raw_battery_threshold))
        if self._battery_voltage < self._raw_battery_threshold:
            self._log.warning('battery low: {:>5.2f}v'.format(self._battery_voltage))
            if self._enable_battery_messaging:
@@ -249,7 +249,7 @@ class BatteryCheck(Publisher):
        Checks the voltage on channel a (1), returning a message if below the
        configured threshold, otherwise None.
        '''
-       self._log.info('❄️  checking channel a voltage {:5.2f} against threshold {:5.2f}...'.format(self._regulator_a_voltage, self._five_volt_threshold))
+#      self._log.debug('checking channel a voltage {:5.2f} against threshold {:5.2f}...'.format(self._regulator_a_voltage, self._five_volt_threshold))
        if self._regulator_a_voltage < self._five_volt_threshold:
            self._log.warning('5V regulator A low:  {:>5.2f}v'.format(self._regulator_a_voltage))
            if self._enable_channel_a_messaging:
@@ -264,7 +264,7 @@ class BatteryCheck(Publisher):
        Checks the voltage on channel b (2), returning a message if below the
        configured threshold, otherwise None.
        '''
-       self._log.info('❄️  checking channel b voltage {:5.2f} against threshold {:5.2f}...'.format(self._regulator_b_voltage, self._five_volt_threshold))
+#      self._log.debug('checking channel b voltage {:5.2f} against threshold {:5.2f}...'.format(self._regulator_b_voltage, self._five_volt_threshold))
        if self._regulator_b_voltage < self._five_volt_threshold:
            self._log.warning('5V regulator B low:  {:>5.2f}v'.format(self._regulator_b_voltage))
            if self._enable_channel_b_messaging:
@@ -281,17 +281,17 @@ class BatteryCheck(Publisher):
         messages until after the loop has run a few times, as it seems the
         first check after starting tends to measure a bit low.
         '''
-        self._log.info('starting key listener loop:\t' + Fore.YELLOW + 'type \'?\' for help, \'q\' or Ctrl-C to exit.')
+        self._log.info('starting battery check loop.')
         try:
             while f_is_enabled():
                 _count = next(self._counter)
 #               if _count % 100 != 0: # process only every 100th loop
 #                   return
-                self._log.info('[{:03d}] battery check started...'.format(_count))
+#               self._log.debug('[{:03d}] battery check started...'.format(_count))
 
                 self._battery_voltage = self._ads1015.get_compensated_voltage(channel=self._battery_channel, reference_voltage=self._reference)
-                self._log.info(Fore.GREEN + 'battery channel: {}; reference: {:<5.2f}v; voltage: {:5.2f}v'.format(
-                        self._battery_channel, self._reference, self._battery_voltage))
+#               self._log.debug('battery channel: {}; reference: {:<5.2f}v; voltage: {:5.2f}v'.format(
+#                       self._battery_channel, self._reference, self._battery_voltage))
 
 #               _motor_voltage = self._read_tb_voltage()
 #               if self._battery_voltage is None or ( self._tb and _motor_voltage is None ):
@@ -303,10 +303,10 @@ class BatteryCheck(Publisher):
 #                           self._battery_voltage, _motor_voltage))
 
                 self._regulator_a_voltage = self._ads1015.get_compensated_voltage(channel=self._five_volt_a_channel, reference_voltage=self._reference)
-                self._log.info(Fore.GREEN + 'five volt A channel {}: {:5.2f}V.'.format(self._five_volt_a_channel, self._regulator_a_voltage))
+#               self._log.debug(Fore.GREEN + 'five volt A channel {}: {:5.2f}V.'.format(self._five_volt_a_channel, self._regulator_a_voltage))
 
                 self._regulator_b_voltage = self._ads1015.get_compensated_voltage(channel=self._five_volt_b_channel, reference_voltage=self._reference)
-                self._log.info(Fore.GREEN + 'five volt B channel {}: {:5.2f}V.'.format(self._five_volt_b_channel, self._regulator_b_voltage))
+#               self._log.debug(Fore.GREEN + 'five volt B channel {}: {:5.2f}V.'.format(self._five_volt_b_channel, self._regulator_b_voltage))
 
                 # publish message if exceeds threshold...
                 _message = None
@@ -317,22 +317,22 @@ class BatteryCheck(Publisher):
                 if not _message and self._enable_channel_b_messaging:
                     _message = self._check_channel_b()
                 if not _message:
-                    self._log.info(Style.DIM + 'battery: {:>5.2f}v; regulator A: {:>5.2f}v; regulator B: {:>5.2f}v'.format(\
+                    self._log.info('battery: {:>5.2f}v; regulator A: {:>5.2f}v; regulator B: {:>5.2f}v'.format(\
                             self._battery_voltage, self._regulator_a_voltage, self._regulator_b_voltage))
 
                 if _message:
 #                   _message = self._message_factory.create_message(_event, True)
-                    self._log.info('battery-publishing message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
+#                   self._log.debug('battery-publishing message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
                     await Publisher.publish(self, _message)
-                    self._log.info('battery-published message:' + Fore.WHITE + ' {}.'.format(_message.name))
+#                   self._log.debug('battery-published message:' + Fore.WHITE + ' {}.'.format(_message.name))
                 else:
                     # nothing happening...
-                    self._log.info('[{:03d}] waiting for battery event...'.format(_count))
+#                   self._log.debug('[{:03d}] waiting for battery event...'.format(_count))
+                    pass
                 await asyncio.sleep(self._loop_delay_sec)
+#               self._log.debug('[{:03d}] battery check ended.'.format(_count))
 
-                self._log.info(Style.DIM + '[{:03d}] battery check ended.'.format(_count))
-
-            self._log.info('publish loop complete.')
+            self._log.info('battery check loop complete.')
         finally:
             pass
 
