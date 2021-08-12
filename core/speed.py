@@ -141,20 +141,20 @@ class Speed(Enum):
         _s1 = _x_range[1]
         # percentage of way that v is along _s0.velocity to _s1.velocity is: _s0 + velocity / ( _v1 - _v0 )
         if _s0.velocity == _s1.velocity:
-            _pp = Speed.lerp( _s0.ahead , _s1.ahead, 1.0 )
+            _pp = Speed.lerp(_s0.ahead , _s1.ahead, 1.0)
             if velocity < 0:
                 _pp *= -1
-            _log.info(Fore.RED + '💜 v={:5.2f};\tX range: ({} to {});          \t\t'.format(velocity, _s0.ahead, _s1.ahead) + Fore.YELLOW + 'power: {:5.2f}'.format(_pp))
+#           _log.info(Fore.RED + 'v={:5.2f};\tX range: ({} to {});          \t\t'.format(velocity, _s0.ahead, _s1.ahead) + Fore.YELLOW + 'power: {:5.2f}'.format(_pp))
         else:
             if velocity < 0:
-                _pc = ( (-1 * _s0.velocity) - velocity ) / ( _s1.velocity - _s0.velocity )
+                _pc = ((-1 * _s0.velocity) - velocity) / (_s1.velocity - _s0.velocity)
             else:
                 _pc = ( velocity - _s0.velocity ) / ( _s1.velocity - _s0.velocity )
             _xt = Speed.lerp(_s0.velocity, _s1.velocity, _pc)
-            _pp = Speed.lerp( _s0.ahead , _s1.ahead, _pc )
+            _pp = Speed.lerp(_s0.ahead , _s1.ahead, _pc)
             if velocity < 0:
                 _pp *= -1
-            _log.info(Fore.GREEN + '💜 v={:5.2f};\tX range: ({} to {}); xt: {:5.2f}; {:.0%}   \t'.format(velocity, _s0.ahead, _s1.ahead, _xt, _pc) + Fore.YELLOW + 'power: {:5.2f}'.format(_pp))
+#           _log.info(Fore.GREEN + 'v={:5.2f};\tX range: ({} to {}); xt: {:5.2f}; {:.0%}   \t'.format(velocity, _s0.ahead, _s1.ahead, _xt, _pc) + Fore.YELLOW + 'power: {:5.2f}'.format(_pp))
         return _pp
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -173,39 +173,28 @@ class Speed(Enum):
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @staticmethod
     def xrange(x):
-#       print('x {}'.format(x))
         if abs(x) >= Speed.MAXIMUM.velocity:
             return [ Speed.MAXIMUM, Speed.MAXIMUM ]
         r = []
         if x < 0:
             x *= -1
-#           print('-? {}'.format(x))
             for s in Speed:
                 # counting up from zero, first time we're less than value use that as our high value
-#               print(Fore.BLACK+'-sa x: {}; s: {}'.format(x, s)+Style.RESET_ALL)
                 if x <= s.velocity:
-#                   print('-a {}'.format(s))
                     r.append(s)
                     break
             for s in reversed(Speed):
                 # counting down from max, first time we're greater than v use that as our low value
-#               print(Fore.BLACK+'-sb {}'.format(s)+Style.RESET_ALL)
                 if x >= s.velocity:
-#                   print('-b x: {}; s: {}'.format(x, s))
                     r.append(s)
                     break
         else:
-#           print('+? {}'.format(x))
             for s in reversed(Speed):
-#               print(Fore.BLACK+'+sa {}'.format(s)+Style.RESET_ALL)
                 if x >= s.velocity:
-#                   print('+a {}'.format(s))
                     r.append(s)
                     break
             for s in Speed:
-#               print(Fore.BLACK+'+sb {}'.format(s)+Style.RESET_ALL)
                 if x <= s.velocity:
-#                   print('+b {}'.format(s))
                     r.append(s)
                     break
         if len(r) == 1:
