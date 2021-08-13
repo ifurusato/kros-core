@@ -118,7 +118,7 @@ class BatteryCheck(Publisher):
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def name(self):
-        return 'BatteryCheck'
+        return 'battery'
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def set_enable_messaging(self, enable):
@@ -317,9 +317,7 @@ class BatteryCheck(Publisher):
                 if not _message and self._enable_channel_b_messaging:
                     _message = self._check_channel_b()
                 if not _message:
-                    self._log.info('battery: {:>5.2f}v; regulator A: {:>5.2f}v; regulator B: {:>5.2f}v'.format(\
-                            self._battery_voltage, self._regulator_a_voltage, self._regulator_b_voltage))
-
+                    self._log.info(Style.DIM + self.get_battery_info())
                 if _message:
 #                   _message = self._message_factory.create_message(_event, True)
 #                   self._log.debug('battery-publishing message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
@@ -335,6 +333,11 @@ class BatteryCheck(Publisher):
             self._log.info('battery check loop complete.')
         finally:
             pass
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def get_battery_info(self):
+        return 'battery: {:>5.2f}v; regulator A: {:>5.2f}v; regulator B: {:>5.2f}v'.format(\
+                self._battery_voltage, self._regulator_a_voltage, self._regulator_b_voltage)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def disable(self):

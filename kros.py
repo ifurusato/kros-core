@@ -232,7 +232,7 @@ class KROS(Component, FiniteStateMachine):
             self._motor_ctrl.enable()
 
         # now in main application loop until quit or Ctrl-C...
-        self._log.info(Fore.YELLOW + 'enabling message bus...')
+        self._log.info('enabling message bus...')
         self._message_bus.enable()
 
         if self._message_bus and self._message_bus.enabled:
@@ -357,9 +357,9 @@ class SystemSubscriber(Subscriber):
         if message.gcd:
             raise GarbageCollectedError('cannot process message: message has been garbage collected. [3]')
         _event = message.event
-        self._log.info('pre-processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.label) + Style.RESET_ALL)
+        self._log.info('pre-processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.label))
         if Event.is_system_event(_event):
-            self._log.info('🍠 processing system message {}'.format(message.name))
+#           self._log.debug('processing system message {}'.format(message.name))
             self.dispatch_system_event(message.payload)
         else:
             self._log.warning('unrecognised event on message {}'.format(message.name) + ''.format(message.event.label))
@@ -371,8 +371,9 @@ class SystemSubscriber(Subscriber):
         '''
         Process an incoming event's payload.
         '''
-        self._log.info('🍠 processing payload event {}'.format(payload.event.name))
+        self._log.info('processing payload event {}'.format(payload.event.label))
         if payload.event is Event.SHUTDOWN:
+            self._log.info('shut down requested.')
             self._message_bus.disable()
             self._kros.disable()
             pass # TODO

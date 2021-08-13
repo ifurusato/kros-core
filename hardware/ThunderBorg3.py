@@ -500,6 +500,29 @@ SetMotors(1)     -> all motors are moving forward at 100% power
         except:
             self.Print('Failed sending all motors drive level!')
 
+    # ..........................................................................
+    # bespoke (not part of ThunderBorg code)
+
+    def SetMotor1Off(self):
+        try:
+            command = COMMAND_SET_A_FWD
+            self.RawWrite(command, [0])
+        except KeyboardInterrupt:
+            raise
+        except:
+            self.Print('Failed zeroing motor 1 drive level!')
+
+    def SetMotor2Off(self):
+        try:
+            command = COMMAND_SET_B_FWD
+            self.RawWrite(command, [0])
+        except KeyboardInterrupt:
+            raise
+        except:
+            self.Print('Failed zeroing motor 2 drive level!')
+
+    # ..........................................................................
+
 
     def MotorsOff(self):
         """

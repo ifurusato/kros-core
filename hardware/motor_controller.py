@@ -127,7 +127,8 @@ class MotorController(Component):
         try:
             while f_is_enabled():
                 _event_count = next(self._event_counter)
-#               if not isclose(self._decelerate_ratio, 0.0, abs_tol=0.1):
+                if not isclose(self._decelerate_ratio, 0.0, abs_tol=0.1):
+                    self._log.info(Fore.GREEN + 'trigger DECELARATION.')
 #                   # if decelerating then apply that to target velocities first
 #                   self.decelerate(_event_count)
 #                   pass
@@ -162,8 +163,9 @@ class MotorController(Component):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def print_info(self, count):
+        self._log.info('motor controller:')
         if self.stopped:
-            self._log.debug('[{:04d}] '.format(count) + 'velocity: stopped.')
+            self._log.info(('[{:04d}] '.format(count) if count else '') + 'velocity: stopped.')
 #                   + Fore.RED   + 'port: {:<5.2f} -> {:<5.2f} / {:<5.2f}'.format(
 #                           self._port_motor.velocity, self._port_motor.target_velocity, self._port_motor.current_power)
 #                   + Fore.CYAN  + ' :: '
@@ -199,8 +201,10 @@ class MotorController(Component):
 
         # port ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
-        self._log.info(Fore.RED + '\t{}'.format('port') \
-                + Fore.CYAN + ' {}enabled: '.format((' ' * max(0, (10 - len('port')))))
+        self._log.info(Fore.RED + '\t{}{}'.format('port',(' ' * 9))
+                + Fore.CYAN + 'power: ' + Fore.YELLOW + '{:5.2f}'.format(self._port_motor.current_power))
+        self._log.info(Fore.RED + '\t{}'.format('motor') \
+                + Fore.CYAN + ' {}enabled: '.format((' ' * 5))
                 + Fore.YELLOW + '{}\t'.format(self._port_motor.enabled)
                 + Fore.CYAN + 'suppressed: '
                 + Fore.YELLOW + '{}'.format(self._port_motor.suppressed))
@@ -212,7 +216,7 @@ class MotorController(Component):
                 + Fore.YELLOW + '{}'.format(self._port_motor.slew_limiter.suppressed))
 
         self._log.info(Fore.RED + '\t{}'.format('pid') \
-                + Fore.CYAN + ' {}enabled: '.format((' ' * max(0, (10 - len('port')))))
+                + Fore.CYAN + ' {}enabled: '.format((' ' * max(0, (11 - len('port')))))
                 + Fore.YELLOW + '{}\t'.format(self._port_motor.pid_controller.enabled)
                 + Fore.CYAN + 'suppressed: '
                 + Fore.YELLOW + '{}'.format(self._port_motor.pid_controller.suppressed))
@@ -225,8 +229,10 @@ class MotorController(Component):
 
         # starboard ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
-        self._log.info(Fore.GREEN + '\t{}'.format('stbd') \
-                + Fore.CYAN + ' {}enabled: '.format((' ' * max(0, (10 - len('stbd')))))
+        self._log.info(Fore.GREEN + '\t{}{}'.format('stbd',(' ' * 9)) 
+                + Fore.CYAN + 'power: ' + Fore.YELLOW + '{:5.2f}'.format(self._stbd_motor.current_power))
+        self._log.info(Fore.GREEN + '\t{}'.format('motor') \
+                + Fore.CYAN + ' {}enabled: '.format((' ' * 5))
                 + Fore.YELLOW + '{}\t'.format(self._stbd_motor.enabled)
                 + Fore.CYAN + 'suppressed: '
                 + Fore.YELLOW + '{}'.format(self._stbd_motor.suppressed))
@@ -238,7 +244,7 @@ class MotorController(Component):
                 + Fore.YELLOW + '{}'.format(self._stbd_motor.slew_limiter.suppressed))
 
         self._log.info(Fore.GREEN + '\t{}'.format('pid') \
-                + Fore.CYAN + ' {}enabled: '.format((' ' * max(0, (10 - len('stbd')))))
+                + Fore.CYAN + ' {}enabled: '.format((' ' * max(0, (11 - len('stbd')))))
                 + Fore.YELLOW + '{}\t'.format(self._stbd_motor.pid_controller.enabled)
                 + Fore.CYAN + 'suppressed: '
                 + Fore.YELLOW + '{}'.format(self._stbd_motor.pid_controller.suppressed))
@@ -297,25 +303,8 @@ class MotorController(Component):
                 return 'astern indeterminate (2)'
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def set_motor_velocity(self, orientation, target_velocity):
-        '''
-        A convenience method that sets the target velocity and motor
-        power of the specified motor. Accepts either ints or floats
-        between -100 and 100.
-        '''
-#       self._log.info(Fore.GREEN + Style.NORMAL + 'set velocity: {:5.2f} of {} motor.'.format(target_velocity, orientation.name))
-        if isinstance(target_velocity, int):
-           target_velocity = float(target_velocity)
-        if not isinstance(target_velocity, float):
-            raise ValueError('expected float, not {}'.format(type(target_velocity)))
-        if orientation is Orientation.PORT:
-            self._port_motor.target_velocity = target_velocity
-        else:
-            self._stbd_motor.target_velocity = target_velocity
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def dispatch_velocity_event(self, payload):
-        self.reset_deceleration()
+        self._reset_deceleration()
         _event = payload.event
 #       self._log.debug('dispatch velocity event: {}'.format(_event.label))
         _value = payload.value
@@ -373,7 +362,7 @@ class MotorController(Component):
         A dispatcher for chadburn events: full, half, slow and dead slow
         for both ahead and astern.
         '''
-        self.reset_deceleration()
+        self._reset_deceleration()
         _event = payload.event
         self._log.info('dispatch chadburn event: {}'.format(_event.label))
         _value = payload.value
@@ -393,7 +382,7 @@ class MotorController(Component):
         A dispatcher for theta (rotation/turning) events: turn ahead, turn to,
         and turn astern for port and starboard; spin port and spin starboard.
         '''
-        self.reset_deceleration()
+        self._reset_deceleration()
         _event = payload.event
         self._log.info('dispatch theta event: {}'.format(_event.label))
         _value = payload.value
@@ -459,9 +448,9 @@ class MotorController(Component):
         '''
         A dispatcher for deceleration events: halt, _brake and stop.
         '''
-        self.reset_deceleration()
+        self._reset_deceleration()
         _event = payload.event
-        self._log.info('dispatch stop event: {}'.format(_event.label))
+        self._log.info('🛑 dispatch stop event: {}'.format(_event.label))
         _value = payload.value
         if _event is Event.HALT:
             self.halt()
@@ -476,6 +465,8 @@ class MotorController(Component):
     def dispatch_infrared_event(self, payload):
         '''
         A dispatcher for infrared events from port side, port, center, starboard, or starboard side.
+
+        THIS SHOULD BE MOVED OUT OF THE MOTOR CONTROLLER.
         '''
         _event = payload.event
         _value = payload.value
@@ -504,6 +495,7 @@ class MotorController(Component):
         A dispatcher for bumper events from port, center or starboard.
 
         This causes the robot to halt.
+        THIS SHOULD BE MOVED OUT OF THE MOTOR CONTROLLER.
         '''
         _event = payload.event
         _value = payload.value
@@ -520,13 +512,35 @@ class MotorController(Component):
             raise ValueError('unrecognised bumper event {}'.format(_event.label))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def set_motor_velocity(self, orientation, target_velocity):
+        '''
+        A convenience method that sets the target velocity and motor
+        power of the specified motor. Accepts either ints or floats
+        between -100 and 100.
+        '''
+#       self._log.info(Fore.GREEN + Style.NORMAL + 'set velocity: {:5.2f} of {} motor.'.format(target_velocity, orientation.name))
+        if isinstance(target_velocity, int):
+           target_velocity = float(target_velocity)
+        if not isinstance(target_velocity, float):
+            raise ValueError('expected float, not {}'.format(type(target_velocity)))
+        if not isclose(self._decelerate_ratio, 0.0, abs_tol=0.05):
+            self._log.info(Style.BRIGHT + '🍉 force-setting velocity of {} motor to zero.'.format(orientation.label))
+            target_velocity = 0.0
+        else:
+            self._log.info(Style.BRIGHT + '🍉 setting velocity of {} motor to: {:5.2f}'.format(orientation.label, target_velocity))
+        if orientation is Orientation.PORT:
+            self._port_motor.target_velocity = target_velocity
+        else:
+            self._stbd_motor.target_velocity = target_velocity
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _spin(self, orientation):
         '''
         Spin to either port (counter-clockwise) or starboard (clockwise) by
         setting the target velocity of each motor to opposite directions.
         '''
         self._log.info('theta SPIN {}.'.format(orientation.name))
-        self.reset_deceleration()
+        self._reset_deceleration()
         if orientation is Orientation.PORT:
             _port_velocity = -1 * self._spin_speed.velocity
             _stbd_velocity = self._spin_speed.velocity
@@ -572,22 +586,40 @@ class MotorController(Component):
         self.set_motor_velocity(orientation, _updated_target_velocity)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def stop(self):
+        '''
+        Stops both motors immediately, with no slewing.
+        '''
+        self._log.info('💀 stopping...')
+        if not self.stopped:
+            self._port_motor.target_velocity = 0.0
+            self._stbd_motor.target_velocity = 0.0
+            self._log.info('stopped.')
+        else:
+            self._log.warning('already stopped.')
+        # set velocity but don't wait, just call stop
+#       self._log.info('💀 stopping ANYWAY...')
+#       self._port_motor.stop()
+#       self._port_motor.off()
+#       self._stbd_motor.stop()
+#       self._stbd_motor.off()
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def halt(self):
         '''
         Quickly (but not immediately) stops both motors.
         '''
         if not self.stopped:
             if self._loop_enabled:
-                self._log.info('halting with ratio: {:5.2f}...'.format(self._decelerate_ratio))
+                self._log.info('🌞 halting with ratio: {:5.2f}...'.format(self._decelerate_ratio))
                 self._decelerate_ratio = self._halt_ratio
             else:
-                self._log.info('stopping immediately: no increment loop running.')
+                self._log.info('🌞 stopping immediately: no increment loop running.')
                 self._port_motor.stop()
                 self._stbd_motor.stop()
             self._log.info('halted.')
         else:
             self._log.debug('already halted.')
-        return True
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def brake(self):
@@ -596,7 +628,7 @@ class MotorController(Component):
         '''
         if not self.stopped:
             if self.loop_is_running():
-                self._log.info('braking with ratio: {:5.2f}...'.format(self._decelerate_ratio))
+                self._log.info('🐣 braking with ratio: {:5.2f}...'.format(self._decelerate_ratio))
                 self._decelerate_ratio = self._brake_ratio
             else:
                 self._log.info('stopping immediately: no increment loop running.')
@@ -605,7 +637,6 @@ class MotorController(Component):
             self._log.info('braked.')
         else:
             self._log.warning('already braked.')
-        return True
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def decelerate(self, count):
@@ -624,7 +655,7 @@ class MotorController(Component):
         self._log.info(Fore.BLACK + 'decelerate() port: {:5.2f}; stbd: {:5.2f}'.format(self._port_motor.target_velocity, self._stbd_motor.target_velocity))
         if isclose(self._port_motor.target_velocity, 0.0, abs_tol=0.5) and isclose(self._stbd_motor.target_velocity, 0.0, abs_tol=0.5):
             # stopping...
-            self.reset_deceleration()
+            self._reset_deceleration()
             self.stop()
             self.stop_loop() # not necessarily...
             self._log.info(Fore.YELLOW + 'deceleration complete.')
@@ -649,28 +680,11 @@ class MotorController(Component):
                     + Fore.CYAN  + '\t:: decelerate: ' + Fore.BLUE + '{:.0%}'.format(self._decelerate_ratio))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def reset_deceleration(self):
+    def _reset_deceleration(self):
         '''
         Halts any automated deceleration.
         '''
         self._decelerate_ratio = 0.0
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def stop(self):
-        '''
-        Stops both motors immediately, with no slewing.
-        '''
-        self._log.info('stopping...')
-        if not self.stopped:
-            self._port_motor.target_velocity = 0.0
-            self._stbd_motor.target_velocity = 0.0
-            self._log.info('stopped.')
-        else:
-            self._log.warning('already stopped.')
-        # call stop anyway
-        self._port_motor.stop()
-        self._stbd_motor.stop()
-        return True
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property

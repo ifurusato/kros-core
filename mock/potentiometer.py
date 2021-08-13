@@ -49,7 +49,7 @@ class MockPotentiometer(Component):
         self._loop            = asyncio.get_event_loop()
         # configuration ....................................
         _cfg = config['kros'].get('mock').get('potentiometer')
-        self._loop_delay_sec  = _cfg.get('loop_delay_sec') 
+        self._loop_delay_sec  = _cfg.get('loop_delay_sec')
         self._log.info('ready.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -102,14 +102,14 @@ class MockPotentiometer(Component):
         '''
         if signal:
             self._log.info('received exit signal {}...'.format(signal))
-        self._log.info(Fore.RED + 'nacking outstanding tasks...' + Style.RESET_ALL)
+        self._log.info(Fore.RED + 'nacking outstanding tasks...')
         tasks = [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]
         [task.cancel() for task in tasks]
-        self._log.info(Fore.RED + 'cancelling {:d} outstanding tasks...'.format(len(tasks)) + Style.RESET_ALL)
+        self._log.info(Fore.RED + 'cancelling {:d} outstanding tasks...'.format(len(tasks)))
         _result = await asyncio.gather(*tasks, return_exceptions=True)
-        self._log.info(Fore.RED + 'stopping loop...; result: {}'.format(_result) + Style.RESET_ALL)
+        self._log.info(Fore.RED + 'stopping loop...; result: {}'.format(_result))
         self._loop.stop()
-        self._log.info(Fore.RED + 'shutting down...' + Style.RESET_ALL)
+        self._log.info(Fore.RED + 'shutting down...')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property

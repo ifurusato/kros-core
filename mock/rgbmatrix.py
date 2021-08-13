@@ -223,7 +223,7 @@ class RgbMatrix(object):
                 _value = max(_value, 0.0)
                 if _value > 5.0:
                     _value = 50.0
-#               self._log.info(Fore.MAGENTA + 'p_y={}; _value: {}'.format(p_y, _value) + Style.RESET_ALL)
+#               self._log.info(Fore.MAGENTA + 'p_y={}; _value: {}'.format(p_y, _value))
                 for p_x in range(0, _width):
                     _r = self._colors[p_x].red
                     _g = self._colors[p_x].green
@@ -234,7 +234,7 @@ class RgbMatrix(object):
                         _b = (_value / 10.0) * _b
                     _x = x + (_width - p_x)
                     _y = y + p_y
-                    self._log.info(Fore.YELLOW + 'setting pixel x={}/{}, y={}/{};'.format(_x, _width, _y, _height) + Fore.MAGENTA + '\tvalue: {:>5.2f}'.format(_value) + Style.RESET_ALL)
+                    self._log.info(Fore.YELLOW + 'setting pixel x={}/{}, y={}/{};'.format(_x, _width, _y, _height) + Fore.MAGENTA + '\tvalue: {:>5.2f}'.format(_value))
                     rgbmatrix5x5.set_pixel(_x, _y , _r, _g, _b)
                     _value -= 10.0
                     if _value < 0.0:

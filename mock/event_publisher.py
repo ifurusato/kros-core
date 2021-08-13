@@ -201,6 +201,7 @@ class EventPublisher(Publisher):
                         elif och == 105: # 'i' print info
                             self._log.heading('System Information','Memory, CPU and Message Bus Information.')
                             self._system.print_sys_info()
+                            self._print_power_info()
                             self._message_bus.print_system_status()
                             self._motor_ctrl.print_motor_status()
                             self._motor_ctrl.print_info(None)
@@ -213,9 +214,10 @@ class EventPublisher(Publisher):
                             await self._message_bus.pop_queue()
                             continue
                         elif och == 3 or och == 113: # 'q'
-                            self.disable()
-                            self._log.info('exiting on \'q\' or Ctrl-C...')
-                            continue
+                            self._log.info(Fore.YELLOW + 'shutting down on \'q\' or Ctrl-C...')
+                            _event = Event.SHUTDOWN
+#                           self.disable()
+#                           continue
                         elif och == 47 or och == 63: # '/' or '?' for help
                             self.print_help()
                             continue
@@ -236,7 +238,8 @@ class EventPublisher(Publisher):
                             self._log.info('toggle increment direction: {:d}'.format(self._ir_direction))
                             och += 32
                         # otherwise handle as event
-                        _event = self.get_event_for_char(och)
+                        if not _event:
+                            _event = self.get_event_for_char(och)
                         if _event is not None:
                             self._log.info('key \'{}\' ({}) pressed; key-publishing message for event: {}'.format(ch, och, _event))
                             _message = self._message_factory.create_message(_event, True)
@@ -280,6 +283,15 @@ class EventPublisher(Publisher):
         finally:
             if self._getch:
                 self._getch.close()
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def _print_power_info(self):
+        _battery_check = self._message_bus.get_publisher('battery')
+        if _battery_check:
+            _msg = _battery_check.get_battery_info() 
+        else:
+            _msg = 'no power information available.'
+        self._log.info('power supply: \t' + Fore.YELLOW + '{}'.format(_msg))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _get_infrared_value(self):
@@ -513,7 +525,7 @@ class EventPublisher(Publisher):
 
       ┏━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┓
       ┃    1    ┃    2    ┃    3    ┃    4    ┃    5    ┃    6    ┃    7    ┃    8    ┃    9    ┃    0    ┃    -    ┃    =    ┃   DEL   ┃
-      ┃ FUL AST ┃ HAF AST ┃ SLO AST ┃ DSL AST ┃  STOP   ┃ DSL AHD ┃ SLO AHD ┃ HAF AHD ┃ FUL AHD ┃  HALT   ┃  BRAKE  ┃  EVEN   ┃ SHUTDWN ┃
+      ┃ FUL AST ┃ HAF AST ┃ SLO AST ┃ DSL AST ┃  HALT   ┃ DSL AHD ┃ SLO AHD ┃ HAF AHD ┃ FUL AHD ┃  STOP   ┃  BRAKE  ┃  EVEN   ┃ SHUTDWN ┃
  ┏━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┛
  ┃   TAB   ┃    Q    ┃    W    ┃    E    ┃    R    ┃    T    ┃    Y    ┃    U    ┃    I    ┃    O    ┃    P    ┃    [    ┃    ]    ┃
  ┃ GAMEPAD ┃  QUIT   ┃  FLOOD  ┃   POT   ┃  ROAM   ┃  MOTH   ┃  SNIFF  ┃  IDLE   ┃  INFO   ┃ CLR TSK ┃ POP_MSG ┃ IN_PORT ┃ IN_STBD ┃
@@ -525,18 +537,19 @@ class EventPublisher(Publisher):
                      ┃ MTR_INF ┃ SP_PORT ┃ TN_PORT ┃ VERBOSE ┃ TN_STBD ┃ SP_STBD ┃  AVOID  ┃ DE_VELO ┃ IN_VELO ┃  HELP   ┃  CLOCK  ┃
                      ┗━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┛
 
-  FUL AST:   full astern        QUIT:     quit application              IR_PSID:  port side infrared            MTR_INF:  toggle motor info
-  HAF AST:   half astern        FLOOD:    toggle flood publisher        IR_PORT:  port infrared                 SP_PORT:  spin port
-  SLO AST:   slow astern        SNIFF:    tirgger SNIFF behaviour       IR_CNTR:  center infrared               TN_PORT:  turn to port
-  DSL AST:   dead slow astern   ROAM:     trigger ROAM behaviour        IR_STBD:  starboard infrared            VERBOSE:  toggle verbosity
-  STOP:      stop               AVOID:    avoidance beheaviour          IR_SSID:  starboard side infrared       TN_STBD:  turn to starboard
-  DSL AHD:   dead slow ahead    INFO:     print system information      HELP:     print help                    SP_STBD:  spin starboard
-  SLO AHD:   slow ahead         CLR_TSK:  clear completed tasks         BM_PORT:  port bumper
-  HAF AHD:   half ahead         POP_MSG:  pop messages from queue       BM_CNTR:  center bumper                 DE_VELO:  decrease velocity
-  FUL AHD:   full ahead         IN_PORT:  increase port velocity        BM_STBD:  starboard bumper              IN_VELO:  increase velocity
-  HALT:      halt               IN_STBD:  increase starboard velocity   DE_PORT:  decrease port velocity        HELP:     print help
-  BRAKE:     brake                                                      DE_STBD:  decrease starboard velocity   CLOCK:    toggle system clock
-  EVEN:      even velocity, port and stbd motors                        RET:      clear display
+                               TAB:      toggle gamepad
+  FUL AST:   full astern       QUIT:     quit application             IR_PSID:  port side infrared           MTR_INF:  toggle motor info
+  HAF AST:   half astern       FLOOD:    toggle flood publisher       IR_PORT:  port infrared                SP_PORT:  spin port
+  SLO AST:   slow astern       POT:      toggle potentiometer         IR_CNTR:  center infrared              TN_PORT:  turn to port
+  DSL AST:   dead slow astern  ROAM:     trigger roam behaviour       IR_STBD:  starboard infrared           VERBOSE:  toggle verbosity
+  HALT:      halt              MOTH:     trigger moth behaviour       IR_SSID:  starboard side infrared      TN_STBD:  turn to starboard
+  DSL AHD:   dead slow ahead   SNIFF:    trigger sniff behaviour      HELP:     print help                   SP_STBD:  spin starboard
+  SLO AHD:   slow ahead        IDLE:     send idle message            BM_PORT:  port bumper                  AVOID:    trigger avoid behaviour
+  HAF AHD:   half ahead        INFO:     print system information     BM_CNTR:  center bumper                DE_VELO:  decrease velocity
+  FUL AHD:   full ahead        CLR_TSK:  clear completed tasks        BM_STBD:  starboard bumper             IN_VELO:  increase velocity
+  STOP:      stop              POP_MSG:  pop messages from queue      DE_PORT:  decrease port velocity       HELP:     print help
+  BRAKE:     brake             IN_PORT:  increase port velocity       DE_STBD:  decrease starboard velocity  CLOCK:    toggle system clock
+  EVEN:      even velocity     IN_STBD:  increase starboard velocity  RET:      clear display
   SHUTDOWN:  shut down robot
         ''')
 
@@ -599,8 +612,8 @@ class EventPublisher(Publisher):
             return Event.BRAKE
         elif och == 46:  # . increase port velocity
             return Event.INCREASE_VELOCITY
-        elif och == 48:  # 0 halt
-            return Event.HALT
+        elif och == 48:  # 0 stop
+            return Event.STOP
         elif och == 49:  # 1 full astern
             return Event.FULL_ASTERN
         elif och == 50:  # 2 half astern
@@ -609,8 +622,8 @@ class EventPublisher(Publisher):
             return Event.SLOW_ASTERN
         elif och == 52:  # 4 dead slow astern
             return Event.DEAD_SLOW_ASTERN
-        elif och == 53:  # 5 stop
-            return Event.STOP
+        elif och == 53:  # 5 halt
+            return Event.HALT
         elif och == 54:  # 6 dead slow ahead
             return Event.DEAD_SLOW_AHEAD
         elif och == 55:  # 7 slow ahead

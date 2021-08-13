@@ -60,9 +60,8 @@ class MotorSubscriber(Subscriber):
         :param message:  the message to process.
         '''
         if message.gcd:
-            raise GarbageCollectedError('cannot process message: message has been garbage collected. [3]')
+            raise GarbageCollectedError('cannot process message: message has been garbage collected.')
         _event = message.event
-#       self._log.debug('pre-processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.label) + Style.RESET_ALL)
         if _event.group is Group.STOP:
             self._motor_ctrl.dispatch_stop_event(message.payload)
         elif _event.group is Group.VELOCITY:
