@@ -70,7 +70,7 @@ kros:
             decel_increment:          5.0        # normal incremental deceleration
             halt_ratio:               0.4        # ratio for quick halt behaviour
             brake_ratio:              0.7        # ratio for slower braking behaviour
-            spin_speed:        'DEAD_SLOW'       # motor speed when spinning
+            spin_speed:             'FULL'       # motor speed when spinning
             verbose:                False        # noisy messaging
         odometry:
             enable_odometry:         True        # if true we enable motor encoders and odometry

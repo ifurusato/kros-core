@@ -79,7 +79,7 @@ class MotorController(Component):
         self._rate                 = Rate(self._loop_delay_hz, Level.ERROR)
         self._accel_increment      = _cfg.get('accel_increment')   # normal incremental acceleration
         self._decel_increment      = _cfg.get('decel_increment')   # normal incremental deceleration
-        self._log.info('accelerate increment: {:5.2f}; decelerate increment: {:5.2f}'.format(self._accel_increment, self._decel_increment))
+        self._log.info(Fore.YELLOW + 'accelerate increment: {:5.2f}; decelerate increment: {:5.2f}'.format(self._accel_increment, self._decel_increment))
         self._halt_ratio           = _cfg.get('halt_ratio')        # ratio for quick _halt behaviour
         self._log.info('halt ratio:\t{:<5.2f}'.format(self._halt_ratio))
         self._brake_ratio          = _cfg.get('brake_ratio')       # ratio for slower braking behaviour
@@ -128,10 +128,9 @@ class MotorController(Component):
             while f_is_enabled():
                 _event_count = next(self._event_counter)
                 if not isclose(self._decelerate_ratio, 0.0, abs_tol=0.1):
-                    self._log.info(Fore.GREEN + 'trigger DECELARATION.')
-#                   # if decelerating then apply that to target velocities first
-#                   self.decelerate(_event_count)
-#                   pass
+                    # if decelerating then apply that to target velocities first
+                    self.decelerate(_event_count)
+
                 self._port_motor.update_target_velocity()
                 self._stbd_motor.update_target_velocity()
                 # TODO add execute any callbacks here
@@ -146,7 +145,7 @@ class MotorController(Component):
         self._log.info('exited motor control loop.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def stop_loop(self):
+    def _stop_loop(self):
         '''
         Stop the loop.
         '''
@@ -598,7 +597,6 @@ class MotorController(Component):
         else:
             self._log.warning('already stopped.')
         # set velocity but don't wait, just call stop
-#       self._log.info('💀 stopping ANYWAY...')
 #       self._port_motor.stop()
 #       self._port_motor.off()
 #       self._stbd_motor.stop()
@@ -654,12 +652,17 @@ class MotorController(Component):
         '''
         self._log.info(Fore.BLACK + 'decelerate() port: {:5.2f}; stbd: {:5.2f}'.format(self._port_motor.target_velocity, self._stbd_motor.target_velocity))
         if isclose(self._port_motor.target_velocity, 0.0, abs_tol=0.5) and isclose(self._stbd_motor.target_velocity, 0.0, abs_tol=0.5):
+            self._log.info(Fore.YELLOW + 'deceleration finished...')
             # stopping...
             self._reset_deceleration()
-            self.stop()
-            self.stop_loop() # not necessarily...
+#           self.stop()
+            self._port_motor.stop()
+#           self._port_motor.off()
+            self._stbd_motor.stop()
+#           self._stbd_motor.off()
             self._log.info(Fore.YELLOW + 'deceleration complete.')
-        else:
+        elif count % 2 == 0:
+            self._log.info(Fore.YELLOW + 'still decelerating...')
             # still decelerating...
             if isclose(self._port_motor.target_velocity, 0.0, abs_tol=1.0):
                 self._port_motor.target_velocity = 0.0
@@ -670,14 +673,14 @@ class MotorController(Component):
             else:
                 self._stbd_motor.target_velocity = self._stbd_motor.target_velocity * self._decelerate_ratio
         # print stats...
-        if self._log.is_at_least(Level.WARN):
-            self._log.info(Style.DIM + '[{:04d}] velocity:'.format(count)
-                    + Fore.RED   + ' port: {:5.2f} ➔ {:<5.2f}'.format(self._port_motor.velocity, self._port_motor.target_velocity)
-                    + ' {:5.2f}'.format(self._port_motor.current_power)
-                    + Fore.CYAN  + '\t:: '
-                    + Fore.GREEN + 'stbd: {:5.2f} ➔ {:<5.2f}'.format(self._port_motor.velocity, self._stbd_motor.target_velocity)
-                    + ' {:5.2f}'.format(self._stbd_motor.current_power)
-                    + Fore.CYAN  + '\t:: decelerate: ' + Fore.BLUE + '{:.0%}'.format(self._decelerate_ratio))
+#       if self._log.is_at_least(Level.WARN):
+#           self._log.info(Style.DIM + '[{:04d}] velocity:'.format(count)
+#                   + Fore.RED   + ' port: {:5.2f} ➔ {:<5.2f}'.format(self._port_motor.velocity, self._port_motor.target_velocity)
+#                   + ' {:5.2f}'.format(self._port_motor.current_power)
+#                   + Fore.CYAN  + '\t:: '
+#                   + Fore.GREEN + 'stbd: {:5.2f} ➔ {:<5.2f}'.format(self._port_motor.velocity, self._stbd_motor.target_velocity)
+#                   + ' {:5.2f}'.format(self._stbd_motor.current_power)
+#                   + Fore.CYAN  + '\t:: decelerate: ' + Fore.BLUE + '{:.0%}'.format(self._decelerate_ratio))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _reset_deceleration(self):
@@ -729,6 +732,7 @@ class MotorController(Component):
                 self._log.warning('event: motors are in motion (halting).')
                 self._port_motor.stop()
                 self._stbd_motor.stop()
+            self._stop_loop() # stop loop thread
             self._port_motor.disable()
             self._stbd_motor.disable()
             self._log.info('disabled.')
