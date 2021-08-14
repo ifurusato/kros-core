@@ -41,13 +41,12 @@ class JerkLimiter(Component):
     def __init__(self, config, orientation, suppressed=False, enabled=True, level=Level.INFO):
         self._log = Logger('jerk:{}'.format(orientation.label), level)
         Component.__init__(self, self._log, suppressed=suppressed, enabled=enabled)
-        _cfg = config['kros'].get('motor')
-        _maximum_output = _cfg.get('motor_power_limit') # power limit to motor
+        _maximum_output = config['kros'].get('motor').get('motor_power_limit') # power limit to motor
         _minimum_output = _maximum_output * -1
-        _jerk_tolerance_pc = _cfg.get('jerk').get('jerk_tolerance') # expressed as percent (0-100)
+        _cfg = config['kros'].get('motor').get('jerk_limiter')
+        _jerk_tolerance_pc = _cfg.get('jerk_tolerance') # expressed as percent (0-100)
         if _jerk_tolerance_pc < 0 or _jerk_tolerance_pc > 100:
             raise ValueError('jerk tolerance must be expressed as a percentage value (0-100).')
-#       self._tolerance = (( _jerk_tolerance_pc / 100 ) * abs(_maximum_output - _minimum_output))
         self._tolerance = ( _jerk_tolerance_pc / 100 ) * _maximum_output
         self._jerk_rate_limit = self._tolerance * 1.3 # defined as the tolerance
         self._clip = lambda n: _minimum_output if n <= _minimum_output else _maximum_output if n >= _maximum_output else n

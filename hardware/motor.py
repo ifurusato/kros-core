@@ -238,21 +238,22 @@ class Motor(Component):
             for callback in self.__callbacks:
                 callback()
             _velocity = self._velocity()
+            _current_target_velocity = self.__target_velocity
             # set the target velocity variable modified by the slew limiter, if active
             if self._slew_limiter and self._slew_limiter.is_active:
-                self.__target_velocity = self._slew_limiter.limit(self.velocity, self.__target_velocity)
+                _current_target_velocity = self._slew_limiter.limit(self.velocity, _current_target_velocity)
 
             # use velocity clipper as a sanity checker
-            self.__target_velocity = self._velocity_clip(self.__target_velocity)
+            _current_target_velocity = self._velocity_clip(_current_target_velocity)
 
             # we now convert velocity to power, either by passing the target velocity to the PID controller (when active)
             # otherwise directly setting power to the motor via the proportional interpolator from the Speed Enum.
+#           self._log.debug('setting target velocity to: {:<5.2f} (from {:5.2f})'.format(_current_target_velocity, self.__target_velocity))
             if self._pid_controller.is_active: # via PID
-                self._pid_controller.set_velocity(self.__target_velocity)
+                self._pid_controller.set_velocity(_current_target_velocity)
             else: # via Speed
-                _power = Speed.get_proportional_power(self.__target_velocity)
+                _power = Speed.get_proportional_power(_current_target_velocity)
                 self.__set_motor_power(_power)
-
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def set_motor_power(self, target_power):

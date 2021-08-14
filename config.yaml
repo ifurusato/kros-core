@@ -57,8 +57,8 @@ kros:
     motor:
         maximum_velocity:            80.0        # limit to settable motor velocity
         motor_power_limit:            0.40       # upper and lower (x -1) limit set on power sent to motor
-        enable_slew_limiter:        False        # initial enabled state for slew limiter
-        suppress_slew_limiter:       True        # initial suppressed state for slew limiter
+        enable_slew_limiter:         True        # initial enabled state for slew limiter
+        suppress_slew_limiter:      False        # initial suppressed state for slew limiter
         enable_pid_controller:       True        # initial enable state for PID controller, otherwise direct drive
         suppress_pid_controller:    False        # initial suppressed state for PID controller
         enable_jerk_limiter:        False        # initial enabled state for jerk limiter
@@ -89,6 +89,14 @@ kros:
             sample_freq_hz:          20          # 20Hz equiv to 50ms/0.05s
             hyst_queue_len:          20          # size of queue used for running average for hysteresis
             pot_ctrl:              False         # if True enable potentiometer for setting PID terms
+        slew_limiter:
+            minimum_output:         -90.0        # lower limit of permitted velocity output values
+            maximum_output:          90.0        # upper limit of permitted velocity output values
+            rate:                 'NORMAL'       # select value of enum: EXTREMELY_SLOW, VERY_SLOW, SLOWER, SLOW, NORMAL, FAST, VERY_FAST
+            hysteresis:               2.0        # how close do we get to the target velocity?
+            use_elapsed_time:        True        # used elapsed time or percentage
+        jerk_limiter:
+            jerk_tolerance:          10          # percentage limit of permitted change per iteration
         speed:                                   # configured motor speeds for chadburn events
             astern:
                 MAXIMUM:             -0.90
@@ -128,14 +136,6 @@ kros:
 #               THREE_QUARTER:       60.0
 #               FULL:                80.0
 #               MAXIMUM:             90.0
-        slew:
-            minimum_output:         -90.0        # lower limit of permitted velocity output values
-            maximum_output:          90.0        # upper limit of permitted velocity output values
-            rate:                  'FAST'        # select value of enum: EXTREMELY_SLOW, VERY_SLOW, SLOWER, SLOW, NORMAL, FAST, VERY_FAST
-            hysteresis:               2.0        # how close do we get to the target velocity?
-            use_elapsed_time:        True        # used elapsed time or percentage
-        jerk:
-            jerk_tolerance:          10          # percentage limit of permitted change per iteration
     gamepad:
         enabled:                    False
         device_path:  '/dev/input/event5'        # the path to the bluetooth gamepad on the pi (see find_gamepad.py)
