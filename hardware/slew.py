@@ -45,7 +45,7 @@ class SlewLimiter(Component):
         self._maximum_output    = _cfg.get('maximum_output')
         self._log.info('minimum output: {:5.2f}; maximum output: {:5.2f}'.format(self._minimum_output, self._maximum_output))
         self._use_elapsed_time  = _cfg.get('use_elapsed_time')
-        self._default_slew_rate = SlewRate.from_string(_cfg.get('rate')) # default rate_limit, value change permitted per millisecond
+        self._default_slew_rate = SlewRate.from_string(_cfg.get('default_rate')) # default rate_limit, value change permitted per millisecond
         self._log.info('default slew rate: {}; {:6.4f}/cycle'.format(self._default_slew_rate.label, self._default_slew_rate.limit))
         self.slew_rate = self._default_slew_rate
         self._slew_hysteresis   = _cfg.get('hysteresis')
@@ -67,7 +67,7 @@ class SlewLimiter(Component):
         Reset the slew rate to the default value provided in the configuration.
         '''
         self._slew_rate = self._default_slew_rate
-        self._log.info(Fore.BLUE + 'slew rate limit reset to default of {}; {:>6.4f}/cycle.'.format(slew_rate.label, self._slew_rate.limit))
+        self._log.info(Fore.BLUE + 'slew rate limit reset to default of {}; {:>6.4f}/cycle.'.format(self._slew_rate.label, self._slew_rate.limit))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
@@ -86,10 +86,10 @@ class SlewLimiter(Component):
         if not isinstance(slew_rate, SlewRate):
             raise ValueError('expected SlewRate argument, not {}'.format(type(slew_rate)))
         self._slew_rate = slew_rate
-        self._log.info(Fore.BLUE + 'slew rate limit set to {}; {:>6.4f}/cycle.'.format(slew_rate.label, self._slew_rate.limit))
+        self._log.info(Fore.BLUE + '🍒 slew rate limit set to {}; {:>6.4f}/cycle.'.format(slew_rate.label, self._slew_rate.limit))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def reset(self, value):
+    def _reset_timer(self, value):
         '''
         Resets the elapsed timer.
         '''
@@ -97,6 +97,34 @@ class SlewLimiter(Component):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def limit(self, current_value, target_value):
+        '''
+        Next generation attempt.
+        '''
+        if not self.is_active:
+            return target_value
+        elif isclose(target_value, current_value, abs_tol=1e-3):
+            return target_value
+        elif target_value > current_value: # increasing ..........
+            # add a percentage of difference between current and target to current
+            _diff = self._slew_rate.ratio * ( target_value - current_value )
+#           if abs(_diff) < self._slew_hysteresis:
+#               _diff = self._slew_hysteresis
+            _value = current_value + _diff
+#           self._log.info(Fore.RED + '+value: {:+06.2f}; diff: {:06.2f} ({:3.1f}%); target: {:+06.2f}'.format(\
+#                   _value, _diff, 100.0 * self._slew_rate.ratio, target_value))
+        else: # decreasing .......................................
+            # subtract a percentage of difference between current and target to current
+            _diff = self._slew_rate.ratio * ( current_value - target_value )
+#           if abs(_diff) < self._slew_hysteresis:
+#               _diff = self._slew_hysteresis
+            _value = current_value - _diff
+#           self._log.info(Fore.BLUE + '-value: {:+06.2f}; diff: {:06.2f} ({:3.1f}%); target: {:+06.2f}'.format(\
+#                   _value, _diff, 100.0 * self._slew_rate.ratio, target_value))
+
+        return -1.0 * self._clip(-1.0 * _value) if _value < 0.0 else self._clip(_value)
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def xlimit(self, current_value, target_value):
         '''
         The returned result is the maximum amount of change between the current value
         and the target value based on the amount of elapsed time between calls (in
@@ -117,25 +145,27 @@ class SlewLimiter(Component):
             _now = self._millis()
             _elapsed = _now - self._start_time
             if isclose(target_value, current_value, abs_tol=1e-3):
-                self._log.info(Fore.YELLOW + '+value: {:+06.2f}; target: {:+06.2f}), elapsed: {:+06.2f} (elapsed, is close)'.format(
-                        current_value, target_value, _elapsed))
-                return current_value
+#               self._log.info(Fore.BLUE + '+value: {:+06.2f}; target: {:+06.2f}), elapsed: {:+06.2f} (elapsed, is close)'.format(
+#                       current_value, target_value, _elapsed))
+                return target_value
+#               return current_value
             elif target_value > current_value: # increasing ..........
-                _min = current_value - ( self._slew_rate.limit * _elapsed )
-                _max = current_value + ( self._slew_rate.limit * _elapsed )
+                _min   = current_value - ( self._slew_rate.limit * _elapsed )
+                _max   = current_value + ( self._slew_rate.limit * _elapsed )
                 _value = self._clip_by(target_value, _min, _max)
-                self._log.info(Fore.YELLOW + '+value: {:+06.2f}; target: {:+06.2f}), min: {:+06.2f}), max: {:+06.2f}); elapsed: {:+06.2f} (elapsed)'.format(
+                self._log.info(Fore.RED + '+value: {:+06.2f}; target: {:+06.2f}), min: {:+06.2f}), max: {:+06.2f}); elapsed: {:+06.2f} (elapsed)'.format(
                         _value, target_value, _min, _max, _elapsed))
             else: # decreasing .......................................
-                _min = current_value - ( self._slew_rate.limit * _elapsed )
-                _max = current_value + ( self._slew_rate.limit * _elapsed )
+                _min   = current_value - ( self._slew_rate.limit * _elapsed )
+                _max   = current_value + ( self._slew_rate.limit * _elapsed )
                 _value = self._clip_by(target_value, _min, _max)
-                self._log.info(Fore.YELLOW + '-value: {:+06.2f}; target: {:+06.2f}), min: {:+06.2f}), max: {:+06.2f}); elapsed: {:+06.2f} (elapsed)'.format(
+                self._log.info(Fore.BLUE + '-value: {:+06.2f}; target: {:+06.2f}), min: {:+06.2f}), max: {:+06.2f}); elapsed: {:+06.2f} (elapsed)'.format(
                         _value, target_value, _min, _max, _elapsed))
         else:
             if isclose(target_value, current_value, abs_tol=1e-3):
-                self._log.info(Fore.BLUE + '=value: {:+06.2f}; (close)'.format(current_value))
-                return current_value
+#               self._log.info(Fore.BLUE + '=value: {:+06.2f}; (close)'.format(current_value))
+                return target_value
+#               return current_value
             elif target_value > current_value: # increasing ..........
                 # add a percentage of difference between current and target to current
                 _diff = self._slew_rate.ratio * ( target_value - current_value )
@@ -159,7 +189,7 @@ class SlewLimiter(Component):
 #           self._log.info('🐝 value: {:+06.2f}; target: {:+06.2f}'.format(_value, target_value))
 #           return target_value
         # clip the output between min and max set in config (if negative we fix it before and after)
-        self._log.info('🐝 value: {:+06.2f}; target: {:+06.2f}'.format(_value, target_value))
+#       self._log.info('value: {:+06.2f}; target: {:+06.2f}'.format(_value, target_value))
         return -1.0 * self._clip(-1.0 * _value) if _value < 0.0 else self._clip(_value)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -186,14 +216,15 @@ class SlewLimiter(Component):
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-class SlewRate(Enum): #        tested to 50.0 velocity:
+class SlewRate(Enum): # tested to 50.0 velocity:
+    #                  num   ratio     pid    limit
     EXTREMELY_SLOW   = ( 0,  0.009,   0.16, 00.0001 ) # 5.1 sec
     VERY_SLOW        = ( 1,   0.02,   0.22, 00.0002 ) # 3.1 sec
     SLOWER           = ( 2,   0.05,   0.38, 00.0005 ) # 1.7 sec
     SLOW             = ( 3,   0.08,   0.48, 00.0010 ) # 1.3 sec
     NORMAL           = ( 4,   0.10,   0.58, 00.0050 ) # 1.0 sec
     FAST             = ( 5,   0.25,   0.68, 00.0100 ) # 0.6 sec
-    VERY_FAST        = ( 6,   0.40,    0.90, 00.0200 ) # 0.5 sec
+    VERY_FAST        = ( 6,   0.50,   0.90, 00.0200 ) # 0.5 sec
 
     def __new__(cls, *args, **kwds):
         obj = object.__new__(cls)
