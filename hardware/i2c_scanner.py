@@ -42,12 +42,12 @@ class I2CScanner(object):
         self._int_list = []
         self._hex_list = []
         try:
-            import smbus
+            from smbus2 import SMBus
             bus_number = 1  # 1 indicates /dev/i2c-1
-            self._bus = smbus.SMBus(bus_number)
+            self._bus = SMBus(bus_number)
             self._log.info('ready.')
         except ImportError:
-            self._log.warning('initialised. This script requires smbus. Will operate without but return an empty result.')
+            self._log.warning('initialised. This script requires smbus2. Will operate without but return an empty result.')
             self._bus = None
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈

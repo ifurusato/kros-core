@@ -26,6 +26,7 @@ from core.event import Event
 from core.rate import Rate
 from core.message_bus import MessageBus
 from hardware.motor_configurer import MotorConfigurer
+from hardware.slew import SlewRate
 from hardware.motor import Motor
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -80,10 +81,12 @@ class MotorController(Component):
         self._accel_increment      = _cfg.get('accel_increment')   # normal incremental acceleration
         self._decel_increment      = _cfg.get('decel_increment')   # normal incremental deceleration
         self._log.info(Fore.YELLOW + 'accelerate increment: {:5.2f}; decelerate increment: {:5.2f}'.format(self._accel_increment, self._decel_increment))
-        self._halt_ratio           = _cfg.get('halt_ratio')        # ratio for quick _halt behaviour
-        self._log.info('halt ratio:\t{:<5.2f}'.format(self._halt_ratio))
-        self._brake_ratio          = _cfg.get('brake_ratio')       # ratio for slower braking behaviour
-        self._log.info('brake ratio:\t{:<5.2f}'.format(self._brake_ratio))
+        # slew rate for quick halt behaviour
+        self._halt_slew_rate       = SlewRate.from_string(_cfg.get('brake_rate'))
+        self._log.info('halt rate:\t{}'.format(self._halt_slew_rate.name))
+        # slew rate for slower braking behaviour
+        self._brake_slew_rate      = SlewRate.from_string(_cfg.get('halt_rate'))
+        self._log.info('brake rate:\t{}'.format(self._brake_slew_rate.name))
         self._spin_speed           = Speed.from_string(_cfg.get('spin_speed')) # motor speed when spinning
         self._log.info('spin speed:\t{}'.format(self._spin_speed.name))
         self._log.info('motors ready.')
@@ -415,7 +418,7 @@ class MotorController(Component):
         '''
         A dispatcher for deceleration events: halt, _brake and stop.
         '''
-        self._reset_slew_rate()
+#       self._reset_slew_rate() # FIXME do we want this here or not?
         _event = payload.event
         self._log.info('🛑 dispatch stop event: {}'.format(_event.label))
         _value = payload.value
@@ -554,38 +557,89 @@ class MotorController(Component):
         Stops both motors immediately, with no slewing.
         '''
         self._log.info('💀 stopping...')
-        if not self.stopped:
-            self._port_motor.target_velocity = 0.0
-            self._stbd_motor.target_velocity = 0.0
-            self._log.info('stopped.')
-        else:
+        if self.stopped:
             self._log.warning('already stopped.')
-        # set velocity but don't wait, just call stop
-#       self._port_motor.stop()
-#       self._port_motor.off()
-#       self._stbd_motor.stop()
-#       self._stbd_motor.off()
+        else:
+            if self._loop_enabled:
+                if self._port_motor.slew_limiter.is_active:
+                    self._log.info('stopping soft...')
+                    self._reset_slew_rate() # use default FAST rate
+                    self._port_motor.target_velocity = 0.0
+                    self._stbd_motor.target_velocity = 0.0
+                else:
+                    # the last two blocks aren't currently very different from each other
+                    self._log.info('stopping hard...')
+                    # set velocity but don't wait, just call stop
+                    self._reset_slew_rate() # use default FAST rate
+                    self._port_motor.target_velocity = 0.0
+                    self._stbd_motor.target_velocity = 0.0
+                    # we rely on this ultimately
+                    self._port_motor.stop()
+                    self._stbd_motor.stop()
+            else:
+                self._log.info('stopping very hard...')
+                self._reset_slew_rate()
+                self._port_motor.target_velocity = 0.0
+                self._stbd_motor.target_velocity = 0.0
+                # we rely on this ultimately
+                self._port_motor.stop()
+                self._stbd_motor.stop()
+                self._port_motor.off()
+                self._stbd_motor.off()
+            self._log.info('stopped.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def halt(self):
         '''
         Quickly (but not immediately) stops both motors.
         '''
-        if not self.stopped:
+        if self.stopped:
+            self._log.debug('already halted.')
+        else:
             if self._loop_enabled:
-#               self._log.info('🌞 halting with ratio: {:5.2f}...'.format(self._decelerate_ratio))
-#               self._decelerate_ratio = self._halt_ratio
-
-                self._port_motor.target_velocity = 0.0
-                self._stbd_motor.target_velocity = 0.0
-                pass
+                if self._port_motor.slew_limiter.is_active:
+                    self._log.info('🌞 halting soft...')
+                    # use slew limiter for halting if available
+                    self._set_slew_rate(self._halt_slew_rate)
+                    self._port_motor.target_velocity = 0.0
+                    self._stbd_motor.target_velocity = 0.0
+                else:
+                    self._log.info('🌞 halting hard...')
+                    self._port_motor.target_velocity = 0.0
+                    self._stbd_motor.target_velocity = 0.0
             else:
-                self._log.info('🌞 stopping immediately: no increment loop running.')
+                self._log.info('🌞 halting very hard...')
                 self._port_motor.stop()
                 self._stbd_motor.stop()
             self._log.info('halted.')
+#       self._reset_slew_rate()
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def brake(self):
+        '''
+        Slowly coasts both motors to a stop.
+        '''
+        if self.stopped:
+            self._log.warning('already braked.')
         else:
-            self._log.debug('already halted.')
+            if self._loop_enabled:
+                if self._port_motor.slew_limiter.is_active:
+                    self._log.info('🌞 braking soft...')
+                    # use slew limiter for halting if available
+                    self._set_slew_rate(self._brake_slew_rate)
+                    self._port_motor.target_velocity = 0.0
+                    self._stbd_motor.target_velocity = 0.0
+                    pass
+                else:
+                    self._log.info('🌞 braking hard...')
+                    self._port_motor.target_velocity = 0.0
+                    self._stbd_motor.target_velocity = 0.0
+            else:
+                self._log.info('🌞 braking very hard...')
+                self._port_motor.stop()
+                self._stbd_motor.stop()
+            self._log.info('braked.')
+#       self._reset_slew_rate()
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _set_slew_rate(self, slew_rate):
@@ -594,24 +648,6 @@ class MotorController(Component):
         '''
         self._port_motor.slew_limiter.slew_rate = slew_rate
         self._stbd_motor.slew_limiter.slew_rate = slew_rate
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def brake(self):
-        '''
-        Slowly coasts both motors to a stop.
-        '''
-        if not self.stopped:
-            if self.loop_is_running():
-#               self._log.info('🐣 braking with ratio: {:5.2f}...'.format(self._decelerate_ratio))
-#               self._decelerate_ratio = self._brake_ratio
-                pass
-            else:
-                self._log.info('stopping immediately: no increment loop running.')
-                self._port_motor.stop()
-                self._stbd_motor.stop()
-            self._log.info('braked.')
-        else:
-            self._log.warning('already braked.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _reset_slew_rate(self):
