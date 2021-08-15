@@ -35,6 +35,7 @@ from core.controller import Controller
 from core.publisher import Publisher
 from core.subscriber import Subscriber, GarbageCollector
 
+from hardware.ifs_publisher import IfsPublisher
 from mock.event_publisher import EventPublisher
 from mock.pot_publisher import PotentiometerPublisher
 from mock.mock_pot_publisher import MockPotPublisher
@@ -165,6 +166,11 @@ class KROS(Component, FiniteStateMachine):
         _cfg = self._config['kros'].get('component')
 
         # create publishers ....................................................
+
+        _enable_ifs_publisher = _cfg.get('enable_ifs_publisher')
+        if _enable_ifs_publisher:
+            self._ifs_publisher = IfsPublisher(self._config, self._message_bus, self._message_factory, level=self._level)
+
         _enable_event_publisher = _cfg.get('enable_event_publisher')
         if _enable_event_publisher:
             self._event_publisher = EventPublisher(self._config, self._message_bus, self._message_factory, self._motor_ctrl, self._system, level=self._level)

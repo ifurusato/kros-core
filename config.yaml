@@ -10,6 +10,7 @@ kros:
     use_external_clock:               True       # if True use external clock
     exit_on_dire_event:              False       # if True exit if encountering a dire event
     component:                                   # enable specific publish/subscribe components
+        enable_ifs_publisher:         True       # enable Integrated Front Sensor publisher
         enable_event_publisher:       True       # keyboard robot simulator (kinda necessary for running CLI)
         enable_pot_publisher:         True       # digital velocity control potentiometer publisher
         enable_battery_publisher:     True       # battery check publisher
@@ -136,6 +137,27 @@ kros:
 #               THREE_QUARTER:       60.0
 #               FULL:                80.0
 #               MAXIMUM:             90.0
+    io_expander:
+        port_side_ir_pin:            8           # pin connected to port side infrared
+        port_ir_pin:                10           # pin connected to port infrared
+        center_ir_pin:              11           # pin connected to center infrared
+        stbd_ir_pin:                 9           # pin connected to starboard infrared
+        stbd_side_ir_pin:            7           # pin connected to starboard side infrared
+        port_bmp_pin:                6           # pin connected to port bumper
+        center_bmp_pin:              4           # pin connected to center bumper
+        stbd_bmp_pin:                5           # pin connected to starboard bumper
+        port_moth_pin:              13           # pin connected to port moth sensor
+        stbd_moth_pin:              14           # pin connected to starboard moth sensor
+    integrated_front_sensor:
+        use_potentiometer:  False                # use potentiometer to adjust distance setting
+        ignore_duplicates:  False                # don't fire messages for duplicate events
+        # the analog sensor distances (raw or cm) used as event trigger thresholds:
+        cntr_raw_min_trigger:        35          # below this raw value we don't execute callback on center IR
+        oblq_raw_min_trigger:        43          # below this raw value we don't execute callback on PORT & STBD IRs
+        side_raw_min_trigger:        50          # below this raw value we don't execute callback on side IRs
+        cntr_trigger_distance_cm:    90.0        # center analog IR sensor max distance before triggering
+        oblq_trigger_distance_cm:    70.0        # port or starboard oblique analog IR sensor max distance before triggering
+        side_trigger_distance_cm:    70.0        # port or starboard side analog IR sensor max distance before triggering
     gamepad:
         enabled:                    False
         device_path:  '/dev/input/event5'        # the path to the bluetooth gamepad on the pi (see find_gamepad.py)
@@ -156,6 +178,9 @@ kros:
         idle:
             idle_threshold_sec:      10          # how many seconds before we trigger an idle behaviour
             idle_loop_delay_sec:      1.0        # main loop delay in seconds
+    publisher:
+        integrated_front_sensor:
+            loop_freq_hz:            20          # polling loop frequency (Hz)
     mock:
         potentiometer:
             loop_delay_sec:           0.05       # loop delay
@@ -408,28 +433,6 @@ devices:
 #        default_filename_prefix: 'motors'        # output directory name
 #        gnuplot_template_file: 'settings_slew_template.gp'  # template for gnuplot settings
 #        gnuplot_output_file: 'settings_slew.gp'  # output file for gnuplot settings
-#    io_expander:
-#        port_side_ir_pin:   8                    # pin connected to port side infrared
-#        port_ir_pin:       10                    # pin connected to port infrared
-#        center_ir_pin:     11                    # pin connected to center infrared
-#        stbd_ir_pin:        9                    # pin connected to starboard infrared
-#        stbd_side_ir_pin:   7                    # pin connected to starboard side infrared
-#        port_bmp_pin:       6                    # pin connected to port bumper
-#        center_bmp_pin:     4                    # pin connected to center bumper
-#        stbd_bmp_pin:       5                    # pin connected to starboard bumper
-#        port_moth_pin:     13                    # pin connected to port moth sensor
-#        stbd_moth_pin:     14                    # pin connected to starboard moth sensor
-#    integrated_front_sensor:
-#        use_potentiometer:  False                # use potentiometer to adjust distance setting
-#        ignore_duplicates:  False                # don't fire messages for duplicate events
-#        loop_freq_hz:      20                    # polling loop frequency (Hz)
-#        # the analog sensor distances (raw or cm) used as event trigger thresholds:
-#        cntr_raw_min_trigger:              35    # below this raw value we don't execute callback on center IR
-#        oblq_raw_min_trigger:              43    # below this raw value we don't execute callback on PORT & STBD IRs
-#        side_raw_min_trigger:              50    # below this raw value we don't execute callback on side IRs
-#        cntr_trigger_distance_cm:        90.0    # center analog IR sensor max distance before triggering
-#        oblq_trigger_distance_cm:        70.0    # port or starboard oblique analog IR sensor max distance before triggering
-#        side_trigger_distance_cm:        70.0    # port or starboard side analog IR sensor max distance before triggering
 #    moth:
 #        hysteresis:   10                         # permissable range for int values being considered equal
 #    i2c_master:
