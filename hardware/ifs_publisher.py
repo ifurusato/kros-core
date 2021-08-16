@@ -118,7 +118,6 @@ class IfsPublisher(Publisher):
         self._log.info('poll...')
         _group = self._get_sensor_group()
 
-#       self._ifs.poll()
         self._log.info(Fore.YELLOW + '[{:04d}] sensor group: {}'.format(self._count, _group))
         _start_time = dt.datetime.now()
         if _group == 0: # bumper group .........................................

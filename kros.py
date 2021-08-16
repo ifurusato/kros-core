@@ -142,9 +142,13 @@ class KROS(Component, FiniteStateMachine):
         self._log.info('argument level:       {}'.format(arguments.level))
 
         # scan I2C bus .........................................................
+        print('BEGIN. I2CScanner')
         _i2c_scanner = I2CScanner(self._config, self._log.level)
+        print('A. I2CScanner')
         _i2c_scanner.print_device_list()
+        print('B. I2CScanner')
         self._addresses = _i2c_scanner.get_int_addresses()
+        print('END. I2CScanner')
 
         # establish basic subsumption components ...............................
 

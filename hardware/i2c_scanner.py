@@ -47,7 +47,10 @@ class I2CScanner(object):
             self._bus = SMBus(bus_number)
             self._log.info('ready.')
         except ImportError:
-            self._log.warning('initialised. This script requires smbus2. Will operate without but return an empty result.')
+            self._log.warning('unable to initialise: this script requires smbus2. Will operate without but returns an empty result. [1]')
+            self._bus = None
+        except Exception:
+            self._log.warning('unable to initialise: this script requires smbus2. Will operate without but returns an empty result. [2]')
             self._bus = None
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈

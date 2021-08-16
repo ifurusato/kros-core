@@ -16,13 +16,15 @@
 # source: /usr/local/lib/python3.7/dist-packages/ioexpander/__init__.py
 #
 
+import itertools, random
 from colorama import init, Fore, Style
 init()
 
 from core.logger import Logger, Level
 from core.event import Event
+from mock.io_expander import MockIoExpander # used only during dev and testing
 
-# ..............................................................................
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class IoExpander():
     '''
     Wraps an IO Expander board as input from an integrated front sensor
@@ -85,12 +87,20 @@ class IoExpander():
             self._ioe.set_mode(self._port_bmp_pin,     io.IN_PU)
             self._ioe.set_mode(self._cntr_bmp_pin,     io.IN_PU)
             self._ioe.set_mode(self._stbd_bmp_pin,     io.IN_PU)
-        except ImportError:
-            self._ioe = None
-            self._log.error("This script requires the pimoroni-ioexpander module\nInstall with: pip3 install --user pimoroni-ioexpander")
+#       except ImportError:
+#           self._log.warning("This script requires the pimoroni-ioexpander module\nInstall with: pip3 install --user pimoroni-ioexpander [1]")
+#           self._ioe = None
+        except Exception:
+            self._log.warning("This script requires the pimoroni-ioexpander module\nInstall with: pip3 install --user pimoroni-ioexpander [2]")
+            self._log.info('using mock IO Expander.')
+            self._ioe = MockIoExpander(config, level)
         self._log.info('ready.')
 
-    # ..........................................................................
+    @property
+    def is_active(self):
+        return self._ioe != None
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 #    def add(self, message):
 #        '''
 #        React to every 5th TICK message.
@@ -118,7 +128,7 @@ class IoExpander():
 #                    + Fore.GREEN + 'STBD={:d}'.format(self._stbd_bmp_pump) )
 #        pass
 
-    # infrared sensors .........................................................
+    # infrared sensors ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
     def get_port_side_ir_value(self):
         return int(round(self._ioe.input(self._port_side_ir_pin) * 100.0))
@@ -127,6 +137,8 @@ class IoExpander():
         return int(round(self._ioe.input(self._port_ir_pin) * 100.0))
 
     def get_center_ir_value(self):
+        if not self._ioe:
+            return None
         return int(round(self._ioe.input(self._center_ir_pin) * 100.0))
 
     def get_stbd_ir_value(self):
@@ -135,13 +147,13 @@ class IoExpander():
     def get_stbd_side_ir_value(self):
         return int(round(self._ioe.input(self._stbd_side_ir_pin) * 100.0))
 
-    # moth/anti-moth ...........................................................
+    # moth/anti-moth ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
     def get_moth_values(self):
         return [ int(round(self._ioe.input(self._port_moth_pin) * 100.0)), \
                  int(round(self._ioe.input(self._stbd_moth_pin) * 100.0)) ]
 
-    # bumpers ..................................................................
+    # bumpers ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
     def get_port_bmp_value(self):
         return ( self._ioe.input(self._port_bmp_pin) == 0 )
@@ -162,10 +174,10 @@ class IoExpander():
         return ( self._ioe.input(self._stbd_bmp_pin) == 0 )
 #       return ( self._ioe.input(self._stbd_bmp_pin) == 0 )
 
-    # ..........................................................................
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     # raw values are unprocessed values from the IO Expander (used for testing)
    
-    # raw infrared sensors .....................................................
+    # raw infrared sensors ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
     def get_raw_port_side_ir_value(self):
         return self._ioe.input(self._port_side_ir_pin)
@@ -182,7 +194,7 @@ class IoExpander():
     def get_raw_stbd_side_ir_value(self):
         return self._ioe.input(self._stbd_side_ir_pin)
 
-    # raw moth sensors .........................................................
+    # raw moth sensors ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
     def get_raw_moth_values(self):
         return [ self._ioe.input(self._port_moth_pin), self._ioe.input(self._stbd_moth_pin) ]
@@ -193,7 +205,7 @@ class IoExpander():
     def get_raw_stbd_moth_value(self):
         return self._ioe.input(self._stbd_moth_pin)
 
-    # raw bumpers ..............................................................
+    # raw bumpers ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
     def get_raw_port_bmp_value(self):
         return self._ioe.input(self._port_bmp_pin)
@@ -203,6 +215,5 @@ class IoExpander():
 
     def get_raw_stbd_bmp_value(self):
         return self._ioe.input(self._stbd_bmp_pin)
-
 
 # EOF

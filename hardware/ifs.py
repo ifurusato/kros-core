@@ -26,7 +26,7 @@ from core.event import Event
 from core.message import Message
 from core.message_bus import MessageBus
 from core.message_factory import MessageFactory
-from hardware.ioe import IoExpander
+from hardware.io_expander import IoExpander
 from hardware.digital_pot import DigitalPotentiometer # for calibration only
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -70,7 +70,7 @@ class IntegratedFrontSensor(Component):
                 + Fore.GREEN + ' stbd={:>5.2f}; stbd side={:>5.2f}'.format(self._oblq_trigger_distance_cm, self._side_trigger_distance_cm))
         # hardware pin assignments are defined in IO Expander
         # create/configure IO Expander
-        self._ioe = IoExpander(config, Level.INFO)
+        self._io_expander = IoExpander(config, Level.INFO)
         # these are used to support running averages
         _queue_limit = 2 # larger number means it takes longer to change
         self._deque_cntr      = Deque([], maxlen=_queue_limit)
@@ -89,21 +89,21 @@ class IntegratedFrontSensor(Component):
         '''
         Polls the port bumper, returning True if triggered.
         '''
-        return self._ioe.get_raw_port_bmp_value() == 0
+        return self._io_expander.get_raw_port_bmp_value() == 0
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def poll_cntr_bumper(self):
         '''
         Polls the center bumper, returning True if triggered.
         '''
-        return self._ioe.get_raw_center_bmp_value() == 0
+        return self._io_expander.get_raw_center_bmp_value() == 0
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def poll_stbd_bumper(self):
         '''
         Polls the starboard bumper, returning True if triggered.
         '''
-        return self._ioe.get_raw_stbd_bmp_value() == 0
+        return self._io_expander.get_raw_stbd_bmp_value() == 0
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     # Group 0: the bumpers
@@ -143,17 +143,18 @@ class IntegratedFrontSensor(Component):
         Polls the center infrared sensor, returning the value or None if nothing
         is within range.
         '''
-        _cntr_ir_data = self._ioe.get_center_ir_value()
-        if _cntr_ir_data > self._cntr_raw_min_trigger:
-            self._log.info(Fore.BLUE + 'ANALOG IR CENTER:\t' + (Fore.RED if (_cntr_ir_data > 100.0) else Fore.YELLOW) \
-                    + Style.BRIGHT + '{:d}'.format(_cntr_ir_data) + Style.DIM + '\t(analog value 0-255)')
-            _value = self._get_mean_distance(Orientation.CNTR, self._convert_to_distance(_cntr_ir_data))
-            if _value != None and _value < self._cntr_trigger_distance_cm:
-                self._log.info(Fore.BLUE + Style.NORMAL + '🍰 CNTR\tmean distance:\t{:5.2f}/{:5.2f}cm'.format(\
-                        _value, self._cntr_trigger_distance_cm) + Style.DIM + '; raw: {:d}'.format(_cntr_ir_data))
-                _message = self._message_factory.create_message(Event.INFRARED_CNTR, _value)
-                self._log.info('🍰 created message for event: {}; value: {:5.2f}'.format(_message.event, _message.value))
-                return _message
+        if self._io_expander.is_active:
+            _cntr_ir_data = self._io_expander.get_center_ir_value()
+            if _cntr_ir_data > self._cntr_raw_min_trigger:
+                self._log.info(Fore.BLUE + 'ANALOG IR CENTER:\t' + (Fore.RED if (_cntr_ir_data > 100.0) else Fore.YELLOW) \
+                        + Style.BRIGHT + '{:d}'.format(_cntr_ir_data) + Style.DIM + '\t(analog value 0-255)')
+                _value = self._get_mean_distance(Orientation.CNTR, self._convert_to_distance(_cntr_ir_data))
+                if _value != None and _value < self._cntr_trigger_distance_cm:
+                    self._log.info(Fore.BLUE + Style.NORMAL + '🍰 CNTR\tmean distance:\t{:5.2f}/{:5.2f}cm'.format(\
+                            _value, self._cntr_trigger_distance_cm) + Style.DIM + '; raw: {:d}'.format(_cntr_ir_data))
+                    _message = self._message_factory.create_message(Event.INFRARED_CNTR, _value)
+                    self._log.info('🍰 created message for event: {}; value: {:5.2f}'.format(_message.event, _message.value))
+                    return _message
         return None
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -166,7 +167,7 @@ class IntegratedFrontSensor(Component):
         _port_ir_message = None
         _stbd_ir_message = None
         # port analog infrared sensor ......................
-        _port_ir_data      = self._ioe.get_port_ir_value()
+        _port_ir_data      = self._io_expander.get_port_ir_value()
         if _port_ir_data > self._oblq_raw_min_trigger:
             self._log.info('ANALOG IR OBLIQUE:\t' + (Fore.RED if (_port_ir_data > 100.0) else Fore.YELLOW) \
                     + Style.BRIGHT + '{:d}'.format(_port_ir_data) + Style.DIM + '\t(analog value 0-255)')
@@ -177,7 +178,7 @@ class IntegratedFrontSensor(Component):
                 _port_ir_message = self._message_factory.create_message(Event.INFRARED_PORT, _value)
 #               self._publish_message(_port_ir_message)
         # starboard analog infrared sensor .................
-        _stbd_ir_data      = self._ioe.get_stbd_ir_value()
+        _stbd_ir_data      = self._io_expander.get_stbd_ir_value()
         if _stbd_ir_data > self._oblq_raw_min_trigger:
             self._log.info('ANALOG IR OBLIQUE:\t' + (Fore.RED if (_stbd_ir_data > 100.0) else Fore.YELLOW) \
                     + Style.BRIGHT + '{:d}'.format(_stbd_ir_data) + Style.DIM + '\t(analog value 0-255)')
@@ -194,7 +195,7 @@ class IntegratedFrontSensor(Component):
         _port_side_ir_message = None
         _stbd_side_ir_message = None
         # port side analog infrared sensor .................
-        _port_side_ir_data = self._ioe.get_port_side_ir_value()
+        _port_side_ir_data = self._io_expander.get_port_side_ir_value()
         if _port_side_ir_data > self._side_raw_min_trigger:
             self._log.info(Fore.RED + 'ANALOG IR SIDE:\t' + (Fore.RED if (_port_side_ir_data > 100.0) else Fore.YELLOW) \
                     + Style.BRIGHT + '{:d}'.format(_port_side_ir_data) + Style.DIM + '\t(analog value 0-255)')
@@ -204,7 +205,7 @@ class IntegratedFrontSensor(Component):
                         _value, self._side_trigger_distance_cm) + Style.DIM + '; raw: {:d}'.format(_port_side_ir_data))
                 _port_side_ir_message = self._message_factory.create_message(Event.INFRARED_PORT_SIDE, _value)
         # starboard side analog infrared sensor ............
-        _stbd_side_ir_data = self._ioe.get_stbd_side_ir_value()
+        _stbd_side_ir_data = self._io_expander.get_stbd_side_ir_value()
         if _stbd_side_ir_data > self._side_raw_min_trigger:
             self._log.info('ANALOG IR SIDE:\t' + (Fore.RED if (_stbd_side_ir_data > 100.0) else Fore.YELLOW) \
                     + Style.BRIGHT + '{:d}'.format(_stbd_side_ir_data) + Style.DIM + '\t(analog value 0-255)')
