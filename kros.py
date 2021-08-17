@@ -37,7 +37,7 @@ from core.subscriber import Subscriber, GarbageCollector
 
 from hardware.ifs_publisher import IfsPublisher
 from mock.event_publisher import EventPublisher
-from mock.pot_publisher import PotentiometerPublisher
+from mock.velocity_publisher import VelocityPublisher
 from mock.mock_pot_publisher import MockPotPublisher
 from mock.bumper_subscriber import BumperSubscriber
 from mock.infrared_subscriber import InfraredSubscriber
@@ -171,41 +171,43 @@ class KROS(Component, FiniteStateMachine):
 
         # create publishers ....................................................
 
-        _enable_ifs_publisher = _cfg.get('enable_ifs_publisher')
+        _pubs = arguments.pubs if arguments.pubs else ''
+        _enable_ifs_publisher = _cfg.get('enable_ifs_publisher') or 'i' in _pubs
         if _enable_ifs_publisher:
             self._ifs_publisher = IfsPublisher(self._config, self._message_bus, self._message_factory, level=self._level)
 
-        _enable_event_publisher = _cfg.get('enable_event_publisher')
+        _enable_event_publisher = _cfg.get('enable_event_publisher') or 'e' in _pubs
         if _enable_event_publisher:
             self._event_publisher = EventPublisher(self._config, self._message_bus, self._message_factory, self._motor_ctrl, self._system, level=self._level)
-            if _cfg.get('enable_pot_publisher'):
+            if _cfg.get('enable_velocity_publisher'):
                 self._log.warning('key event and potentiometer publishers both enabled; using only key events.')
         if not _enable_event_publisher: # we only enable potentiometer publishers if event publisher isn't available
-            if _cfg.get('enable_pot_publisher'):
-                self._pot_publisher = PotentiometerPublisher(self._config, self._message_bus, self._message_factory, level=self._level)
+            if _cfg.get('enable_velocity_publisher') or 'v' in _pubs:
+                self._pot_publisher = VelocityPublisher(self._config, self._message_bus, self._message_factory, level=self._level)
             else:
                 self._pot_publisher = MockPotPublisher(self._config, self._message_bus, self._message_factory, level=self._level)
 
         # add battery check publisher
-        if _cfg.get('enable_battery_publisher'):
+        if _cfg.get('enable_battery_publisher') or 'b' in _pubs:
             self._battery = BatteryCheck(self._config, self._message_bus, self._message_factory, self._level)
-
-#       self._publisher2  = FloodPublisher(self._message_bus, self._message_factory)
-#       self._publisher3  = GamepadPublisher(self._config, self._message_bus, self._message_factory)
+    #   _message_bus.print_publishers()
 
         # create subscribers ...................................................
-        if _cfg.get('enable_system_subscriber'):
+
+        _subs = arguments.subs if arguments.subs else ''
+        if _cfg.get('enable_system_subscriber') or 's' in _subs:
             self._system_subscriber   = SystemSubscriber(self._config, self, self._message_bus, level=self._level)
-        if _cfg.get('enable_motor_subscriber'):
+        if _cfg.get('enable_motor_subscriber') or 'm' in _subs:
             self._motor_subscriber    = MotorSubscriber(self._config, self._message_bus, self._motor_ctrl, level=self._level)
-        if _cfg.get('enable_bumper_subscriber'):
+        if _cfg.get('enable_bumper_subscriber') or 'b' in _subs:
             self._bumper_subscriber   = BumperSubscriber(self._config, self._message_bus, self._motor_ctrl, level=self._level)
-        if _cfg.get('enable_infrared_subscriber'):
+        if _cfg.get('enable_infrared_subscriber') or 'i' in _subs:
             self._infrared_subscriber = InfraredSubscriber(self._config, self._message_bus, self._motor_ctrl, level=self._level) # reacts to IR sensors
         self._garbage_collector   = GarbageCollector(self._config, self._message_bus, level=self._level)
+    #   _message_bus.print_subscribers()
 
         # create behaviours ....................................................
-        _enable_behaviours = _cfg.get('enable_behaviours')
+        _enable_behaviours = _cfg.get('enable_behaviours') or arguments.behave
         if _enable_behaviours:
             self._behaviour_mgr = BehaviourManager(self._config, self._message_bus, self._level) # a specialised subscriber
 #           self._behaviour_mgr = None
@@ -215,8 +217,6 @@ class KROS(Component, FiniteStateMachine):
             self._moth  = Moth(self._config, self._message_bus, self._message_factory, self._motor_ctrl, self._level)
             self._sniff = Sniff(self._config, self._message_bus, self._message_factory, self._motor_ctrl, self._level)
             self._idle  = Idle(self._config, self._message_bus, self._message_factory, self._level)
-    #   _message_bus.print_publishers()
-    #   _message_bus.print_subscribers()
         self._log.info('configured.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -420,6 +420,19 @@ class SystemSubscriber(Subscriber):
     # end of SystemSubscriber class  ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
 
 # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+def print_documentation():
+    '''
+    Print the extended documentation.
+    '''
+    _help_file = Path("help.txt")
+    if _help_file.is_file():
+        with open(_help_file) as f:
+            _content = f.read()
+            print(_content)
+    else:
+        print('{} not found.'.format(_help_file))
+
+# ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 def parse_args():
     '''
     Parses the command line arguments and return the resulting args object.
@@ -427,26 +440,38 @@ def parse_args():
     '''
     _log = Logger('parse-args', Level.INFO)
     _log.debug('parsing...')
-    formatter = lambda prog: argparse.HelpFormatter(prog,max_help_position=60)
+#   formatter = lambda prog: argparse.HelpFormatter(prog,max_help_position=60)
+    formatter = lambda prog: argparse.RawTextHelpFormatter(prog)
     parser = argparse.ArgumentParser(formatter_class=formatter,
-            description='Provides command line control of the KROS application.', \
+            description='Provides command line control of the K-Series Robot OS application.',
             epilog='This script may be executed by krosd (kros daemon) or run directly from the command line.')
+
+    parser.add_argument('--docs',        '-d', action='store_true', help='show the documentation message and exit')
     parser.add_argument('--configure',   '-c', action='store_true', help='run configuration (included by -s)')
     parser.add_argument('--start',       '-s', action='store_true', help='start kros')
     parser.add_argument('--no-motors',   '-n', action='store_true', help='disable motors (uses mock)')
     parser.add_argument('--gamepad',     '-g', action='store_true', help='enable bluetooth gamepad control')
     parser.add_argument('--video',       '-v', action='store_true', help='enable video if installed')
-    parser.add_argument('--mock',        '-m', action='store_true', help='permit mocked libraries (when not on a Pi)')
+    parser.add_argument('--pubs',        '-P', help='enable publishers as identified by first character')
+    parser.add_argument('--subs',        '-S', help='enable subscribers as identified by first character')
+    parser.add_argument('--behave',      '-B', action='store_true', help='enable behaviours')
+    parser.add_argument('--mock',        '-m', action='store_true', help='permit mocked libraries (e.g., when not on a Pi)')
     parser.add_argument('--config-file', '-f', help='use alternative configuration file')
     parser.add_argument('--level',       '-l', help='specify logging level \'DEBUG\'|\'INFO\'|\'WARN\'|\'ERROR\' (default: \'INFO\')')
     try:
         args = parser.parse_args()
-        _log.debug('parsed arguments: {}\n'.format(args))
-        if not args.configure and not args.start:
+        if args.docs:
+            print(Fore.CYAN)
+            parser.print_help()
+            print('')
+            print_documentation()
+            print(Style.RESET_ALL)
+            return -1
+        elif not args.configure and not args.start:
             print(Fore.CYAN)
             parser.print_help()
             print(Style.RESET_ALL)
-            return None
+            return -1
         else:
             return args
     except NotImplementedError as nie:
@@ -475,14 +500,17 @@ _kros = None
 def main(argv):
     global _kros
 
-    _log = Logger("main", Level.INFO)
     signal.signal(signal.SIGINT, signal_handler)
 
+    _suppress = False
+    _log = Logger("main", Level.INFO)
     try:
         _args = parse_args()
         if _args == None:
             print('')
             _log.info('arguments: no action.')
+        elif _args == -1:
+            _suppress = True # help or docs
         else:
             _level = Level.from_string(_args.level) if _args.level != None else Level.INFO
             _log.level = _level
@@ -500,7 +528,8 @@ def main(argv):
     except Exception:
         print(Fore.RED + Style.BRIGHT + 'error starting kros: {}'.format(traceback.format_exc()) + Style.RESET_ALL)
     finally:
-        _log.info('exit.')
+        if not _suppress:
+            _log.info('exit.')
         if _kros:
             _log.info('finally calling close...')
             _kros.close()

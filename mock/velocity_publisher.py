@@ -7,9 +7,9 @@
 #
 # author:   Murray Altheim
 # created:  2020-05-19
-# modified: 2021-07-21
+# modified: 2021-08-17
 #
-# MockPoteniometer at bottom.
+# MockPotentiometer at bottom.
 #
 
 from abc import ABC, abstractmethod
@@ -29,12 +29,13 @@ from core.publisher import Publisher
 from behave.trigger_behaviour import TriggerBehaviour
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-class PotentiometerPublisher(Publisher):
+class VelocityPublisher(Publisher):
 
-    _PUBLISHER_LOOP = '__pot_publisher_loop'
+    _PUBLISHER_LOOP = '__velocity_publisher_loop'
 
     '''
-    A Publisher that publishes motor speed controls from a digital potentiometer.
+    A Publisher that publishes motor target velocity controls from a digital
+    potentiometer.
 
     :param name:            the name of this behaviour
     :param config:          the application configuration
@@ -43,8 +44,8 @@ class PotentiometerPublisher(Publisher):
     :param level:           the optional log level
     '''
     def __init__(self, config, message_bus, message_factory, level=Level.INFO):
-        Publisher.__init__(self, 'pot', config, message_bus, message_factory, suppressed=False, level=level)
-        _cfg = self._config['kros'].get('mock').get('pot_publisher')
+        Publisher.__init__(self, 'velo', config, message_bus, message_factory, suppressed=False, level=level)
+        _cfg = self._config['kros'].get('mock').get('velocity_publisher')
         self._loop_delay_sec = _cfg.get('loop_delay_sec') # 0.05 is 50ms/20Hz, so each loop is 1/20th second or 20 loops/sec
         if not isinstance(level, Level):
             raise ValueError('wrong type for log level argument: {}'.format(type(level)))
@@ -87,13 +88,13 @@ class PotentiometerPublisher(Publisher):
     def enable(self):
         Publisher.enable(self)
         if self.enabled:
-            if self._message_bus.get_task_by_name(PotentiometerPublisher._PUBLISHER_LOOP) or self._publish_loop_running:
+            if self._message_bus.get_task_by_name(VelocityPublisher._PUBLISHER_LOOP) or self._publish_loop_running:
                 raise Exception('already enabled.')
 #               self._log.warning('already enabled.')
             else:
                 self._log.info('creating task for publisher loop...')
                 self._publish_loop_running = True
-                self._message_bus.loop.create_task(self._publisher_loop(lambda: self.enabled), name=PotentiometerPublisher._PUBLISHER_LOOP)
+                self._message_bus.loop.create_task(self._publisher_loop(lambda: self.enabled), name=VelocityPublisher._PUBLISHER_LOOP)
                 self._log.info('enabled.')
         else:
             self._log.warning('failed to enable publisher loop.')

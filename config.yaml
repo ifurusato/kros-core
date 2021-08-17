@@ -10,14 +10,16 @@ kros:
     use_external_clock:               True       # if True use external clock
     exit_on_dire_event:              False       # if True exit if encountering a dire event
     component:                                   # enable specific publish/subscribe components
-        enable_ifs_publisher:         True       # enable Integrated Front Sensor publisher
+        # publishers .............................
+        enable_ifs_publisher:        False       # enable Integrated Front Sensor publisher
         enable_event_publisher:       True       # keyboard robot simulator (kinda necessary for running CLI)
-        enable_pot_publisher:         True       # digital velocity control potentiometer publisher
         enable_battery_publisher:    False       # battery check publisher
-        enable_system_subscriber:     True       # system events subscriber
-        enable_motor_subscriber:      True       # motor events subscriber
-        enable_bumper_subscriber:     True       # bumper events subscriber
-        enable_infrared_subscriber:   True       # infrared events subscriber
+        enable_velocity_publisher:   False       # velocity control potentiometer publisher
+        # subscribers ............................
+        enable_system_subscriber:    False       # system events subscriber
+        enable_motor_subscriber:     False       # motor events subscriber
+        enable_bumper_subscriber:    False       # bumper events subscriber
+        enable_infrared_subscriber:  False       # infrared events subscriber
         enable_behaviours:           False       # enable BehaviourManager and Behaviours
     message_bus:
         max_age_ms:                  20.0        # maximum age of a message before expiry
@@ -182,7 +184,7 @@ kros:
     mock:
         potentiometer:
             loop_delay_sec:           0.05       # loop delay
-        pot_publisher:
+        velocity_publisher:
             loop_delay_sec:           0.05       # loop delay
             hysteresis:               3.0        # hysteresis near zero
         event_publisher:

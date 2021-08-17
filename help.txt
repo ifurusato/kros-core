@@ -1,0 +1,16 @@
+The --pubs and --subs arguments override the values in the YAML configuration file:
+
+publishers  ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+
+  'b':      battery check publisher
+  'e':      keyboard events publisher
+  'i':      Integrated Front Sensor publisher
+  'v':      velocity publisher
+
+subscribers ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+
+  'b':      bumper events subscriber
+  'i':      infrared events subscriber
+  'm':      motor events subscriber
+  's':      system events subscriber
+

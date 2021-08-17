@@ -134,7 +134,7 @@ class MotorController(Component):
         self._log.info('exited motor control loop.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def _stop_loop(self):
+    def stop_loop(self):
         '''
         Stop the loop.
         '''
@@ -701,7 +701,7 @@ class MotorController(Component):
                 self._log.warning('event: motors are in motion (halting).')
                 self._port_motor.stop()
                 self._stbd_motor.stop()
-            self._stop_loop() # stop loop thread
+            self.stop_loop() # stop loop thread
             self._port_motor.disable()
             self._stbd_motor.disable()
             self._log.info('disabled.')
