@@ -7,19 +7,19 @@
 # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
 kros:
-    use_external_clock:               True       # if True use external clock
     exit_on_dire_event:              False       # if True exit if encountering a dire event
     component:                                   # enable specific publish/subscribe components
+        enable_killswitch:            True       # kill switch
         # publishers .............................
-        enable_ifs_publisher:        False       # enable Integrated Front Sensor publisher
-        enable_event_publisher:       True       # keyboard robot simulator (kinda necessary for running CLI)
-        enable_battery_publisher:    False       # battery check publisher
-        enable_velocity_publisher:   False       # velocity control potentiometer publisher
+        enable_ifs_publisher:         True       # enable Integrated Front Sensor publisher
+        enable_event_publisher:      False       # keyboard robot simulator (kinda necessary for running CLI)
+        enable_battery_publisher:     True       # battery check publisher
+        enable_velocity_publisher:    True       # velocity control potentiometer publisher
         # subscribers ............................
-        enable_system_subscriber:    False       # system events subscriber
-        enable_motor_subscriber:     False       # motor events subscriber
+        enable_system_subscriber:     True       # system events subscriber
+        enable_motor_subscriber:      True       # motor events subscriber
         enable_bumper_subscriber:    False       # bumper events subscriber
-        enable_infrared_subscriber:  False       # infrared events subscriber
+        enable_infrared_subscriber:   True       # infrared events subscriber
         enable_behaviours:           False       # enable BehaviourManager and Behaviours
     message_bus:
         max_age_ms:                  20.0        # maximum age of a message before expiry
@@ -51,6 +51,10 @@ kros:
             raw_battery_threshold:   17.74       # raw and 5v regulator thresholds set from known measurements:
             low_5v_threshold:         4.75       # really 4.82v
             loop_delay_sec:          30          # sample loop delay (sec)
+        external_clock:
+            pin:                      6          # pin connected to external clock source
+        killswitch:
+             pin:                     7          # pin connected to hardware kill switch
     geometry:                                    # robot geometry (e.g., KR01)
         wheel_diameter:              68.0        # wheel diameter (mm)
         wheelbase:                  160.0        # wheelbase (mm)
@@ -66,6 +70,7 @@ kros:
         suppress_jerk_limiter:       True        # initial suppressed state for jerk limiter
         thunderborg_address:         0x15        # I²C address for thunderborg motor controller
         motor_controller:
+            use_external_clock:      True        # if True use external clock, ignoring loop delay value
             loop_delay_hz:           20          # main loop delay in hz
             accel_increment:          5.0        # normal incremental acceleration
             decel_increment:          5.0        # normal incremental deceleration
@@ -152,9 +157,9 @@ kros:
         use_potentiometer:  False                # use potentiometer to adjust distance setting
         ignore_duplicates:  False                # don't fire messages for duplicate events
         # the analog sensor distances (raw or cm) used as event trigger thresholds:
-        cntr_raw_min_trigger:        35          # below this raw value we don't execute callback on center IR
-        oblq_raw_min_trigger:        43          # below this raw value we don't execute callback on PORT & STBD IRs
-        side_raw_min_trigger:        50          # below this raw value we don't execute callback on side IRs
+        cntr_raw_min_trigger:        60          # below this raw value we don't execute callback on center IR
+        oblq_raw_min_trigger:        60          # below this raw value we don't execute callback on PORT & STBD IRs
+        side_raw_min_trigger:        60          # below this raw value we don't execute callback on side IRs
         cntr_trigger_distance_cm:    90.0        # center analog IR sensor max distance before triggering
         oblq_trigger_distance_cm:    70.0        # port or starboard oblique analog IR sensor max distance before triggering
         side_trigger_distance_cm:    70.0        # port or starboard side analog IR sensor max distance before triggering

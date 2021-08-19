@@ -26,7 +26,7 @@
 # see; /usr/local/lib/python3.8/asyncio/queues.py
 #
 
-import sys, traceback, logging
+import sys, time, traceback, logging
 import asyncio, signal
 from datetime import datetime as dt
 from colorama import init, Fore, Style
@@ -70,7 +70,7 @@ class MessageBus(Component):
         self._loop                   = None
         self._last_message_timestamp = None
         self._clip_event_list        = False # used for printing only
-        self._closing                = False
+        self._closing                = False # used during shutdown
         self._log.info('ready.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -101,12 +101,15 @@ class MessageBus(Component):
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def get_all_tasks(self, include_hidden=False):
         '''
-        Returns the task list, not including those whose name starts with '__'.
+        Returns the task list, not including the current task or those whose
+        name starts with '__'.
+
+        :param include_hidden:  if True return all; do not filter on task name.
         '''
         _tasks = []
         try:
             for _task in asyncio.all_tasks(loop=self._loop):
-                if include_hidden or not _task.get_name().startswith('__'):
+                if _task is not asyncio.current_task() and ( include_hidden or not _task.get_name().startswith('__')):
                     _tasks.append(_task)
         except RuntimeError:
             self._log.warning('no running loop.')
@@ -117,28 +120,15 @@ class MessageBus(Component):
         '''
         Clears the task list of any completed tasks.
         '''
-#       breakpoint()
         _tasks = self.get_all_tasks()
         if len(_tasks) == 0:
             self._log.debug('no outstanding tasks.')
         else:
-#           self._log.debug('clearing {:d} task{}...'.format(len(_tasks), ('' if len(_tasks) == 1 else 's')))
             for _task in _tasks:
                 if not _task.cancelled():
-#                   self._log.debug('cancelling task:\t' + Fore.YELLOW + '{}...'.format(_task.get_name()))
                     _task.cancel()
                 if _task.done():
-#                   self._log.debug('removing completed task:\t' + Fore.YELLOW + '{}...'.format(_task.get_name()))
                     _tasks.remove(_task)
-                else:
-#                   self._log.debug('incomplete task:\t' + Fore.BLUE + '{}'.format(_task.get_name()))
-                    pass
-#           if self._log.is_at_least(Level.DEBUG):
-#               self._log.debug('{:d} task{} remain{}.'.format(len(_tasks),
-#                       ('' if len(_tasks) == 1 else 's'),
-#                       ('s' if len(_tasks) == 1 else '')))
-#               for _task in _tasks:
-#                   self._log.debug('unfinished task:\t' + Fore.BLUE + '{}...'.format(_task.get_name()))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
@@ -192,12 +182,7 @@ class MessageBus(Component):
         '''
         Clear the message bus of any messages.
         '''
-#       self._log.info('clearing queue of {:d} message{}.'.format(self._queue.qsize(), '' if self._queue.qsize() == 1 else 's'))
         self._queue.clear()
-#       if self._queue.qsize() == 0:
-#           self._log.info('queue is empty.')
-#       else:
-#           self._log.info('queue contains {:d} message{} after clearing.'.format(self._queue.qsize(), '' if self._queue.qsize() == 1 else 's'))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
@@ -358,12 +343,16 @@ class MessageBus(Component):
         for subscriber in self._subscribers:
             subscriber.start()
         self._log.info('starting consume loop with {:d} subscriber{}...'.format(len(self._subscribers), '' if len(self._subscribers) == 1 else 's'))
-        while self.enabled:
+        try:
+            while self.enabled:
+                for subscriber in self._subscribers:
+#                   self._log.debug('publishing to subscriber {}...'.format(subscriber.name))
+                    await subscriber.consume()
+#                   self._log.debug('published to subscriber {}...'.format(subscriber.name))
+        finally:
+            self._log.info('🐹 completed consume loop with {:d} subscriber{}...'.format(len(self._subscribers), '' if len(self._subscribers) == 1 else 's'))
             for subscriber in self._subscribers:
-#               self._log.debug('publishing to subscriber {}...'.format(subscriber.name))
-                await subscriber.consume()
-#               self._log.debug('published to subscriber {}...'.format(subscriber.name))
-        self._log.info('completed consume loop with {:d} subscriber{}...'.format(len(self._subscribers), '' if len(self._subscribers) == 1 else 's'))
+                self._log.info('🐹 subscriber: {}; enabled: {}'.format(subscriber.name, subscriber.enabled))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _enable_publishers(self):
@@ -474,6 +463,7 @@ class MessageBus(Component):
         '''
         Cleanup tasks tied to the service's shutdown.
         '''
+        self._log.info('🌄 shutdown...')
         if signal:
             self._log.info('received exit signal {}...'.format(signal))
         self._log.info('nacking outstanding tasks...')
@@ -482,7 +472,11 @@ class MessageBus(Component):
         self._log.info('cancelling {:d} outstanding tasks...'.format(len(tasks)))
         _result = await asyncio.gather(*tasks, return_exceptions=True)
         self._log.info('stopping loop...; result: {}'.format(_result))
-        self._loop.stop()
+        self._log.info('🌄 stopping event loop...')
+        if self.loop.is_running():
+            self._log.info('🌄 stopping event loop...')
+            self.loop.stop()
+            self._log.info('🌄 event loop stopped.')
         self._log.info('shutting down...')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -526,48 +520,76 @@ class MessageBus(Component):
             self._loop.set_exception_handler(self.handle_exception)
             self._loop.create_task(self._start_consuming(), name='__event_loop__')
         if not self._loop.is_running():
-#           self._log.debug('starting asyncio task loop...')
+            self._log.info('🍉 starting asyncio task loop...')
+#           try:
             self._loop.run_forever()
+#           finally:
+#               self._log.info('🍉 finally on loop run forever; running: {}; closed: {}'.format(self.loop.is_running(), self.loop.is_closed()))
+#               if self.loop.is_running() and not self.loop.is_closed():
+#                   self._log.info('🍉 CLOSING loop...')
+#                   self.loop.run_until_complete(self.loop.shutdown_asyncgens())
+#                   self.loop.close()
+#                   self._log.info('🍉 loop CLOSED.')
         return self._loop
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def disable(self):
         '''
-        NOTE: we are at this point incidentally tying publishing with
-        the enabled state of the publisher, and subscribing with the
-        enabled state of the subscriber. This may not be desired.
+        This disables and closes all publishers and subscribers as there is
+        no expectation to be able to re-enable the message bus once disabled.
+        This also simplifies the shutdown sequence.
         '''
-        if self.enabled:
+        self._log.info('🌄 disable() enabled: {}'.format(self.enabled))
+        if self.closed:
+            self._log.info('🌄 already closed.')
+        elif self._closing:
+            self._log.info('🌄 already closing.')
+        elif self.enabled:
             Component.disable(self)
-            self._log.info('disabling {:d} publishers...'.format(len(self._publishers)))
-            for publisher in self._publishers:
-                publisher.disable()
-            self._log.info('disabling {:d} subscribers...'.format(len(self._subscribers)))
-            for subscriber in self._subscribers:
-                subscriber.disable()
-            if self._loop and self._loop.is_running():
-                self._loop.stop()
-            self._log.info('disabled.')
-            self.clear_queue()
+            self._log.info('🌄 disabling...')
+            self._log.info('🌄 closing {:d} publishers...'.format(len(self._publishers)))
+            [publisher.close() for publisher in self._publishers]
+            self._log.info('🌄 closing {:d} subscribers...'.format(len(self._subscribers)))
+            [subscriber.close() for subscriber in self._subscribers]
             self.clear_tasks()
-            self._log.info('disabled.')
+            self.clear_queue()
+            self._log.info('🌄 BEFORE. loop is running: {}; closed: {}'.format(self.loop.is_running(), self.loop.is_closed()))
+            if self.loop.is_running():
+                self._log.info('🌄 stopping event loop...')
+                self.loop.stop()
+                self._log.info('🌄 event loop stopped.')
+            if not self.loop.is_running() and not self.loop.is_closed():
+                self._log.info('🌄 closing event loop...')
+                self.loop.close()
+                self._log.info('🌄 event loop closed.')
+            self._log.info('🌄 AFTER.  loop is running: {}; closed: {}'.format(self.loop.is_running(), self.loop.is_closed()))
+            self._log.info('🌄 disabled.')
         else:
-            self._log.debug('already disabled.')
+            self._log.info('🌄 already disabled.')
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    @property
+    def closing(self):
+        return self._closing
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def close(self):
+        '''
+        This defers most of the shutdown process to disable().
+        '''
+        self._log.info('🍭 close() enabled: {}'.format(self.enabled))
         if self.closed:
-            self._log.warning('already closed.')
-        elif self._closing:
-            self._log.warning('already closing.')
+            self._log.warning('🍭 already closed.')
+        elif self.closing:
+            self._log.warning('🍭 already closing.')
         else:
-            if self.enabled:
-                self.disable()
+            self._log.info('🍭 closing...')
+            Component.close(self) # will call disable()
             self._closing = True
-            self._log.info('closing...')
-            Component.close(self)
+#           if self.enabled:
+#               self.disable()
             self._closing = False
-#           self._log.info('closed.')
+        self._log.info('🍭 closed.')
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class PeekableQueue(Queue):

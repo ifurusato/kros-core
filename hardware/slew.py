@@ -46,7 +46,6 @@ class SlewLimiter(Component):
         self._log.info('minimum output: {:5.2f}; maximum output: {:5.2f}'.format(self._minimum_output, self._maximum_output))
         self._use_elapsed_time  = _cfg.get('use_elapsed_time')
         self._default_slew_rate = SlewRate.from_string(_cfg.get('default_rate')) # default rate_limit, value change permitted per millisecond
-        self._log.info('default slew rate: {}; {:6.4f}/cycle'.format(self._default_slew_rate.label, self._default_slew_rate.limit))
         self.slew_rate = self._default_slew_rate
         self._slew_hysteresis   = _cfg.get('hysteresis')
         self._log.info('hysteresis: {:5.2f}'.format(self._slew_hysteresis))
@@ -67,7 +66,7 @@ class SlewLimiter(Component):
         Reset the slew rate to the default value provided in the configuration.
         '''
         self._slew_rate = self._default_slew_rate
-        self._log.info(Fore.BLUE + 'slew rate limit reset to default of {}; {:>6.4f}/cycle.'.format(self._slew_rate.label, self._slew_rate.limit))
+#       self._log.info('slew rate limit reset to default of {}; {:>6.4f}/cycle.'.format(self._slew_rate.label, self._slew_rate.limit))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
@@ -86,7 +85,7 @@ class SlewLimiter(Component):
         if not isinstance(slew_rate, SlewRate):
             raise ValueError('expected SlewRate argument, not {}'.format(type(slew_rate)))
         self._slew_rate = slew_rate
-        self._log.info(Fore.BLUE + '🍒 slew rate limit set to {}; {:>6.4f}/cycle.'.format(slew_rate.label, self._slew_rate.limit))
+        self._log.info('slew rate limit set to {}; {:>6.4f}/cycle.'.format(slew_rate.label, self._slew_rate.limit))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _reset_timer(self, value):

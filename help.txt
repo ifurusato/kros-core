@@ -6,6 +6,7 @@ publishers  ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈�
   'e':      keyboard events publisher
   'i':      Integrated Front Sensor publisher
   'v':      velocity publisher
+  'k':      kill switch publisher
 
 subscribers ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 

@@ -17,7 +17,7 @@ class Component(object):
     '''
     A basic component providing support for enable or disable, suppress or
     release, and close flags. The enable/disable and suppress/release differ
-    in that in a disabled state a component does not operate at all, whereas
+    in that in a disabled state a Component does not operate at all, whereas
     in a suppressed state it operates as normal but cannot send or receive
     messages. This functionality is provided solely as flags, not enforced by
     this class.
@@ -30,7 +30,7 @@ class Component(object):
     The Component is suppressed and disabled by default, though via optional
     constructor arguments either can set be set to True.
 
-    :param logger:  the Logger used for the component
+    :param logger:  the Logger used for the Component
     '''
     def __init__(self, logger, suppressed=True, enabled=False):
         if not isinstance(logger, Logger):
@@ -44,89 +44,86 @@ class Component(object):
         self._enabled    = enabled
         self._closed     = False
 
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-
-    @property
-    def is_active(self):
-        '''
-        A convenience method that returns True if this Component is enabled and
-        released (not suppressed).
-        '''
-        return self._enabled and not self._suppressed
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    # properties ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
     @property
     def enabled(self):
         '''
-        Return the enabled state of this component.
+        Return the enabled state of this Component.
         '''
         return self._enabled
 
+    @property
+    def disabled(self):
+        '''
+        Return the disabled state of this Component.
+        This is a convenience method.
+        '''
+        return not self._enabled
+
+    @property
+    def suppressed(self):
+        '''
+        Return True if this Component is suppressed.
+        '''
+        return self._suppressed
+
+    @property
+    def is_active(self):
+        '''
+        A convenience method that returns True if this Component is enabled
+        and released (i.e., not suppressed).
+        '''
+        return self.enabled and not self.suppressed
+
+    @property
+    def closed(self):
+        '''
+        Returns True if this Component is closed.
+        '''
+        return self._closed
+
+    # state setters ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+
     def enable(self):
         '''
-        Enable this component.
+        Enable this Component.
         '''
-        if not self._closed:
+        if not self.closed:
             self._enabled = True
             self._log.info('enabled.')
         else:
             self._log.warning('cannot enable: already closed.')
 
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-
-    @property
-    def disabled(self):
-        '''
-        Return the disabled state of this component.
-        This is a convenience method.
-        '''
-        return not self._enabled
-
     def disable(self):
         '''
-        Disable this component.
+        Disable this Component.
         '''
-        if self._enabled:
+        if self.enabled:
             self._enabled = False
             self._log.info('disabled.')
         else:
             self._log.debug('already disabled.')
 
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-
-    @property
-    def suppressed(self):
-        '''
-        Return True if the behaviour is suppressed.
-        '''
-        return self._suppressed
-
     def release(self):
         '''
-        Releases (un-suppresses) the component.
+        Releases (un-suppresses) this Component.
         '''
         self._suppressed = False
         self._log.info('released.')
 
     def suppress(self):
         '''
-        Suppresses the component.
+        Suppresses this Component.
         '''
         self._suppressed = True
         self._log.info('suppressed.')
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-
-    @property
-    def closed(self):
-        return self._closed
 
     def close(self):
         '''
         Permanently close and disable the message bus.
         '''
-        if not self._closed:
+        if not self.closed:
             self.disable()
             self._closed = True
             self._log.info('closed.')

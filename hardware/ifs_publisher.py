@@ -79,11 +79,9 @@ class IfsPublisher(Publisher):
 
                 # otherwise handle as event
                 _message = self._ifs.poll_center_infrared()
-
                 if _message is not None:
-                    self._log.info('❎ received message for event: {}; message: {}'.format(_message.event, _message.value))
-                    _message = self._message_factory.create_message(_message.event, True)
-                    _message.value = dt.now() # we use a timestamp to guarantee each message is different
+                    self._log.info('❎ received message for event: {}; value: {:5.2f}cm'.format(_message.event, _message.value))
+#                   _message = self._message_factory.create_message(_message.event, True)
                     self._log.info('❎ ifs-publishing message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
                     await Publisher.publish(self, _message)
                     self._log.info('❎ ifs-published message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))

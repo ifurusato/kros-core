@@ -22,8 +22,9 @@ class System(object):
     '''
     A collection of system control/info/statistical methods.
     '''
-    def __init__(self, level=Level.INFO):
+    def __init__(self, kros, level=Level.INFO):
         self._log = Logger('system', level)
+        self._kros = kros
         self._log.info('ready.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -35,6 +36,7 @@ class System(object):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def print_sys_info(self):
+        self._log.info('kros: \t' + Fore.YELLOW + 'state: {}; enabled: {}'.format(self._kros.state, self._kros.enabled))
         _M = 1000000
         _vm = psutil.virtual_memory()
         self._log.info('virtual memory: \t' + Fore.YELLOW + 'total: {:4.1f}MB; available: {:4.1f}MB ({:5.2f}%); used: {:4.1f}MB; free: {:4.1f}MB'.format(\

@@ -20,7 +20,7 @@ init()
 from core.util import Util
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-class Logger:
+class Logger(object):
 
     _suppress = False
     __color_debug    = Fore.BLUE   + Style.DIM
@@ -81,6 +81,18 @@ class Logger:
                     self._sh.setFormatter(logging.Formatter('%(name)s ' + ( ' '*(16-len(name)) ) + ' : %(message)s'))
                 self.__log.addHandler(self._sh)
         self.level = level
+
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def close(self):
+        '''
+        Closes down logging, and informs the logging system to perform an 
+        orderly shutdown by flushing and closing all handlers. This should 
+        be called at application exit and no further use of the logging 
+        system should be made after this call.
+        '''
+#       self.suppress()
+        logging.shutdown()
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def suppress(self):
@@ -228,26 +240,27 @@ class Logger:
         :param message:  the optional message to display; if None only the title will be displayed.
         :param info:     an optional second message to display right-justified; ignored if None.
         '''
-        MAX_WIDTH = 100
-        MARGIN = 27
-        if title is None or len(title) == 0:
-            raise ValueError('no title parameter provided (required)')
-        _available_width = MAX_WIDTH - MARGIN
-        self.info(self._get_title_bar(title, _available_width))
-        if message:
-            if info is None:
-                info = ''
-            _min_msg_width = len(message) + 1 + len(info)
-            if _min_msg_width >= _available_width:
-                # if total length is greater than available width, just print
-                self.info(Fore.WHITE + Style.BRIGHT + '{} {}'.format(message, info))
-            else:
-                _message_2_right = info.rjust(_available_width - len(message) - 2)
-                self.info(Fore.WHITE + Style.BRIGHT + '{} {}'.format(message, _message_2_right))
-            # print footer
-            self.info(Fore.WHITE + Style.BRIGHT + Util.repeat('-', _available_width-1))
-        # print spacer
-        self.info('')
+        if not self.suppressed:
+            MAX_WIDTH = 100
+            MARGIN = 27
+            if title is None or len(title) == 0:
+                raise ValueError('no title parameter provided (required)')
+            _available_width = MAX_WIDTH - MARGIN
+            self.info(self._get_title_bar(title, _available_width))
+            if message:
+                if info is None:
+                    info = ''
+                _min_msg_width = len(message) + 1 + len(info)
+                if _min_msg_width >= _available_width:
+                    # if total length is greater than available width, just print
+                    self.info(Fore.WHITE + Style.BRIGHT + '{} {}'.format(message, info))
+                else:
+                    _message_2_right = info.rjust(_available_width - len(message) - 2)
+                    self.info(Fore.WHITE + Style.BRIGHT + '{} {}'.format(message, _message_2_right))
+                # print footer
+                self.info(Fore.WHITE + Style.BRIGHT + Util.repeat('-', _available_width-1))
+            # print spacer
+            self.info('')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _get_title_bar(self, message, MAX_WIDTH):

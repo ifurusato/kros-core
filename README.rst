@@ -105,9 +105,9 @@ The current functionality is entirely as a robot simulator, i.e., once installed
 it's possible to run the a test script without requiring an actual robot. Execute
 the script via::
 
-    pub_sub_test.py
+    kros.py -s
 
-to start the message bus event loop, or::
+with the "-s" argument to start the message bus event loop, or::
 
     python3 -m pdb kros.py -s
 

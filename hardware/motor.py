@@ -92,6 +92,8 @@ class Motor(Component):
 #           raise Exception('using mocked velocity.')
         else:
             self._velocity       = Velocity(config, self, level=level)
+            # add callback from motor's update method
+            self.add_callback(self._velocity.tick)
             self._velocity.enable()
         # pid controller .............................................
         _suppress_pid_controller = _cfg.get('suppress_pid_controller')
@@ -204,7 +206,7 @@ class Motor(Component):
     @max_power_ratio.setter
     def max_power_ratio(self, max_power_ratio):
         self.__max_power_ratio = max_power_ratio
-        self._log.info(Fore.YELLOW + 'maximum power ratio: {:<5.2f}'.format(self.__max_power_ratio))
+        self._log.info('maximum power ratio: {:<5.2f}'.format(self.__max_power_ratio))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _callback_step_count(self, pulse):
@@ -237,7 +239,7 @@ class Motor(Component):
         if self.enabled:
             for callback in self.__callbacks:
                 callback()
-            _velocity = self._velocity()
+            _velocity = self._velocity.value
             _current_target_velocity = self.__target_velocity
             # set the target velocity variable modified by the slew limiter, if active
             if self._slew_limiter and self._slew_limiter.is_active:
@@ -342,7 +344,7 @@ class Motor(Component):
             self._tb.SetMotor2(0.0)
         else:
             raise ValueError('unrecognised orientation.')
-        self._log.info('🆑 {} motor stopped.'.format(self._orientation.name))
+        self._log.info('{} motor stopped.'.format(self._orientation.name))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def off(self):
@@ -355,7 +357,7 @@ class Motor(Component):
             self._tb.SetMotor2Off()
         else:
             raise ValueError('unrecognised orientation.')
-        self._log.info('🆑 {} motor off.'.format(self._orientation.name))
+        self._log.info('{} motor off.'.format(self._orientation.name))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def enable(self):

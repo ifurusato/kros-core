@@ -154,6 +154,32 @@ class VelocityPublisher(Publisher):
         '''
         raise Exception('what is this doing here?')
 
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def disable(self):
+        '''
+        Disable this publisher.
+        '''
+        self._log.info('🍄 disabling velocity publisher...')
+        if self.enabled:
+            self._pot.disable()
+            Publisher.disable(self)
+            self._log.info('🍄 velocity publisher disabled.')
+        else:
+            self._log.warning('🍄 velocity publisher already disabled.')
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def close(self):
+        '''
+        Close this publisher.
+        '''
+        self._log.info('👾 closing velocity publisher...')
+        if not self.closed:
+#           self._pot.close()
+            Publisher.close(self)
+            self._log.info('👾 velocity publisher closed.')
+        else:
+            self._log.warning('👾 velocity publisher already closed.')
+
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class MockPotentiometer(object):
     def __init__(self, level=Level.INFO):
@@ -168,6 +194,12 @@ class MockPotentiometer(object):
         return 0.0
 
     def set_black(self):
+        pass
+
+    def disable(self):
+        pass
+
+    def close(self):
         pass
 
 #EOF

@@ -226,7 +226,7 @@ class BatteryCheck(Publisher):
                 self._tb.SetLedShowBattery(False)
             self._log.info('enabled.')
         else:
-            self._log.warning('cannot enable: already closed.')
+            self._log.warning('cannot enable: already enabled.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _check_battery_voltage(self):

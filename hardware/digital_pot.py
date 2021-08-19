@@ -16,10 +16,11 @@ from colorama import init, Fore, Style
 init()
 
 from core.logger import Logger, Level
+from core.component import Component
 from hardware.i2c_scanner import DeviceNotFound
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-class DigitalPotentiometer(object):
+class DigitalPotentiometer(Component):
     '''
     Configures an IO Expander Potentiometer breakout, returning an analog
     value scaled to a specified range. For a center-zero pot simply
@@ -36,8 +37,9 @@ class DigitalPotentiometer(object):
     :param level:      The log level.
     '''
     def __init__(self, config, in_min=None, in_max=None, out_min=None, out_max=None, level=Level.INFO):
-        super().__init__()
+#       super().__init__()
         self._log = Logger('digital-pot', level)
+        Component.__init__(self, self._log, suppressed=False, enabled=True)
         if config is None:
             raise ValueError('no configuration provided.')
         _cfg = config['kros'].get('hardware').get('digital_potentiometer')
@@ -114,7 +116,6 @@ class DigitalPotentiometer(object):
         if not isinstance(out_min, float):
             raise ValueError('wrong type for out_min argument: {}'.format(type(out_min)))
         self._out_min = out_min
-
         if isinstance(out_max, int):
             out_max = float(out_max)
         if not isinstance(out_max, float):
@@ -125,30 +126,35 @@ class DigitalPotentiometer(object):
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def value(self):
+        if self.disabled or not self._ioe:
+            return 0.0
         _value = self._max_value - self._ioe.input(self._pot_enc_c)
         self._log.debug('raw value: {:<5.2f}'.format(_value))
         return _value
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def set_white(self):
-        self._ioe.output(self._pin_red, 255)
-        self._ioe.output(self._pin_green, 255)
-        self._ioe.output(self._pin_blue, 255)
+        if self._ioe:
+            self._ioe.output(self._pin_red, 255)
+            self._ioe.output(self._pin_green, 255)
+            self._ioe.output(self._pin_blue, 255)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def set_black(self):
-        self._ioe.output(self._pin_red, 0)
-        self._ioe.output(self._pin_green, 0)
-        self._ioe.output(self._pin_blue, 0)
+        if self._ioe:
+            self._ioe.output(self._pin_red, 0)
+            self._ioe.output(self._pin_green, 0)
+            self._ioe.output(self._pin_blue, 0)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def set_rgb(self, value):
-        h = value / self._max_value # time.time() / 10.0
-        r, g, b = [int(c * self._period * self._brightness) for c in colorsys.hsv_to_rgb(h, 1.0, 1.0)]
-        self._ioe.output(self._pin_red, r)
-        self._ioe.output(self._pin_green, g)
-        self._ioe.output(self._pin_blue, b)
-        self._log.debug('value: {:<5.2f}; rgb: {},{},{}'.format(value, r, g, b))
+        if self._ioe:
+            h = value / self._max_value # time.time() / 10.0
+            r, g, b = [int(c * self._period * self._brightness) for c in colorsys.hsv_to_rgb(h, 1.0, 1.0)]
+            self._ioe.output(self._pin_red, r)
+            self._ioe.output(self._pin_green, g)
+            self._ioe.output(self._pin_blue, b)
+            self._log.debug('value: {:<5.2f}; rgb: {},{},{}'.format(value, r, g, b))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def get_scaled_value(self, update_led=True):
@@ -156,6 +162,8 @@ class DigitalPotentiometer(object):
         Return a scaled value while also updating the RGB LED if the
         argument is True (the default).
         '''
+        if self.disabled:
+            return 0.0
         _value = self.value
         if update_led:
             self.set_rgb(_value)
@@ -171,5 +179,15 @@ class DigitalPotentiometer(object):
             where e.g.:  a = 0.0, b = 1.0, min = 0, max = 330.
         '''
         return (( self._out_max - self._out_min ) * ( value - self._in_min ) / ( self._in_max - self._in_min )) + self._out_min
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def disable(self):
+        self._log.info("disabling...")
+        if self.enabled:
+            self.set_black()
+            Component.disable(self)
+            self._log.info("disabled.")
+        else:
+            self._log.warning("already disabled.")
 
 #EOF

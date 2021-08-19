@@ -107,7 +107,7 @@ class Velocity(object):
         self._motor = motor
         self._log = Logger('velocity:{}'.format(motor.orientation.label), level)
         # add callback from motor's update method
-        self._motor.add_callback(self.tick)
+#       self._motor.add_callback(self.tick)
         # establish sample frequency
         self._freq_hz = config['kros'].get('motor').get('pid_controller').get('sample_freq_hz')
         self._period_ms = 1000.0 / self._freq_hz
@@ -126,7 +126,7 @@ class Velocity(object):
         # sanity check: perform conversion for velocity of 1 wheel rotation (494 steps)
         # per second, where the returned value should be the circumference (21.36cm)
         _test_velocity = self.steps_to_cm(self._steps_per_rotation)
-        self._log.info(Fore.GREEN + 'example conversion:\t{:7.4f}cm/rotation'.format(_test_velocity))
+        self._log.info('example conversion:\t{:7.4f}cm/rotation'.format(_test_velocity))
         assert _test_velocity == self._wheel_circumference
         # ..............................
         self._stepcount_timestamp = None
@@ -185,12 +185,12 @@ class Velocity(object):
         '''
         return self._velocity
 
-    def __call__(self):
-        '''
-        Enables this class to be called as if it were a function, returning
-        the current velocity value.
-        '''
-        return self._velocity
+#   def __call__(self):
+#       '''
+#       Enables this class to be called as if it were a function, returning
+#       the current velocity value.
+#       '''
+#       return self._velocity
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property

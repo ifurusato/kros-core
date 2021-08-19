@@ -38,13 +38,16 @@ class PID(object):
     '''
     def __init__(self, label, kp, ki, kd, min_output, max_output, setpoint=0.0, period=0.01, level=Level.INFO):
         self._log = Logger('pid:{}'.format(label), level)
-        self._kp         = kp # proportional gain
-        self._ki         = ki # integral gain
-        self._kd         = kd # derivative gain
-        self._setpoint   = setpoint
-        self._min_output = min_output
-        self._max_output = max_output
-        self._limit      = None
+        self._kp           = kp # proportional gain
+        self._ki           = ki # integral gain
+        self._kd           = kd # derivative gain
+        self._setpoint     = setpoint
+        self._min_output   = min_output
+        self._max_output   = max_output
+        self._sp_limit     = None
+        self._setpoint_clip = lambda n: ( -1.0 * self._sp_limit ) if n <= ( -1.0 * self._sp_limit ) \
+                else self._sp_limit if n >= self._sp_limit \
+                else n
         if self._min_output is None or self._max_output is None:
             self._log.info('kp:{:7.4f}; ki:{:7.4f}; kd:{:7.4f}; min={}; max={}'.format(
                     self._kp, self._ki, self._kd, self._min_output, self._max_output))
@@ -53,9 +56,9 @@ class PID(object):
                     self._kp, self._ki, self._kd, self._min_output, self._max_output))
         if not isinstance(period, float):
             raise ValueError('wrong type for period argument: {}'.format(type(period)))
-        self._period_sec = period
+        self._period_sec   = period
         self._log.info('period: {:7.4f} sec'.format(self._period_sec))
-        self._current_time  = time.monotonic # to ensure time deltas are always positive
+#       self._current_time = time.monotonic # to ensure time deltas are always positive
         self.reset()
         self._log.info('ready.')
 
@@ -100,27 +103,24 @@ class PID(object):
         Setter for the set point. If setpoint limit has been set and the
         argument exceeds the limit, the value is set to the limit.
         '''
-        if self._limit:
-            if setpoint > self._limit:
-                self._setpoint = self._limit
-            elif setpoint < -1.0 * self._limit:
-                self._setpoint = -1.0 * self._limit
+        if self._sp_limit:
+#           self._setpoint = self._setpoint_clip(setpoint)
+            _tmp_setpoint = self._setpoint_clip(setpoint)
+            if setpoint > self._sp_limit:
+                self._setpoint = self._sp_limit
+            elif setpoint < -1.0 * self._sp_limit:
+                self._setpoint = -1.0 * self._sp_limit
             else:
                 self._setpoint = setpoint
-#           self._log.info(Fore.YELLOW + '👥 limited; setpoint of {:5.2f} from: {:5.2f}'.format(self._setpoint, setpoint))
-#           self._log.info(Fore.RED + Style.BRIGHT + 'set setpoint: {:5.2f}; limited to: {:5.2f} from max vel: {:5.2f}'.format(setpoint, self._setpoint, self._limit))
+            if _tmp_setpoint != self._setpoint:
+                raise Exception('clip didnt work.')
         else:
             self._setpoint = setpoint
-#           self._log.info(Fore.YELLOW + '👥 setpoint of {:5.2f} from: {:5.2f}'.format(self._setpoint, setpoint))
-#       if self._setpoint is None:
-#           self._log.info('setpoint: None')
-#       else:
-#           self._log.info('setpoint: {:<5.2f}'.format(self._setpoint))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def limit(self):
-        return self._limit
+        return self._sp_limit
 
     @limit.setter
     def limit(self, limit):
@@ -133,7 +133,7 @@ class PID(object):
             self._log.info(Fore.CYAN + Style.DIM + 'setpoint limit: disabled')
         else:
             self._log.info(Fore.CYAN + 'setpoint limit: {:5.2f}'.format(limit))
-        self._limit = limit
+        self._sp_limit = limit
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def __call__(self, target, dt=None):
@@ -149,44 +149,42 @@ class PID(object):
                    different from real time.
         '''
 #       self._log.info(Fore.RED + Style.BRIGHT + '🍅 __call__() setpoint: {:5.2f}; target: {:5.2f}; dt: {}'.format(self._setpoint, target, dt))
-        _now = self._current_time()
+#       _now = self._current_time()
+        _now = time.monotonic()
         if dt is None:
             dt = _now - self._last_time
-#           dt = _now - self._last_time if _now - self._last_time else 1e-16
         elif dt <= 0:
             raise ValueError("dt has nonpositive value {}. Must be positive.".format(dt))
         # display dt in milliseconds
-#       self._log.info(Fore.MAGENTA + Style.BRIGHT + '>> dt: {:7.4f}ms;'.format(dt * 1000.0))
+        print(Fore.MAGENTA + Style.BRIGHT + '👾 dt: {:7.4f}ms;'.format(dt * 1000.0) + Style.RESET_ALL)
 
         if dt < self._period_sec and not math.isclose(dt, self._period_sec) and self._last_output is not None:
             # only update every period
-#           self._log.info(Fore.RED + Style.BRIGHT + '__call__() dt {:9.7f} < period: {:9.7f}; last output: {:5.2f}'.format(\
-#                   dt, self._period_sec, self._last_output) + Style.RESET_ALL)
-            return self._last_output
-
-        # compute error terms
-        _error = self._setpoint - target
-        d_input = target - (self._last_input if self._last_input is not None else target)
-
-        # compute the proportional, integral and derivative terms
-        self._proportional = self._kp * _error
-        self._integral    += self._ki * _error * dt
-        self._integral     = self._clip(self._integral) # avoid integral windup
-        self._derivative   = -self._kd * d_input / dt
-
-        # compute output, clipped to limits
-        output = self._clip(self._proportional + self._integral + self._derivative)
-
-        kp, ki, kd = self.constants
-        cp, ci, cd = self.components
-#       self._log.info('🐙 dt={:7.4f}ms '.format(dt * 1000.0) \
-#               + Fore.CYAN + Style.DIM + 'target={:5.2f}; error={:6.3f};'.format(target, _error) \
-#               + Fore.MAGENTA + ' KP={:<8.5f}; KD={:<8.5f};'.format(kp, kd) \
-#               + Fore.CYAN + Style.BRIGHT + ' P={:8.5f}; I={:8.5f}; D={:8.5f}; sp={:6.3f};'.format(cp, ci, cd, self._setpoint) \
-#               + Style.BRIGHT + ' out: {:<8.5f}'.format(output))
+            output = self._last_output
+        else:
+            # compute error terms
+            _error = self._setpoint - target
+            d_input = target - (self._last_input if self._last_input is not None else target)
+    
+            # compute the proportional, integral and derivative terms
+            self._proportional = self._kp * _error
+            self._integral    += self._ki * _error * dt
+            self._integral     = self._clip(self._integral) # avoid integral windup
+            self._derivative   = -self._kd * d_input / dt
+    
+            # compute output, clipped to limits
+            output = self._clip(self._proportional + self._integral + self._derivative)
+    
+            kp, ki, kd = self.constants
+            cp, ci, cd = self.components
+#           self._log.info('🐙 dt={:7.4f}ms '.format(dt * 1000.0) \
+#                   + Fore.CYAN + Style.DIM + 'target={:5.2f}; error={:6.3f};'.format(target, _error) \
+#                   + Fore.MAGENTA + ' KP={:<8.5f}; KD={:<8.5f};'.format(kp, kd) \
+#                   + Fore.CYAN + Style.BRIGHT + ' P={:8.5f}; I={:8.5f}; D={:8.5f}; sp={:6.3f};'.format(cp, ci, cd, self._setpoint) \
+#                   + Style.BRIGHT + ' out: {:<8.5f}'.format(output))
+            self._last_output = output
 
         # keep track of state
-        self._last_output = output
         self._last_input  = target
         self._last_time   = _now
         return output
@@ -269,7 +267,7 @@ class PID(object):
         self._log.info(_fore + 'min_output:     \t{}'.format(self._min_output))
         self._log.info(_fore + 'max_output:     \t{}'.format(self._max_output))
         self._log.info(_fore + 'setpoint:       \t{}'.format(self._setpoint))
-        self._log.info(_fore + 'setpoint limit: \t{}'.format(self._limit))
+        self._log.info(_fore + 'setpoint limit: \t{}'.format(self._sp_limit))
         self._log.info(_fore + 'period:         \t{}'.format(self._period_sec))
 
         self._log.info(_fore + 'proportional:   \t{}'.format(self._proportional))
@@ -299,7 +297,8 @@ class PID(object):
         self._derivative   = 0.0
         self._last_output  = 0.0
         self._last_input   = 0.0
-        self._last_time    = self._current_time()
+        self._last_time    = time.monotonic()
+#       self._last_time    = self._current_time()
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _clip(self, value):

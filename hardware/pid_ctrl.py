@@ -111,21 +111,6 @@ class PIDController(Component):
     def reset_steps(self):
         self._motor._steps = 0
 
-#   # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-#   @property
-#   def setpoint(self):
-#       '''
-#       Getter for the setpoint (PID set point).
-#       '''
-#       return self._pid.setpoint
-
-#   @setpoint.setter
-#   def setpoint(self, setpoint):
-#       '''
-#       Setter for the setpoint (PID set point).
-#       '''
-#       self._pid.setpoint = setpoint
-
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def set_limit(self, limit):
         '''
@@ -145,48 +130,25 @@ class PIDController(Component):
         cp, ci, cd = self._pid.components
         return kp, ki, kd, cp, ci, cd, self._last_power, self._motor.current_power_level, self._power, self._motor.velocity, self._pid.setpoint, self._motor.steps
 
-#   # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-#   @property
-#   def enabled(self):
-#       return self.enabled
-
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def set_velocity(self, target_velocity):
 
         if self.enabled:
             self._pid.setpoint = target_velocity
             _velocity = self._motor.velocity
-#           self._log.info(Fore.WHITE + Style.BRIGHT + '🌺 set PID velocity for {} motor: {:+d} steps; velocity: {:<5.2f}; set: {:5.2f}'.format(self._orientation.label, self._motor.steps, _velocity, target_velocity))
-            # converts velocity to power...DIM
+            # converts velocity to power...
             _pid_output = self._pid(_velocity)
             self._power += _pid_output
             _motor_power = self._power / 100.0
-#           self._log.info(Fore.WHITE + Style.NORMAL + 'handle() _steps: {:d}; _power: {:>5.2f}/_motor_power: {:>5.2f};\t'.format(self._motor.steps, self._power, _motor_power) \
-#                   + 'pid output: {:5.2f};\t'.format(_pid_output) + Style.BRIGHT + 'velocity: {:5.2f}'.format(velocity))
             self._last_power = self._power
 #           _mean_setpoint = self._get_mean_setpoint(self._pid.setpoint)
 #           if _mean_setpoint == 0.0:
-#               self._log.info(Fore.WHITE + Style.DIM + '🍈 set power for {} motor: {:<5.2f} (pid output: {:5.2f})'.format(self._orientation.label, _motor_power, _pid_output))
+#               self._log.info(Fore.WHITE + Style.DIM + 'set power for {} motor: {:<5.2f} (pid output: {:5.2f})'.format(self._orientation.label, _motor_power, _pid_output))
 #               self._motor.set_motor_power(0.0)
 #           else:
-#           self._log.info(Fore.WHITE + Style.BRIGHT + '🌺 set {} motor;\n    velocity: {:5.2f}; targetv : {:5.2f}; PID setpoint: {:5.2f}; motor power: {:<5.2f} (self._power: {:5.2f}; pid output: {:5.2f})'.format(
+#           self._log.info(Fore.WHITE + Style.BRIGHT + 'set {} motor;\n    velocity: {:5.2f}; targetv : {:5.2f}; PID setpoint: {:5.2f}; motor power: {:<5.2f} (self._power: {:5.2f}; pid output: {:5.2f})'.format(
 #                   self._orientation.label, _velocity, target_velocity, self._pid.setpoint, _motor_power, self._power, _pid_output))
-#           self._motor.set_motor_power(self._power / 100.0)
             self._motor.set_motor_power(_motor_power)
-
-#   # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-#   def handle(self, message):
-#       '''
-#       The PID loop that continues while the enabled flag is True.
-
-#       This uses a running average on the setpoint to settle the output
-#       at zero when it's clear the target velocity is zero. This is a
-#       perhaps cheap approach to hysteresis.
-#       '''
-#       if self.enabled and ( message.event is Event.CLOCK_TICK or message.event is Event.CLOCK_TOCK ):
-#           # obtain velocity from motor encoder's step count
-#           self.set_velocity(self._motor.velocity)
-#       return message
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _get_mean_setpoint(self, value):
@@ -228,21 +190,5 @@ class PIDController(Component):
             else:
                 self._message_bus.add_handler(Message, self.handle)
                 Component.enable(self)
-
-#   # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-#   def disable(self):
-#       if not self.enabled:
-#           self._log.warning('already disabled.')
-#       elif self.closed:
-#           self._log.warning('already closed.')
-#       else:
-#           self.enabled = False
-#           self._log.info('disabled.')
-
-#   # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-#   def close(self):
-#       self.disable()
-#       self.closed = True
-#       self._log.info('closed.')
 
 #EOF

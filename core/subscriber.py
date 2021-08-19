@@ -343,13 +343,21 @@ class Subscriber(Component, FiniteStateMachine):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def disable(self):
-        Component.disable(self)
-        FiniteStateMachine.disable(self)
+        if self.enabled:
+            Component.disable(self)
+            FiniteStateMachine.disable(self)
+            self._log.info('subscriber {} disabled.'.format(self.name))
+        else:
+            self._log.warning('subscriber {} already disabled.'.format(self.name))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def close(self):
-        Component.close(self)
-        FiniteStateMachine.close(self)
+        if not self.closed:
+            Component.close(self)
+            FiniteStateMachine.close(self)
+            self._log.info('subscriber {} closed.'.format(self.name))
+        else:
+            self._log.warning('subscriber {} already closed.'.format(self.name))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def __key(self):

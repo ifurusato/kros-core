@@ -26,14 +26,19 @@ from core.event import Event, Group
 from core.system import System
 from core.component import Component
 from core.fsm import FiniteStateMachine
+from core.message import Message, Payload
 from core.message_bus import MessageBus
 from core.message_factory import MessageFactory
 from core.config_loader import ConfigLoader
-from hardware.i2c_scanner import I2CScanner
-
 from core.controller import Controller
 from core.publisher import Publisher
 from core.subscriber import Subscriber, GarbageCollector
+
+from hardware.i2c_scanner import I2CScanner
+from hardware.battery import BatteryCheck
+from hardware.killswitch import KillSwitch
+from hardware.motor_configurer import MotorConfigurer
+from hardware.motor_controller import MotorController
 
 from hardware.ifs_publisher import IfsPublisher
 from mock.event_publisher import EventPublisher
@@ -44,16 +49,13 @@ from mock.infrared_subscriber import InfraredSubscriber
 from mock.motor_subscriber import MotorSubscriber
 #from mock.gamepad_publisher import GamepadPublisher
 #from mock.gamepad_controller import GamepadController
+
 from behave.behaviour_manager import BehaviourManager
 from behave.avoid import Avoid
 from behave.roam import Roam
 from behave.moth import Moth
 from behave.sniff import Sniff
 from behave.idle import Idle
-
-from hardware.battery import BatteryCheck
-from hardware.motor_configurer import MotorConfigurer
-from hardware.motor_controller import MotorController
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class KROS(Component, FiniteStateMachine):
@@ -85,7 +87,7 @@ class KROS(Component, FiniteStateMachine):
         self._log.info('…')
         Component.__init__(self, self._log, suppressed=False, enabled=False)
         FiniteStateMachine.__init__(self, self._log, _name)
-        self._system        = System(level)
+        self._system        = System(self, level)
         self._system.set_nice()
         # configuration...
         self._config        = None
@@ -96,6 +98,7 @@ class KROS(Component, FiniteStateMachine):
         self._gamepad       = None
         self._motor_ctrl    = None
         self._ifs           = None
+        self._killswitch    = None
         self._disable_leds  = False
         self._closing       = False
         self._log.info('initialised.')
@@ -142,13 +145,9 @@ class KROS(Component, FiniteStateMachine):
         self._log.info('argument level:       {}'.format(arguments.level))
 
         # scan I2C bus .........................................................
-        print('BEGIN. I2CScanner')
         _i2c_scanner = I2CScanner(self._config, self._log.level)
-        print('A. I2CScanner')
         _i2c_scanner.print_device_list()
-        print('B. I2CScanner')
         self._addresses = _i2c_scanner.get_int_addresses()
-        print('END. I2CScanner')
 
         # establish basic subsumption components ...............................
 
@@ -192,6 +191,10 @@ class KROS(Component, FiniteStateMachine):
             self._battery = BatteryCheck(self._config, self._message_bus, self._message_factory, self._level)
     #   _message_bus.print_publishers()
 
+        _enable_killswitch= _cfg.get('enable_killswitch') or 'k' in _pubs
+        if _enable_killswitch:
+            self._killswitch = KillSwitch(self._config, self, level=self._level)
+
         # create subscribers ...................................................
 
         _subs = arguments.subs if arguments.subs else ''
@@ -233,6 +236,9 @@ class KROS(Component, FiniteStateMachine):
             # disable Pi LEDs since they may be distracting
             self._set_pi_leds(False)
 
+        if self._killswitch:
+            self._killswitch.enable()
+
         # begin main loop ..................................
 
         self._log.notice('Press Ctrl-C to exit.')
@@ -241,16 +247,21 @@ class KROS(Component, FiniteStateMachine):
         if self._motor_ctrl:
             self._motor_ctrl.enable()
 
+        # enable arbitrator tasks (normal functioning of robot)
+#       self._arbitrator.start()
+
+        # we enable ourself if we get this far successfully
+        Component.enable(self)
+        FiniteStateMachine.enable(self)
+
         # now in main application loop until quit or Ctrl-C...
         self._log.info('enabling message bus...')
         self._message_bus.enable()
 
-        if self._message_bus and self._message_bus.enabled:
-            self._message_bus.close()
-        self._log.info('main loop closed.')
+#       if self._message_bus and self._message_bus.enabled:
+#           self._message_bus.close()
 
-        # enable arbitrator tasks (normal functioning of robot)
-#       self._arbitrator.start()
+#       self._log.info('💔 main loop closed.')
 
         # end main loop ....................................
 
@@ -277,35 +288,79 @@ class KROS(Component, FiniteStateMachine):
             self._log.warning('could not change state of LEDs: does not appear to be a Raspberry Pi.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def shutdown(self):
+        '''
+        Demands a sudden halt of all activities and shut down.
+        '''
+        self._log.info(Fore.RED + 'shutdown(): kill! kill! kill! [enabled={}]'.format(self.enabled))
+        self.close()
+        # TEMP we don't actually get here if we shut down properly
+        if self._killswitch:
+            self._log.info('🚧 shutdown 1.')
+            self._killswitch.reset()
+        self._log.info('🚧 shutdown 2.')
+        self._log.info('🌵 shutdown() kill kill kill ...; enabled: {}'.format(self.enabled))
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def disable(self):
+        '''
+        This permanently disables the KROS.
+        '''
+        self._log.info('👿 disable() enabled: {}'.format(self.enabled))
+        if self.closed:
+            self._log.info('👿 already closed.')
+        elif self._closing:
+            self._log.info('👿 already closing.')
+        elif self.enabled:
+            self._log.info('👿 disabling...')
+            Component.disable(self)
+            if self._motor_ctrl:
+                self._motor_ctrl.disable()
+                self._motor_ctrl.close()
+            FiniteStateMachine.disable(self)
+        else:
+            self._log.warning('👿 already disabled.')
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    @property
+    def closing(self):
+        return self._closing
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def close(self):
         '''
-        This sets the KROS back to normal following a session.
+        This closes KROS and sets the robot to a passive, stable state
+        following a session.
         '''
+        self._log.info('👿 close() enabled: {}'.format(self.enabled))
         if self.closed:
-            self._log.info('already closed.')
-        elif self._closing:
-            self._log.info('already closing.')
+            self._log.warning('👿 already closed.')
+        elif self.closing:
+            self._log.warning('👿 already closing.')
         else:
+            self._log.info('👿 closing...')
+            Component.close(self) # will call disable()
             self._closing = True
-            self._log.info('closing...')
-            Component.disable(self)
-            FiniteStateMachine.disable(self)
-            if self._message_bus:
-                self._message_bus.close()
-            if self._motor_ctrl:
-                self._motor_ctrl.close()
+            self._log.warning('👿 RETURNED from disable.')
+            while self.enabled:
+                self._log.warning('👿 waiting for disable...')
+                time.sleep(0.1)
             if self._behaviour_mgr:
                 self._behaviour_mgr.close()
             if self._gamepad:
                 self._gamepad.close()
             if self._ifs:
                 self._ifs.close()
+            if self._killswitch:
+                self._killswitch.close()
+            if self._message_bus:
+                self._message_bus.close()
             if self._disable_leds: # restore normal function of Pi LEDs
                 self._set_pi_leds(True)
-            Component.close(self)
             FiniteStateMachine.close(self)
             self._closing = False
-#           self._log.info('application closed.')
+            self._log.info('🚧 application closed.')
+            self._log.close()
             sys.exit(0)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -384,15 +439,12 @@ class SystemSubscriber(Subscriber):
         self._log.info('processing payload event {}'.format(payload.event.label))
         if payload.event is Event.SHUTDOWN:
             self._log.info('shut down requested.')
-            self._message_bus.disable()
-            self._kros.disable()
-            pass # TODO
+            self._kros.shutdown()
         elif payload.event is Event.BATTERY_LOW:
             self._log.critical('battery voltage low!')
             if self._exit_on_dire_event:
                 self._log.critical('shutting down KROS...')
-                self._message_bus.disable()
-                self._kros.disable()
+                self._kros.shutdown()
             else:
                 self._log.critical('WARNING! WARNING! WARNING! battery voltage low! Time to shut down KROS.')
             pass
@@ -487,7 +539,7 @@ def parse_args():
 def signal_handler(signal, frame):
     global _kros
     print('\nsignal handler    :' + Fore.MAGENTA + Style.BRIGHT + ' INFO  : Ctrl-C caught: exiting...' + Style.RESET_ALL)
-    if _kros:
+    if _kros and not ( _kros.closing or _kros.closed ):
         _kros.close()
     print(Fore.MAGENTA + 'exit.' + Style.RESET_ALL)
 #   sys.stderr = DevNull()
@@ -530,7 +582,7 @@ def main(argv):
     finally:
         if not _suppress:
             _log.info('exit.')
-        if _kros:
+        if _kros and not ( _kros.closing or _kros.closed ):
             _log.info('finally calling close...')
             _kros.close()
 

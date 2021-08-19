@@ -52,7 +52,7 @@ class InfraredSubscriber(Subscriber):
         await self._message_bus.arbitrate(message.payload)
         # increment sent acknowledgement count
         message.acknowledge_sent()
-        self._log.info(self._color + Style.NORMAL + 'arbitrated payload for event {}; value: {}'.format(message.payload.event.name, message.payload.value))
+        self._log.info(self._color + Style.NORMAL + 'arbitrated payload for event {}; value: {:5.2f}cm'.format(message.payload.event.name, message.payload.value))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def process_message(self, message):

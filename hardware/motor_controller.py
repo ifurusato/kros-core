@@ -10,7 +10,7 @@
 # modified: 2021-07-22
 #
 
-import sys
+import sys, time
 from threading import Thread
 import asyncio, itertools, random, traceback
 from math import isclose
@@ -27,12 +27,14 @@ from core.rate import Rate
 from core.message_bus import MessageBus
 from hardware.motor_configurer import MotorConfigurer
 from hardware.slew import SlewRate
+from hardware.external_clock import ExternalClock
 from hardware.motor import Motor
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class MotorController(Component):
     '''
-    A motor controller that asbtracts the actual control of two motors.
+    A motor controller that asbtracts the actual control of two motors
+    from the physical motor control hardware.
 
     This relies upon both a SlewLimiter and JerkLimiter so that velocity
     and power (resp.) changes occur gradually and safely. It also contains
@@ -71,8 +73,10 @@ class MotorController(Component):
         self._loop_enabled         = False
         self._event_counter        = itertools.count()
         self._last_velocity        = None
+        self._ext_clock            = None
         # configured constants
         _cfg = config['kros'].get('motor').get('motor_controller')
+        self._use_external_clock   = _cfg.get('use_external_clock')
         self._verbose              = _cfg.get('verbose')
         self._loop_delay_hz        = _cfg.get('loop_delay_hz')     # main loop delay
         self._loop_delay_sec       = 1 / self._loop_delay_hz 
@@ -80,7 +84,7 @@ class MotorController(Component):
         self._rate                 = Rate(self._loop_delay_hz, Level.ERROR)
         self._accel_increment      = _cfg.get('accel_increment')   # normal incremental acceleration
         self._decel_increment      = _cfg.get('decel_increment')   # normal incremental deceleration
-        self._log.info(Fore.YELLOW + 'accelerate increment: {:5.2f}; decelerate increment: {:5.2f}'.format(self._accel_increment, self._decel_increment))
+        self._log.info('accelerate increment: {:5.2f}; decelerate increment: {:5.2f}'.format(self._accel_increment, self._decel_increment))
         # slew rate for quick halt behaviour
         self._halt_slew_rate       = SlewRate.from_string(_cfg.get('brake_rate'))
         self._log.info('halt rate:\t{}'.format(self._halt_slew_rate.name))
@@ -89,6 +93,12 @@ class MotorController(Component):
         self._log.info('brake rate:\t{}'.format(self._brake_slew_rate.name))
         self._spin_speed           = Speed.from_string(_cfg.get('spin_speed')) # motor speed when spinning
         self._log.info('spin speed:\t{}'.format(self._spin_speed.name))
+        if self._use_external_clock:
+            self._millis     = lambda: int(round(time.time() * 1000))
+            self._start_time = self._millis()
+            self._log.info(Fore.GREEN + '🍏 configuring external clock callback...')
+            self._ext_clock = ExternalClock(self._config, self._ext_callback_method)
+            self._ext_clock.enable()
         self._log.info('motors ready.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -101,13 +111,18 @@ class MotorController(Component):
         '''
         Start the loop.
         '''
-        self._log.info('start motor control loop...')
+        self._log.info('🍏 start motor control loop...')
         if not self.enabled:
             self._log.warning('not enabled.')
             raise Exception('not enabled.')
-        if self._loop_thread is None:
+        if self.loop_is_running():
+            self._log.warning('🍏 loop already running.')
+        elif self._loop_thread is None:
+            if self._use_external_clock:
+                raise Exception('cannot use thread loop: external clock enabled.') # TEMP shouldn't be necessary
             self._loop_enabled = True
-            self._loop_thread = Thread(name='display_loop', target=MotorController._loop, args=[self, lambda: self._loop_enabled], daemon=True)
+            _is_daemon = False
+            self._loop_thread = Thread(name='display_loop', target=MotorController._loop, args=[self, lambda: self._loop_enabled], daemon=_is_daemon)
             self._loop_thread.start()
             self._log.info('loop enabled.')
         else:
@@ -121,17 +136,32 @@ class MotorController(Component):
         self._log.info('loop start.')
         try:
             while f_is_enabled():
-                _event_count = next(self._event_counter)
                 self._port_motor.update_target_velocity()
                 self._stbd_motor.update_target_velocity()
                 # add execute any callbacks here...
                 if self._verbose: # print stats
-                    self.print_info(_event_count)
+                    self.print_info(next(self._event_counter))
                 self._rate.wait()
-
         except Exception as e:
             self._log.error('error in loop: {}\n{}'.format(e, traceback.format_exc()))
-        self._log.info('exited motor control loop.')
+        finally:
+            self._log.info(Fore.GREEN + 'exited motor control loop.')
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def _ext_callback_method(self):
+        '''
+        The callback called by the external clock as an alternative to the
+        asyncio _loop() method.
+        '''
+        if self.enabled:
+            _now = self._millis()
+            self._port_motor.update_target_velocity()
+            self._stbd_motor.update_target_velocity()
+            _elapsed = _now - self._start_time
+            self._start_time = _now
+            print(Fore.BLACK + 'callback; {:6.3f}ms elapsed.'.format(_elapsed) + Style.RESET_ALL)
+            if self._verbose: # print stats
+                self.print_info(next(self._event_counter))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def stop_loop(self):
@@ -147,7 +177,11 @@ class MotorController(Component):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def loop_is_running(self):
-        return self._loop_enabled and self._loop_thread != None and self._loop_thread.is_alive()
+        '''
+        Returns true if using an external clock or if the loop thread is alive.
+        '''
+        return self._use_external_clock \
+                or ( self._loop_enabled and self._loop_thread != None and self._loop_thread.is_alive() )
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def print_info(self, count):
@@ -273,8 +307,9 @@ class MotorController(Component):
                 return 'astern indeterminate (2)'
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def dispatch_velocity_event(self, payload):
-        self._reset_slew_rate()
+    def dispatch_velocity_event(self, payload, reset_slew=True):
+        if reset_slew:
+            self._reset_slew_rate()
         _event = payload.event
 #       self._log.debug('dispatch velocity event: {}'.format(_event.label))
         _value = payload.value
@@ -487,10 +522,13 @@ class MotorController(Component):
         A convenience method that sets the target velocity and motor
         power of the specified motor. Accepts either ints or floats
         between -100 and 100.
+
+        When the motor controller is disabled any calls to this method
+        will override the target velocity argument and set it to zero.
         '''
-#       self._log.info(Fore.GREEN + Style.NORMAL + 'set velocity: {:5.2f} of {} motor.'.format(target_velocity, orientation.name))
-        if isinstance(target_velocity, int):
-           target_velocity = float(target_velocity)
+        if not self.enabled:
+            self._log.error('motor controller not enabled.')
+            target_velocity = 0.0
         if not isinstance(target_velocity, float):
             raise ValueError('expected float, not {}'.format(type(target_velocity)))
         self._log.info(Style.BRIGHT + 'setting velocity of {} motor to: {:5.2f}'.format(orientation.label, target_velocity))
@@ -654,7 +692,7 @@ class MotorController(Component):
         '''
         Halts any automated deceleration.
         '''
-        self._log.warning(Fore.BLUE + 'reset slew rate.')
+#       self._log.warning(Fore.BLUE + 'reset slew rate.')
         self._port_motor.slew_limiter.reset()
         self._stbd_motor.slew_limiter.reset()
 
@@ -682,11 +720,13 @@ class MotorController(Component):
         if self.enabled:
             self._log.warning('already enabled.')
         else:
-            if not self.loop_is_running():
-                self._port_motor.enable()
-                self._stbd_motor.enable()
-                Component.enable(self)
+            if self._use_external_clock:
+                self._ext_clock.enable()
+            elif not self.loop_is_running():
                 self.start_loop()
+            self._port_motor.enable()
+            self._stbd_motor.enable()
+            Component.enable(self)
             self._log.info('enabled.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -696,12 +736,18 @@ class MotorController(Component):
         '''
         if self.enabled:
             self._log.info('disabling...')
+            self.stop_loop() # stop loop thread
             Component.disable(self)
+            if self._ext_clock:
+                self._ext_clock.disable()
+                self._ext_clock.close()
             if self.is_in_motion(): # if we're moving then halt
                 self._log.warning('event: motors are in motion (halting).')
-                self._port_motor.stop()
-                self._stbd_motor.stop()
-            self.stop_loop() # stop loop thread
+#               self._port_motor.stop()
+#               self._stbd_motor.stop()
+            # stop anyway...
+            self._port_motor.stop()
+            self._stbd_motor.stop()
             self._port_motor.disable()
             self._stbd_motor.disable()
             self._log.info('disabled.')
@@ -714,7 +760,7 @@ class MotorController(Component):
         Halts, turn everything off and stop doing anything.
         '''
         if not self.closed:
-            Component.close(self)
+            Component.close(self) # calls disable
             self._port_motor.close()
             self._stbd_motor.close()
 
