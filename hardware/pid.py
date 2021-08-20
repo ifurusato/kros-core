@@ -58,7 +58,6 @@ class PID(object):
             raise ValueError('wrong type for period argument: {}'.format(type(period)))
         self._period_sec   = period
         self._log.info('period: {:7.4f} sec'.format(self._period_sec))
-#       self._current_time = time.monotonic # to ensure time deltas are always positive
         self.reset()
         self._log.info('ready.')
 
@@ -104,7 +103,6 @@ class PID(object):
         argument exceeds the limit, the value is set to the limit.
         '''
         if self._sp_limit:
-#           self._setpoint = self._setpoint_clip(setpoint)
             _tmp_setpoint = self._setpoint_clip(setpoint)
             if setpoint > self._sp_limit:
                 self._setpoint = self._sp_limit
@@ -130,9 +128,9 @@ class PID(object):
         of the setpoint but rather the getting of the setpoint.
         '''
         if limit == None:
-            self._log.info(Fore.CYAN + Style.DIM + 'setpoint limit: disabled')
+            self._log.info('setpoint limit: disabled')
         else:
-            self._log.info(Fore.CYAN + 'setpoint limit: {:5.2f}'.format(limit))
+            self._log.info('setpoint limit: {:5.2f}'.format(limit))
         self._sp_limit = limit
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -148,15 +146,14 @@ class PID(object):
                    This can be used in simulations when simulation time is
                    different from real time.
         '''
-#       self._log.info(Fore.RED + Style.BRIGHT + '🍅 __call__() setpoint: {:5.2f}; target: {:5.2f}; dt: {}'.format(self._setpoint, target, dt))
-#       _now = self._current_time()
+#       self._log.info(Fore.RED + Style.BRIGHT + 'PID.__call__() setpoint: {:5.2f}; target: {:5.2f}; dt: {}'.format(self._setpoint, target, dt))
         _now = time.monotonic()
         if dt is None:
             dt = _now - self._last_time
         elif dt <= 0:
             raise ValueError("dt has nonpositive value {}. Must be positive.".format(dt))
         # display dt in milliseconds
-        print(Fore.MAGENTA + Style.BRIGHT + '👾 dt: {:7.4f}ms;'.format(dt * 1000.0) + Style.RESET_ALL)
+#       print(Fore.MAGENTA + Style.BRIGHT + 'dt: {:7.4f}ms;'.format(dt * 1000.0) + Style.RESET_ALL)
 
         if dt < self._period_sec and not math.isclose(dt, self._period_sec) and self._last_output is not None:
             # only update every period
@@ -177,7 +174,7 @@ class PID(object):
     
             kp, ki, kd = self.constants
             cp, ci, cd = self.components
-#           self._log.info('🐙 dt={:7.4f}ms '.format(dt * 1000.0) \
+#           self._log.info('dt={:7.4f}ms '.format(dt * 1000.0) \
 #                   + Fore.CYAN + Style.DIM + 'target={:5.2f}; error={:6.3f};'.format(target, _error) \
 #                   + Fore.MAGENTA + ' KP={:<8.5f}; KD={:<8.5f};'.format(kp, kd) \
 #                   + Fore.CYAN + Style.BRIGHT + ' P={:8.5f}; I={:8.5f}; D={:8.5f}; sp={:6.3f};'.format(cp, ci, cd, self._setpoint) \
@@ -290,7 +287,7 @@ class PID(object):
         problems when starting up again. The reset() function cleans
         any stored state.
         '''
-        self._log.info(Fore.YELLOW + 'reset.')
+        self._log.info('reset.')
 #       self._setpoint     = 0.0
         self._proportional = 0.0
         self._integral     = 0.0
@@ -298,7 +295,6 @@ class PID(object):
         self._last_output  = 0.0
         self._last_input   = 0.0
         self._last_time    = time.monotonic()
-#       self._last_time    = self._current_time()
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _clip(self, value):

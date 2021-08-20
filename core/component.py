@@ -95,16 +95,6 @@ class Component(object):
         else:
             self._log.warning('cannot enable: already closed.')
 
-    def disable(self):
-        '''
-        Disable this Component.
-        '''
-        if self.enabled:
-            self._enabled = False
-            self._log.info('disabled.')
-        else:
-            self._log.debug('already disabled.')
-
     def release(self):
         '''
         Releases (un-suppresses) this Component.
@@ -119,15 +109,29 @@ class Component(object):
         self._suppressed = True
         self._log.info('suppressed.')
 
+    def disable(self):
+        '''
+        Disable this Component.
+        This returns a True value to force currency.
+        '''
+        if self.enabled:
+            self._enabled = False
+            self._log.info('disabled.')
+        else:
+            self._log.debug('already disabled.')
+        return True
+
     def close(self):
         '''
         Permanently close and disable the message bus.
+        This returns a True value to force currency.
         '''
         if not self.closed:
-            self.disable()
+            _nil = self.disable()
             self._closed = True
             self._log.info('closed.')
         else:
             self._log.debug('already closed.')
+        return True
 
 #EOF

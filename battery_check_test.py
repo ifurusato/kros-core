@@ -77,8 +77,6 @@ def test_battery_check(config):
         _log.info('Ctrl-C caught; exiting...')
     except Exception as e:
         _log.error('{} encountered, exiting: {}'.format(type(e), e))
-    finally:
-        sys.exit(0)
 
 # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 def main():

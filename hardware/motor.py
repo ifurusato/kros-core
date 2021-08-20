@@ -39,7 +39,9 @@ class Motor(Component):
     are optional; when the PIDController is disabled a velocity-to-power
     dual-axis proportional interpolating function is used.
 
-    This uses the kros:motor: section of the configuration.
+    This uses the kros:motor: section of the configuration. The suppressed state
+    of the slew limiter, PID controller and jerk limiter is initially set to the
+    opposite of the enabled configuration value.
 
     :param config:      application configuration
     :param tb:          reference to the mocked ThunderBorg motor controller
@@ -80,9 +82,8 @@ class Motor(Component):
         self._slew_limiter       = None
         self._jerk_limiter       = None
         # slew limiter ...............................................
-        _suppress_slew_limiter   = _cfg.get('suppress_slew_limiter')
         _enable_slew_limiter     = _cfg.get('enable_slew_limiter')
-#       if not _suppress_slew_limiter and _enable_slew_limiter:
+        _suppress_slew_limiter   = not _enable_slew_limiter
         self._slew_limiter       = SlewLimiter(config, orientation, suppressed=_suppress_slew_limiter, enabled=_enable_slew_limiter, level=level)
         # provides closed loop velocity feedback .....................
         self._using_mocks = config['kros'].get('arguments').get('using_mocks')
@@ -96,12 +97,12 @@ class Motor(Component):
             self.add_callback(self._velocity.tick)
             self._velocity.enable()
         # pid controller .............................................
-        _suppress_pid_controller = _cfg.get('suppress_pid_controller')
         _enable_pid_controller   = _cfg.get('enable_pid_controller')
+        _suppress_pid_controller = not _enable_pid_controller
         self._pid_controller     = PIDController(config, self._message_bus, self, suppressed=_suppress_pid_controller, enabled=_enable_pid_controller, level=level)
         # jerk limiter ...............................................
-        _suppress_jerk_limiter   = _cfg.get('suppress_jerk_limiter')
         _enable_jerk_limiter     = _cfg.get('enable_jerk_limiter')
+        _suppress_jerk_limiter   = not _enable_jerk_limiter
 #       if not _suppress_jerk_limiter and _enable_jerk_limiter:
         self._jerk_limiter       = JerkLimiter(config, orientation, suppressed=_suppress_jerk_limiter, enabled=_enable_jerk_limiter, level=level)
         self._log.info('ready.')

@@ -214,9 +214,8 @@ class Message(object):
         collector.
         '''
         for subscriber in self._subscribers:
-            if subscriber.is_gc:
-                continue
-            elif not self._subscribers[subscriber]:
+            if not subscriber.is_gc and not self._subscribers[subscriber]:
+#               print('message {} not acknowledged by {}'.format(self.name, subscriber.name))
                 return False
         return True
 
@@ -225,7 +224,7 @@ class Message(object):
         Returns True if the message has been acknowledged by the specified subscriber.
         '''
         for subscr in self._subscribers:
-            if subscr == subscriber and self._subscribers[subscriber] == True:
+            if subscr == subscriber and self._subscribers[subscriber]:
                 return True
         return False
 
@@ -235,9 +234,11 @@ class Message(object):
         '''
         if len(self._subscribers) == 0:
             raise Exception('no subscribers set ({}).'.format(self._instance_name))
-        if self._subscribers[subscriber] is True:
+        if self._subscribers[subscriber]: # if acknowledged already by the subscriber
             if subscriber.is_gc:
-                print(Fore.YELLOW + 'WARNING: ' + Fore.CYAN + 'message {} already acknowledged by subscriber: {}'.format(self.name, subscriber.name) + Style.RESET_ALL)
+#               print(Fore.YELLOW + 'WARNING: ' + Fore.CYAN + 'message {} already acknowledged by subscriber: {}'.format(
+#                       self.name, subscriber.name) + Style.RESET_ALL)
+                pass
             else:
                 raise Exception('message {} already acknowledged by subscriber: {}'.format(self.name, subscriber.name))
         else:

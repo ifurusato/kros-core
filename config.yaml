@@ -62,12 +62,9 @@ kros:
     motor:
         maximum_velocity:            80.0        # limit to settable motor velocity
         motor_power_limit:            0.40       # upper and lower (x -1) limit set on power sent to motor
-        enable_slew_limiter:         True        # initial enabled state for slew limiter
-        suppress_slew_limiter:      False        # initial suppressed state for slew limiter
+        enable_slew_limiter:        False        # initial enabled state for slew limiter
         enable_pid_controller:       True        # initial enable state for PID controller, otherwise direct drive
-        suppress_pid_controller:    False        # initial suppressed state for PID controller
         enable_jerk_limiter:        False        # initial enabled state for jerk limiter
-        suppress_jerk_limiter:       True        # initial suppressed state for jerk limiter
         thunderborg_address:         0x15        # I²C address for thunderborg motor controller
         motor_controller:
             use_external_clock:      True        # if True use external clock, ignoring loop delay value

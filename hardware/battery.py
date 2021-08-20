@@ -109,7 +109,6 @@ class BatteryCheck(Publisher):
         except ImportError:
             self._log.error("This script requires the ads1015 module\nInstall with: pip3 install --user ads1015")
 #           from lib.mock_ads1015 import ADS1015
-#           sys.exit(1)
 #           raise ModuleNotFoundError('This script requires the ads1015 module\nInstall with: pip3 install --user ads1015')
         except Exception as e:
             raise RuntimeError('error configuring AD converter: {}'.format(traceback.format_exc()))

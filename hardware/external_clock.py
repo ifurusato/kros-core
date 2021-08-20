@@ -41,19 +41,19 @@ class ExternalClock(Component):
         if config is None:
             raise ValueError('no configuration provided.')
         _cfg = config['kros'].get('hardware').get('external_clock')
-        _pin = _cfg.get('pin')
-        self._log.info('🍏 establishing callback on pin {:d}.'.format(_pin))
-        self._pi.set_mode(gpio=_pin, mode=pigpio.INPUT) # GPIO 12 as input
-#       self._int_callback = self._pi.callback(_pin, pigpio.EITHER_EDGE, self.callback_method if callback is None else callback)
-        self._int_callback = self._pi.callback(_pin, pigpio.EITHER_EDGE, self._callback_method)
         self.__callbacks   = []
-        if callback:
-            self.add_callback(callback)
         self._modulo       = 10
         self._counter      = itertools.count()
         self._millis       = lambda: int(round(time.time() * 1000))
         self._start_time   = self._millis()
         self._last_tick    = 0
+        _pin = _cfg.get('pin')
+        self._log.info('🍏 establishing callback on pin {:d}.'.format(_pin))
+        self._pi.set_mode(gpio=_pin, mode=pigpio.INPUT) # GPIO 12 as input
+#       self._int_callback = self._pi.callback(_pin, pigpio.EITHER_EDGE, self.callback_method if callback is None else callback)
+        self._int_callback = self._pi.callback(_pin, pigpio.EITHER_EDGE, self._callback_method)
+        if callback:
+            self.add_callback(callback)
         self._log.info('ready.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -80,8 +80,8 @@ class ExternalClock(Component):
             if _count % self._modulo == 0.0:
                 _now = self._millis()
                 for callback in self.__callbacks:
-#                   callback(gpio, level, tick)
                     callback()
+#                   callback(gpio, level, tick)
                 _elapsed = _now - self._start_time
                 self._start_time = _now
                 _ticks = tick - self._last_tick

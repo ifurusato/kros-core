@@ -30,11 +30,10 @@ class MotorSubscriber(Subscriber):
     :param name:         the subscriber name (for logging)
     :param config:       the application configuration
     :param message_bus:  the message bus
-    :param color:        the color for messages
     :param level:        the logging level
     '''
-    def __init__(self, config, message_bus, motor_ctrl, color=Fore.MAGENTA, level=Level.INFO):
-        Subscriber.__init__(self, 'motor', config, message_bus, color=color, suppressed=False, enabled=False, level=level)
+    def __init__(self, config, message_bus, motor_ctrl, level=Level.INFO):
+        Subscriber.__init__(self, 'motor', config, message_bus, suppressed=False, enabled=False, level=level)
         if not isinstance(motor_ctrl, MotorController):
             raise ValueError('wrong type for motor_ctrl argument: {}'.format(type(motor_ctrl)))
         self._motor_ctrl = motor_ctrl
@@ -50,7 +49,7 @@ class MotorSubscriber(Subscriber):
         # increment sent acknowledgement count
         message.acknowledge_sent()
 #       if self._message_bus.verbose:
-#       self._log.debug(self._color + Style.NORMAL + 'arbitrated payload for event {}; value: {}'.format(message.payload.event.name, message.payload.value))
+#       self._log.debug('arbitrated payload for event {}; value: {}'.format(message.payload.event.name, message.payload.value))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def process_message(self, message):

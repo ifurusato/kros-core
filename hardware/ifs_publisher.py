@@ -71,27 +71,17 @@ class IfsPublisher(Publisher):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def _ifs_listener_loop(self, f_is_enabled):
-        self._log.info('❎ starting ifs listener loop:\t' + Fore.YELLOW + 'type \'?\' for help, \'q\' or Ctrl-C to exit.')
-        try:
-            while f_is_enabled():
-                _count = next(self._counter)
-#               self._log.info('❎ [{:03d}] BEGIN loop...'.format(_count))
-
-                # otherwise handle as event
-                _message = self._ifs.poll_center_infrared()
-                if _message is not None:
-                    self._log.info('❎ received message for event: {}; value: {:5.2f}cm'.format(_message.event, _message.value))
-#                   _message = self._message_factory.create_message(_message.event, True)
-                    self._log.info('❎ ifs-publishing message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
-                    await Publisher.publish(self, _message)
-                    self._log.info('❎ ifs-published message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
-
-                await asyncio.sleep(self._publish_delay_sec)
-
-#               self._log.info('❎ [{:03d}] END loop.'.format(_count))
-            self._log.info('❎ publish loop complete.')
-        finally:
-            pass
+        self._log.info('starting ifs listener loop:\t' + Fore.YELLOW + 'type \'?\' for help, \'q\' or Ctrl-C to exit.')
+        while f_is_enabled():
+            _count = next(self._counter)
+            _message = self._ifs.poll_center_infrared()
+            if _message is not None:
+#               self._log.info('❎ ifs-publishing message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
+                await Publisher.publish(self, _message)
+                self._log.info('ifs-published message:' + Fore.WHITE + ' {}'.format(_message.name)
+                        + Fore.CYAN + ' event: {}; value: {:5.2f}cm'.format(_message.event.label, _message.value))
+            await asyncio.sleep(self._publish_delay_sec)
+        self._log.info('ifs publish loop complete.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def poll(self):

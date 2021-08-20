@@ -181,13 +181,31 @@ class DigitalPotentiometer(Component):
         return (( self._out_max - self._out_min ) * ( value - self._in_min ) / ( self._in_max - self._in_min )) + self._out_min
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def __reset(self):
+        '''
+        Set the display to black carefully, to be used during closing.
+        '''
+        self._log.info("🍊 __resetting...")
+        if self._ioe:
+            self._ioe.output(self._pin_red, 0)
+        if self._ioe:
+            self._ioe.output(self._pin_green, 0)
+        if self._ioe:
+            self._ioe.output(self._pin_blue, 0)
+        self._log.info("🍊 __reset.")
+        return True
+  
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def disable(self):
-        self._log.info("disabling...")
+        self._log.info("🍊 disabling...")
         if self.enabled:
-            self.set_black()
+            _count = 0
+            while _count < 10 and not self.__reset():
+                self._log.info("🍊 [{:d}] waiting for reset...")
+                time.sleep(0.1)
             Component.disable(self)
-            self._log.info("disabled.")
+            self._log.info('🍊 successfully disabled.')
         else:
-            self._log.warning("already disabled.")
+            self._log.warning("🍊 already disabled.")
 
 #EOF

@@ -52,7 +52,6 @@ class JerkLimiter(Component):
         self._clip = lambda n: _minimum_output if n <= _minimum_output else _maximum_output if n >= _maximum_output else n
         self._log.info('jerk limit: {:5.2f}; tolerance: {:5.2f}; minimum output: {:5.2f}; maximum output: {:5.2f}'.format(
                 self._jerk_rate_limit, self._tolerance, _minimum_output, _maximum_output))
-#       sys.exit(0)
         if not self.suppressed and self.enabled:
             self._log.info('ready.')
         else:

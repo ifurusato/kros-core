@@ -25,6 +25,7 @@ _x_millis     = lambda: int(round(time.time() * 1000))
 _x_start_time = _x_millis()
 
 # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+#def ext_callback_method(*args):
 def ext_callback_method(gpio, level, tick):
     global _x_start_time
     _count = next(_x_counter)
@@ -32,6 +33,9 @@ def ext_callback_method(gpio, level, tick):
         _now = _x_millis()
         _elapsed = _now - _x_start_time
         _x_start_time = _now
+#       gpio  = args[0]
+#       level = args[1]
+#       tick  = args[2]
         print(Fore.BLUE + 'external callback; gpio: {}; level: {}; tick: {};\t'.format(gpio, level, tick, _elapsed) 
                 + Fore.YELLOW + ' {:6.3f}ms elapsed.'.format(_elapsed) + Style.RESET_ALL)
 

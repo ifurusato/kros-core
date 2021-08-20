@@ -7,13 +7,14 @@
 #
 # author:   Murray Altheim
 # created:  2019-12-23
-# modified: 2021-07-19
+# modified: 2021-08-20
 #
 # The NZPRG K-Series Robot Operating System (KROS), including its command line
 # interface (CLI).
 #
 #        1         2         3         4         5         6         7         8         9         C
 #234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
+#
 
 import os, sys, signal, time, threading, traceback
 import argparse, psutil
@@ -33,6 +34,7 @@ from core.config_loader import ConfigLoader
 from core.controller import Controller
 from core.publisher import Publisher
 from core.subscriber import Subscriber, GarbageCollector
+from core.system_subscriber import SystemSubscriber
 
 from hardware.i2c_scanner import I2CScanner
 from hardware.battery import BatteryCheck
@@ -257,11 +259,8 @@ class KROS(Component, FiniteStateMachine):
         # now in main application loop until quit or Ctrl-C...
         self._log.info('enabling message bus...')
         self._message_bus.enable()
-
-#       if self._message_bus and self._message_bus.enabled:
-#           self._message_bus.close()
-
-#       self._log.info('💔 main loop closed.')
+        # that blocks so we never get here until the end...
+        self._log.info('main loop closed.')
 
         # end main loop ....................................
 
@@ -292,34 +291,30 @@ class KROS(Component, FiniteStateMachine):
         '''
         Demands a sudden halt of all activities and shut down.
         '''
-        self._log.info(Fore.RED + 'shutdown(): kill! kill! kill! [enabled={}]'.format(self.enabled))
+        self._log.info(Fore.MAGENTA + '👾 shutdown: ' + Style.BRIGHT + 'kill! kill! kill! kill!')
         self.close()
-        # TEMP we don't actually get here if we shut down properly
-        if self._killswitch:
-            self._log.info('🚧 shutdown 1.')
-            self._killswitch.reset()
-        self._log.info('🚧 shutdown 2.')
-        self._log.info('🌵 shutdown() kill kill kill ...; enabled: {}'.format(self.enabled))
+        # we never get here if we shut down properly
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def disable(self):
         '''
         This permanently disables the KROS.
         '''
-        self._log.info('👿 disable() enabled: {}'.format(self.enabled))
         if self.closed:
-            self._log.info('👿 already closed.')
+            self._log.warning('🙉 already closed.')
         elif self._closing:
-            self._log.info('👿 already closing.')
+            self._log.warning('🙉 already closing.')
         elif self.enabled:
-            self._log.info('👿 disabling...')
-            Component.disable(self)
+            while not Component.disable(self):
+                self._log.info('🙉 disabling...')
             if self._motor_ctrl:
                 self._motor_ctrl.disable()
                 self._motor_ctrl.close()
             FiniteStateMachine.disable(self)
+            self._log.info('🙉 disabled.')
         else:
-            self._log.warning('👿 already disabled.')
+            self._log.warning('🙉 already disabled.')
+        return True
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
@@ -332,18 +327,18 @@ class KROS(Component, FiniteStateMachine):
         This closes KROS and sets the robot to a passive, stable state
         following a session.
         '''
-        self._log.info('👿 close() enabled: {}'.format(self.enabled))
         if self.closed:
-            self._log.warning('👿 already closed.')
+            self._log.warning('already closed.')
         elif self.closing:
-            self._log.warning('👿 already closing.')
+            self._log.warning('already closing.')
         else:
-            self._log.info('👿 closing...')
-            Component.close(self) # will call disable()
+            self._log.info('😾 closing...')
+            while not Component.close(self): # will call disable()
+                self._log.info('😎 closing...')
             self._closing = True
-            self._log.warning('👿 RETURNED from disable.')
+            self._log.info('😤 continuing to close...')
             while self.enabled:
-                self._log.warning('👿 waiting for disable...')
+                self._log.warning('waiting for disable...')
                 time.sleep(0.1)
             if self._behaviour_mgr:
                 self._behaviour_mgr.close()
@@ -353,15 +348,20 @@ class KROS(Component, FiniteStateMachine):
                 self._ifs.close()
             if self._killswitch:
                 self._killswitch.close()
+            time.sleep(0.1)
             if self._message_bus:
+                self._log.info('💀 EXTERNALLY calling close message bus...')
                 self._message_bus.close()
+                self._log.info('💀 EXTERNALLY called close message bus.')
+            self._log.info('😃 mostly closed...')
+            time.sleep(1.0)
             if self._disable_leds: # restore normal function of Pi LEDs
                 self._set_pi_leds(True)
             FiniteStateMachine.close(self)
             self._closing = False
-            self._log.info('🚧 application closed.')
+            self._log.info('👿 application closed.')
             self._log.close()
-            sys.exit(0)
+#           sys.exit(0)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _print_banner(self):
@@ -382,94 +382,8 @@ class KROS(Component, FiniteStateMachine):
         self._log.info(' ')
         self._log.info(' ')
 
-    # end of KROS class  ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
+    # end of KROS class  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-class SystemSubscriber(Subscriber):
-    '''
-    A subscriber to system events.
-
-    :param config:       the application configuration
-    :param message_bus:  the message bus
-    :param level:        the logging level
-    '''
-    def __init__(self, config, kros, message_bus, level=Level.INFO):
-        Subscriber.__init__(self, 'system', config, message_bus=message_bus, suppressed=False, enabled=False, level=level)
-        self._kros = kros
-        self._message_bus = message_bus
-        # exit KROS on dire systems event?
-        self._exit_on_dire_event = config['kros'].get('exit_on_dire_event')
-        self.add_events(Event.by_group(Group.SYSTEM))
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    async def _arbitrate_message(self, message):
-        '''
-        Pass the message on to the Arbitrator and acknowledge that it has been
-        sent (by setting a flag in the message).
-        '''
-        await self._message_bus.arbitrate(message.payload)
-        # increment sent acknowledgement count
-        message.acknowledge_sent()
-        self._log.info(self._color + Style.NORMAL + 'arbitrated payload for event {}; value: {}'.format(message.payload.event.name, message.payload.value))
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    async def process_message(self, message):
-        '''
-        Process the message.
-
-        :param message:  the message to process.
-        '''
-        if message.gcd:
-            raise GarbageCollectedError('cannot process message: message has been garbage collected. [3]')
-        _event = message.event
-        self._log.info('pre-processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.label))
-        if Event.is_system_event(_event):
-#           self._log.debug('processing system message {}'.format(message.name))
-            self.dispatch_system_event(message.payload)
-        else:
-            self._log.warning('unrecognised event on message {}'.format(message.name) + ''.format(message.event.label))
-        await Subscriber.process_message(self, message)
-        self._log.debug('post-processing message {}'.format(message.name))
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def dispatch_system_event(self, payload):
-        '''
-        Process an incoming event's payload.
-        '''
-        self._log.info('processing payload event {}'.format(payload.event.label))
-        if payload.event is Event.SHUTDOWN:
-            self._log.info('shut down requested.')
-            self._kros.shutdown()
-        elif payload.event is Event.BATTERY_LOW:
-            self._log.critical('battery voltage low!')
-            if self._exit_on_dire_event:
-                self._log.critical('shutting down KROS...')
-                self._kros.shutdown()
-            else:
-                self._log.critical('WARNING! WARNING! WARNING! battery voltage low! Time to shut down KROS.')
-            pass
-        elif payload.event is Event.HIGH_TEMPERATURE:
-            self._log.critical('high temperature encoutered!')
-            if self._exit_on_dire_event:
-#               self._message_bus.disable()
-#               self._kros.disable()
-                pass # TODO
-            else:
-                self._log.critical('WARNING! WARNING! WARNING! high temperature encountered! Time to go into idle mode.')
-            pass
-        elif payload.event is Event.COLLISION_DETECT:
-            self._log.critical('collision detection!')
-            if self._exit_on_dire_event:
-#               self._message_bus.disable()
-#               self._kros.disable()
-                pass # TODO
-            else:
-                self._log.critical('WARNING! WARNING! WARNING! collision detection! Stop everything now.')
-            pass
-        else:
-            raise ValueError('unrecognised system event: {}'.format(payload.event.name))
-
-    # end of SystemSubscriber class  ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
 
 # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 def print_documentation():
@@ -581,7 +495,7 @@ def main(argv):
         print(Fore.RED + Style.BRIGHT + 'error starting kros: {}'.format(traceback.format_exc()) + Style.RESET_ALL)
     finally:
         if not _suppress:
-            _log.info('exit.')
+            _log.info('kros exit.')
         if _kros and not ( _kros.closing or _kros.closed ):
             _log.info('finally calling close...')
             _kros.close()

@@ -33,11 +33,10 @@ class BumperSubscriber(Subscriber):
     :param config:       the application configuration
     :param message_bus:  the message bus
     :param motor_ctrl:   the motor controller
-    :param color:        the color for log messages
     :param level:        the logging level
     '''
-    def __init__(self, config, message_bus, motor_ctrl, color=Fore.YELLOW, level=Level.INFO):
-        Subscriber.__init__(self, BumperSubscriber.CLASS_NAME, config, message_bus=message_bus, color=color, suppressed=False, enabled=False, level=level)
+    def __init__(self, config, message_bus, motor_ctrl, level=Level.INFO):
+        Subscriber.__init__(self, BumperSubscriber.CLASS_NAME, config, message_bus=message_bus, suppressed=False, enabled=False, level=level)
         if not isinstance(motor_ctrl, MotorController):
             raise ValueError('wrong type for motor_ctrl argument: {}'.format(type(motor_ctrl)))
         self._motor_ctrl = motor_ctrl
@@ -52,7 +51,7 @@ class BumperSubscriber(Subscriber):
         await self._message_bus.arbitrate(message.payload)
         # increment sent acknowledgement count
         message.acknowledge_sent()
-        self._log.info(self._color + Style.NORMAL + 'arbitrated payload for event {}; value: {}'.format(message.payload.event.name, message.payload.value))
+        self._log.info('arbitrated payload for event {}; value: {}'.format(message.payload.event.name, message.payload.value))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def process_message(self, message):
@@ -64,7 +63,7 @@ class BumperSubscriber(Subscriber):
         if message.gcd:
             raise GarbageCollectedError('cannot process message: message has been garbage collected. [3]')
         _event = message.event
-        self._log.info('pre-processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.label) + Style.RESET_ALL)
+        self._log.info('pre-processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.label))
         if Event.is_bumper_event(_event):
             self._motor_ctrl.dispatch_bumper_event(message.payload)
         else:

@@ -64,16 +64,9 @@ class VelocityPublisher(Publisher):
         self._log.info('ready.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def get_trigger_behaviour(self, event):
-        return TriggerBehaviour.TOGGLE # or RELEASE
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
-    def trigger_event(self):
-        '''
-        This returns the event used to enable/disable the behaviour manually.
-        '''
-        return Event.AVOID
+    def name(self):
+        return 'velo-pot'
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def start(self):
@@ -86,11 +79,10 @@ class VelocityPublisher(Publisher):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def enable(self):
-        Publisher.enable(self)
-        if self.enabled:
+        if not self.enabled:
+            Publisher.enable(self)
             if self._message_bus.get_task_by_name(VelocityPublisher._PUBLISHER_LOOP) or self._publish_loop_running:
                 raise Exception('already enabled.')
-#               self._log.warning('already enabled.')
             else:
                 self._log.info('creating task for publisher loop...')
                 self._publish_loop_running = True
@@ -98,15 +90,6 @@ class VelocityPublisher(Publisher):
                 self._log.info('enabled.')
         else:
             self._log.warning('failed to enable publisher loop.')
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def callback(self):
-        self._log.info('👾 pot callback.')
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    @property
-    def name(self):
-        return 'pot'
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def _publisher_loop(self, f_is_enabled):
@@ -144,41 +127,21 @@ class VelocityPublisher(Publisher):
         self._log.info('publisher loop complete.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def execute(self, message):
-        '''
-        The method called upon each loop iteration. This receives a message and
-        executes a ballistic behaviour for either a bumper or infrared event (if
-        the latter is closer than a specified threshold distance).
-
-        :param message:  an optional Message passed along by the message bus
-        '''
-        raise Exception('what is this doing here?')
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def disable(self):
         '''
         Disable this publisher.
         '''
-        self._log.info('🍄 disabling velocity publisher...')
         if self.enabled:
             self._pot.disable()
             Publisher.disable(self)
-            self._log.info('🍄 velocity publisher disabled.')
-        else:
-            self._log.warning('🍄 velocity publisher already disabled.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def close(self):
         '''
         Close this publisher.
         '''
-        self._log.info('👾 closing velocity publisher...')
         if not self.closed:
-#           self._pot.close()
             Publisher.close(self)
-            self._log.info('👾 velocity publisher closed.')
-        else:
-            self._log.warning('👾 velocity publisher already closed.')
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class MockPotentiometer(object):

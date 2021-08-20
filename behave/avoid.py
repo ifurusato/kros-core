@@ -99,7 +99,7 @@ class Avoid(Behaviour, Publisher):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def callback(self):
-        self._log.info('👾 avoid callback.')
+        self._log.info('avoid callback.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
@@ -183,11 +183,11 @@ class Avoid(Behaviour, Publisher):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def __publish_message(self, message):
-        self._log.info('👾 __publishing message: {}'.format(message.event.label))
+        self._log.info('publishing message: {}'.format(message.event.label))
 #       await Publisher.publish(self, message)
         await self._message_bus.publish_message(message)
         await asyncio.sleep(0.05)
-        self._log.info('👾 __published message: {}'.format(message.event.label))
+        self._log.info('published message: {}'.format(message.event.label))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def execute(self, message):
@@ -199,24 +199,24 @@ class Avoid(Behaviour, Publisher):
         :param message:  an optional Message passed along by the message bus
         '''
         if self.suppressed:
-            self._log.info(Style.DIM + '👾 avoid suppressed; message: {}'.format(message.event.label))
+            self._log.info('avoid suppressed; message: {}'.format(message.event.label))
         else:
-            self._log.info('👾 avoid released; message: {}'.format(message.event.label))
+            self._log.info('avoid released; message: {}'.format(message.event.label))
             _timestamp = self._message_bus.last_message_timestamp
             if _timestamp is None:
-                self._log.info('👾 avoid loop execute; no previous messages.')
+                self._log.info('avoid loop execute; no previous messages.')
             else:
                 _elapsed_ms = (dt.now() - _timestamp).total_seconds() * 1000.0
-                self._log.info('👾 avoid loop execute; {}'.format(Util.get_formatted_time('message age:', _elapsed_ms)))
+                self._log.info('avoid loop execute; {}'.format(Util.get_formatted_time('message age:', _elapsed_ms)))
             if self.enabled:
                 _payload = message.payload
                 _event   = _payload.event
                 _value   = _payload.value
-                self._log.info('👾 avoid enabled, execution on message {}; '.format(message.name) + Fore.YELLOW + ' event: {}; value: {}'.format(_event.label, _value))
+                self._log.info('avoid enabled, execution on message {}; '.format(message.name) + Fore.YELLOW + ' event: {}; value: {}'.format(_event.label, _value))
 
                 # process value
                 if _value < self._min_distance:
-                    self._log.info(Fore.YELLOW + '👾 avoid: value below threshold; event: {}; value: {}'.format(_event.label, _value))
+                    self._log.info(Fore.YELLOW + 'avoid: value below threshold; event: {}; value: {}'.format(_event.label, _value))
 
 #                   # David Anderson's IR bumper behaviour .........................................
 #                   void bumper_behavior()      /* Collision recovery as concurrent task */
@@ -243,15 +243,15 @@ class Avoid(Behaviour, Publisher):
                         # else bump.arg = LEFT_TURN;
                         _turn_ahead_delay = 3000
                         if _event is Event.BUMPER_PORT:
-                            self._log.info('👾 avoid; event: {}; value: {}'.format(_event.label, _value))
+                            self._log.info('avoid; event: {}; value: {}'.format(_event.label, _value))
                             self._queue_directive(Event.TURN_AHEAD_STBD, _turn_ahead_delay)
 
                         elif _event is Event.BUMPER_STBD:
-                            self._log.info('👾 avoid; event: {}; value: {}'.format(_event.label, _value))
+                            self._log.info('avoid; event: {}; value: {}'.format(_event.label, _value))
                             self._queue_directive(Event.TURN_AHEAD_PORT, _turn_ahead_delay)
 
                         elif _event is Event.BUMPER_CNTR:
-                            self._log.info('👾 avoid; event: {}; value: {}'.format(_event.label, _value))
+                            self._log.info('avoid; event: {}; value: {}'.format(_event.label, _value))
                             self._queue_directive(Event.TURN_AHEAD_PORT, _turn_ahead_delay) # same as starboard
                         # msleep(500);                // suspend and turn for 1/2 second
 
@@ -273,15 +273,15 @@ class Avoid(Behaviour, Publisher):
                         # }
 
                     elif _event is Event.INFRARED_PORT_SIDE:
-                        self._log.info('👾 avoid; event: {}; value: {}'.format(_event.label, _value))
+                        self._log.info('avoid; event: {}; value: {}'.format(_event.label, _value))
                     elif _event is Event.INFRARED_PORT:
-                        self._log.info('👾 avoid; event: {}; value: {}'.format(_event.label, _value))
+                        self._log.info('avoid; event: {}; value: {}'.format(_event.label, _value))
                     elif _event is Event.INFRARED_CNTR:
-                        self._log.info('👾 avoid; event: {}; value: {}'.format(_event.label, _value))
+                        self._log.info('avoid; event: {}; value: {}'.format(_event.label, _value))
                     elif _event is Event.INFRARED_STBD:
-                        self._log.info('👾 avoid; event: {}; value: {}'.format(_event.label, _value))
+                        self._log.info('avoid; event: {}; value: {}'.format(_event.label, _value))
                     elif _event is Event.INFRARED_STBD_SIDE:
-                        self._log.info('👾 avoid; event: {}; value: {}'.format(_event.label, _value))
+                        self._log.info('avoid; event: {}; value: {}'.format(_event.label, _value))
                     else:
                         raise ValueError('expected a bumper or infrared event, not {}'.format(_event.label))
                     # David Anderson's IR collision avoidance behaviour ............................
@@ -310,8 +310,8 @@ class Avoid(Behaviour, Publisher):
 #                       }
 #                   }
                 else:
-                    self._log.info('👾💜 avoid (no action): value above threshold; event: {}; value: {}'.format(_event.label, _value))
+                    self._log.info('avoid (no action): value above threshold; event: {}; value: {}'.format(_event.label, _value))
             else:
-                self._log.info('👾 avoid disabled, execution on message {}; '.format(message.name) + Fore.YELLOW + ' event: {}; value: {}'.format(_event.label, _value))
+                self._log.info('avoid disabled, execution on message {}; '.format(message.name) + Fore.YELLOW + ' event: {}; value: {}'.format(_event.label, _value))
 
 #EOF

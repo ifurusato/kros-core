@@ -68,7 +68,6 @@ class MotorController(Component):
         self._stbd_motor = motor_configurer.get_motor(Orientation.STBD)
 
         # temporary until we move functionality to motors
-        self._color                = Fore.MAGENTA
         self._loop_thread          = None
         self._loop_enabled         = False
         self._event_counter        = itertools.count()
@@ -159,7 +158,7 @@ class MotorController(Component):
             self._stbd_motor.update_target_velocity()
             _elapsed = _now - self._start_time
             self._start_time = _now
-            print(Fore.BLACK + 'callback; {:6.3f}ms elapsed.'.format(_elapsed) + Style.RESET_ALL)
+#           print(Fore.BLACK + 'callback; {:6.3f}ms elapsed.'.format(_elapsed) + Style.RESET_ALL) # display loop-elapsed time
             if self._verbose: # print stats
                 self.print_info(next(self._event_counter))
 
@@ -308,6 +307,12 @@ class MotorController(Component):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def dispatch_velocity_event(self, payload, reset_slew=True):
+        '''
+        A dispatcher for velocity change events.
+        '''
+        if not self.enabled:
+            self._log.warning('disabled: ignoring velocity dispatch.')
+            return
         if reset_slew:
             self._reset_slew_rate()
         _event = payload.event
@@ -318,7 +323,7 @@ class MotorController(Component):
             self.start_loop()
         if _event is Event.VELOCITY:
             if _changed:
-                self._log.info(self._color + Style.BRIGHT + 'set velocity;\t'
+                self._log.info('set velocity;\t'
                         + Fore.RED + 'port: {:5.2f} / {:5.2f}; '.format(_value, self._port_motor.velocity)
                         + Fore.GREEN + 'stbd: {:5.2f} / {:5.2f}'.format(_value, self._stbd_motor.velocity))
             self.set_motor_velocity(Orientation.PORT, _value)
@@ -326,35 +331,35 @@ class MotorController(Component):
         elif _event is Event.INCREASE_PORT_VELOCITY:
             self._increment_motor_velocity(Orientation.PORT, self._accel_increment)
             if _changed:
-                self._log.info(self._color + Style.BRIGHT + 'increase PORT velocity; velocity: {:5.2f}'.format(self._port_motor.velocity))
+                self._log.info('increase PORT velocity; velocity: {:5.2f}'.format(self._port_motor.velocity))
             pass
         elif _event is Event.DECREASE_PORT_VELOCITY:
             self._increment_motor_velocity(Orientation.PORT, -1 * self._decel_increment)
             if _changed:
-                self._log.info(self._color + Style.BRIGHT + 'decrease PORT velocity; velocity: {:5.2f}'.format(self._port_motor.velocity))
+                self._log.info('decrease PORT velocity; velocity: {:5.2f}'.format(self._port_motor.velocity))
             pass
         elif _event is Event.INCREASE_STBD_VELOCITY:
             self._increment_motor_velocity(Orientation.STBD, self._accel_increment)
             if _changed:
-                self._log.info(self._color + Style.BRIGHT + 'increase STBD velocity; velocity: {:5.2f}'.format(self._stbd_motor.velocity))
+                self._log.info('increase STBD velocity; velocity: {:5.2f}'.format(self._stbd_motor.velocity))
             pass
         elif _event is Event.DECREASE_STBD_VELOCITY:
             self._increment_motor_velocity(Orientation.STBD, -1 * self._decel_increment)
             if _changed:
-                self._log.info(self._color + Style.BRIGHT + 'decrease STBD velocity; velocity: {:5.2f}'.format(self._stbd_motor.velocity))
+                self._log.info('decrease STBD velocity; velocity: {:5.2f}'.format(self._stbd_motor.velocity))
             pass
         elif _event is Event.INCREASE_VELOCITY:
             self._increment_motor_velocity(Orientation.PORT, self._accel_increment)
             self._increment_motor_velocity(Orientation.STBD, self._accel_increment)
             if _changed:
-                self._log.info(self._color + Style.BRIGHT + 'increase velocity;\t'
+                self._log.info('increase velocity;\t'
                         + Fore.RED + 'port: {:5.2f};\t'.format(self._port_motor.velocity)
                         + Fore.GREEN + 'stbd: {:5.2f}'.format(self._stbd_motor.velocity))
         elif _event is Event.DECREASE_VELOCITY:
             self._increment_motor_velocity(Orientation.PORT, -1 * self._decel_increment)
             self._increment_motor_velocity(Orientation.STBD, -1 * self._decel_increment)
             if _changed:
-                self._log.info(self._color + Style.BRIGHT + 'decrease velocity;\t'
+                self._log.info('decrease velocity;\t'
                         + Fore.RED + 'port: {:5.2f};\t'.format(self._port_motor.velocity)
                         + Fore.GREEN + 'stbd: {:5.2f}'.format(self._stbd_motor.velocity))
         else:
@@ -364,9 +369,12 @@ class MotorController(Component):
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def dispatch_chadburn_event(self, payload):
         '''
-        A dispatcher for chadburn events: full, half, slow and dead slow
+        A dispatcher for chadburn events, e.g., full, half, slow and dead slow
         for both ahead and astern.
         '''
+        if not self.enabled:
+            self._log.warning('disabled: ignoring chadburn dispatch.')
+            return
         self._reset_slew_rate()
         _event = payload.event
         self._log.info('dispatch chadburn event: {}'.format(_event.label))
@@ -384,9 +392,12 @@ class MotorController(Component):
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def dispatch_theta_event(self, payload):
         '''
-        A dispatcher for theta (rotation/turning) events: turn ahead, turn to,
-        and turn astern for port and starboard; spin port and spin starboard.
+        A dispatcher for theta (rotation/turning) events, e.g., turn ahead,
+        turn astern for port and starboard, spin port and spin starboard.
         '''
+        if not self.enabled:
+            self._log.warning('disabled: ignoring theta dispatch.')
+            return
         self._reset_slew_rate()
         _event = payload.event
         self._log.info('dispatch theta event: {}'.format(_event.label))
@@ -453,9 +464,12 @@ class MotorController(Component):
         '''
         A dispatcher for deceleration events: halt, _brake and stop.
         '''
+        if not self.enabled:
+            self._log.warning('disabled: ignoring stop dispatch.')
+            return
 #       self._reset_slew_rate() # FIXME do we want this here or not?
         _event = payload.event
-        self._log.info('🛑 dispatch stop event: {}'.format(_event.label))
+        self._log.info('dispatch stop event: {}'.format(_event.label))
         _value = payload.value
         if _event is Event.HALT:
             self.halt()
@@ -469,13 +483,17 @@ class MotorController(Component):
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def dispatch_infrared_event(self, payload):
         '''
-        A dispatcher for infrared events from port side, port, center, starboard, or starboard side.
+        A dispatcher for infrared events, e.g., from port side, port, center,
+        starboard, or starboard side.
 
         THIS SHOULD BE MOVED OUT OF THE MOTOR CONTROLLER.
         '''
+        if not self.enabled:
+            self._log.warning('disabled: ignoring infrared dispatch.')
+            return
         _event = payload.event
         _value = payload.value
-        self._log.info('dispatch infrared event: {}'.format(_event.label))
+        self._log.info('dispatch infrared event: {}; with value: {:5.2f}'.format(_event.label, _value))
         if _event is Event.INFRARED_PORT_SIDE:
             self._log.info('INFRARED PORT SIDE.')
 #           self._brake()
@@ -497,11 +515,15 @@ class MotorController(Component):
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def dispatch_bumper_event(self, payload):
         '''
-        A dispatcher for bumper events from port, center or starboard.
+        A dispatcher for bumper events, e.g., from port, center or starboard.
 
-        This causes the robot to halt.
+        This currently causes the robot to halt.
+
         THIS SHOULD BE MOVED OUT OF THE MOTOR CONTROLLER.
         '''
+        if not self.enabled:
+            self._log.warning('disabled: ignoring bumper dispatch.')
+            return
         _event = payload.event
         _value = payload.value
         if _event is Event.BUMPER_PORT:
@@ -531,10 +553,13 @@ class MotorController(Component):
             target_velocity = 0.0
         if not isinstance(target_velocity, float):
             raise ValueError('expected float, not {}'.format(type(target_velocity)))
-        self._log.info(Style.BRIGHT + 'setting velocity of {} motor to: {:5.2f}'.format(orientation.label, target_velocity))
         if orientation is Orientation.PORT:
+            if self._port_motor.target_velocity != target_velocity:
+                self._log.info('setting velocity of port motor to: ' + Fore.RED + '{:5.2f}'.format(target_velocity))
             self._port_motor.target_velocity = target_velocity
         else:
+            if self._stbd_motor.target_velocity != target_velocity:
+                self._log.info('setting velocity of stbd motor to: ' + Fore.GREEN + '{:5.2f}'.format(target_velocity))
             self._stbd_motor.target_velocity = target_velocity
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -741,15 +766,13 @@ class MotorController(Component):
             if self._ext_clock:
                 self._ext_clock.disable()
                 self._ext_clock.close()
-            if self.is_in_motion(): # if we're moving then halt
-                self._log.warning('event: motors are in motion (halting).')
-#               self._port_motor.stop()
-#               self._stbd_motor.stop()
-            # stop anyway...
-            self._port_motor.stop()
-            self._stbd_motor.stop()
-            self._port_motor.disable()
-            self._stbd_motor.disable()
+            _count = 0
+            while _count < 10 and self.is_in_motion(): # if we're moving then halt
+                _count += 1
+                self._log.warning('[{:d}] event: motors are in motion (halting).'.format(_count))
+                self._port_motor.stop()
+                self._stbd_motor.stop()
+                time.sleep(0.1)
             self._log.info('disabled.')
         else:
             self._log.debug('already disabled.')
@@ -763,5 +786,10 @@ class MotorController(Component):
             Component.close(self) # calls disable
             self._port_motor.close()
             self._stbd_motor.close()
+        # stop anyway...
+        self._port_motor.stop()
+        self._stbd_motor.stop()
+        self._port_motor.disable()
+        self._stbd_motor.disable()
 
 #EOF

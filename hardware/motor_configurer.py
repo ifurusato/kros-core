@@ -54,7 +54,6 @@ class MotorConfigurer():
         # default until successful in configuring ThunderBorg:
         self._config['kros'].get('arguments')['using_mocks'] = True
         if not self._motors_enabled: # overrides _enable_mock
-#           sys.exit(0)
             self._enable_mock = True
         else:
             self._enable_mock = _args.get('mock_enabled')

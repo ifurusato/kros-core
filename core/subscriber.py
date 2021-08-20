@@ -36,16 +36,16 @@ class Subscriber(Component, FiniteStateMachine):
     :param name:         the subscriber name (for logging)
     :param config:       the application configuration
     :param message_bus:  the message bus
-    :param color:        the optional color for log messages
     :param suppressed:   the initial state of the suppressed flag
     :param enabled:      the initial state of the enabled flag
     :param level:        the logging level
     '''
-    def __init__(self, name, config, message_bus, color=Fore.CYAN, suppressed=False, enabled=False, level=Level.INFO):
+    def __init__(self, name, config, message_bus, suppressed=False, enabled=False, level=Level.INFO):
         self._log = Logger('sub:{}'.format(name), level)
         if not isinstance(name, str):
             raise ValueError('wrong type for name argument: {}'.format(type(name)))
         self._name = name
+        self._id   = random.randint(10000,99999)
         if not isinstance(config, dict):
             raise ValueError('wrong type for config argument: {}'.format(type(name)))
         self._config = config
@@ -58,11 +58,10 @@ class Subscriber(Component, FiniteStateMachine):
             raise ValueError('wrong type for enabled argument: {}'.format(type(enabled)))
         Component.__init__(self, self._log, suppressed, enabled)
         FiniteStateMachine.__init__(self, self._log, name)
-        self._color  = color
         self._events = [] # list of acceptable event types
         self._brief  = True # brief messages by default
         self._message_bus.register_subscriber(self)
-        self._log.info(self._color + 'ready.')
+        self._log.info(Fore.BLACK + 'ready (superclass).')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def set_log_level(self, level):
@@ -123,7 +122,7 @@ class Subscriber(Component, FiniteStateMachine):
         Adds an event to the list that this subscriber accepts.
         '''
         self._events.append(event)
-        self._log.debug('added \'{}\' event to subscriber {} ({:d} events).'.format(event.label, self._name, len(self._events)))
+#       self._log.debug('added \'{}\' event to subscriber {} ({:d} events).'.format(event.label, self._name, len(self._events)))
 
     def print_events(self):
         if self._events == [Event.ANY]:
@@ -163,14 +162,14 @@ class Subscriber(Component, FiniteStateMachine):
         This method is not meant to be overridden, except by the garbage
         collector. The process_message() method can be overridden.
         '''
-        self._log.debug(self._color + Style.DIM + 'consume() called on {}.'.format(self.name))
+#       self._log.debug('consume() called on {}.'.format(self.name))
         _peeked_message = await self._message_bus.peek_message()
         if not _peeked_message:
             raise QueueEmptyOnPeekError('peek returned none.')
         elif _peeked_message.gcd:
             raise GarbageCollectedError('{} cannot consume: message has been garbage collected. [1]'.format(self.name))
 
-        self._log.debug(self._color + Style.DIM + 'consume() continuing for {}...'.format(self.name))
+#       self._log.debug('consume() continuing for {}...'.format(self.name))
         _ackd = _peeked_message.acknowledged_by(self)
         if not _ackd and self.acceptable(_peeked_message):
             _event = asyncio.Event()
@@ -181,21 +180,19 @@ class Subscriber(Component, FiniteStateMachine):
             _peeked_message.acknowledge(self)
 
             # this subscriber accepts this message and hasn't seen it before so consume and handle the message
-            self._log.debug(self._color + Style.DIM + 'waiting to consume acceptable message:'
-                    + Fore.WHITE + ' {}; event: {}'.format(_peeked_message.name, _peeked_message.event.label))
+#           self._log.debug('waiting to consume acceptable message:'
+#                   + Fore.WHITE + ' {}; event: {}'.format(_peeked_message.name, _peeked_message.event.label))
 
             _message = await self._message_bus.consume_message()
             self._message_bus.consumed()
-            if self._message_bus.verbose:
-                self._log.debug(self._color + Style.DIM + 'consumed acceptable message:' \
-                    + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
+#           if self._message_bus.verbose:
+#               self._log.debug('consumed acceptable message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
 
             # handle acceptable message
             if self._message_bus.verbose:
                 _elapsed_ms = (dt.now() - _message.timestamp).total_seconds() * 1000.0
                 self._print_message_info('process message:', _message, _elapsed_ms)
-            self._log.debug(self._color + Style.DIM + 'creating task for processing message:' \
-                    + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
+#           self._log.debug('creating task for processing message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
             # create message processing task
             asyncio.create_task(self.process_message(_message), name='{}:process-message-{}'.format(self.name, _message.name))
 
@@ -210,31 +207,28 @@ class Subscriber(Component, FiniteStateMachine):
             _event.set()
 
             # we've handled message so pass along to arbitrator
-            if not _message.sent:
-                self._log.debug(self._color + 'sending message: {}; event: {} to arbitrator...'.format(_message.name, _message.event.label))
+            if _message.sent == 0:
+#               self._log.debug('sending message: {}; event: {} to arbitrator...'.format(_message.name, _message.event.label))
                 await self._arbitrate_message(_message)
-                self._log.debug(self._color + 'sent message:' + Fore.WHITE + ' {}; event: {} to arbitrator.'.format(_message.name, _message.event.label))
+#               self._log.debug('sent message:' + Fore.WHITE + ' {}; event: {} to arbitrator.'.format(_message.name, _message.event.label))
             else:
-                self._log.warning(self._color + 'message: {} already sent; event: {}'.format(_message.name, _message.event.label))
+                self._log.warning('message: {} already sent; event: {}'.format(_message.name, _message.event.label))
 
 #           # keep track of timestamp of last message
-#           self._log.debug(Fore.YELLOW + '🕘 last message timestamp: {}'.format(_message.timestamp))
+#           self._log.debug('last message timestamp: {}'.format(_message.timestamp))
 #           self._message_bus.last_message_timestamp = _message.timestamp
             # republish the message
-            self._log.debug(self._color + 'awaiting republication of message:' \
-                + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
+#           self._log.debug('awaiting republication of message:' \
+#               + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
             await self._message_bus.republish_message(_message)
-            self._log.debug(self._color + 'message:' \
-                + Fore.WHITE + ' {} with event: {}'.format(_message.name, _message.event.label) + self._color + ' has been republished.')
+#           self._log.debug('message:' + Fore.WHITE + ' {} with event: {}'.format(_message.name, _message.event.label) + ' has been republished.')
 
         elif not _ackd:
             # if not already ack'd, acknowledge we've seen the message
-            self._log.debug(self._color + Style.DIM + 'acknowledging unacceptable message:' \
-                    + Fore.WHITE + ' {}; event: {} (queue: {:d} elements)'.format(
-                    _peeked_message.name, _peeked_message.event.label, self._message_bus.queue_size))
+#           self._log.debug('acknowledging unacceptable message:' + Fore.WHITE + ' {}; event: {} (queue: {:d} elements)'.format(
+#                   _peeked_message.name, _peeked_message.event.label, self._message_bus.queue_size))
             _peeked_message.acknowledge(self)
-
-#       self._log.debug(self._color + Style.DIM + 'consume() complete on {}.'.format(self.name))
+#       self._log.debug('consume() complete on {}.'.format(self.name))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _done_callback(self, task):
@@ -260,12 +254,12 @@ class Subscriber(Component, FiniteStateMachine):
 
         :param message:  the message to process.
         '''
-        self._log.debug(self._color + Style.DIM + 'processing message {}'.format(message.name))
+#       self._log.debug('processing message {}'.format(message.name))
         if message.gcd:
             raise GarbageCollectedError('cannot process message: message has been garbage collected. [3]')
         # indicate that this subscriber has processed the message
         message.process(self)
-        self._log.debug(self._color + Style.DIM + 'processed message {}'.format(message.name))
+#       self._log.debug('processed message {}'.format(message.name))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def _arbitrate_message(self, message):
@@ -277,7 +271,7 @@ class Subscriber(Component, FiniteStateMachine):
         # increment sent acknowledgement count
         message.acknowledge_sent()
 #       if self._message_bus.verbose:
-#           self._log.info(self._color + Style.DIM + 'arbitrated payload for event {}; value: {}'.format(message.payload.event.name, message.payload.value))
+#           self._log.info('arbitrated payload for event {}; value: {}'.format(message.payload.event.name, message.payload.value))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def _cleanup_message(self, message):
@@ -290,8 +284,8 @@ class Subscriber(Component, FiniteStateMachine):
 
         :param message:  consumed message that is done being processed.
         '''
-        if self._message_bus.verbose:
-            self._log.debug(self._color + Style.DIM + 'begin cleanup of message: {}'.format(message.name))
+#       if self._message_bus.verbose:
+#           self._log.debug('begin cleanup of message: {}'.format(message.name))
         if message.gcd:
             self._log.warning('cannot cleanup message: message has been garbage collected. [4]')
             return
@@ -300,7 +294,7 @@ class Subscriber(Component, FiniteStateMachine):
         message.expire()
         # clear any tasks related to the message
 #       self._message_bus.clear_tasks()
-        self._log.debug(self._color + Style.DIM + 'end cleanup of message: {}'.format(message.name))
+#       self._log.debug('end cleanup of message: {}'.format(message.name))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _print_message_info(self, title, message, elapsed):
@@ -312,12 +306,12 @@ class Subscriber(Component, FiniteStateMachine):
         :param elapsed:  the optional elapsed time (in milliseconds) for an operation
         '''
         if self._brief:
-            self._log.debug(self._color + Style.BRIGHT + title + Style.NORMAL \
+            self._log.debug(Style.BRIGHT + title + Style.NORMAL \
                     + ' id: ' + Style.BRIGHT + '{};'.format(message.name) + Style.NORMAL \
                     + ' event: ' + Style.BRIGHT + ( '{}; '.format(message.event.label) if message.event else 'n/a' ) + Style.NORMAL \
                     + ' value: ' + Style.BRIGHT + Util.get_formatted_value(message.payload.value))
         else:
-            self._log.debug(self._color + Style.BRIGHT + title + Style.NORMAL + '\n' \
+            self._log.debug(Style.BRIGHT + title + Style.NORMAL + '\n' \
                     + Subscriber.LOG_INDENT + 'id: ' + Style.BRIGHT + '{};'.format(message.name) + Style.NORMAL \
                     + ' event: ' + Style.BRIGHT + ( '{}; '.format(message.event.label) if message.event else 'n/a: [gc\'d] ' ) + Style.NORMAL \
                     + ' value: ' + Style.BRIGHT + Util.get_formatted_value(message.payload.value) + '\n' + Style.NORMAL \
@@ -361,7 +355,7 @@ class Subscriber(Component, FiniteStateMachine):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def __key(self):
-        return (self.name, self._color)
+        return (self.name, self._id)
 
     def __hash__(self):
         return hash(self.__key())
@@ -379,11 +373,10 @@ class GarbageCollector(Subscriber):
     :param name:         the subscriber name (for logging)
     :param config:       the application configuration
     :param message_bus:  the message bus
-    :param color:        the optional color for log messages
     :param level:        the logging level
     '''
-    def __init__(self, config, message_bus, color=Fore.BLUE, level=Level.INFO):
-        Subscriber.__init__(self, GarbageCollector.CLASS_NAME, config, message_bus=message_bus, color=color, suppressed=False, enabled=False, level=level)
+    def __init__(self, config, message_bus, level=Level.INFO):
+        Subscriber.__init__(self, GarbageCollector.CLASS_NAME, config, message_bus=message_bus, suppressed=False, enabled=False, level=level)
         self.add_event(Event.ANY)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -397,15 +390,18 @@ class GarbageCollector(Subscriber):
         A filter that returns True if the message is either expired and/or
         fully acknowledged.
         '''
-        _elapsed_ms = (dt.now() - message.timestamp).total_seconds() * 1000.0
-        if self._message_bus.is_expired(message) and message.fully_acknowledged:
-            return True
-        elif self._message_bus.is_expired(message):
-            return True
-        elif message.fully_acknowledged:
-            return True
-        else:
-            return False
+#       _elapsed_ms = (dt.now() - message.timestamp).total_seconds() * 1000.0
+        return self._message_bus.is_expired(message) or message.fully_acknowledged
+#       self._log.info('🍟 message {} acceptable? expired? {}; fully acknowledged? {}'.format(
+#               message.name, self._message_bus.is_expired(message), message.fully_acknowledged))
+#       if self._message_bus.is_expired(message) and message.fully_acknowledged:
+#           return True
+#       elif self._message_bus.is_expired(message):
+#           return True
+#       elif message.fully_acknowledged:
+#           return True
+#       else:
+#           return False
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def consume(self):
@@ -419,8 +415,8 @@ class GarbageCollector(Subscriber):
             raise QueueEmptyOnPeekError('peek returned none.')
         elif _peeked_message.gcd:
             self._log.warning('message has already been garbage collected. [1]'.format(self.name))
-        if self._message_bus.verbose:
-            self._log.debug(self._color + 'gc-consume() message:' + Fore.WHITE + ' {}; event: {}'.format(_peeked_message.name, _peeked_message.event.label))
+#       if self._message_bus.verbose:
+#           self._log.debug('gc-consume() message:' + Fore.WHITE + ' {}; event: {}'.format(_peeked_message.name, _peeked_message.event.label))
 
         # garbage collect (consume) if filter accepts the peeked message
         if self.acceptable(_peeked_message):
@@ -429,14 +425,14 @@ class GarbageCollector(Subscriber):
             _message.gc() # mark as garbage collected and don't republish
             if not _message.sent:
                 self._log.warning('garbage collected undelivered message: {}; event: {}'.format(_message.name, _message.event.name))
-            elif self._message_bus.verbose:
-                self._log.debug(self._color + 'garbage collected message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
+#           elif self._message_bus.verbose:
+#           self._log.info('garbage collected message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
         else:
             # acknowledge we've seen the message
             _peeked_message.acknowledge(self)
-            self._log.debug(self._color + Style.DIM + 'acknowledged unacceptable message:' \
-                    + Fore.WHITE + ' {}; event: {} (queue: {:d} elements)'.format(
-                    _peeked_message.name, _peeked_message.event.label, self._message_bus.queue_size))
+#           self._log.info('acknowledged unacceptable message:' \
+#                   + Fore.WHITE + ' {}; event: {} (queue: {:d} elements)'.format(
+#                   _peeked_message.name, _peeked_message.event.label, self._message_bus.queue_size))
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class GarbageCollectedError(Exception):

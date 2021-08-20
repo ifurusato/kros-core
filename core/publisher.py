@@ -55,7 +55,7 @@ class Publisher(Component, FiniteStateMachine):
         FiniteStateMachine.__init__(self, self._log, name)
         self._name = name
         self._message_bus.register_publisher(self)
-        self._log.info('ready.')
+        self._log.info(Fore.BLACK + 'ready (superclass).')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property

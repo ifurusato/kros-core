@@ -61,7 +61,7 @@ class Behaviour(ABC, Subscriber):
         if message.gcd:
             raise GarbageCollectedError('cannot process message: message has been garbage collected. [3]')
         _event = message.payload.event
-        self._log.info(self._color + 'processing message {}; with event '.format(message.name) + Fore.YELLOW + ' {}'.format(_event.label))
+        self._log.info('processing message {}; with event '.format(message.name) + Fore.YELLOW + ' {}'.format(_event.label))
         # indicate that this subscriber has processed the message
         message.process(self)
         # now process message...

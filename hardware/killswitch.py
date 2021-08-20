@@ -10,7 +10,7 @@
 # modified: 2021-08-18
 #
 
-import time, pigpio
+import pigpio
 from enum import Enum
 from colorama import init, Fore, Style
 init()
@@ -39,8 +39,9 @@ class KillSwitch(Component):
         if not isinstance(config, dict):
             raise ValueError('wrong type for config argument: {}'.format(type(config)))
         self._config = config['kros'].get('hardware').get('killswitch')
-        self._pin = self._config.get('pin')
-        self._kros = kros
+        self._pin       = self._config.get('pin')
+        self._kros      = kros
+        self._pi        = None
         self._triggered = False
         self._log.info('ready.')
 
@@ -48,10 +49,8 @@ class KillSwitch(Component):
     def callback_method(self, gpio, level, tick):
         if not self._triggered:
             self._triggered = True
-            print(Fore.YELLOW + 'callback method fired; gpio: {}; level: {}; tick: {}'.format(gpio, level, tick) + Style.RESET_ALL)
-            self._log.info(Fore.YELLOW + 'callback method fired; gpio: {}; level: {}; tick: {}'.format(gpio, level, tick) + Style.RESET_ALL)
+            self._log.info('killswitch triggered on GPIO pin {}; logic level: {}; ticks: {}'.format(gpio, level, tick))
             self._kros.shutdown()
-            time.sleep(0.1)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def reset(self):
