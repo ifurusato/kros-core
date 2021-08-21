@@ -11,15 +11,15 @@ kros:
     component:                                   # enable specific publish/subscribe components
         enable_killswitch:            True       # kill switch
         # publishers .............................
-        enable_ifs_publisher:         True       # enable Integrated Front Sensor publisher
-        enable_event_publisher:      False       # keyboard robot simulator (kinda necessary for running CLI)
-        enable_battery_publisher:     True       # battery check publisher
-        enable_velocity_publisher:    True       # velocity control potentiometer publisher
+        enable_ifs_publisher:        False       # enable Integrated Front Sensor publisher
+        enable_event_publisher:       True       # keyboard robot simulator (kinda necessary for running CLI)
+        enable_battery_publisher:    False       # battery check publisher
+        enable_velocity_publisher:   False       # velocity control potentiometer publisher
         # subscribers ............................
         enable_system_subscriber:     True       # system events subscriber
         enable_motor_subscriber:      True       # motor events subscriber
         enable_bumper_subscriber:    False       # bumper events subscriber
-        enable_infrared_subscriber:   True       # infrared events subscriber
+        enable_infrared_subscriber:  False       # infrared events subscriber
         enable_behaviours:           False       # enable BehaviourManager and Behaviours
     message_bus:
         max_age_ms:                  20.0        # maximum age of a message before expiry
@@ -49,6 +49,7 @@ kros:
             five_volt_a_channel:      1          # AD channel for power supply A
             five_volt_b_channel:      2          # AD channel for power supply B
             raw_battery_threshold:   17.74       # raw and 5v regulator thresholds set from known measurements:
+#           raw_battery_threshold:   11.00       # raw and 5v regulator thresholds set from known measurements:
             low_5v_threshold:         4.75       # really 4.82v
             loop_delay_sec:          30          # sample loop delay (sec)
         external_clock:
@@ -61,7 +62,7 @@ kros:
         steps_per_rotation:         494          # encoder steps per wheel rotation
     motor:
         maximum_velocity:            80.0        # limit to settable motor velocity
-        motor_power_limit:            0.40       # upper and lower (x -1) limit set on power sent to motor
+        motor_power_limit:            0.80       # upper and lower (x -1) limit set on power sent to motor
         enable_slew_limiter:        False        # initial enabled state for slew limiter
         enable_pid_controller:       True        # initial enable state for PID controller, otherwise direct drive
         enable_jerk_limiter:        False        # initial enabled state for jerk limiter
@@ -166,6 +167,11 @@ kros:
         loop_delay:                   0.01       # main loop delay was sleep(0.01) or 1/100th second, or 10ms. 50ms is the delay for 20Hz, so 10ms is 5x 20Hz or 100Hz.
         loop_freq_hz:               100          # polling loop frequency (Hz)
     behaviour:
+        enable_avoid_behaviour:     False        # enable avoidance behaviour
+        enable_roam_behaviour:       True        # enable roam behaviour
+        enable_moth_behaviour:      False        # enable moth behaviour
+        enable_sniff_behaviour:     False        # enable sniff behaviour
+        enable_idle_behaviour:      False        # enable idle behaviour
         avoid:
             min_distance:            20.0        # minimum distance in cm upon which we trigger avoidance behaviour
         roam:

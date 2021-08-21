@@ -183,22 +183,6 @@ class MotorController(Component):
                 or ( self._loop_enabled and self._loop_thread != None and self._loop_thread.is_alive() )
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def print_info(self, count):
-        self._log.info('motor controller:')
-        if self.stopped:
-            self._log.info(('[{:04d}] '.format(count) if count else '') + 'velocity: stopped.')
-        else:
-            self._log.info(('[{:04d}] '.format(count) if count else '')
-                    + 'velocity: '
-                    + Fore.RED   + 'port: {:<5.2f} -> {:<5.2f} / {:<5.2f}'.format(
-                            self._port_motor.velocity, self._port_motor.target_velocity, self._port_motor.current_power)
-                    + ' {:5.2f}'.format(self._port_motor.current_power)
-                    + Fore.CYAN  + ' :: '
-                    + Fore.GREEN + 'stbd: {:<5.2f} -> {:<5.2f} / {:<5.2f}'.format(
-                            self._stbd_motor.velocity, self._stbd_motor.target_velocity, self._stbd_motor.current_power)
-                    + Fore.CYAN + ' :: movement: {}'.format(self._characterise_movement()))
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def print_motor_status(self):
         self._log.info('motors:')
 
@@ -257,53 +241,6 @@ class MotorController(Component):
                 + Fore.YELLOW + '{}\t'.format(self._stbd_motor.jerk_limiter.enabled)
                 + Fore.CYAN + 'suppressed: '
                 + Fore.YELLOW + '{}'.format(self._stbd_motor.jerk_limiter.suppressed))
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def _characterise_movement(self):
-        '''
-        Return a pair of strings in a list, characterising the current and
-        target movement based on the direction of the two motors.
-        '''
-        _before = self._get_movement_description(self._port_motor.velocity, self._stbd_motor.velocity)
-        _after  = self._get_movement_description(self._port_motor.target_velocity, self._stbd_motor.target_velocity)
-        if _before == _after:
-            return _before
-        else:
-            return '{} -> → {}'.format(_before, _after)
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def _get_movement_description(self, port_velocity, stbd_velocity):
-        _avg_velocity = ( port_velocity + stbd_velocity ) / 2.0
-
-        if isclose(port_velocity, 0.0, abs_tol=0.5) and isclose(stbd_velocity, 0.0, abs_tol=0.5):
-            # close to stopped
-            return 'stopped'
-        elif isclose(port_velocity, stbd_velocity, abs_tol=0.5):
-            if port_velocity > 0.0:
-                return 'straight ahead'
-            else:
-                return 'straight astern'
-        elif isclose(_avg_velocity, 0.0, abs_tol=0.5):
-            if port_velocity > stbd_velocity:
-                return 'rotate to starboard'
-            elif port_velocity < stbd_velocity:
-                return 'rotate to port'
-            else:
-                return 'indeterminate (0)'
-        elif _avg_velocity > 0.0:
-            if port_velocity > stbd_velocity:
-                return 'turn ahead to starboard'
-            elif port_velocity < stbd_velocity:
-                return 'turn ahead to port'
-            else:
-                return 'ahead indeterminate (1)'
-        elif _avg_velocity < 0.0:
-            if port_velocity > stbd_velocity:
-                return 'turn astern to starboard'
-            elif port_velocity < stbd_velocity:
-                return 'turn astern to port'
-            else:
-                return 'astern indeterminate (2)'
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def dispatch_velocity_event(self, payload, reset_slew=True):
@@ -375,6 +312,9 @@ class MotorController(Component):
         if not self.enabled:
             self._log.warning('disabled: ignoring chadburn dispatch.')
             return
+        if not self.loop_is_running():
+#           self.start_loop()
+            raise Exception('loop not running')
         self._reset_slew_rate()
         _event = payload.event
         self._log.info('dispatch chadburn event: {}'.format(_event.label))
@@ -384,7 +324,7 @@ class MotorController(Component):
         if _speed is not Speed.STOP and not self.loop_is_running():
             self.start_loop()
         # ........
-        _value = _speed.velocity if _direction is Direction.AHEAD else -1 * _speed.velocity
+        _value = float(_speed.velocity) if _direction is Direction.AHEAD else float(-1.0 * _speed.velocity)
         self._log.info('♈ set chadburn velocity: {} direction: {}; value: {}'.format(_speed.label, _direction.label, _value))
         self.set_motor_velocity(Orientation.PORT, _value)
         self.set_motor_velocity(Orientation.STBD, _value)
@@ -539,6 +479,19 @@ class MotorController(Component):
             raise ValueError('unrecognised bumper event {}'.format(_event.label))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def get_motor(self, orientation):
+        '''
+        Returns the motor with the matching orientation.
+        '''
+        if orientation is Orientation.PORT:
+            return self._port_motor
+        elif orientation is Orientation.STBD:
+            return self._stbd_motor
+        else:
+            raise Exception('expected PORT or STBD orientation.')
+        pass
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def set_motor_velocity(self, orientation, target_velocity):
         '''
         A convenience method that sets the target velocity and motor
@@ -551,16 +504,21 @@ class MotorController(Component):
         if not self.enabled:
             self._log.error('motor controller not enabled.')
             target_velocity = 0.0
+        if isinstance(target_velocity, int):
+            self._log.warning('expected target velocity as float not int.')
+            target_velocity = float(target_velocity)
         if not isinstance(target_velocity, float):
             raise ValueError('expected float, not {}'.format(type(target_velocity)))
         if orientation is Orientation.PORT:
-            if self._port_motor.target_velocity != target_velocity:
-                self._log.info('setting velocity of port motor to: ' + Fore.RED + '{:5.2f}'.format(target_velocity))
+#           if self._port_motor.target_velocity != target_velocity:
+#               self._log.info('setting velocity of port motor to: ' + Fore.RED + '{:5.2f}'.format(target_velocity))
             self._port_motor.target_velocity = target_velocity
-        else:
-            if self._stbd_motor.target_velocity != target_velocity:
-                self._log.info('setting velocity of stbd motor to: ' + Fore.GREEN + '{:5.2f}'.format(target_velocity))
+        elif orientation is Orientation.STBD:
+#           if self._stbd_motor.target_velocity != target_velocity:
+#               self._log.info('setting velocity of stbd motor to: ' + Fore.GREEN + '{:5.2f}'.format(target_velocity))
             self._stbd_motor.target_velocity = target_velocity
+        else:
+            raise Exception('expected PORT or STBD orientation.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _spin(self, orientation):
@@ -735,6 +693,69 @@ class MotorController(Component):
         Returns true if either motor is moving.
         '''
         return self._port_motor.is_in_motion() or self._stbd_motor.is_in_motion()
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def print_info(self, count):
+        self._log.info('motor controller:')
+        if self.stopped:
+            self._log.info(('[{:04d}] '.format(count) if count else '') + 'velocity: stopped.')
+        else:
+            self._log.info(('[{:04d}] '.format(count) if count else '')
+                    + 'velocity: '
+                    + Fore.RED   + 'port: {:<5.2f} -> {:<5.2f} / {:<5.2f}'.format(
+                            self._port_motor.velocity, self._port_motor.target_velocity, self._port_motor.current_power)
+                    + ' {:5.2f}'.format(self._port_motor.current_power)
+                    + Fore.CYAN  + ' :: '
+                    + Fore.GREEN + 'stbd: {:<5.2f} -> {:<5.2f} / {:<5.2f}'.format(
+                            self._stbd_motor.velocity, self._stbd_motor.target_velocity, self._stbd_motor.current_power)
+                    + Fore.CYAN + ' :: movement: {}'.format(self._characterise_movement()))
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def _characterise_movement(self):
+        '''
+        Return a pair of strings in a list, characterising the current and
+        target movement based on the direction of the two motors.
+        '''
+        _before = self._get_movement_description(self._port_motor.velocity, self._stbd_motor.velocity)
+        _after  = self._get_movement_description(self._port_motor.target_velocity, self._stbd_motor.target_velocity)
+        if _before == _after:
+            return _before
+        else:
+            return '{} -> → {}'.format(_before, _after)
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def _get_movement_description(self, port_velocity, stbd_velocity):
+        _avg_velocity = ( port_velocity + stbd_velocity ) / 2.0
+
+        if isclose(port_velocity, 0.0, abs_tol=0.5) and isclose(stbd_velocity, 0.0, abs_tol=0.5):
+            # close to stopped
+            return 'stopped'
+        elif isclose(port_velocity, stbd_velocity, abs_tol=0.5):
+            if port_velocity > 0.0:
+                return 'straight ahead'
+            else:
+                return 'straight astern'
+        elif isclose(_avg_velocity, 0.0, abs_tol=0.5):
+            if port_velocity > stbd_velocity:
+                return 'rotate to starboard'
+            elif port_velocity < stbd_velocity:
+                return 'rotate to port'
+            else:
+                return 'indeterminate (0)'
+        elif _avg_velocity > 0.0:
+            if port_velocity > stbd_velocity:
+                return 'turn ahead to starboard'
+            elif port_velocity < stbd_velocity:
+                return 'turn ahead to port'
+            else:
+                return 'ahead indeterminate (1)'
+        elif _avg_velocity < 0.0:
+            if port_velocity > stbd_velocity:
+                return 'turn astern to starboard'
+            elif port_velocity < stbd_velocity:
+                return 'turn astern to port'
+            else:
+                return 'astern indeterminate (2)'
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def enable(self):

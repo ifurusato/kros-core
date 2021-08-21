@@ -43,6 +43,10 @@ class Roam(Behaviour):
     robot reaches a minimum distance in which it halts and then goes into an
     obstacle avoidance behaviour (handled elsewhere).
 
+    This means that we will in the future need to suppress whatever is the
+    normal avoidance behaviour for the center IR sensor when this is active,
+    at least up to the minimum roam distance.
+
     An option is to set the maximum distance to roam, so that the robot
     accelerates to roaming speed, varies its speed as described above,
     then as it nears its target distance, decelerates to a halt at the
@@ -163,7 +167,7 @@ class Roam(Behaviour):
         speed ahead never astern (reversing).
         '''
         self._log.info('setting motor speed limit...')
-        _velocity = self._motor_ctrl.get_motor_velocity(orientation)
+        _velocity = self._motor_ctrl.get_motor(orientation).velocity
         _target_velocity = Util.clip(_velocity, self._min_speed, self.speed_limit)
         # TEMP test
         _clipped = Util.clip(_velocity, self._min_speed, self.speed_limit)

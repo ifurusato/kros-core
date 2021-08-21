@@ -195,27 +195,24 @@ class DigitalPotentiometer(Component):
         '''
         Set the display to black carefully, to be used during closing.
         '''
-        self._log.info("🍊 __resetting...")
         if self._ioe:
             self._ioe.output(self._pin_red, 0)
         if self._ioe:
             self._ioe.output(self._pin_green, 0)
         if self._ioe:
             self._ioe.output(self._pin_blue, 0)
-        self._log.info("🍊 __reset.")
         return True
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def disable(self):
-        self._log.info("🍊 disabling...")
         if self.enabled:
             _count = 0
             while _count < 10 and not self.__reset():
-                self._log.info("🍊 [{:d}] waiting for reset...")
+                self._log.info("[{:d}] waiting for digital potentiometer reset...")
                 time.sleep(0.1)
             Component.disable(self)
-            self._log.info('🍊 successfully disabled.')
+            self._log.debug('successfully disabled.')
         else:
-            self._log.warning("🍊 already disabled.")
+            self._log.warning("already disabled.")
 
 #EOF

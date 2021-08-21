@@ -185,8 +185,8 @@ class KROS(Component, FiniteStateMachine):
         if not _enable_event_publisher: # we only enable potentiometer publishers if event publisher isn't available
             if _cfg.get('enable_velocity_publisher') or 'v' in _pubs:
                 self._pot_publisher = VelocityPublisher(self._config, self._message_bus, self._message_factory, level=self._level)
-            else:
-                self._pot_publisher = MockPotPublisher(self._config, self._message_bus, self._message_factory, level=self._level)
+#           else:
+#               self._pot_publisher = MockPotPublisher(self._config, self._message_bus, self._message_factory, level=self._level)
 
         # add battery check publisher
         if _cfg.get('enable_battery_publisher') or 'b' in _pubs:
@@ -216,12 +216,18 @@ class KROS(Component, FiniteStateMachine):
         if _enable_behaviours:
             self._behaviour_mgr = BehaviourManager(self._config, self._message_bus, self._level) # a specialised subscriber
 #           self._behaviour_mgr = None
+            _bcfg = self._config['kros'].get('behaviour')
             # create and register behaviours (listed in priority order)
-            self._avoid = Avoid(self._config, self._message_bus, self._message_factory, self._motor_ctrl, self._level)
-            self._roam  = Roam(self._config, self._message_bus, self._message_factory, self._motor_ctrl, self._level)
-            self._moth  = Moth(self._config, self._message_bus, self._message_factory, self._motor_ctrl, self._level)
-            self._sniff = Sniff(self._config, self._message_bus, self._message_factory, self._motor_ctrl, self._level)
-            self._idle  = Idle(self._config, self._message_bus, self._message_factory, self._level)
+            if _bcfg.get('enable_avoid_behaviour'):
+                self._avoid = Avoid(self._config, self._message_bus, self._message_factory, self._motor_ctrl, self._level)
+            if _bcfg.get('enable_roam_behaviour'):
+                self._roam  = Roam(self._config, self._message_bus, self._message_factory, self._motor_ctrl, self._level)
+            if _bcfg.get('enable_moth_behaviour'):
+                self._moth  = Moth(self._config, self._message_bus, self._message_factory, self._motor_ctrl, self._level)
+            if _bcfg.get('enable_sniff_behaviour'):
+                self._sniff = Sniff(self._config, self._message_bus, self._message_factory, self._motor_ctrl, self._level)
+            if _bcfg.get('enable_idle_behaviour'):
+                self._idle  = Idle(self._config, self._message_bus, self._message_factory, self._level)
         self._log.info('configured.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -301,19 +307,19 @@ class KROS(Component, FiniteStateMachine):
         This permanently disables the KROS.
         '''
         if self.closed:
-            self._log.warning('🙉 already closed.')
+            self._log.warning('already closed.')
         elif self._closing:
-            self._log.warning('🙉 already closing.')
+            self._log.warning('already closing.')
         elif self.enabled:
             while not Component.disable(self):
-                self._log.info('🙉 disabling...')
+                self._log.info('disabling...')
             if self._motor_ctrl:
                 self._motor_ctrl.disable()
                 self._motor_ctrl.close()
             FiniteStateMachine.disable(self)
-            self._log.info('🙉 disabled.')
+            self._log.info('disabled.')
         else:
-            self._log.warning('🙉 already disabled.')
+            self._log.warning('already disabled.')
         return True
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -332,11 +338,10 @@ class KROS(Component, FiniteStateMachine):
         elif self.closing:
             self._log.warning('already closing.')
         else:
-            self._log.info('😾 closing...')
+            self._log.info('closing...')
             while not Component.close(self): # will call disable()
-                self._log.info('😎 closing...')
+                self._log.info('closing...')
             self._closing = True
-            self._log.info('😤 continuing to close...')
             while self.enabled:
                 self._log.warning('waiting for disable...')
                 time.sleep(0.1)
@@ -350,16 +355,15 @@ class KROS(Component, FiniteStateMachine):
                 self._killswitch.close()
             time.sleep(0.1)
             if self._message_bus:
-                self._log.info('💀 EXTERNALLY calling close message bus...')
+#               self._log.info('closing message bus from kros...')
                 self._message_bus.close()
-                self._log.info('💀 EXTERNALLY called close message bus.')
-            self._log.info('😃 mostly closed...')
+#               self._log.info('closed message bus.')
             time.sleep(1.0)
             if self._disable_leds: # restore normal function of Pi LEDs
                 self._set_pi_leds(True)
             FiniteStateMachine.close(self)
             self._closing = False
-            self._log.info('👿 application closed.')
+            self._log.info('application closed.')
             self._log.close()
 #           sys.exit(0)
 

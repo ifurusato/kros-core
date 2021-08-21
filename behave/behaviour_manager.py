@@ -73,12 +73,23 @@ class BehaviourManager(Subscriber):
         Subscriber.start(self)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def enable(self):
-        self._log.debug('enable behaviours...')
-        if not self.enabled:
-            Subscriber.enable(self)
+    def enable_behaviours(self):
+        if not self.closed:
+            self._log.info('enable behaviours...')
             for _key, _behaviour in self._behaviours.items():
                 _behaviour.enable()
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def suppress_behaviours(self):
+        self._log.info('suppress behaviours...')
+        for _key, _behaviour in self._behaviours.items():
+            _behaviour.suppress()
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def disable_behaviours(self):
+        self._log.info('disable behaviours...')
+        for _key, _behaviour in self._behaviours.items():
+            _behaviour.disable()
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def process_message(self, message):
@@ -152,22 +163,21 @@ class BehaviourManager(Subscriber):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def disable(self):
-        self._log.debug('disable behaviours...')
-        if self.enabled:
-            for _key, _behaviour in self._behaviours.items():
-                _behaviour.disable()
-            Subscriber.disable(self)
+        '''
+        Disable the behaviour manager and all behaviours.
+        '''
+        self._log.debug('disable behaviour manager and all behaviours...')
+        self.disable_behaviours()
+        Subscriber.disable(self)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def close(self):
         '''
-        Permanently close and disable the message bus.
+        Permanently close and disable the behaviour manager and all behaviours.
         '''
-        if self.enabled:
-            self.disable()
         if not self.closed:
+            Subscriber.close(self) # will call disable
             for _key, _behaviour in self._behaviours.items():
                 _behaviour.close()
-            Subscriber.close(self)
 
 #EOF

@@ -112,7 +112,7 @@ class MessageBus(Component):
                     if _task is not asyncio.current_task() and ( include_hidden or not _task.get_name().startswith('__')):
                         _tasks.append(_task)
             except RuntimeError as e:
-                self._log.warning('cannot get task list: {}'.format(e))
+                self._log.debug('cannot get task list: {}'.format(e))
         return _tasks
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -484,21 +484,20 @@ class MessageBus(Component):
 
         This returns a value only in order to force currency.
         '''
-        self._log.info('💀 __close message bus loop...')
         try:
             if self.loop:
                 if self.loop.is_running():
-                    self._log.info('💀 stopping event loop...')
+                    self._log.info('stopping event loop...')
                     self.loop.stop()
-                    self._log.info('💀 event loop stopped.')
+                    self._log.info('event loop stopped.')
                 if not self.loop.is_running() and not self.loop.is_closed():
-                    self._log.info('💀 closing event loop...')
+                    self._log.info('closing event loop...')
                     self.loop.close()
-                    self._log.info('💀 event loop closed.')
+                    self._log.info('event loop closed.')
             else:
-                self._log.warning('💀 no message bus event loop!')
+                self._log.warning('no message bus event loop!')
         except Exception as e:
-            self._log.error('💀 error stopping event loop: {}'.format(e))
+            self._log.error('error stopping event loop: {}'.format(e))
         return True
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈

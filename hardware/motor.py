@@ -64,7 +64,7 @@ class Motor(Component):
         # configuration ..............................................
         _cfg = config['kros'].get('motor')
         self._max_velocity       = _cfg.get('maximum_velocity') # limit to motor velocity
-        self._log.info('max velocity:\t{:<5.2f}'.format(self._max_velocity))
+        self._log.info(Fore.WHITE + 'max velocity:\t{:<5.2f}'.format(self._max_velocity))
         self._velocity_clip = lambda n: ( -1.0 * self._max_velocity ) if n <= ( -1.0 * self._max_velocity ) \
                 else self._max_velocity if n >= self._max_velocity \
                 else n
@@ -73,11 +73,13 @@ class Motor(Component):
         self._power_clip = lambda n: ( -1.0 * self._motor_power_limit ) if n <= ( -1.0 * self._motor_power_limit ) \
                 else self._motor_power_limit if n >= self._motor_power_limit \
                 else n
+        self._counter            = itertools.count()
         self.__callbacks         = []
         self.__steps             = 0     # step counter
         self.__max_applied_power = 0.0   # capture maximum power applied
         self.__max_power_ratio   = 0.0   # will be set by MotorConfigurer
         self.__target_velocity   = 0.0   # the target velocity of the motor
+        self._last_driving_power = 0.0   # last power setting for motor
         self._decoder            = None  # motor encoder
         self._slew_limiter       = None
         self._jerk_limiter       = None
@@ -183,11 +185,19 @@ class Motor(Component):
         '''
         if not isinstance(target_velocity, float):
             raise ValueError('expected float, not {}'.format(type(target_velocity)))
-#       self._log.debug('set target velocity: {:5.2f} of {} motor.'.format(target_velocity, self._orientation.name))
+        _count = next(self._counter)
+        if _count % 10 == 0:
+            if self._orientation is Orientation.PORT:
+                self._log.info('setting PORT motor velocity: ' + Fore.RED   + '{:5.2f}; '.format(target_velocity)
+                        + Fore.CYAN + 'power: ' + Fore.YELLOW + '{:5.2f} ➔ {:5.2f}'.format(self._last_driving_power, self.current_power))
+            elif self._orientation is Orientation.STBD:
+                self._log.info('setting STBD motor velocity: ' + Fore.GREEN + '{:5.2f}; '.format(target_velocity)
+                        + Fore.CYAN + 'power: ' + Fore.YELLOW + '{:5.2f} ➔ {:5.2f}'.format(self._last_driving_power, self.current_power))
+#       self._log.info('set target velocity: {:5.2f} of {} motor.'.format(target_velocity, self._orientation.name))
         self.__target_velocity = target_velocity
         if self._using_mocks:
-            self._velocity.velocity = target_velocity
-#           raise Exception('using velocity mock!')
+#           self._velocity.velocity = target_velocity
+            raise Exception('using velocity mock!')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
@@ -292,17 +302,18 @@ class Motor(Component):
 
         # okay, let's go .........................
         # driving power is modified by the max power ratio to reduce battery voltage to motor voltage
-        _driving_power = float(target_power * self.max_power_ratio)
+        _raw_driving_power = float(target_power * self.max_power_ratio)
         # temporary, just for safety
-        _clipped_driving_power = self._power_clip(_driving_power)
+        _driving_power = self._power_clip(_raw_driving_power)
         if self._orientation is Orientation.PORT:
-#           self._log.debug('power: target {:5.2f} converted to driving {:<5.2f} clipped to: {:5.2f}'.format(target_power, _driving_power, _clipped_driving_power))
-            self._tb.SetMotor1(_clipped_driving_power)
+#           self._log.debug('power: target {:5.2f} converted to driving {:<5.2f} clipped to: {:5.2f}'.format(target_power, _raw_driving_power, _driving_power))
+            self._tb.SetMotor1(_driving_power)
             pass
         else:
-#           self._log.debug('power: target {:5.2f} converted to driving {:<5.2f} clipped to: {:5.2f}'.format(target_power, _driving_power, _clipped_driving_power))
-            self._tb.SetMotor2(_clipped_driving_power)
+#           self._log.debug('power: target {:5.2f} converted to driving {:<5.2f} clipped to: {:5.2f}'.format(target_power, _raw_driving_power, _driving_power))
+            self._tb.SetMotor2(_driving_power)
             pass
+        self._last_driving_power = _driving_power
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
