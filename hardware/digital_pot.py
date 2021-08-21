@@ -10,7 +10,7 @@
 # modified: 2021-07-21
 #
 
-import sys, colorsys
+import sys, colorsys, traceback
 import ioexpander as io
 from colorama import init, Fore, Style
 init()
@@ -18,6 +18,9 @@ init()
 from core.logger import Logger, Level
 from core.component import Component
 from hardware.i2c_scanner import DeviceNotFound
+
+REG_ADCCON0 = 0xa8
+REG_PWMCON0 = 0x98
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class DigitalPotentiometer(Component):
@@ -65,6 +68,7 @@ class DigitalPotentiometer(Component):
         _out_max         = _cfg.get('out_max') if out_max is None else out_max
         self.set_output_limits(_out_min, _out_max)
         # now configure IO Expander
+        self._log.info("🥝 configuring IO Expander...")
         try:
             self._ioe = io.IOE(i2c_addr=self._i2c_addr)
             self._ioe.set_mode(self._pot_enc_a, io.PIN_MODE_PP)
@@ -77,11 +81,16 @@ class DigitalPotentiometer(Component):
             self._ioe.set_mode(self._pin_red,   io.PWM, invert=True)
             self._ioe.set_mode(self._pin_green, io.PWM, invert=True)
             self._ioe.set_mode(self._pin_blue,  io.PWM, invert=True)
+
+#           _result = self._ioe.get_bit(REG_ADCCON0, 7)
+            _result = self._ioe.get_bit(REG_PWMCON0, 6)
+            print('REG_PWMCON0: {}'.format(_result))
+
         except FileNotFoundError:
             raise DeviceNotFound("unable to initialise potentiometer: no device found.")
         except Exception as e:
 #           self._log.warning(Fore.BLACK + "unable to initialise IO Expander: {}\n{}".format(e, traceback.format_exc()))
-            raise DeviceNotFound("{} error initialising potentiometer.".format(type(e)))
+            raise DeviceNotFound("{} error initialising potentiometer: {}".format(type(e), traceback.format_exc()))
 
         self._log.info("running LED with {} brightness steps.".format(int(self._period * self._brightness)))
         self._log.info("ready.")
@@ -180,6 +189,7 @@ class DigitalPotentiometer(Component):
         '''
         return (( self._out_max - self._out_min ) * ( value - self._in_min ) / ( self._in_max - self._in_min )) + self._out_min
 
+
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def __reset(self):
         '''
@@ -194,7 +204,7 @@ class DigitalPotentiometer(Component):
             self._ioe.output(self._pin_blue, 0)
         self._log.info("🍊 __reset.")
         return True
-  
+
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def disable(self):
         self._log.info("🍊 disabling...")
