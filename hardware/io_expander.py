@@ -72,7 +72,6 @@ class IoExpander():
         try:
             import ioexpander as io
             self._ioe = io.IOE(i2c_addr=0x18)
-#           self._ioe.set_i2c_addr(0x18)
             self._ioe.set_adc_vref(3.3)  # input voltage of IO Expander, this is 3.3 on Breakout Garden
             # analog infrared sensors
             self._ioe.set_mode(self._port_side_ir_pin, io.ADC)
@@ -99,34 +98,6 @@ class IoExpander():
     @property
     def is_active(self):
         return self._ioe != None
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-#    def add(self, message):
-#        '''
-#        React to every 5th TICK message.
-#        '''
-##       self._log.info(Fore.YELLOW + Style.DIM + 'MESSAGE received at message {:d}.'.format(message.eid))
-#        if message.event is Event.CLOCK_TICK:
-#            if message.eid % 5 == 0:
-##               self._log.info(Fore.GREEN + Style.BRIGHT + 'STBD bumper: {}'.format(self._ioe.input(self._stbd_bmp_pin)))
-#                if self._ioe.input(self._port_bmp_pin) == 0:
-#                    self._port_bmp_pump = self._pump_limit
-#                if self._ioe.input(self._cntr_bmp_pin) == 0:
-#                    self._cntr_bmp_pump = self._pump_limit
-#                if self._ioe.input(self._stbd_bmp_pin) == 0:
-#                    self._stbd_bmp_pump = self._pump_limit
-#            else:
-#                if self._port_bmp_pump > 0:
-#                    self._port_bmp_pump -= 1
-#                if self._cntr_bmp_pump > 0:
-#                    self._cntr_bmp_pump -= 1
-#                if self._stbd_bmp_pump > 0:
-#                    self._stbd_bmp_pump -= 1
-#            self._log.debug('message[{:d}] received values: '.format(message.eid) \
-#                    + Fore.RED   + 'PORT={:d}\t'.format(self._port_bmp_pump) \
-#                    + Fore.BLUE  + 'CNTR={:d}\t'.format(self._cntr_bmp_pump) \
-#                    + Fore.GREEN + 'STBD={:d}'.format(self._stbd_bmp_pump) )
-#        pass
 
     # infrared sensors ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
@@ -157,7 +128,6 @@ class IoExpander():
 
     def get_port_bmp_value(self):
         return ( self._ioe.input(self._port_bmp_pin) == 0 )
-#       return ( self._ioe.input(self._port_bmp_pin) == 0 )
 
     def get_center_bmp_value(self):
         _value = self._ioe.input(self._cntr_bmp_pin)
@@ -167,12 +137,9 @@ class IoExpander():
         else:
             print(Fore.RED + 'get_center_bmp_value({}): {}'.format(type(_value), _value) + Style.RESET_ALL)
             return False
-#       return ( _value == 0 )
-#       return ( self._ioe.input(self._cntr_bmp_pin) == 0 )
 
     def get_stbd_bmp_value(self):
         return ( self._ioe.input(self._stbd_bmp_pin) == 0 )
-#       return ( self._ioe.input(self._stbd_bmp_pin) == 0 )
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     # raw values are unprocessed values from the IO Expander (used for testing)

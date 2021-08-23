@@ -33,6 +33,46 @@ class EventPublisher(Publisher):
 
     _LISTENER_LOOP_NAME = '__key_listener_loop'
 
+    _KEY_EVENT_MAP = dict([
+        ( 27,  Event.SHUTDOWN ),
+        ( 39,  Event.DECREASE_STBD_VELOCITY ),
+        ( 44,  Event.DECREASE_VELOCITY ),
+        ( 45,  Event.BRAKE ),
+        ( 46,  Event.INCREASE_VELOCITY ),
+        ( 48,  Event.STOP ),
+        ( 49,  Event.FULL_ASTERN ),
+        ( 50,  Event.HALF_ASTERN ),
+        ( 51,  Event.SLOW_ASTERN ),
+        ( 52,  Event.DEAD_SLOW_ASTERN ),
+        ( 53,  Event.HALT ),
+        ( 54,  Event.DEAD_SLOW_AHEAD ),
+        ( 55,  Event.SLOW_AHEAD ),
+        ( 56,  Event.HALF_AHEAD ),
+        ( 57,  Event.FULL_AHEAD ),
+        ( 59,  Event.DECREASE_PORT_VELOCITY ),
+        ( 61,  Event.EVEN ),
+        ( 91,  Event.INCREASE_PORT_VELOCITY ),
+        ( 93,  Event.INCREASE_STBD_VELOCITY ),
+        ( 97,  Event.INFRARED_PORT_SIDE ),
+        ( 98,  Event.TURN_TO_STBD ),
+        ( 99,  Event.TURN_TO_PORT ),
+        ( 100, Event.INFRARED_CNTR ),
+        ( 102, Event.INFRARED_STBD ),
+        ( 103, Event.INFRARED_STBD_SIDE ),
+        ( 106, Event.BUMPER_PORT ),
+        ( 107, Event.BUMPER_CNTR ),
+        ( 108, Event.BUMPER_STBD ),
+        ( 109, Event.AVOID ),
+        ( 110, Event.SPIN_STBD ),
+        ( 114, Event.ROAM ),
+        ( 115, Event.INFRARED_PORT ),
+        ( 116, Event.MOTH ),
+        ( 117, Event.IDLE ),
+        ( 120, Event.SPIN_PORT ),
+        ( 121, Event.SNIFF ),
+        ( 127, Event.SHUTDOWN ),
+    ])
+
     _RANDOM_EVENTS = [
             Event.INFRARED_PORT_SIDE, Event.INFRARED_PORT, Event.INFRARED_CNTR, Event.INFRARED_STBD, Event.INFRARED_STBD_SIDE,
             Event.BUMPER_PORT, Event.BUMPER_CNTR, Event.BUMPER_STBD,
@@ -239,7 +279,7 @@ class EventPublisher(Publisher):
                             och += 32
                         # otherwise handle as event
                         if not _event:
-                            _event = self.get_event_for_char(och)
+                            _event = EventPublisher._KEY_EVENT_MAP[och]
                         if _event is not None:
                             self._log.info('key \'{}\' ({}) pressed; key-publishing message for event: {}'.format(ch, och, _event))
                             _message = self._message_factory.create_message(_event, True)
@@ -552,132 +592,6 @@ class EventPublisher(Publisher):
   EVEN:      even velocity     IN_STBD:  increase starboard velocity  RET:      clear display
   SHUTDOWN:  shut down robot
         ''')
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def get_event_for_char(self, och):
-        '''
-        Below are the mapped characters for IFS-based events, including several others:
-
-           dec   char   usage
-
-             9   tab    gamepad
-            27   del    same as backspace
-            39   ' *    increase stbd velocity
-            59   ; *    increase port velocity
-            44   , *    decrease velocity
-            46   . *    increase velocity
-            47   /      help
-            61   + *    even velocity
-            91   [ *    increase port velocity
-            92   \      toggle system clock
-            93   ] *    increase stbd velocity
-
-            97   a *    port side infrared
-            98   b *    turn to stbd
-            99   c *    turn to port
-           100   d *    cntr infrared
-           101   e      gamepad
-           102   f *    stbd infrared
-           103   g *    stbd side infrared
-           104   h
-           105   i      info
-           106   j *    port bumper
-           107   k *    cntr bumper
-           108   l *    stbd bumper
-           109   m
-           110   n *    spin stbd
-           111   o      clear task list
-           112   p      pop message
-           113   q
-           114   r *    roam
-           115   s *    port infrared
-           116   t      moth
-           117   u      noop (test message)
-           118   v      verbose
-           119   w      toggle flood mode with random messages
-           120   x *    spin port
-           121   y *    sniff
-           122   z      toggle motors loop
-           127   del    shut down
-
-        * represents robot sensor or control input.
-        '''
-        if och == 27: # delete
-            return Event.SHUTDOWN
-        elif och   == 39:  # ' decrease stbd velocity
-            return Event.DECREASE_STBD_VELOCITY
-        elif och == 44:  # , decrease velocity
-            return Event.DECREASE_VELOCITY
-        elif och == 45:  # - break
-            return Event.BRAKE
-        elif och == 46:  # . increase port velocity
-            return Event.INCREASE_VELOCITY
-        elif och == 48:  # 0 stop
-            return Event.STOP
-        elif och == 49:  # 1 full astern
-            return Event.FULL_ASTERN
-        elif och == 50:  # 2 half astern
-            return Event.HALF_ASTERN
-        elif och == 51:  # 3 slow astern
-            return Event.SLOW_ASTERN
-        elif och == 52:  # 4 dead slow astern
-            return Event.DEAD_SLOW_ASTERN
-        elif och == 53:  # 5 halt
-            return Event.HALT
-        elif och == 54:  # 6 dead slow ahead
-            return Event.DEAD_SLOW_AHEAD
-        elif och == 55:  # 7 slow ahead
-            return Event.SLOW_AHEAD
-        elif och == 56:  # 8 half ahead
-            return Event.HALF_AHEAD
-        elif och == 57:  # 9 full ahead
-            return Event.FULL_AHEAD
-        elif och == 59:  # . decrease port velocity
-            return Event.DECREASE_PORT_VELOCITY
-        elif och == 61:  # + even
-            return Event.EVEN
-        elif och == 91:  # [ increase port velocity
-            return Event.INCREASE_PORT_VELOCITY
-        elif och == 93:  # . increase stbd velocity
-            return Event.INCREASE_STBD_VELOCITY
-        elif och == 97:  # a
-            return Event.INFRARED_PORT_SIDE
-        elif och == 98:  # b
-            return Event.TURN_TO_STBD
-        elif och == 99:  # c
-            return Event.TURN_TO_PORT
-        elif och == 100: # d
-            return Event.INFRARED_CNTR
-        elif och == 102: # f
-            return Event.INFRARED_STBD
-        elif och == 103: # g
-            return Event.INFRARED_STBD_SIDE
-        elif och == 106: # j
-            return Event.BUMPER_PORT
-        elif och == 107: # k
-            return Event.BUMPER_CNTR
-        elif och == 108: # l
-            return Event.BUMPER_STBD
-        elif och == 109: # m
-            return Event.AVOID
-        elif och == 110: # n
-            return Event.SPIN_STBD
-        elif och == 114: # r
-            return Event.ROAM
-        elif och == 115: # s
-            return Event.INFRARED_PORT
-        elif och == 116: # t
-            return Event.MOTH
-        elif och == 117: # u
-            return Event.IDLE
-        elif och == 120: # x
-            return Event.SPIN_PORT
-        elif och == 121: # y
-            return Event.SNIFF
-        elif och == 127: # backspace or delete
-            return Event.SHUTDOWN
-        else:
-            return None
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class _Getch():

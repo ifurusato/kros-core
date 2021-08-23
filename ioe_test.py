@@ -21,7 +21,7 @@ init()
 
 from core.logger import Logger, Level
 from core.config_loader import ConfigLoader
-from hardware.ioe import IoExpander
+from hardware.io_expander import IoExpander
 
 # ..............................................................................
 @pytest.mark.unit
@@ -73,9 +73,15 @@ def test_ioe():
 #           _log.info(Fore.RED   + 'BMP Triggered? {}\t'.format(_bmp_port_value) \
 #                   + Fore.BLUE  + '{}\t'.format(_bmp_cntr_value) \
 #                   + Fore.GREEN + '{}'.format(_bmp_stbd_value))
+
+#           _log.info(Fore.RED   + 'BMP \t\t{:5.2f}\t\t\t'.format(_bmp_port_value) \
+#                   + Fore.BLUE  + '{:5.2f}\t\t\t'.format(_bmp_cntr_value) \
+#                   + Fore.GREEN + '{:5.2f}'.format(_bmp_stbd_value))
+
             _log.info(Fore.RED   + 'BMP \t\t{:<d}\t\t\t'.format(_bmp_port_value) \
                     + Fore.BLUE  + '{:<d}\t\t\t'.format(_bmp_cntr_value) \
                     + Fore.GREEN + '{:<d}'.format(_bmp_stbd_value))
+
         _log.info('i={:d}\n'.format(i))
         time.sleep(0.33)
 

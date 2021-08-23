@@ -8,10 +8,12 @@
 
 kros:
     exit_on_dire_event:              False       # if True exit if encountering a dire event
+    use_external_clock:               True       # if True use external clock, ignoring loop delay value
     component:                                   # enable specific publish/subscribe components
         enable_killswitch:            True       # kill switch
+        enable_behaviours:            True       # enable BehaviourManager (Behaviours enabled individually)
         # publishers .............................
-        enable_ifs_publisher:        False       # enable Integrated Front Sensor publisher
+        enable_ifs_publisher:         True       # enable Integrated Front Sensor publisher
         enable_event_publisher:       True       # keyboard robot simulator (kinda necessary for running CLI)
         enable_battery_publisher:    False       # battery check publisher
         enable_velocity_publisher:   False       # velocity control potentiometer publisher
@@ -20,7 +22,28 @@ kros:
         enable_motor_subscriber:      True       # motor events subscriber
         enable_bumper_subscriber:    False       # bumper events subscriber
         enable_infrared_subscriber:  False       # infrared events subscriber
-        enable_behaviours:           False       # enable BehaviourManager and Behaviours
+    behaviour:
+        enable_avoid_behaviour:      False       # enable avoidance behaviour
+        enable_roam_behaviour:        True       # enable roam behaviour
+        enable_moth_behaviour:       False       # enable moth behaviour
+        enable_sniff_behaviour:      False       # enable sniff behaviour
+        enable_idle_behaviour:       False       # enable idle behaviour
+        avoid:
+            min_distance:            20.0        # minimum distance in cm upon which we trigger avoidance behaviour
+        roam:
+            min_distance:            25.0        # minimum distance in cm
+            max_distance:            50.0        # maximum distance in cm
+            min_velocity:             0.0        # minimum motor target velocity
+            max_velocity:           100.0        # maximum motor target velocity
+            cruising_speed:        'SLOW'        # cruising speed (recovery speed)
+            cruise_wait_ticks:        3          # how many ticks to wait before cruising again
+        moth:
+            anti_moth:              False        # moth or anti-moth
+        sniff:
+            nada:                   False        # nada
+        idle:
+            idle_threshold_sec:      10          # how many seconds before we trigger an idle behaviour
+            idle_loop_delay_sec:      1.0        # main loop delay in seconds
     message_bus:
         max_age_ms:                  20.0        # maximum age of a message before expiry
         publish_delay_sec:            0.05       # publishing delay loop
@@ -63,12 +86,11 @@ kros:
     motor:
         maximum_velocity:            80.0        # limit to settable motor velocity
         motor_power_limit:            0.80       # upper and lower (x -1) limit set on power sent to motor
-        enable_slew_limiter:        False        # initial enabled state for slew limiter
+        enable_slew_limiter:         True        # initial enabled state for slew limiter (if disabled, no halt or brake)
         enable_pid_controller:       True        # initial enable state for PID controller, otherwise direct drive
         enable_jerk_limiter:        False        # initial enabled state for jerk limiter
         thunderborg_address:         0x15        # I²C address for thunderborg motor controller
         motor_controller:
-            use_external_clock:      True        # if True use external clock, ignoring loop delay value
             loop_delay_hz:           20          # main loop delay in hz
             accel_increment:          5.0        # normal incremental acceleration
             decel_increment:          5.0        # normal incremental deceleration
@@ -115,10 +137,10 @@ kros:
             ahead:
                 STOP:                 0.0
                 DEAD_SLOW:            0.15
-                SLOW:                 0.25
-                ONE_THIRD:            0.33
-                HALF:                 0.40
-                TWO_THIRDS:           0.55
+                SLOW:                 0.20
+                ONE_THIRD:            0.28
+                HALF:                 0.35
+                TWO_THIRDS:           0.50
                 THREE_QUARTER:        0.60
                 FULL:                 0.80
                 MAXIMUM:              0.90
@@ -152,10 +174,12 @@ kros:
         port_moth_pin:              13           # pin connected to port moth sensor
         stbd_moth_pin:              14           # pin connected to starboard moth sensor
     integrated_front_sensor:
-        use_potentiometer:  False                # use potentiometer to adjust distance setting
-        ignore_duplicates:  False                # don't fire messages for duplicate events
+        use_analog_potentiometer:   False        # use analog potentiometer to adjust distance setting
+        use_digital_potentiometer:  False        # use digital potentiometer to adjust distance setting
+        ignore_duplicates:          False        # don't fire messages for duplicate events
         # the analog sensor distances (raw or cm) used as event trigger thresholds:
-        cntr_raw_min_trigger:        60          # below this raw value we don't execute callback on center IR
+        conversion_exponent:          1.33       # 1.27/1.33 the constant used for infrared distance conversion
+        cntr_raw_min_trigger:        40          # below this raw value we don't execute callback on center IR
         oblq_raw_min_trigger:        60          # below this raw value we don't execute callback on PORT & STBD IRs
         side_raw_min_trigger:        60          # below this raw value we don't execute callback on side IRs
         cntr_trigger_distance_cm:    90.0        # center analog IR sensor max distance before triggering
@@ -166,26 +190,6 @@ kros:
         device_path:  '/dev/input/event5'        # the path to the bluetooth gamepad on the pi (see find_gamepad.py)
         loop_delay:                   0.01       # main loop delay was sleep(0.01) or 1/100th second, or 10ms. 50ms is the delay for 20Hz, so 10ms is 5x 20Hz or 100Hz.
         loop_freq_hz:               100          # polling loop frequency (Hz)
-    behaviour:
-        enable_avoid_behaviour:     False        # enable avoidance behaviour
-        enable_roam_behaviour:       True        # enable roam behaviour
-        enable_moth_behaviour:      False        # enable moth behaviour
-        enable_sniff_behaviour:     False        # enable sniff behaviour
-        enable_idle_behaviour:      False        # enable idle behaviour
-        avoid:
-            min_distance:            20.0        # minimum distance in cm upon which we trigger avoidance behaviour
-        roam:
-            min_distance:            20.0        # minimum distance in cm
-            max_distance:           200.0        # maximum distance in cm
-            min_speed:                0.0        # minimum motor speed
-            max_speed:              100.0        # maximum motor speed
-        moth:
-            anti_moth:              False        # moth or anti-moth
-        sniff:
-            nada:                   False        # nada
-        idle:
-            idle_threshold_sec:      10          # how many seconds before we trigger an idle behaviour
-            idle_loop_delay_sec:      1.0        # main loop delay in seconds
     publisher:
         integrated_front_sensor:
             loop_freq_hz:            20          # polling loop frequency (Hz)

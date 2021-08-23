@@ -63,11 +63,11 @@ class IfsPublisher(Publisher):
         else:
             self._log.warning('failed to enable publisher.')
 
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    async def _publish_message(self, message):
-        self._log.info('ifs-publishing message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
-        await Publisher.publish(self, _message)
-        self._log.info('ifs-published message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
+#   # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+#   async def _publish_message(self, message):
+#       self._log.info('ifs-publishing message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
+#       await Publisher.publish(self, _message)
+#       self._log.info('ifs-published message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def _ifs_listener_loop(self, f_is_enabled):
@@ -79,7 +79,7 @@ class IfsPublisher(Publisher):
 #               self._log.info('❎ ifs-publishing message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
                 await Publisher.publish(self, _message)
                 self._log.info('ifs-published message:' + Fore.WHITE + ' {}'.format(_message.name)
-                        + Fore.CYAN + ' event: {}; value: {:5.2f}cm'.format(_message.event.label, _message.value))
+                        + Fore.CYAN + ' event: {}; '.format(_message.event.label) + Fore.YELLOW + 'value: {:5.2f}cm'.format(_message.value))
             await asyncio.sleep(self._publish_delay_sec)
         self._log.info('ifs publish loop complete.')
 

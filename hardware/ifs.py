@@ -27,6 +27,7 @@ from core.message import Message
 from core.message_bus import MessageBus
 from core.message_factory import MessageFactory
 from hardware.io_expander import IoExpander
+from hardware.analog_pot import AnalogPotentiometer # for calibration only
 from hardware.digital_pot import DigitalPotentiometer # for calibration only
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -54,9 +55,18 @@ class IntegratedFrontSensor(Component):
         self._log.info('configuring integrated front sensor...')
         self._config = config['kros'].get('integrated_front_sensor')
         self._ignore_duplicates        = self._config.get('ignore_duplicates')
-        self._pot = DigitalPotentiometer(config, Level.INFO) \
-                if self._config.get('use_potentiometer') \
+        _cfg = [ 0, 330, 0.0, 2.0 ]
+        self._analog_pot = AnalogPotentiometer(config, in_min=_cfg[0], in_max=_cfg[1], out_min=_cfg[2], out_max=_cfg[3], level=Level.INFO) \
+                if self._config.get('use_analog_potentiometer') \
                 else None
+        if self._analog_pot:
+            self._log.info(Fore.YELLOW + 'using analog potentiometer for calibration.')
+        self._digital_pot = DigitalPotentiometer(config, Level.INFO) \
+                if self._config.get('use_digital_potentiometer') \
+                else None
+        if self._digital_pot:
+            self._log.info(Fore.YELLOW + 'using digital potentiometer for calibration.')
+        self._conversion_exponent = self._config.get('conversion_exponent') # 1.27, 1.33
         # event thresholds:
         self._cntr_raw_min_trigger     = self._config.get('cntr_raw_min_trigger')
         self._oblq_raw_min_trigger     = self._config.get('oblq_raw_min_trigger')
@@ -177,7 +187,6 @@ class IntegratedFrontSensor(Component):
                 self._log.info(Fore.RED + Style.DIM + 'PORT     \tmean distance:\t{:5.2f}/{:5.2f}cm'.format(\
                         _value, self._oblq_trigger_distance_cm) + Style.DIM + '; raw: {:d}'.format(_port_ir_data))
                 _port_ir_message = self._message_factory.create_message(Event.INFRARED_PORT, _value)
-#               self._publish_message(_port_ir_message)
         # starboard analog infrared sensor .................
         _stbd_ir_data      = self._io_expander.get_stbd_ir_value()
         if _stbd_ir_data > self._oblq_raw_min_trigger:
@@ -291,14 +300,19 @@ class IntegratedFrontSensor(Component):
         '''
         if value == None or value == 0:
             return None
-        if self._pot:
-            _EXPONENT = self._pot.get_scaled_value(True)
+
+        if self._analog_pot:
+            _EXPONENT = self._analog_pot.get_scaled_value()
+        elif self._digital_pot:
+            _EXPONENT = self._digital_pot.get_scaled_value(True)
         else:
-            _EXPONENT = 1.27 #1.33
+            _EXPONENT = self._conversion_exponent # 1.27, 1.33
         _NUMERATOR = 1000.0
         _distance = pow( _NUMERATOR / value, _EXPONENT ) # 900
-        if self._pot:
-            self._log.info(Fore.YELLOW + 'value: {:>5.2f}; pot value: {:>5.2f}; distance: {:>5.2f}cm'.format(value, _EXPONENT, _distance))
+        if self._analog_pot:
+            self._log.info(Fore.CYAN + 'value: {:>5.2f}; analog pot value: {:>5.2f}; '.format(value, _EXPONENT) + Fore.YELLOW + 'distance: {:>5.2f}cm'.format(_distance))
+        elif self._digital_pot:
+            self._log.info(Fore.CYAN + 'value: {:>5.2f}; digital pot value: {:>5.2f}; '.format(value, _EXPONENT) + Fore.YELLOW + 'distance: {:>5.2f}cm'.format(_distance))
         return _distance
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -306,7 +320,9 @@ class IntegratedFrontSensor(Component):
         '''
         Close the IoExpander and release any resources.
         '''
-        if self._pot:
-            self._pot.close()
+        if not self.closed:
+            if self._digital_pot:
+                self._digital_pot.close()
+            Component.close(self)
 
 # EOF

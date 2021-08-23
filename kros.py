@@ -38,6 +38,7 @@ from core.system_subscriber import SystemSubscriber
 
 from hardware.i2c_scanner import I2CScanner
 from hardware.battery import BatteryCheck
+from hardware.external_clock import ExternalClock
 from hardware.killswitch import KillSwitch
 from hardware.motor_configurer import MotorConfigurer
 from hardware.motor_controller import MotorController
@@ -98,6 +99,7 @@ class KROS(Component, FiniteStateMachine):
         self._arbitrator    = None
         self._controller    = None
         self._gamepad       = None
+        self._ext_clock     = None
         self._motor_ctrl    = None
         self._ifs           = None
         self._killswitch    = None
@@ -163,10 +165,21 @@ class KROS(Component, FiniteStateMachine):
     #    _gp_controller = GamepadController(self._level)
     #    _message_bus.register_controller(_gp_controller)
 
+        self._use_external_clock = self._config['kros'].get('use_external_clock')
+        if self._use_external_clock:
+            self._log.info('configuring external clock callback...')
+#           self._ext_clock = ExternalClock(self._config, self._ext_callback_method)
+            self._ext_clock = ExternalClock(self._config, None, self._level)
+            self._ext_clock.enable()
+
         # add motor controller ................................................
         self._log.info('configure motor controller...')
         _motor_configurer = MotorConfigurer(self._config, self._message_bus, _i2c_scanner, level=self._level)
-        self._motor_ctrl = MotorController(self._config, self._message_bus, _motor_configurer, self._level)
+        self._motor_ctrl = MotorController(self._config, self._message_bus, _motor_configurer, self._ext_clock, self._level)
+        if self._use_external_clock:
+            self._ext_clock.add_callback(self._motor_ctrl._ext_callback_method)
+
+        # create components ....................................................
 
         _cfg = self._config['kros'].get('component')
 
@@ -221,7 +234,7 @@ class KROS(Component, FiniteStateMachine):
             if _bcfg.get('enable_avoid_behaviour'):
                 self._avoid = Avoid(self._config, self._message_bus, self._message_factory, self._motor_ctrl, self._level)
             if _bcfg.get('enable_roam_behaviour'):
-                self._roam  = Roam(self._config, self._message_bus, self._message_factory, self._motor_ctrl, self._level)
+                self._roam  = Roam(self._config, self._message_bus, self._message_factory, self._motor_ctrl, external_clock=self._ext_clock, level=self._level)
             if _bcfg.get('enable_moth_behaviour'):
                 self._moth  = Moth(self._config, self._message_bus, self._message_factory, self._motor_ctrl, self._level)
             if _bcfg.get('enable_sniff_behaviour'):
@@ -271,6 +284,13 @@ class KROS(Component, FiniteStateMachine):
         # end main loop ....................................
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def get_external_clock(self):
+        '''
+        Returns the ExternalClock, None if not used.
+        '''
+        return self._ext_clock
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _set_pi_leds(self, enable):
         '''
         Enables or disables the Raspberry Pi's board LEDs.
@@ -316,6 +336,9 @@ class KROS(Component, FiniteStateMachine):
             if self._motor_ctrl:
                 self._motor_ctrl.disable()
                 self._motor_ctrl.close()
+            if self._ext_clock:
+                self._ext_clock.disable()
+                self._ext_clock.close()
             FiniteStateMachine.disable(self)
             self._log.info('disabled.')
         else:

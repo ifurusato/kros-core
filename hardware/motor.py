@@ -63,10 +63,11 @@ class Motor(Component):
         self._log.info('initialising {} motor with {} as motor controller...'.format(orientation.name, type(self._tb).__name__))
         # configuration ..............................................
         _cfg = config['kros'].get('motor')
-        self._max_velocity       = _cfg.get('maximum_velocity') # limit to motor velocity
+        self._max_velocity       = _cfg.get('maximum_velocity') # a constant, the limit to motor velocity
+        self._max_fwd_velocity   = self._max_velocity           # a variable, the limit to forward velocity
         self._log.info(Fore.WHITE + 'max velocity:\t{:<5.2f}'.format(self._max_velocity))
         self._velocity_clip = lambda n: ( -1.0 * self._max_velocity ) if n <= ( -1.0 * self._max_velocity ) \
-                else self._max_velocity if n >= self._max_velocity \
+                else min(self._max_velocity, self._max_fwd_velocity) if n >= self._max_fwd_velocity \
                 else n
         self._motor_power_limit = _cfg.get('motor_power_limit') # power limit to motor
         self._log.info('motor power limit: {:<5.2f}'.format(self._motor_power_limit))
@@ -86,7 +87,8 @@ class Motor(Component):
         # slew limiter ...............................................
         _enable_slew_limiter     = _cfg.get('enable_slew_limiter')
         _suppress_slew_limiter   = not _enable_slew_limiter
-        self._slew_limiter       = SlewLimiter(config, orientation, suppressed=_suppress_slew_limiter, enabled=_enable_slew_limiter, level=level)
+        self._slew_limiter       = SlewLimiter(config, orientation, suppressed=_suppress_slew_limiter,
+                enabled=_enable_slew_limiter, level=level)
         # provides closed loop velocity feedback .....................
         self._using_mocks = config['kros'].get('arguments').get('using_mocks')
         if self._using_mocks:
@@ -101,12 +103,14 @@ class Motor(Component):
         # pid controller .............................................
         _enable_pid_controller   = _cfg.get('enable_pid_controller')
         _suppress_pid_controller = not _enable_pid_controller
-        self._pid_controller     = PIDController(config, self._message_bus, self, suppressed=_suppress_pid_controller, enabled=_enable_pid_controller, level=level)
+        self._pid_controller     = PIDController(config, self._message_bus, self, suppressed=_suppress_pid_controller,
+                enabled=_enable_pid_controller, level=level)
         # jerk limiter ...............................................
         _enable_jerk_limiter     = _cfg.get('enable_jerk_limiter')
         _suppress_jerk_limiter   = not _enable_jerk_limiter
 #       if not _suppress_jerk_limiter and _enable_jerk_limiter:
-        self._jerk_limiter       = JerkLimiter(config, orientation, suppressed=_suppress_jerk_limiter, enabled=_enable_jerk_limiter, level=level)
+        self._jerk_limiter       = JerkLimiter(config, orientation, suppressed=_suppress_jerk_limiter,
+                enabled=_enable_jerk_limiter, level=level)
         self._log.info('ready.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -127,7 +131,34 @@ class Motor(Component):
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def max_velocity(self):
+        '''
+        Returns the maximum velocity in either direction.
+        This is a constant, provided by application configuration.
+        '''
         return self._max_velocity
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    @property
+    def max_fwd_velocity(self):
+        '''
+        Returns the maximum forward velocity limit.
+        This is a variable and can be altered to limit forward velocity.
+        '''
+        return self._max_fwd_velocity
+    
+    @max_fwd_velocity.setter
+    def max_fwd_velocity(self, maximum_velocity):
+        '''
+        Sets the maximum forward velocity limit to the argument.
+        '''
+        self._max_fwd_velocity = maximum_velocity
+
+    def reset_max_fwd_velocity(self):
+        '''
+        Resets the maximum forward velocity limit to the configured value.
+        '''
+        self._log.info(Fore.MAGENTA + '🍆 reset maximum forward velocity.')
+        self._max_fwd_velocity = self._max_velocity
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property

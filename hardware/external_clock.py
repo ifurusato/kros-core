@@ -24,7 +24,10 @@ class ExternalClock(Component):
     '''
     Sets up a falling-edge callback on a GPIO pin, whose toggle is generated
     by an external source. When supplied by a callback the method will be 
-    triggered.
+    triggered. 
+
+    There is also a second "slow" callback that is triggered at a lower rate,
+    with a modulo value meant to trigger roughly at 1Hz.
 
     Make sure to call close() when finished to free up the Pi resources.
 
@@ -41,16 +44,17 @@ class ExternalClock(Component):
         if config is None:
             raise ValueError('no configuration provided.')
         _cfg = config['kros'].get('hardware').get('external_clock')
-        self.__callbacks   = []
-        self._modulo       = 10
-        self._counter      = itertools.count()
-        self._millis       = lambda: int(round(time.time() * 1000))
-        self._start_time   = self._millis()
-        self._last_tick    = 0
+        self.__callbacks      = []
+        self.__slow_callbacks = []
+        self._modulo          = 10
+        self._slow_modulo     = 200 # 100: every 10 ticks 2Hz; 200: 1Hz; 
+        self._counter         = itertools.count()
+        self._millis          = lambda: int(round(time.time() * 1000))
+        self._last_time      = self._millis()
+        self._last_slow_time = self._millis()
         _pin = _cfg.get('pin')
-        self._log.info('🍏 establishing callback on pin {:d}.'.format(_pin))
+        self._log.info('establishing callback on pin {:d}.'.format(_pin))
         self._pi.set_mode(gpio=_pin, mode=pigpio.INPUT) # GPIO 12 as input
-#       self._int_callback = self._pi.callback(_pin, pigpio.EITHER_EDGE, self.callback_method if callback is None else callback)
         self._int_callback = self._pi.callback(_pin, pigpio.EITHER_EDGE, self._callback_method)
         if callback:
             self.add_callback(callback)
@@ -68,10 +72,13 @@ class ExternalClock(Component):
         ''' 
         self.__callbacks.append(callback)
 
-#   # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-#   @property
-#   def modulo(self):
-#       return self._modulo
+     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def add_slow_callback(self, callback):
+        '''     
+        Adds a 'slow' callback to those triggered by clock ticks. This is
+        triggered at a slower (modulo) rate than the normal callback.
+        ''' 
+        self.__slow_callbacks.append(callback)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _callback_method(self, gpio, level, tick):
@@ -81,14 +88,17 @@ class ExternalClock(Component):
                 _now = self._millis()
                 for callback in self.__callbacks:
                     callback()
-#                   callback(gpio, level, tick)
-                _elapsed = _now - self._start_time
-                self._start_time = _now
-                _ticks = tick - self._last_tick
-                self._last_tick = tick
-#               print(Fore.YELLOW + 'callback; gpio: {}; level: {}; {} ticks; {:6.3f}ms elapsed.'.format(gpio, level, _ticks, _elapsed) + Style.RESET_ALL)
+                if _count % self._slow_modulo == 0.0:
+                    for callback in self.__slow_callbacks:
+                        callback()
+                    _slow_elapsed = _now - self._last_slow_time
+                    self._last_slow_time = _now
+#                   self._log.info(Fore.MAGENTA + 'slow tick: {:6.3f}s elapsed.'.format(_slow_elapsed / 1000.0))
+                _elapsed = _now - self._last_time
+                self._last_time = _now
         else:
-            print(Fore.BLUE + Style.DIM + 'callback: {:6.3f}ms elapsed; drifting off into the aether...' + Style.RESET_ALL)
+            self._log.warning('external clock disabled: {:6.3f}ms elapsed.')
+            pass
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def close(self):

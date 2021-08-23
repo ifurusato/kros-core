@@ -39,7 +39,7 @@ def test_pot():
 #   _out_max = 1.0
 #   _apot = AnalogPotentiometer(_config, in_min=_in_min, in_max=_in_max, out_min=_out_min, out_max=_out_max, level=Level.INFO)
 
-    _cfg = [ 0, 330, 0.0, 1.0 ]
+    _cfg = [ 0, 330, 0.0, 2.0 ]
     _apot = AnalogPotentiometer(_config, in_min=_cfg[0], in_max=_cfg[1], out_min=_cfg[2], out_max=_cfg[3], level=Level.INFO)
 #   _apot = AnalogPotentiometer(_config, Level.DEBUG)
 

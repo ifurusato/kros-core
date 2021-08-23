@@ -32,11 +32,13 @@ class Behaviour(ABC, Subscriber):
     :param config:           the application configuration
     :param message_bus:      the message bus
     :param message_factory:  the message factory
+    :param suppressed:       suppressed state, default False
+    :param enabled:          enabled state, default True
     :param level:            the optional log level
     '''
-    def __init__(self, name, config, message_bus, message_factory, level=Level.INFO):
+    def __init__(self, name, config, message_bus, message_factory, suppressed=False, enabled=True, level=Level.INFO):
         self._log = Logger('beh:{}'.format(name), level)
-        Subscriber.__init__(self, name, config, message_bus, suppressed=False, enabled=True, level=Level.INFO)
+        Subscriber.__init__(self, name, config, message_bus, suppressed=suppressed, enabled=enabled, level=Level.INFO)
         if not isinstance(message_factory, MessageFactory):
             raise ValueError('expected MessageFactory, not {}.'.format(type(message_factory)))
         self._message_factory = message_factory
@@ -61,18 +63,13 @@ class Behaviour(ABC, Subscriber):
         if message.gcd:
             raise GarbageCollectedError('cannot process message: message has been garbage collected. [3]')
         _event = message.payload.event
-        self._log.info('processing message {}; with event '.format(message.name) + Fore.YELLOW + ' {}'.format(_event.label))
+        self._log.debug('processing message {}; with event '.format(message.name) + Fore.YELLOW + ' {}'.format(_event.label))
         # indicate that this subscriber has processed the message
         message.process(self)
         # now process message...
         if not self.suppressed:
-            # is this still valid for a Behaviour?
-            self._log.debug('calling execute() method on event {}...'.format(_event.label))
             self.execute(message)
-            self._log.debug('called execute() method on event {}...'.format(_event.label))
-        else:
-            self._log.info(Style.DIM + '{} behaviour suppressed.'.format(self.name))
-        self._log.debug('processed message {}'.format(message.name))
+#       self._log.debug('processed message {}'.format(message.name))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @abstractmethod

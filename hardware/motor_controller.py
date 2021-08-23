@@ -27,7 +27,6 @@ from core.rate import Rate
 from core.message_bus import MessageBus
 from hardware.motor_configurer import MotorConfigurer
 from hardware.slew import SlewRate
-from hardware.external_clock import ExternalClock
 from hardware.motor import Motor
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -47,12 +46,13 @@ class MotorController(Component):
       Halt:  slew the target velocity of the motors to zero quickly.
       Brake: slew the target velocity of the motors to zero slowly.
 
-    :param confif:       the application configuration
-    :param message_bus:  the application MessageBus
-    :param motor_config: the MotorConfigurator object
-    :param level:        the logging level
+    :param confif:          the application configuration
+    :param message_bus:     the application MessageBus
+    :param motor_config:    the MotorConfigurator object
+    :param external_clock:  optional external system clock
+    :param level:           the logging level
     '''
-    def __init__(self, config, message_bus, motor_configurer, level=Level.INFO):
+    def __init__(self, config, message_bus, motor_configurer, external_clock=None, level=Level.INFO):
         self._log = Logger('motor-ctrl', level)
         Component.__init__(self, self._log, suppressed=False, enabled=False)
         self._log.info('initialising motors...')
@@ -66,16 +66,15 @@ class MotorController(Component):
             raise ValueError('wrong type for motor configurer argument: {}'.format(type(motor_configurer)))
         self._port_motor = motor_configurer.get_motor(Orientation.PORT)
         self._stbd_motor = motor_configurer.get_motor(Orientation.STBD)
-
+        self._ext_clock            = external_clock
         # temporary until we move functionality to motors
         self._loop_thread          = None
         self._loop_enabled         = False
         self._event_counter        = itertools.count()
         self._last_velocity        = None
-        self._ext_clock            = None
         # configured constants
+        self._slew_limiter_enabled = config['kros'].get('motor').get('enable_slew_limiter')
         _cfg = config['kros'].get('motor').get('motor_controller')
-        self._use_external_clock   = _cfg.get('use_external_clock')
         self._verbose              = _cfg.get('verbose')
         self._loop_delay_hz        = _cfg.get('loop_delay_hz')     # main loop delay
         self._loop_delay_sec       = 1 / self._loop_delay_hz 
@@ -85,19 +84,15 @@ class MotorController(Component):
         self._decel_increment      = _cfg.get('decel_increment')   # normal incremental deceleration
         self._log.info('accelerate increment: {:5.2f}; decelerate increment: {:5.2f}'.format(self._accel_increment, self._decel_increment))
         # slew rate for quick halt behaviour
-        self._halt_slew_rate       = SlewRate.from_string(_cfg.get('brake_rate'))
+        self._halt_slew_rate       = SlewRate.from_string(_cfg.get('halt_rate'))
         self._log.info('halt rate:\t{}'.format(self._halt_slew_rate.name))
         # slew rate for slower braking behaviour
-        self._brake_slew_rate      = SlewRate.from_string(_cfg.get('halt_rate'))
+        self._brake_slew_rate      = SlewRate.from_string(_cfg.get('brake_rate'))
         self._log.info('brake rate:\t{}'.format(self._brake_slew_rate.name))
         self._spin_speed           = Speed.from_string(_cfg.get('spin_speed')) # motor speed when spinning
         self._log.info('spin speed:\t{}'.format(self._spin_speed.name))
-        if self._use_external_clock:
-            self._millis     = lambda: int(round(time.time() * 1000))
-            self._start_time = self._millis()
-            self._log.info(Fore.GREEN + '🍏 configuring external clock callback...')
-            self._ext_clock = ExternalClock(self._config, self._ext_callback_method)
-            self._ext_clock.enable()
+        self._millis               = lambda: int(round(time.time() * 1000))
+        self._start_time           = self._millis()
         self._log.info('motors ready.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -105,19 +100,43 @@ class MotorController(Component):
     def name(self):
         return 'motor-ctrl'
 
+#   # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+#   def set_max_fwd_velocity(self, maximum_velocity):
+#       '''
+#       Sets the maximum forward velocity limit for both motors.
+#       '''
+#       if maximum_velocity < 0.0:
+#           raise ValueError('maximum forward velocity cannot be less than zero.')
+#       self._port_motor.set_max_fwd_velocity(maximum_velocity)
+#       self._stbd_motor.set_max_fwd_velocity(maximum_velocity)
+#       self._log.info('🍕 set motor speed limit to: {:5.2f}'.format(maximum_velocity))
+
+    def reset_max_fwd_velocity(self):
+        '''
+        Resets the maximum forward velocity limit for both motors to the default.
+        '''
+        self._port_motor.reset_max_fwd_velocity()
+        self._stbd_motor.reset_max_fwd_velocity()
+        self._log.info('🍕 reset motor speed limit.')
+
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def start_loop(self):
         '''
-        Start the loop.
+        Start the loop Thread.
+
+        If we're using an external clock this generates a warning message
+        and otherwise does nothing.
         '''
-        self._log.info('🍏 start motor control loop...')
+        self._log.info('start motor control loop...')
         if not self.enabled:
-            self._log.warning('not enabled.')
             raise Exception('not enabled.')
         if self.loop_is_running():
-            self._log.warning('🍏 loop already running.')
+            if self._ext_clock:
+                self._log.warning('cannot start control loop: using external clock.')
+            else:
+                self._log.warning('loop already running.')
         elif self._loop_thread is None:
-            if self._use_external_clock:
+            if self._ext_clock:
                 raise Exception('cannot use thread loop: external clock enabled.') # TEMP shouldn't be necessary
             self._loop_enabled = True
             _is_daemon = False
@@ -179,7 +198,7 @@ class MotorController(Component):
         '''
         Returns true if using an external clock or if the loop thread is alive.
         '''
-        return self._use_external_clock \
+        return self._ext_clock \
                 or ( self._loop_enabled and self._loop_thread != None and self._loop_thread.is_alive() )
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -582,7 +601,7 @@ class MotorController(Component):
             self._log.warning('already stopped.')
         else:
             if self._loop_enabled:
-                if self._port_motor.slew_limiter.is_active:
+                if self._slew_limiter_enabled:
                     self._log.info('stopping soft...')
                     self._reset_slew_rate() # use default FAST rate
                     self._port_motor.target_velocity = 0.0
@@ -617,8 +636,8 @@ class MotorController(Component):
         if self.stopped:
             self._log.debug('already halted.')
         else:
-            if self._loop_enabled:
-                if self._port_motor.slew_limiter.is_active:
+            if self._ext_clock or self._loop_enabled:
+                if self._slew_limiter_enabled:
                     self._log.info('🌞 halting soft...')
                     # use slew limiter for halting if available
                     self._set_slew_rate(self._halt_slew_rate)
@@ -643,8 +662,8 @@ class MotorController(Component):
         if self.stopped:
             self._log.warning('already braked.')
         else:
-            if self._loop_enabled:
-                if self._port_motor.slew_limiter.is_active:
+            if self._ext_clock or self._loop_enabled:
+                if self._slew_limiter_enabled:
                     self._log.info('🌞 braking soft...')
                     # use slew limiter for halting if available
                     self._set_slew_rate(self._brake_slew_rate)
@@ -766,13 +785,11 @@ class MotorController(Component):
         if self.enabled:
             self._log.warning('already enabled.')
         else:
-            if self._use_external_clock:
-                self._ext_clock.enable()
-            elif not self.loop_is_running():
+            Component.enable(self)
+            if not self._ext_clock and not self.loop_is_running():
                 self.start_loop()
             self._port_motor.enable()
             self._stbd_motor.enable()
-            Component.enable(self)
             self._log.info('enabled.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -784,9 +801,6 @@ class MotorController(Component):
             self._log.info('disabling...')
             self.stop_loop() # stop loop thread
             Component.disable(self)
-            if self._ext_clock:
-                self._ext_clock.disable()
-                self._ext_clock.close()
             _count = 0
             while _count < 10 and self.is_in_motion(): # if we're moving then halt
                 _count += 1
