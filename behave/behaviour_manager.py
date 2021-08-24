@@ -51,7 +51,7 @@ class BehaviourManager(Subscriber):
         '''
         self._behaviours[behaviour.trigger_event] = behaviour
         self.add_event(behaviour.trigger_event)
-        self._log.info('added behaviour \'{}\' linked to trigger event \'{}\' to manager.'.format(behaviour.name, behaviour.trigger_event))
+        self._log.info(Fore.MAGENTA + 'added behaviour \'{}\' linked to trigger event \'{}\' to manager.'.format(behaviour.name, behaviour.trigger_event))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def get_behavior_for_trigger_event(self, event):
@@ -101,7 +101,7 @@ class BehaviourManager(Subscriber):
         _event = message.event
         if message.gcd:
             raise GarbageCollectedError('cannot process message: message has been garbage collected. [3]')
-        self._log.debug('pre-processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.label))
+        self._log.info(Fore.MAGENTA + 'pre-processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.label))
         self._alter_behaviour(_event)
 
         self._log.debug('awaiting subscriber process_message {}.'.format(_event.name))
@@ -119,7 +119,8 @@ class BehaviourManager(Subscriber):
         # get behaviour for event type
         _behaviour = self.get_behavior_for_trigger_event(event)
         if _behaviour is None:
-            self._log.warning('cannot act: no behaviour associated with event {}.'.format(event.label))
+            self._log.warning('cannot act: no behaviour associated with event {}, from {:d} registered behaviours ({}).'.format(
+                    event.label, len(self._behaviours), self._behaviours))
             return
 
         _trigger_behaviour = _behaviour.get_trigger_behaviour(event)

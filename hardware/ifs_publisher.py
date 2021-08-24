@@ -39,12 +39,18 @@ class IfsPublisher(Publisher):
     :param level:             the log level
     '''
     def __init__(self, config, message_bus, message_factory, level=Level.INFO):
-        Publisher.__init__(self, 'ifs', config, message_bus, message_factory, level=level)
-        self._level           = level
-        self._counter         = itertools.count()
-        self._ifs             = IntegratedFrontSensor(config, message_bus=self.message_bus, message_factory=self.message_factory, level=self.logger.level)
-        self._group           = 0
-        # configuration ....................................
+        if not isinstance(level, Level):
+            raise ValueError('wrong type for log level argument: {}'.format(type(level)))
+        self._level = level
+        Publisher.__init__(self, 'ifs', config, message_bus, message_factory, level=self._level)
+        # during calibration the IFS uses DEBUG level
+        self._use_analog_pot  = config['kros'].get('integrated_front_sensor').get('use_analog_potentiometer')
+        self._use_digital_pot = config['kros'].get('integrated_front_sensor').get('use_digital_potentiometer')
+        self._ifs_level = ( Level.DEBUG if self._use_analog_pot or self._use_digital_pot  else self._level )
+        self._ifs = IntegratedFrontSensor(config, message_bus=self.message_bus, message_factory=self.message_factory, level=self._ifs_level)
+        # configuration ................
+        self._group   = 0
+        self._counter = itertools.count()
         _cfg = config['kros'].get('publisher').get('integrated_front_sensor')
         _loop_freq_hz = _cfg.get('loop_freq_hz')
         self._publish_delay_sec = 1.0 / _loop_freq_hz
@@ -63,12 +69,6 @@ class IfsPublisher(Publisher):
         else:
             self._log.warning('failed to enable publisher.')
 
-#   # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-#   async def _publish_message(self, message):
-#       self._log.info('ifs-publishing message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
-#       await Publisher.publish(self, _message)
-#       self._log.info('ifs-published message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
-
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def _ifs_listener_loop(self, f_is_enabled):
         self._log.info('starting ifs listener loop:\t' + Fore.YELLOW + 'type \'?\' for help, \'q\' or Ctrl-C to exit.')
@@ -76,10 +76,10 @@ class IfsPublisher(Publisher):
             _count = next(self._counter)
             _message = self._ifs.poll_center_infrared()
             if _message is not None:
-#               self._log.info('❎ ifs-publishing message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
                 await Publisher.publish(self, _message)
-                self._log.info('ifs-published message:' + Fore.WHITE + ' {}'.format(_message.name)
-                        + Fore.CYAN + ' event: {}; '.format(_message.event.label) + Fore.YELLOW + 'value: {:5.2f}cm'.format(_message.value))
+#               if self._ifs_level != Level.DEBUG:
+#                   self._log.info('ifs-published message:' + Fore.WHITE + ' {}'.format(_message.name)
+#                           + Fore.CYAN + ' event: {}; '.format(_message.event.label) + Fore.YELLOW + 'value: {:5.2f}cm'.format(_message.value))
             await asyncio.sleep(self._publish_delay_sec)
         self._log.info('ifs publish loop complete.')
 

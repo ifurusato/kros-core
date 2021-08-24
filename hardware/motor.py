@@ -157,7 +157,7 @@ class Motor(Component):
         '''
         Resets the maximum forward velocity limit to the configured value.
         '''
-        self._log.info(Fore.MAGENTA + '🍆 reset maximum forward velocity.')
+#       self._log.info(Fore.MAGENTA + 'reset maximum forward velocity.')
         self._max_fwd_velocity = self._max_velocity
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈

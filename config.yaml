@@ -178,7 +178,8 @@ kros:
         use_digital_potentiometer:  False        # use digital potentiometer to adjust distance setting
         ignore_duplicates:          False        # don't fire messages for duplicate events
         # the analog sensor distances (raw or cm) used as event trigger thresholds:
-        conversion_exponent:          1.33       # 1.27/1.33 the constant used for infrared distance conversion
+        conversion_exponent:          1.34       # 1.27-1.35 the constant used for infrared distance conversion
+        fudge_factor:                -2.00       # slight non-linear adjustment for accuracy
         cntr_raw_min_trigger:        40          # below this raw value we don't execute callback on center IR
         oblq_raw_min_trigger:        60          # below this raw value we don't execute callback on PORT & STBD IRs
         side_raw_min_trigger:        60          # below this raw value we don't execute callback on side IRs

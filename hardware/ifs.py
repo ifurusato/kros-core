@@ -9,10 +9,6 @@
 # created:  2020-01-18
 # modified: 2020-10-28
 #
-# Implements an Integrated Front Sensor using an IO Expander Breakout Garden
-# board. This polls the values of the board's pins, which outputs 0-255 values
-# for analog pins, and a 0 or 1 for digital pins.
-#
 
 from collections import deque as Deque
 from colorama import init, Fore, Style
@@ -33,12 +29,23 @@ from hardware.digital_pot import DigitalPotentiometer # for calibration only
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class IntegratedFrontSensor(Component):
     '''
-    IntegratedFrontSensor: communicates with the integrated front bumpers and
-    infrared sensors, receiving messages from the IO Expander board or I²C
+    The IntegratedFrontSensor: communicates with the integrated front bumpers
+    and infrared sensors, receiving messages via the IO Expander board or I²C
     Arduino slave, sending the messages with its events onto the message bus.
+    For analog sensors the values are contained within the Payload of the
+    Message.
 
-    When enabled this adds the IFS as a handler to the Clock's BessageBus, to
-    receive TICK messages triggering polling of the sensors.
+    This polls the values of the IO Expander's pins, which outputs 0-255 values
+    for analog pins, and a 0 or 1 for digital pins.
+
+    Configuration ......................
+
+    The analog infrared values are returned as distances in centimeters, with
+    the calibration done using either an analog or digital potentiometer. This
+    uses both a 'conversion exponent' and a 'fudge factor' from the YAML
+    configuration. Due to the non-linear response from the Sharp IR sensors
+    this compromise is weighted towards closer range measurement, as accuracy
+    at greater distances is less important than close to the robot.
 
     :param config:            the YAML based application configuration
     :param message_bus:       the asynchronous message bus
@@ -46,6 +53,8 @@ class IntegratedFrontSensor(Component):
     :param level:             the logging Level
     '''
     def __init__(self, config, message_bus, message_factory, suppressed=False, enabled=True, level=Level.INFO):
+        if not isinstance(level, Level):
+            raise ValueError('wrong type for log level argument: {}'.format(type(level)))
         self._log = Logger("ifs", level)
         Component.__init__(self, self._log, suppressed, enabled)
         if config is None:
@@ -66,7 +75,8 @@ class IntegratedFrontSensor(Component):
                 else None
         if self._digital_pot:
             self._log.info(Fore.YELLOW + 'using digital potentiometer for calibration.')
-        self._conversion_exponent = self._config.get('conversion_exponent') # 1.27, 1.33
+        self._conversion_exponent      = self._config.get('conversion_exponent') # 1.27, 1.33
+        self._fudge_factor             = self._config.get('fudge_factor') # can be zero
         # event thresholds:
         self._cntr_raw_min_trigger     = self._config.get('cntr_raw_min_trigger')
         self._oblq_raw_min_trigger     = self._config.get('oblq_raw_min_trigger')
@@ -269,7 +279,7 @@ class IntegratedFrontSensor(Component):
         the target is too close to the sensor the values are not valid. According
         to spec 10cm is the minimum distance, but we get relative variability up
         until about 5cm. Values over 150 clearly indicate the robot is less than
-        10cm from the target.
+        10cm from the target. Here's a sampled output:
 
             0cm = unreliable
             5cm = 226.5
@@ -308,11 +318,11 @@ class IntegratedFrontSensor(Component):
         else:
             _EXPONENT = self._conversion_exponent # 1.27, 1.33
         _NUMERATOR = 1000.0
-        _distance = pow( _NUMERATOR / value, _EXPONENT ) # 900
+        _distance = pow( _NUMERATOR / value, _EXPONENT ) + self._fudge_factor
         if self._analog_pot:
-            self._log.info(Fore.CYAN + 'value: {:>5.2f}; analog pot value: {:>5.2f}; '.format(value, _EXPONENT) + Fore.YELLOW + 'distance: {:>5.2f}cm'.format(_distance))
+            self._log.debug(Fore.CYAN + 'value: {:>5.2f}; analog pot value: {:>5.2f}; '.format(value, _EXPONENT) + Fore.YELLOW + 'distance: {:>5.2f}cm'.format(_distance))
         elif self._digital_pot:
-            self._log.info(Fore.CYAN + 'value: {:>5.2f}; digital pot value: {:>5.2f}; '.format(value, _EXPONENT) + Fore.YELLOW + 'distance: {:>5.2f}cm'.format(_distance))
+            self._log.debug(Fore.CYAN + 'value: {:>5.2f}; digital pot value: {:>5.2f}; '.format(value, _EXPONENT) + Fore.YELLOW + 'distance: {:>5.2f}cm'.format(_distance))
         return _distance
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
