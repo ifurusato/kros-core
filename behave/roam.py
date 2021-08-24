@@ -31,7 +31,7 @@ class Roam(Behaviour):
     provide a forward speed limit for both motors based on a distance value
     provided by the center infrared sensor, i.e., the distance to an obstacle
     in cm. If no obstacle is perceived within the range of the sensor, the 
-    velocity limit is reset to the motor's default maximum speed.
+    velocity limit is removed.
 
     Because we only know how far the obstacle is based on incoming events,
     if we haven't seen an event in awhile we may assume there is nothing
@@ -56,19 +56,15 @@ class Roam(Behaviour):
     normal avoidance behaviour for the center IR sensor when this is active,
     at least up to the minimum roam distance.
 
-    There are effectively two distance filters at play: the center infrared
-    sensor doesn't generate messages beyond a certain distance; and there is
-    also a filter within this class that ignores messages whose distance value
-    exceeds the threshold of the roam behaviour.
-
     The external clock is required insofar as the Roam behaviour won't
     function in its absence, as it is used for resetting the motor's maximum
     velocity setting.
 
-    An option is to set the maximum distance to roam, so that the robot
-    accelerates to roaming speed, varies its speed as described above,
-    then as it nears its target distance, decelerates to a halt at the
-    target.
+    This is implemented by adding a lambda function multiplier into the
+    Motor's update_target_velocity method. When absent there is no effect;
+    when closer than the minimum range a lambda that returns zero is set;
+    otherwise a lambda that converts the observed distance (cm) to a ratio
+    is used.
 
     :param config:           the application configuration
     :param message_bus:      the asynchronous message bus
@@ -102,15 +98,19 @@ class Roam(Behaviour):
         _velocity_km_hr = 36.0 * ( self._max_velocity / 1000 )
         self._log.info(Style.BRIGHT + 'configured speed:    \t{:4.2f} to {:4.2f}cm/sec ({:3.1f}km/hr)'.format(
                 self._min_velocity, self._max_velocity, _velocity_km_hr))
-        self._ratio         = ( self._max_velocity - self._min_velocity ) / ( self._max_distance - self._min_distance )
-        self._log.info(Style.BRIGHT + 'speed/distance ratio:\t{:4.2f} ({:.0%})'.format(self._ratio, self._ratio))
+        # zero lambda always returns a zero value
+        self._zero_velocity_ratio = lambda n: self._min_velocity
+        # lambda accepts distance and returns a ratio to multiply against velocity
+        self._velocity_ratio = lambda n: ( ( n - self._min_distance ) / ( self._max_distance - self._min_distance ) )
+        _ratio               = ( self._max_velocity - self._min_velocity ) / ( self._max_distance - self._min_distance )
+        self._log.info(Style.BRIGHT + 'ratio calculation:\t{:4.2f} = ({:4.2f} - {:4.2f}) / ({:4.2f} - {:4.2f})'.format(_ratio, self._max_velocity, self._min_velocity, self._max_distance, self._min_distance))
+        self._log.info(Style.BRIGHT + 'speed/distance ratio:\t{:4.2f} ({:.0%})'.format(_ratio, _ratio))
         self._cruising_speed = Speed.from_string(_cfg.get('cruising_speed'))
         self._cruising_velocity = float(self._cruising_speed.velocity)
         self._log.info(Style.BRIGHT + 'cruising speed:      \t{} ({:5.2f}cm/sec)'.format(self._cruising_speed.label, self._cruising_speed.velocity))
-        self._last_dist_cm  = 0.0
         self._wait_ticks    = _cfg.get('cruise_wait_ticks') # assumes slow tick at 1Hz
-        self._log.info(Style.BRIGHT + 'cruise wait time:    \t{:4.2f} ticks'.format(self._wait_ticks))
         self._wait_count    = self._wait_ticks
+        self._log.info(Style.BRIGHT + 'cruise wait time:    \t{:4.2f} ticks'.format(self._wait_ticks))
         # .................................
         self.add_event(Event.INFRARED_CNTR)
         self._log.info('ready.')
@@ -138,53 +138,18 @@ class Roam(Behaviour):
         '''
         This sets the velocity limit for both motors based on the distance
         argument. Both motors share the same limit, as there's no reason for
-        them to be different. Because the values are stored on each motor
-        separately we just use the PORT motor to obtain the value.
+        them to be different.
         '''
         print('')
-        self._log.info('🌰 setting max fwd velocity from distance of {:<5.2f}cm'.format(distance_cm))
-
-#       _cruise_ok = self._last_dist_cm > distance_cm
-        self._last_dist_cm = distance_cm
-#       if self._cruise_ok: # then it's further than it was before, so reset
-
-        # are both moters moving forward?
-#       if self._port_motor.velocity > 0.0 and self._stbd_motor.velocity > 0.0:
+        self._log.info('setting max fwd velocity from distance of {:<5.2f}cm'.format(distance_cm))
         self._wait_count = self._wait_ticks
-
-        if distance_cm >= self._max_distance: 
-            self._log.info(Fore.YELLOW + '📶 no speed limit at distance: {:5.2f} > max: {:5.2f}'.format(distance_cm, self._max_distance))
-            # when distance >+ max_distance, no speed limit. E.g., at 200cm return 100.0
-            self._reset_maximum_forward_velocity('no obstacle seen at {:>5.2f}cm.'.format(distance_cm))
-            return
-        elif distance_cm < self._min_distance: 
-            self._log.info(Fore.RED + '🚻 TOO CLOSE: stopping.')
-            # When the distance < min_distance, returns min_velocity. E.g., at 20cm return 0.0
-            _roam_max_velocity = self._min_velocity
-        else:
-            # otherwise use a ratio of distance to speed as the limit. E.g., at 100cm return 50.0
-            # distance range = 200 - 20 (180), speed range = 100 - 0 (100)
-            # so the ratio = 100:180 or 5:9 or 55%
-            _roam_max_velocity = distance_cm * self._ratio
-            self._log.info(Fore.GREEN + '💹 set speed limit to: {:5.2f} using ratio {:5.2f}'.format(_roam_max_velocity, self._ratio))
-
-        # sanity czech
-        _roam_max_velocity = Util.clip(_roam_max_velocity, self._min_velocity, self._max_velocity)
-
-        # get the maximum forward velocity of both motors. This should be the same for both.
-        if self._port_motor.max_fwd_velocity != self._stbd_motor.max_fwd_velocity:
-            raise Exception('expected max fwd velocities to be equal.') # TEMP
-        _motors_max_fwd_velocity = max(self._port_motor.max_fwd_velocity, self._stbd_motor.max_fwd_velocity)
-
-        # Compare max velocity limit of motors with roam_max_velocity generated by distance argument
-        # If roam_max_velocity < current max velocity of motor, set the motor's limit.
-        # e.g., if roam limit is 30 and current max velocity is 50, then set max_fwd_velocity to roam limit
-        if _roam_max_velocity < _motors_max_fwd_velocity:
-            self._port_motor.max_fwd_velocity = _roam_max_velocity
-            self._stbd_motor.max_fwd_velocity = _roam_max_velocity
-            self._log.info('🍏 SET roam max velocity: {:5.2f}; motor max fwd: {:5.2f}'.format(_roam_max_velocity, _motors_max_fwd_velocity))
-        else:
-            self._log.info('🍎 DID NOT SET roam max velocity: {:5.2f}; motor max fwd: {:5.2f}'.format(_roam_max_velocity, _motors_max_fwd_velocity))
+        if distance_cm >= self._max_distance: # when distance >+ max_distance, no speed limit
+            self._log.info(Fore.YELLOW + 'no speed limit at distance: {:5.2f} > max: {:5.2f}'.format(distance_cm, self._max_distance))
+            self._reset_velocity_multiplier('no obstacle seen at {:>5.2f}cm.'.format(distance_cm))
+        elif distance_cm < self._min_distance: # when distance < min_distance, set zero lambda
+            self._set_velocity_multiplier(Fore.RED + 'too close', self._zero_velocity_ratio(distance_cm))
+        else: # otherwise set lambda that returns a ratio of distance to speed as the limit
+            self._set_velocity_multiplier(Fore.WHITE + 'within range at {:5.2f}'.format(distance_cm), self._velocity_ratio(distance_cm))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _tick(self):
@@ -195,30 +160,38 @@ class Roam(Behaviour):
         continually auto-trigger.
         '''
         if not self.suppressed:
-            self._log.info('🕓 tick;\twait count: {:d}; suppressed: {};\t'.format(
-                    self._wait_count, self.suppressed) + Fore.YELLOW + 'last distance: {:>5.2f}cm'.format(self._last_dist_cm))
+            self._log.info('tick;\twait count: {:d}; suppressed: {};\t'.format( self._wait_count, self.suppressed))
             # wait ten counts before trying to move
             if self._wait_count == 0:
-                self._log.info('🐰 stable.')
+                self._log.info('stable.')
             elif self._wait_count == 1:
                 self._log.info(' cruise triggered.')
-                self._log.info('🐰 cruise triggered at: {} ({:5.2f}cm/sec)'.format(self._cruising_speed.name, self._cruising_velocity))
+                self._log.info('cruise triggered at: {} ({:5.2f}cm/sec)'.format(self._cruising_speed.name, self._cruising_velocity))
                 self._wait_count = 0
                 # we change state in the transition from wait count 1 to 0 (0 being a steady state)
-#               if self._last_dist_cm > self._min_distance:
-                self._reset_maximum_forward_velocity('recovered from encounter.')
+                self._reset_velocity_multiplier('recovered from encounter.')
                 self._port_motor.target_velocity = self._cruising_velocity
                 self._stbd_motor.target_velocity = self._cruising_velocity
             else:
-                self._log.info('🐰 counting down from {:d}...'.format(self._wait_count))
+                self._log.info('counting down from {:d}...'.format(self._wait_count))
                 self._wait_count -= 1
                 pass
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def _reset_maximum_forward_velocity(self, reason):
-        self._log.info(Fore.MAGENTA + '♒ reset max fwd velocity: ' + Fore.YELLOW + '{}'.format(reason))
-        self._port_motor.reset_max_fwd_velocity()
-        self._stbd_motor.reset_max_fwd_velocity()
+    def _set_velocity_multiplier(self, reason, lambda_function):
+
+#       if not isinstance(message_bus, lambda):
+
+        self._log.info(Fore.GREEN + 'set max fwd velocity: ' + '{}'.format(reason))
+        self._port_motor.set_velocity_multiplier(lambda_function)
+        self._stbd_motor.set_velocity_multiplier(lambda_function)
+        pass
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def _reset_velocity_multiplier(self, reason):
+        self._log.info(Fore.MAGENTA + 'reset max fwd velocity: ' + Fore.YELLOW + '{}'.format(reason))
+        self._port_motor.reset_velocity_multiplier()
+        self._stbd_motor.reset_velocity_multiplier()
         pass
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈

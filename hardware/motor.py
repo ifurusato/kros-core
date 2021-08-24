@@ -84,6 +84,7 @@ class Motor(Component):
         self._decoder            = None  # motor encoder
         self._slew_limiter       = None
         self._jerk_limiter       = None
+        self._velocity_lambda    = None
         # slew limiter ...............................................
         _enable_slew_limiter     = _cfg.get('enable_slew_limiter')
         _suppress_slew_limiter   = not _enable_slew_limiter
@@ -138,27 +139,34 @@ class Motor(Component):
         return self._max_velocity
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    @property
-    def max_fwd_velocity(self):
-        '''
-        Returns the maximum forward velocity limit.
-        This is a variable and can be altered to limit forward velocity.
-        '''
-        return self._max_fwd_velocity
+#   @property
+#   def max_fwd_velocity(self):
+#       '''
+#       Returns the maximum forward velocity limit.
+#       This is a variable and can be altered to limit forward velocity.
+#       '''
+#       return self._max_fwd_velocity
     
-    @max_fwd_velocity.setter
-    def max_fwd_velocity(self, maximum_velocity):
-        '''
-        Sets the maximum forward velocity limit to the argument.
-        '''
-        self._max_fwd_velocity = maximum_velocity
+#   @max_fwd_velocity.setter
+#   def max_fwd_velocity(self, maximum_velocity):
+#       '''
+#       Sets the maximum forward velocity limit to the argument.
+#       '''
+#       self._max_fwd_velocity = maximum_velocity
 
-    def reset_max_fwd_velocity(self):
+    def set_velocity_multiplier(self, lambda_function):
         '''
-        Resets the maximum forward velocity limit to the configured value.
+        Sets the velocity multiplier to the provided lambda function.
+
+        If non-null this is a function that alters the target velocity as a multiplier.
         '''
-#       self._log.info(Fore.MAGENTA + 'reset maximum forward velocity.')
-        self._max_fwd_velocity = self._max_velocity
+        self._velocity_lambda = lambda_function
+
+    def reset_velocity_multiplier(self):
+        '''
+        Resets the velocity multiplier to None, i.e., no function.
+        '''
+        self._velocity_lambda = None
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
@@ -289,6 +297,9 @@ class Motor(Component):
 
             # use velocity clipper as a sanity checker
             _current_target_velocity = self._velocity_clip(_current_target_velocity)
+
+            if self._velocity_lambda is not None:
+                _current_target_velocity = self._velocity_lambda * _current_target_velocity
 
             # we now convert velocity to power, either by passing the target velocity to the PID controller (when active)
             # otherwise directly setting power to the motor via the proportional interpolator from the Speed Enum.
