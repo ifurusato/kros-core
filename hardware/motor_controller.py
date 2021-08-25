@@ -186,7 +186,7 @@ class MotorController(Component):
         '''
         Stop the loop.
         '''
-        if self._loop_enabled:
+        if self.loop_is_running:
             self._loop_enabled = False
             self._loop_thread  = None
             self._log.info('loop disabled.')
@@ -600,7 +600,7 @@ class MotorController(Component):
         if self.stopped:
             self._log.warning('already stopped.')
         else:
-            if self._loop_enabled:
+            if self.loop_is_running:
                 if self._slew_limiter_enabled:
                     self._log.info('stopping soft...')
                     self._reset_slew_rate() # use default FAST rate

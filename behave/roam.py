@@ -103,7 +103,8 @@ class Roam(Behaviour):
         # lambda accepts distance and returns a ratio to multiply against velocity
         self._velocity_ratio = lambda n: ( ( n - self._min_distance ) / ( self._max_distance - self._min_distance ) )
         _ratio               = ( self._max_velocity - self._min_velocity ) / ( self._max_distance - self._min_distance )
-        self._log.info(Style.BRIGHT + 'ratio calculation:\t{:4.2f} = ({:4.2f} - {:4.2f}) / ({:4.2f} - {:4.2f})'.format(_ratio, self._max_velocity, self._min_velocity, self._max_distance, self._min_distance))
+        self._log.info(Style.BRIGHT + 'ratio calculation:\t{:4.2f} = ({:4.2f} - {:4.2f}) / ({:4.2f} - {:4.2f})'.format(
+                _ratio, self._max_velocity, self._min_velocity, self._max_distance, self._min_distance))
         self._log.info(Style.BRIGHT + 'speed/distance ratio:\t{:4.2f} ({:.0%})'.format(_ratio, _ratio))
         self._cruising_speed = Speed.from_string(_cfg.get('cruising_speed'))
         self._cruising_velocity = float(self._cruising_speed.velocity)
@@ -142,14 +143,15 @@ class Roam(Behaviour):
         '''
         print('')
         self._log.info('setting max fwd velocity from distance of {:<5.2f}cm'.format(distance_cm))
-        self._wait_count = self._wait_ticks
         if distance_cm >= self._max_distance: # when distance >+ max_distance, no speed limit
             self._log.info(Fore.YELLOW + 'no speed limit at distance: {:5.2f} > max: {:5.2f}'.format(distance_cm, self._max_distance))
             self._reset_velocity_multiplier('no obstacle seen at {:>5.2f}cm.'.format(distance_cm))
         elif distance_cm < self._min_distance: # when distance < min_distance, set zero lambda
             self._set_velocity_multiplier(Fore.RED + 'too close', self._zero_velocity_ratio(distance_cm))
+            self._wait_count = self._wait_ticks # reset wait
         else: # otherwise set lambda that returns a ratio of distance to speed as the limit
             self._set_velocity_multiplier(Fore.WHITE + 'within range at {:5.2f}'.format(distance_cm), self._velocity_ratio(distance_cm))
+            self._wait_count = self._wait_ticks # reset wait
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _tick(self):
