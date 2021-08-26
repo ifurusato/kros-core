@@ -42,14 +42,14 @@ from hardware.external_clock import ExternalClock
 from hardware.killswitch import KillSwitch
 from hardware.motor_configurer import MotorConfigurer
 from hardware.motor_controller import MotorController
+from hardware.motor_subscriber import MotorSubscriber
+from hardware.bumper_subscriber import BumperSubscriber
+from hardware.infrared_subscriber import InfraredSubscriber
 
 from hardware.ifs_publisher import IfsPublisher
 from mock.event_publisher import EventPublisher
 from mock.velocity_publisher import VelocityPublisher
 from mock.mock_pot_publisher import MockPotPublisher
-from mock.bumper_subscriber import BumperSubscriber
-from mock.infrared_subscriber import InfraredSubscriber
-from mock.motor_subscriber import MotorSubscriber
 #from mock.gamepad_publisher import GamepadPublisher
 #from mock.gamepad_controller import GamepadController
 
