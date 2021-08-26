@@ -10,7 +10,6 @@
 # modified: 2021-07-08
 #
 
-import itertools
 from colorama import init, Fore, Style
 init()
 
@@ -87,7 +86,6 @@ class Roam(Behaviour):
             pass
         else:
             raise Exception('unable to enable roam behaviour: no external clock available.')
-        self._counter       = itertools.count()
         _cfg = config['kros'].get('behaviour').get('roam')
         self._modulo        = 5 # at 20Hz, every 20 ticks is 1 second, every 5 ticks 250ms
         self._min_distance  = _cfg.get('min_distance')

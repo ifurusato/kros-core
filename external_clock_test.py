@@ -21,23 +21,20 @@ _log = Logger('ext-clock-test', Level.INFO)
 _ext_clock    = None
 _x_modulo     = 1
 _x_counter    = itertools.count()
-_x_millis     = lambda: int(round(time.time() * 1000))
-_x_start_time = _x_millis()
+_x_start_time = time.monotonic()
 
 # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-#def ext_callback_method(*args):
-def ext_callback_method(gpio, level, tick):
+def ext_callback_method():
     global _x_start_time
     _count = next(_x_counter)
     if _count % _x_modulo == 0.0:
-        _now = _x_millis()
+        _now = time.monotonic()
         _elapsed = _now - _x_start_time
         _x_start_time = _now
 #       gpio  = args[0]
 #       level = args[1]
 #       tick  = args[2]
-        print(Fore.BLUE + 'external callback; gpio: {}; level: {}; tick: {};\t'.format(gpio, level, tick, _elapsed) 
-                + Fore.YELLOW + ' {:6.3f}ms elapsed.'.format(_elapsed) + Style.RESET_ALL)
+        print(Fore.BLUE + 'external callback;\t' + Fore.YELLOW + ' {:6.3f}ms elapsed.'.format(_elapsed) + Style.RESET_ALL)
 
 # main ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
