@@ -46,8 +46,8 @@ class ExternalClock(Component):
         _cfg = config['kros'].get('hardware').get('external_clock')
         self.__callbacks      = []
         self.__slow_callbacks = []
-        self._modulo          = 10
-        self._slow_modulo     = 200 # 100: every 10 ticks 2Hz; 200: 1Hz; 
+        self._modulo          = 1
+        self._slow_modulo     = 20 # 100: every 10 ticks 2Hz; 200: 1Hz; 
         self._counter         = itertools.count()
         self._millis          = lambda: int(round(time.time() * 1000))
         self._last_time      = self._millis()
@@ -91,13 +91,13 @@ class ExternalClock(Component):
                 if _count % self._slow_modulo == 0.0:
                     for callback in self.__slow_callbacks:
                         callback()
-                    _slow_elapsed = _now - self._last_slow_time
-                    self._last_slow_time = _now
+#                   _slow_elapsed = _now - self._last_slow_time
+#                   self._last_slow_time = _now
 #                   self._log.info(Fore.MAGENTA + 'slow tick: {:6.3f}s elapsed.'.format(_slow_elapsed / 1000.0))
                 _elapsed = _now - self._last_time
                 self._last_time = _now
         else:
-            self._log.warning('external clock disabled: {:6.3f}ms elapsed.')
+            self._log.warning('external clock disabled: {:5.2f}ms elapsed.')
             pass
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈

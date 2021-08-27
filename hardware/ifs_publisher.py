@@ -74,7 +74,10 @@ class IfsPublisher(Publisher):
         self._log.info('starting ifs listener loop:\t' + Fore.YELLOW + 'type \'?\' for help, \'q\' or Ctrl-C to exit.')
         while f_is_enabled():
             _count = next(self._counter)
-            _message = self._ifs.poll_center_infrared()
+            _message = self._ifs.poll_bumpers()
+            if not _message:
+                _messages = self._ifs.poll_center_infrared()
+FIXME
             if _message is not None:
                 await Publisher.publish(self, _message)
 #               if self._ifs_level != Level.DEBUG:

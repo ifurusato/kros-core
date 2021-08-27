@@ -8,6 +8,7 @@
 
 import pigpio
 import itertools
+from datetime import datetime as dt
 import os, sys, signal, time
 from colorama import init, Fore, Style
 init()
@@ -19,22 +20,29 @@ from hardware.external_clock import ExternalClock
 
 _log = Logger('ext-clock-test', Level.INFO)
 _ext_clock    = None
-_x_modulo     = 1
+_modulo       = 1
+_slow_modulo  = 1
 _x_counter    = itertools.count()
-_x_start_time = time.monotonic()
+_timestamp    = dt.now()
+_slow_timestamp    = dt.now()
 
 # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 def ext_callback_method():
-    global _x_start_time
+    global _timestamp
     _count = next(_x_counter)
-    if _count % _x_modulo == 0.0:
-        _now = time.monotonic()
-        _elapsed = _now - _x_start_time
-        _x_start_time = _now
-#       gpio  = args[0]
-#       level = args[1]
-#       tick  = args[2]
-        print(Fore.BLUE + 'external callback;\t' + Fore.YELLOW + ' {:6.3f}ms elapsed.'.format(_elapsed) + Style.RESET_ALL)
+    if _count % _modulo == 0.0:
+        _elapsed_ms = (dt.now() - _timestamp).total_seconds() * 1000.0
+        print(Fore.BLUE + 'external callback;\t' + Fore.YELLOW + ' {:7.4f}ms elapsed.'.format(_elapsed_ms) + Style.RESET_ALL)
+        _timestamp = dt.now()
+
+# ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+def ext_slow_callback_method():
+    global _slow_timestamp
+    _count = next(_x_counter)
+    if _count % _slow_modulo == 0.0:
+        _elapsed_ms = (dt.now() - _slow_timestamp).total_seconds() * 1000.0
+        print(Fore.GREEN + 'external slow callback;\t' + Fore.YELLOW + ' {:7.4f}ms elapsed.'.format(_elapsed_ms) + Style.RESET_ALL)
+        _slow_timestamp = dt.now()
 
 # main ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
@@ -50,7 +58,9 @@ def main():
 
 #       _pin = 6
 #       _ext_clock = ExternalClock(_config)
-        _ext_clock = ExternalClock(_config, ext_callback_method)
+        _ext_clock = ExternalClock(_config)
+        _ext_clock.add_callback(ext_callback_method)
+        _ext_clock.add_slow_callback(ext_slow_callback_method)
         _ext_clock.enable()
 
         while True:

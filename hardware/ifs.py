@@ -154,7 +154,7 @@ class IntegratedFrontSensor(Component):
             self._log.info(Fore.GREEN + 'adding new message for BUMPER_STBD event.')
             _stbd_bmp_message = self._message_factory.create_message(Event.BUMPER_STBD, True)
 
-        return [_port_bmp_message, _cntr_bmp_message, _stbd_bmp_message]
+        return [_port_bmp_message, _cntr_bmp_message, _stbd_bmp_message] if _port_bmp_message or _cntr_bmp_message or _stbd_bmp_message else None
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     # Group 1: the center infrared sensor
