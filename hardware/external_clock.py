@@ -49,8 +49,9 @@ class ExternalClock(Component):
         self._slow_modulo     = 20 # 100: every 10 ticks 2Hz; 200: 1Hz; 
         self._counter         = itertools.count()
         self._millis          = lambda: int(round(time.time() * 1000))
-        self._last_time      = self._millis()
-        self._last_slow_time = self._millis()
+        self._last_time       = self._millis()
+        self._last_slow_time  = self._millis()
+        self._int_callback    = None
         _pin = _cfg.get('pin')
         self._log.info('ready.')
 
@@ -62,7 +63,7 @@ class ExternalClock(Component):
      # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def enable(self):
         Component.enable(self)
-        if enabled:
+        if self.enabled:
             if not self._initd:
                 try:
                     self._log.info('importing pigpio...')
