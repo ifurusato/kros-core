@@ -51,7 +51,7 @@ def test_ioe():
         if _show_ir:
             _ir_port_side_value = _ioe.get_raw_port_side_ir_value() 
             _ir_port_value      = _ioe.get_raw_port_ir_value()
-            _ir_cntr_value      = _ioe.get_raw_center_ir_value() 
+            _ir_cntr_value      = _ioe.get_raw_cntr_ir_value() 
             _ir_stbd_value      = _ioe.get_raw_stbd_ir_value()
             _ir_stbd_side_value = _ioe.get_raw_stbd_side_ir_value()
             _log.info(Fore.RED   + 'IR {:8.5f}\t'.format(_ir_port_side_value) \
@@ -62,7 +62,7 @@ def test_ioe():
 #       # bumpers ..................................................................
         if _show_bmp:
             _bmp_port_value     = _ioe.get_raw_port_bmp_value()
-            _bmp_cntr_value     = _ioe.get_raw_center_bmp_value()
+            _bmp_cntr_value     = _ioe.get_raw_cntr_bmp_value()
             _bmp_stbd_value     = _ioe.get_raw_stbd_bmp_value()
 #           if _bmp_port_value == 0:
 #               _bmp_port_triggered = True

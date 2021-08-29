@@ -30,13 +30,13 @@ class MockIoExpander():
         self._log = Logger('mock-ioe', level)
         self._counter = itertools.count()
         _count = next(self._counter) # gets us above zero
-        self._center_value = 255.0
+        self._cntr_value = 255.0
         # copied from IoExpander init
         _config = config['kros'].get('io_expander')
         # infrared
         self._port_side_ir_pin = _config.get('port_side_ir_pin')  # pin connected to port side infrared
         self._port_ir_pin      = _config.get('port_ir_pin')       # pin connected to port infrared
-        self._center_ir_pin    = _config.get('center_ir_pin')     # pin connected to center infrared
+        self._cntr_ir_pin      = _config.get('cntr_ir_pin')       # pin connected to center infrared
         self._stbd_ir_pin      = _config.get('stbd_ir_pin')       # pin connected to starboard infrared
         self._stbd_side_ir_pin = _config.get('stbd_side_ir_pin')  # pin connected to starboard side infrared
         # moth/anti-moth
@@ -44,7 +44,7 @@ class MockIoExpander():
         self._stbd_moth_pin    = _config.get('stbd_moth_pin')     # pin connected to starboard moth sensor
         # bumpers
         self._port_bmp_pin     = _config.get('port_bmp_pin')      # pin connected to port bumper
-        self._cntr_bmp_pin     = _config.get('center_bmp_pin')    # pin connected to center bumper
+        self._cntr_bmp_pin     = _config.get('cntr_bmp_pin')      # pin connected to center bumper
         self._stbd_bmp_pin     = _config.get('stbd_bmp_pin')      # pin connected to starboard bumper
         self._log.info('ready.')
 
@@ -60,11 +60,11 @@ class MockIoExpander():
                 _value = random.randint(0, 50) + 205
             elif pin == self._port_ir_pin: # random analog value
                 _value = random.randint(0, 50) + 205
-            elif pin == self._center_ir_pin: # decrement center IR each time called by 22
-                self._center_value -= 22.0
-                if self._center_value <= 50.0:
-                    self._center_value = 255.0
-                _value = self._center_value
+            elif pin == self._cntr_ir_pin: # decrement center IR each time called by 22
+                self._cntr_value -= 22.0
+                if self._cntr_value <= 50.0:
+                    self._cntr_value = 255.0
+                _value = self._cntr_value
             elif pin == self._stbd_ir_pin: # random analog value
                 _value = random.randint(0, 50) + 205
             elif pin == self._stbd_side_ir_pin: # random analog value

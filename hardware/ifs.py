@@ -116,7 +116,7 @@ class IntegratedFrontSensor(Component):
         '''
         Polls the center bumper, returning True if triggered.
         '''
-        return self._io_expander.get_raw_center_bmp_value() == 0
+        return self._io_expander.get_raw_cntr_bmp_value() == 0
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def poll_stbd_bumper(self):
@@ -158,13 +158,13 @@ class IntegratedFrontSensor(Component):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     # Group 1: the center infrared sensor
-    def poll_center_infrared(self):
+    def poll_cntr_infrared(self):
         '''
         Polls the center infrared sensor, returning the value or None if nothing
         is within range.
         '''
         if self._io_expander.is_active:
-            _cntr_ir_data = self._io_expander.get_center_ir_value()
+            _cntr_ir_data = self._io_expander.get_cntr_ir_value()
             if _cntr_ir_data > self._cntr_raw_min_trigger:
 #               self._log.info(Fore.BLUE + 'ANALOG IR CENTER:\t' + (Fore.RED if (_cntr_ir_data > 100.0) else Fore.YELLOW)
 #                       + Style.BRIGHT + '{:d} exceeds trigger of {:d}'.format(_cntr_ir_data, self._cntr_raw_min_trigger)

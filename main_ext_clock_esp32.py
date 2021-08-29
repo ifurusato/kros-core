@@ -7,8 +7,11 @@
 # author:   Murray Altheim
 # created:  2021-08-26
 # modified: 2021-08-27
-
-from machine import SPI, Pin
+#
+from machine import Timer
+from machine import Pin
+from machine import SPI
+#from machine import PWM
 import tinypico as TinyPICO
 from dotstar import DotStar
 import time, gc
@@ -47,12 +50,23 @@ for j in range(0, 3):
     dotstar[0] = COLOR_BLACK
     time.sleep_ms(333)
 
-b = False
-p4 = Pin(4, Pin.OUT)
-while True:
-    b = not b
-    p4.value(b)
-#   time.sleep_ms(50) 
-    time.sleep_us(50000) # 50ms = 50000us
+
+# now the raison d'etre ..........................
+
+_pin = Pin(4, Pin.OUT)
+
+def tick():
+    global _pin
+    if _pin.value():
+        _pin.value(0)
+    else:
+        _pin.value(1)
+
+# some implementations have Pin.toggle(), some don't!
+_timer = Timer(1)
+_timer.init(period=50, mode=Timer.PERIODIC, callback=lambda n: tick())
+#_timer.init(period=50, mode=Timer.PERIODIC, callback=lambda n: _pin.toggle())
+
+#_pwm = PWM(_pin, freq=200, duty_u16=32767)
 
 #EOF

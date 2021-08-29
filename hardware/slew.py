@@ -213,6 +213,7 @@ class SlewRate(Enum): # tested to 50.0 velocity:
     NORMAL           = ( 4,   0.10,   0.58, 00.0050 ) # 1.0 sec
     FAST             = ( 5,   0.25,   0.68, 00.0100 ) # 0.6 sec
     VERY_FAST        = ( 6,   0.50,   0.90, 00.0200 ) # 0.5 sec
+    EXTREMELY_FAST   = ( 7,   0.95,   0.90, 00.1000 ) # 0.9 sec
 
     def __new__(cls, *args, **kwds):
         obj = object.__new__(cls)

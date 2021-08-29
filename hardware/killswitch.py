@@ -42,11 +42,12 @@ class KillSwitch(Component):
         self._pin       = self._config.get('pin')
         self._kros      = kros
         self._pi        = None
+        self._initd     = False
         self._triggered = False
         self._log.info('ready.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def callback_method(self, gpio, level, tick):
+    def _callback_method(self, gpio, level, tick):
         if not self._triggered:
             self._triggered = True
             self._log.info('killswitch triggered on GPIO pin {}; logic level: {}; ticks: {}'.format(gpio, level, tick))
@@ -60,16 +61,20 @@ class KillSwitch(Component):
     def enable(self):
         Component.enable(self)
         if self.enabled:
-            self._log.info('enabling killswitch...')
-            try:
-                self._pi = pigpio.pi()
-                if not self._pi.connected:
-                    raise Exception('unable to establish connection to Pi.')
-                self._pi.set_mode(gpio=self._pin, mode=pigpio.INPUT) # GPIO 12 as input
-                _cb1 = self._pi.callback(self._pin, pigpio.FALLING_EDGE, self.callback_method)
-                self._log.info('configured kill switch callback on pin {:d}.'.format(self._pin))
-            except Exception as e:
-                self._log.error('unable to enable kill switch: {}'.format(e))
+            if not self._initd:
+                # establish pigpio interrupts for kill switch
+                self._log.info('enabling killswitch...')
+                try:
+                    self._pi = pigpio.pi()
+                    if not self._pi.connected:
+                        raise Exception('unable to establish connection to Pi.')
+                    self._pi.set_mode(gpio=self._pin, mode=pigpio.INPUT) # GPIO 12 as input
+                    _cb1 = self._pi.callback(self._pin, pigpio.FALLING_EDGE, self._callback_method)
+                    self._log.info('configured kill switch callback on pin {:d}.'.format(self._pin))
+                except Exception as e:
+                    self._log.error('unable to enable kill switch: {}'.format(e))
+                finally:
+                    self._initd = True
         else:
             self._log.warning('already enabled.')
 

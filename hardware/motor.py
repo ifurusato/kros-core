@@ -207,7 +207,17 @@ class Motor(Component):
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def velocity(self):
+        '''
+        Return the velocity of this Motor as a value.
+        '''
         return self._velocity.value
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def get_velocity(self):
+        '''
+        Return the Velocity object for this Motor.
+        '''
+        return self._velocity
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
@@ -222,6 +232,7 @@ class Motor(Component):
         '''
         Set the target velocity of the Motor.
         '''
+        self._log.info('set target velocity: {:5.2f} of {} motor.'.format(target_velocity, self._orientation.name))
         if not isinstance(target_velocity, float):
             raise ValueError('expected float, not {}'.format(type(target_velocity)))
         _count = next(self._counter)

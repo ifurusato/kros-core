@@ -87,6 +87,7 @@ class MotorController(Component):
         self._halt_slew_rate       = SlewRate.from_string(_cfg.get('halt_rate'))
         self._log.info('halt rate:\t{}'.format(self._halt_slew_rate.name))
         # slew rate for slower braking behaviour
+        self._emergency_slew_rate  = SlewRate.EXTREMELY_FAST
         self._brake_slew_rate      = SlewRate.from_string(_cfg.get('brake_rate'))
         self._log.info('brake rate:\t{}'.format(self._brake_slew_rate.name))
         self._spin_speed           = Speed.from_string(_cfg.get('spin_speed')) # motor speed when spinning
@@ -486,16 +487,24 @@ class MotorController(Component):
         _event = payload.event
         _value = payload.value
         if _event is Event.BUMPER_PORT:
-            self._log.info('BUMPER PORT.')
-            self.halt()
+            self._log.info(Fore.RED + 'BUMPER PORT.')
+            self.emergency_stop()
+            self.backup_cm(10)
         elif _event is Event.BUMPER_CNTR:
-            self._log.info('BUMPER CNTR.')
-            self.halt()
+            self._log.info(Fore.BLUE + 'BUMPER CNTR.')
+            self.emergency_stop()
+            self.backup_cm(10)
         elif _event is Event.BUMPER_STBD:
-            self._log.info('BUMPER STBD.')
-            self.halt()
+            self._log.info(Fore.GREEN + 'BUMPER STBD.')
+            self.emergency_stop()
+            self.backup_cm(10)
         else:
             raise ValueError('unrecognised bumper event {}'.format(_event.label))
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def  backup_cm(dist_cm):
+        pass
+
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def get_motor(self, orientation):
@@ -617,15 +626,7 @@ class MotorController(Component):
                     self._port_motor.stop()
                     self._stbd_motor.stop()
             else:
-                self._log.info('stopping very hard...')
-                self._reset_slew_rate()
-                self._port_motor.target_velocity = 0.0
-                self._stbd_motor.target_velocity = 0.0
-                # we rely on this ultimately
-                self._port_motor.stop()
-                self._stbd_motor.stop()
-                self._port_motor.off()
-                self._stbd_motor.off()
+                self.emergency_stop()
             self._log.info('stopped.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -649,8 +650,7 @@ class MotorController(Component):
                     self._stbd_motor.target_velocity = 0.0
             else:
                 self._log.info('🌞 halting very hard...')
-                self._port_motor.stop()
-                self._stbd_motor.stop()
+                self.emergency_stop()
             self._log.info('halted.')
 #       self._reset_slew_rate()
 
@@ -676,10 +676,23 @@ class MotorController(Component):
                     self._stbd_motor.target_velocity = 0.0
             else:
                 self._log.info('🌞 braking very hard...')
-                self._port_motor.stop()
-                self._stbd_motor.stop()
+                self.emergency_stop()
             self._log.info('braked.')
 #       self._reset_slew_rate()
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def emergency_stop(self):
+        self._log.info('emergency stop...')
+        self._set_slew_rate(self._emergency_slew_rate)
+        self._port_motor.target_velocity = 0.0
+        self._stbd_motor.target_velocity = 0.0
+        # we rely on this ultimately
+#       self._port_motor.stop()
+#       self._stbd_motor.stop()
+#       self._port_motor.off()
+#       self._stbd_motor.off()
+#       self._reset_slew_rate()
+        self._log.info('emergency stopped.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _set_slew_rate(self, slew_rate):

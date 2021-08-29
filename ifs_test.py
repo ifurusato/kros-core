@@ -55,7 +55,7 @@ def test_ifs_publisher():
             # ..............................................
             _stbd_bmp = _ifs.poll_stbd_bumper()
 
-#           _center = _ifs.poll_center_infrared()
+#           _center = _ifs.poll_cntr_infrared()
 #           if _center:
 #               _log.info(Fore.YELLOW + 'response: {}'.format(_center))
 #           else:

@@ -11,7 +11,7 @@ kros:
     use_external_clock:               True       # if True use external clock, ignoring loop delay value
     component:                                   # enable specific publish/subscribe components
         enable_killswitch:            True       # kill switch
-        enable_behaviours:            True       # enable BehaviourManager (Behaviours enabled individually)
+        enable_behaviours:           False       # enable BehaviourManager (Behaviours enabled individually)
         # publishers .............................
         enable_ifs_publisher:         True       # enable Integrated Front Sensor publisher
         enable_event_publisher:       True       # keyboard robot simulator (kinda necessary for running CLI)
@@ -21,7 +21,7 @@ kros:
         enable_system_subscriber:     True       # system events subscriber
         enable_motor_subscriber:      True       # motor events subscriber
         enable_bumper_subscriber:     True       # bumper events subscriber
-        enable_infrared_subscriber:  False       # infrared events subscriber
+        enable_infrared_subscriber:   True       # infrared events subscriber
     behaviour:
         enable_avoid_behaviour:      False       # enable avoidance behaviour
         enable_roam_behaviour:        True       # enable roam behaviour
@@ -44,6 +44,10 @@ kros:
         idle:
             idle_threshold_sec:      10          # how many seconds before we trigger an idle behaviour
             idle_loop_delay_sec:      1.0        # main loop delay in seconds
+        travel:
+            accel_range_cm:          25.0        # the distance used for acceleration and deceleration (cm)
+            cruising_speed:         'SLOW'       # cruising speed (recovery speed)
+            targeting_speed:   'DEAD_SLOW'       # low velocity from which we're prepared to immediately halt upon reaching a step target 
     message_bus:
         max_age_ms:                  20.0        # maximum age of a message before expiry
         publish_delay_sec:            0.05       # publishing delay loop
@@ -76,7 +80,8 @@ kros:
             low_5v_threshold:         4.75       # really 4.82v
             loop_delay_sec:          30          # sample loop delay (sec)
         external_clock:
-            pin:                     21          # pin connected to external clock source
+#           pin:                     21          # pin connected to external clock source from TinyPICO
+            pin:                      6          # pin connected to external clock source from Itsy Bitsy RP2040
         killswitch:
              pin:                     7          # pin connected to hardware kill switch
     geometry:                                    # robot geometry (e.g., KR01)
@@ -165,11 +170,11 @@ kros:
     io_expander:
         port_side_ir_pin:            8           # pin connected to port side infrared
         port_ir_pin:                10           # pin connected to port infrared
-        center_ir_pin:              11           # pin connected to center infrared
+        cntr_ir_pin:                11           # pin connected to center infrared
         stbd_ir_pin:                 9           # pin connected to starboard infrared
         stbd_side_ir_pin:            7           # pin connected to starboard side infrared
         port_bmp_pin:                6           # pin connected to port bumper
-        center_bmp_pin:              4           # pin connected to center bumper
+        cntr_bmp_pin:                4           # pin connected to center bumper
         stbd_bmp_pin:                5           # pin connected to starboard bumper
         port_moth_pin:              13           # pin connected to port moth sensor
         stbd_moth_pin:              14           # pin connected to starboard moth sensor
@@ -183,7 +188,7 @@ kros:
         cntr_raw_min_trigger:        40          # below this raw value we don't execute callback on center IR
         oblq_raw_min_trigger:        60          # below this raw value we don't execute callback on PORT & STBD IRs
         side_raw_min_trigger:        60          # below this raw value we don't execute callback on side IRs
-        cntr_trigger_distance_cm:    90.0        # center analog IR sensor max distance before triggering
+        cntr_trigger_distance_cm:    60.0        # center analog IR sensor max distance before triggering
         oblq_trigger_distance_cm:    70.0        # port or starboard oblique analog IR sensor max distance before triggering
         side_trigger_distance_cm:    70.0        # port or starboard side analog IR sensor max distance before triggering
     gamepad:
@@ -194,6 +199,11 @@ kros:
     publisher:
         integrated_front_sensor:
             loop_freq_hz:            20          # polling loop frequency (Hz)
+            debounce_ms:             50          # switch debounce time in milliseconds
+            port_bmp_pin:            21          # GPIO pin connected to port bumper
+            cntr_bmp_pin:            20          # GPIO pin connected to center bumper
+            stbd_bmp_pin:            16          # GPIO pin connected to starboard bumper
+            one_shot:             False          # if True then require reset before retriggering
     mock:
         potentiometer:
             loop_delay_sec:           0.05       # loop delay
@@ -406,12 +416,12 @@ devices:
 #        led_pin:       21                        # pin connected to status LED
 ##   bumper:
 ##       port_pin:      21                        # pin connected to port bumper
-##       center_pin:    19                        # pin connected to center bumper
+##       cntr_pin:      19                        # pin connected to center bumper
 ##       starboard_pin: 13                        # pin connected to starboard bumper
 ##       upper_pin:      7                        # pin connected to upper bumper
 ##   infrared:
 ##       port_pin:           6                    # pin connected to port infrared
-##       center_pin:         0                    # pin connected to center infrared (use zero if using LR IR)
+##       cntr_pin:           0                    # pin connected to center infrared (use zero if using LR IR)
 ##       stbd_pin:          16                    # pin connected to starboard infrared
 ##       port_side_pin:      5                    # pin connected to port side infrared
 ##       stbd_side_pin:     12                    # pin connected to starboard side infrared
