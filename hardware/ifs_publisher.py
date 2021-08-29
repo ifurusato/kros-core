@@ -15,7 +15,6 @@
 import sys, time, itertools, random, traceback
 import asyncio
 import concurrent.futures
-import pigpio
 from datetime import datetime as dt
 from colorama import init, Fore, Style
 init()
@@ -85,9 +84,11 @@ class IfsPublisher(Publisher):
         Publisher.enable(self)
         if self.enabled:
             if not self._initd:
-                # establish pigpio interrupts for bumper pins
-                self._log.info('enabling killswitch...')
                 try:
+                    self._log.info('importing pigpio ...')
+                    import pigpio
+                    # establish pigpio interrupts for bumper pins
+                    self._log.info('enabling bumper interrupts...')
                     self._pi = pigpio.pi()
                     if not self._pi.connected:
                         raise Exception('unable to establish connection to Pi.')
@@ -104,10 +105,9 @@ class IfsPublisher(Publisher):
                     _stbd_callback = self._pi.callback(self._stbd_bmp_pin, pigpio.FALLING_EDGE, self._stbd_callback_method)
                     self._log.info('configured stbd bumper callback on pin {:d}.'.format(self._stbd_bmp_pin))
                 except Exception as e:
-                    self._log.error('unable to enable kill switch: {}'.format(e))
+                    self._log.warning('error configuring bumper interrupts: {}'.format(e))
                 finally:
                     self._initd = True
-
             if self._message_bus.get_task_by_name(IfsPublisher._LISTENER_LOOP_NAME):
                 self._log.warning('already enabled.')
             else:

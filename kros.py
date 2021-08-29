@@ -153,6 +153,16 @@ class KROS(Component, FiniteStateMachine):
         _i2c_scanner.print_device_list()
         self._addresses = _i2c_scanner.get_int_addresses()
 
+        # check for availability of pigpio .....................................
+
+        try:
+            import pigpio
+            _pigpio_available = True
+            self._log.info('pigpio library available.')
+        except Exception:
+            _pigpio_available = False
+            self._log.warning('pigpio library not available; will attempt to use mocks where available.')
+
         # establish basic subsumption components ...............................
 
         self._log.info('configure subsumption components...')
@@ -166,11 +176,13 @@ class KROS(Component, FiniteStateMachine):
     #    _message_bus.register_controller(_gp_controller)
 
         self._use_external_clock = self._config['kros'].get('use_external_clock')
-        if self._use_external_clock:
+        if self._use_external_clock and _pigpio_available:
             self._log.info('configuring external clock callback...')
 #           self._ext_clock = ExternalClock(self._config, self._ext_callback_method)
             self._ext_clock = ExternalClock(self._config, None, self._level)
             self._ext_clock.enable()
+        else:
+            self._use_external_clock = False
 
         # add motor controller ................................................
         self._log.info('configure motor controller...')
@@ -207,7 +219,7 @@ class KROS(Component, FiniteStateMachine):
     #   _message_bus.print_publishers()
 
         _enable_killswitch= _cfg.get('enable_killswitch') or 'k' in _pubs
-        if _enable_killswitch:
+        if _enable_killswitch and _pigpio_available:
             self._killswitch = KillSwitch(self._config, self, level=self._level)
 
         # create subscribers ...................................................

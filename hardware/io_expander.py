@@ -134,10 +134,10 @@ class IoExpander(Component):
 #           self._log.warning("This script requires the pimoroni-ioexpander module\nInstall with: pip3 install --user pimoroni-ioexpander [1]")
 #           self._ioe = None
         except Exception as e:
-            self._log.warning('error configuring IOExpander: {}'.format(e))
-            sys.exit(1)
-#           self._log.info('using mock IO Expander.')
-#           self._ioe = MockIoExpander(config, level)
+#           self._log.warning('error configuring IOExpander: {}'.format(e))
+#           sys.exit(1)
+            self._log.warning('using mock IO Expander: error configuring: {}'.format(e))
+            self._ioe = MockIoExpander(config, level)
         self._log.info('ready.')
    
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈

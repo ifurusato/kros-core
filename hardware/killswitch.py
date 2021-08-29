@@ -10,7 +10,6 @@
 # modified: 2021-08-18
 #
 
-import pigpio
 from enum import Enum
 from colorama import init, Fore, Style
 init()
@@ -28,6 +27,8 @@ class KillSwitch(Component):
     pin when enabled and just call a kill() method on KROS when triggered.
 
     This should be closed upon completion so the Pi resources are freed up.
+
+    Lazily-imports and configures pigpio when the enabled.
 
     :param config:    the application configuration
     :param kros:      the KROS application
@@ -62,9 +63,11 @@ class KillSwitch(Component):
         Component.enable(self)
         if self.enabled:
             if not self._initd:
-                # establish pigpio interrupts for kill switch
-                self._log.info('enabling killswitch...')
                 try:
+                    self._log.info('importing pigpio...')
+                    import pigpio
+                    # establish pigpio interrupts for kill switch
+                    self._log.info('enabling killswitch...')
                     self._pi = pigpio.pi()
                     if not self._pi.connected:
                         raise Exception('unable to establish connection to Pi.')
@@ -72,7 +75,7 @@ class KillSwitch(Component):
                     _cb1 = self._pi.callback(self._pin, pigpio.FALLING_EDGE, self._callback_method)
                     self._log.info('configured kill switch callback on pin {:d}.'.format(self._pin))
                 except Exception as e:
-                    self._log.error('unable to enable kill switch: {}'.format(e))
+                    self._log.warning('no kill switch available: error during configuration: {}'.format(e))
                 finally:
                     self._initd = True
         else:

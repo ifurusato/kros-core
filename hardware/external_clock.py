@@ -10,7 +10,6 @@
 # see the LICENSE file included as part of this package.
 #
 
-import pigpio
 import itertools
 import os, sys, signal, time
 from colorama import init, Fore, Style
@@ -31,6 +30,8 @@ class ExternalClock(Component):
 
     Make sure to call close() when finished to free up the Pi resources.
 
+    Lazily-imports and configures pigpio when the enabled.
+
     :param config:     The application configuration.
     :param callback:   the optional callback method. 
     :param level:      the logging level.
@@ -38,12 +39,10 @@ class ExternalClock(Component):
     def __init__(self, config, callback=None, level=Level.INFO):
         self._log = Logger('ext-clock', level)
         Component.__init__(self, self._log, suppressed=False, enabled=True)
-        self._pi = pigpio.pi()
-        if not self._pi.connected:
-            raise Exception('unable to establish connection to Pi.')
         if config is None:
             raise ValueError('no configuration provided.')
         _cfg = config['kros'].get('hardware').get('external_clock')
+        self._initd           = False
         self.__callbacks      = []
         self.__slow_callbacks = []
         self._modulo          = 1
@@ -53,17 +52,36 @@ class ExternalClock(Component):
         self._last_time      = self._millis()
         self._last_slow_time = self._millis()
         _pin = _cfg.get('pin')
-        self._log.info('establishing callback on pin {:d}.'.format(_pin))
-        self._pi.set_mode(gpio=_pin, mode=pigpio.INPUT) # GPIO 12 as input
-        self._int_callback = self._pi.callback(_pin, pigpio.EITHER_EDGE, self._callback_method)
-        if callback:
-            self.add_callback(callback)
         self._log.info('ready.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def name(self):
         return 'ext-clock'
+
+     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def enable(self):
+        Component.enable(self)
+        if enabled:
+            if not self._initd:
+                try:
+                    self._log.info('importing pigpio...')
+                    import pigpio
+                    self._pi = pigpio.pi()
+                    if not self._pi.connected:
+                        raise Exception('unable to establish connection to Pi.')
+                    self._log.info('establishing callback on pin {:d}.'.format(_pin))
+                    self._pi.set_mode(gpio=_pin, mode=pigpio.INPUT) # GPIO 12 as input
+                    self._int_callback = self._pi.callback(_pin, pigpio.EITHER_EDGE, self._callback_method)
+                    if callback:
+                        self.add_callback(callback)
+                    self._log.info('configured external clock.')
+                except Exception as e:
+                    self._log.error('unable to enable external clock: {}'.format(e))
+                finally:
+                    self._initd = True
+        else:
+            self._log.warning('unable to enable external clock.')
 
      # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def add_callback(self, callback):
