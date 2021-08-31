@@ -529,7 +529,7 @@ def main(argv):
                 _kros.start()
             # kros is now running...
     except KeyboardInterrupt:
-        print(Style.BRIGHT + 'caught Ctrl-C; exiting...')
+        print(Style.BRIGHT + 'caught Ctrl-C; exiting...' + Style.RESET_ALL)
     except Exception:
         print(Fore.RED + Style.BRIGHT + 'error starting kros: {}'.format(traceback.format_exc()) + Style.RESET_ALL)
     finally:

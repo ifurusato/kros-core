@@ -235,6 +235,8 @@ devices:
     0x15: 'ThunderBorg'
     0x16: 'RGB Encoder'
     0x18: 'IO Expander'
+    0x22: 'Picon Zero 1'
+    0x23: 'Picon Zero 2'
     0x28: 'BNO055'
     0x29: 'VL53L1X'
     0x36: 'UltraBorg'

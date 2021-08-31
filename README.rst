@@ -80,6 +80,26 @@ Alternately, use the setup.py script to install dependencies. As this is a work
 in progress you may find error messages referring to missing libraries; if so,
 you will need to install these manually. 
 
+Also via apt::
+
+    sudo apt-get install pigpio python-pigpio python3-pigpio
+
+    sudo /usr/local/bin/python3.8 -m pip install --upgrade pip
+
+Once pigpio is installed you must start its daemon::
+
+    sudo systemctl start pigpiod 
+
+Rather than do this every time you restart, it's easier to enable it to start
+automatically on boot::
+
+    sudo systemctl enable pigpiod
+
+
+To see the status fo the pigpio daemon::
+
+    sudo systemctl status pigpiod 
+
 
 Installation
 ************
