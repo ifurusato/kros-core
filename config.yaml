@@ -188,7 +188,7 @@ kros:
         cntr_raw_min_trigger:        40          # below this raw value we don't execute callback on center IR
         oblq_raw_min_trigger:        60          # below this raw value we don't execute callback on PORT & STBD IRs
         side_raw_min_trigger:        60          # below this raw value we don't execute callback on side IRs
-        cntr_trigger_distance_cm:    60.0        # center analog IR sensor max distance before triggering
+        cntr_trigger_distance_cm:    50.0        # center analog IR sensor max distance before triggering
         oblq_trigger_distance_cm:    70.0        # port or starboard oblique analog IR sensor max distance before triggering
         side_trigger_distance_cm:    70.0        # port or starboard side analog IR sensor max distance before triggering
     gamepad:

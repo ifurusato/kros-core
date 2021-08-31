@@ -449,11 +449,11 @@ class EventPublisher(Publisher):
     def _toggle_motors(self):
         if self._motor_ctrl:
             self._log.info('toggle motors...')
-            if self._motor_ctrl.loop_is_running():
+            if self._motor_ctrl.loop_is_running:
                 self._motor_ctrl.stop_loop()
             else:
                 self._motor_ctrl.start_loop()
-            self._log.debug('loop is running? ' + Fore.YELLOW + '{}'.format(self._motor_ctrl.loop_is_running()))
+            self._log.debug('loop is running? ' + Fore.YELLOW + '{}'.format(self._motor_ctrl.loop_is_running))
         else:
             self._log.warning('no motors available.')
 

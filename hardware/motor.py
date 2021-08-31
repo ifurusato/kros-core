@@ -280,9 +280,11 @@ class Motor(Component):
             self.__steps = self.__steps - pulse
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    @property
     def is_in_motion(self):
         '''
-        Returns True if the motor is moving.
+        Returns True if the motor is moving, i.e., if the current power
+        setting of the motor is greater than zero.
         '''
         return self.current_power > 0.0
 

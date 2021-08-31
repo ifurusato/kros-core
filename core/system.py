@@ -36,16 +36,32 @@ class System(object):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def print_sys_info(self):
-        self._log.info('kros: \t' + Fore.YELLOW + 'state: {}; enabled: {}'.format(self._kros.state, self._kros.enabled))
-        _M = 1000000
+        self._log.info('kros:  state: ' + Fore.YELLOW + '{}  \t'.format(self._kros.state.name) \
+                + Fore.CYAN + 'enabled: ' + Fore.YELLOW + '{}'.format(self._kros.enabled))
+        # disk space ...................
+        self._log.info('root file system:')
+        _rootfs = psutil.disk_usage('/')
+        _div = float(1<<30)
+        _div = 1024.0 ** 3
+        self._log.info('  total:  \t' + Fore.YELLOW + '{:>6.2f}GB'.format(_rootfs.total / _div))
+        self._log.info('  used:   \t' + Fore.YELLOW + '{:>6.2f}GB ({}%)'.format((_rootfs.used / _div), _rootfs.percent))
+        self._log.info('  free:   \t' + Fore.YELLOW + '{:>6.2f}GB'.format(_rootfs.free / _div))
+        # memory .......................
+        _MB = 1000000
         _vm = psutil.virtual_memory()
-        self._log.info('virtual memory: \t' + Fore.YELLOW + 'total: {:4.1f}MB; available: {:4.1f}MB ({:5.2f}%); used: {:4.1f}MB; free: {:4.1f}MB'.format(\
-                _vm[0]/_M, _vm[1]/_M, _vm[2], _vm[3]/_M, _vm[4]/_M))
         # svmem(total=n, available=n, percent=n, used=n, free=n, active=n, inactive=n, buffers=n, cached=n, shared=n)
-        _sw = psutil.swap_memory()
+        self._log.info('virtual memory:')
+        self._log.info('  total:    \t' + Fore.YELLOW + '{:>6.2f}MB'.format(_vm[0]/_MB))
+        self._log.info('  available:\t' + Fore.YELLOW + '{:>6.2f}MB'.format(_vm[1]/_MB))
+        self._log.info('  used:     \t' + Fore.YELLOW + '{:>6.2f}GB ({:4.1f}%)'.format(_vm[3]/_MB, _vm[2]))
+        self._log.info('  free:     \t' + Fore.YELLOW + '{:>6.2f}GB'.format( _vm[4]/_MB))
         # sswap(total=n, used=n, free=n, percent=n, sin=n, sout=n)
-        self._log.info('swap memory:    \t' + Fore.YELLOW + 'total: {:4.1f}MB; used: {:4.1f}MB; free: {:4.1f}MB ({:5.2f}%)'.format(\
-                _sw[0]/_M, _sw[1]/_M, _sw[2]/_M, _sw[3]))
+        _sw = psutil.swap_memory()
+        self._log.info('swap memory:')
+        self._log.info('  total:  \t' + Fore.YELLOW + '{:>6.2f}MB'.format(_sw[0]/_MB))
+        self._log.info('  used:   \t' + Fore.YELLOW + '{:>6.2f}MB ({:3.1f}%)'.format(_sw[1]/_MB, _sw[3]))
+        self._log.info('  free:   \t' + Fore.YELLOW + '{:>6.2f}MB'.format(_sw[2]/_MB))
+        # CPU temperature ..............
         temperature = self.read_cpu_temperature()
         if temperature:
             self._log.info('cpu temperature:\t' + Fore.YELLOW + '{:5.2f}°C'.format(temperature))

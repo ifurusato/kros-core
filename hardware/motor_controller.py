@@ -29,6 +29,8 @@ from hardware.motor_configurer import MotorConfigurer
 from hardware.slew import SlewRate
 from hardware.motor import Motor
 
+from behave.travel import Travel # perhaps doesn't belong here
+
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class MotorController(Component):
     '''
@@ -94,12 +96,29 @@ class MotorController(Component):
         self._log.info('spin speed:\t{}'.format(self._spin_speed.name))
         self._millis               = lambda: int(round(time.time() * 1000))
         self._start_time           = self._millis()
+        # configure travel behaviour
+        self._travel = Travel(config, motor_configurer, level)
         self._log.info('motors ready.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def name(self):
         return 'motor-ctrl'
+
+#   # traveling behaviours ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+
+    def travel(self, direction, distance_cm, wait_til_stop=False):
+        '''
+        Travel a fixed distance in the indicated direction, as a ballistic
+        behaviour, then stop. Returns the number of ticks traveled for the
+        port and starboard motor, respectively.
+        '''
+        self._log.info('travel {} for {}cm, wait til stop? {}'.format(direction.label, distance_cm, wait_til_stop))
+        _result = self._travel.travel(direction, distance_cm)
+        if wait_til_stop:
+            _is_stopped = self.wait_til_stopped()
+        self._log.info('travel complete.')
+        return _result
 
 #   # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 #   def set_max_fwd_velocity(self, maximum_velocity):
@@ -118,7 +137,7 @@ class MotorController(Component):
         '''
         self._port_motor.reset_max_fwd_velocity()
         self._stbd_motor.reset_max_fwd_velocity()
-        self._log.info('🍕 reset motor speed limit.')
+        self._log.info('reset motor speed limit.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def start_loop(self):
@@ -131,7 +150,7 @@ class MotorController(Component):
         self._log.info('start motor control loop...')
         if not self.enabled:
             raise Exception('not enabled.')
-        if self.loop_is_running():
+        if self.loop_is_running:
             if self._ext_clock:
                 self._log.warning('cannot start control loop: using external clock.')
             else:
@@ -195,18 +214,31 @@ class MotorController(Component):
             self._log.warning('already disabled.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    @property
     def loop_is_running(self):
         '''
         Returns true if using an external clock or if the loop thread is alive.
         '''
-        return self._ext_clock \
+        return self._ext_clock is not None \
                 or ( self._loop_enabled and self._loop_thread != None and self._loop_thread.is_alive() )
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def print_motor_status(self):
+        '''
+        Pretty-prints the status of the motor controller and motors.
+        '''
+        # motor controller ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+
+        self._log.info('motor controller:')
+        self._log.info('  loop running:\t' + Fore.YELLOW + '{}'.format(self.loop_is_running))
+        self._log.info('  is in motion:\t' + Fore.YELLOW + '{}'.format(self.is_in_motion))
+        self._log.info('  is stopped:  \t' + Fore.YELLOW + '{}'.format(self.stopped))
+
+        # motors ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+
         self._log.info('motors:')
 
-        # port ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+        # port ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
         self._log.info(Fore.RED + '\t{}{}'.format('port',(' ' * 9))
                 + Fore.CYAN + 'power: ' + Fore.YELLOW + '{:5.2f}'.format(self._port_motor.current_power))
@@ -234,7 +266,7 @@ class MotorController(Component):
                 + Fore.CYAN + 'suppressed: '
                 + Fore.YELLOW + '{}'.format(self._port_motor.jerk_limiter.suppressed))
 
-        # starboard ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+        # starboard ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
         self._log.info(Fore.GREEN + '\t{}{}'.format('stbd',(' ' * 9)) 
                 + Fore.CYAN + 'power: ' + Fore.YELLOW + '{:5.2f}'.format(self._stbd_motor.current_power))
@@ -276,7 +308,7 @@ class MotorController(Component):
 #       self._log.debug('dispatch velocity event: {}'.format(_event.label))
         _value = payload.value
         _changed = self._last_velocity != _value
-        if not self.loop_is_running():
+        if not self.loop_is_running:
             self.start_loop()
         if _event is Event.VELOCITY:
             if _changed:
@@ -332,7 +364,7 @@ class MotorController(Component):
         if not self.enabled:
             self._log.warning('disabled: ignoring chadburn dispatch.')
             return
-        if not self.loop_is_running():
+        if not self.loop_is_running:
 #           self.start_loop()
             raise Exception('loop not running')
         self._reset_slew_rate()
@@ -341,11 +373,11 @@ class MotorController(Component):
         _value = payload.value
         _speed = _event.speed
         _direction = _event.direction
-        if _speed is not Speed.STOP and not self.loop_is_running():
+        if _speed is not Speed.STOP and not self.loop_is_running:
             self.start_loop()
         # ........
         _value = float(_speed.velocity) if _direction is Direction.AHEAD else float(-1.0 * _speed.velocity)
-        self._log.info('♈ set chadburn velocity: {} direction: {}; value: {}'.format(_speed.label, _direction.label, _value))
+        self._log.info('set chadburn velocity: {} direction: {}; value: {}'.format(_speed.label, _direction.label, _value))
         self.set_motor_velocity(Orientation.PORT, _value)
         self.set_motor_velocity(Orientation.STBD, _value)
 
@@ -363,7 +395,7 @@ class MotorController(Component):
         self._log.info('dispatch theta event: {}'.format(_event.label))
         _value = payload.value
         self._log.info('theta event: {}'.format(_event.label))
-        if not self.loop_is_running():
+        if not self.loop_is_running:
             self.start_loop()
         # ........
         if _event is Event.THETA:
@@ -502,9 +534,10 @@ class MotorController(Component):
             raise ValueError('unrecognised bumper event {}'.format(_event.label))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def  backup_cm(dist_cm):
-        pass
-
+    def backup_cm(self, dist_cm):
+        _distance_cm = 10
+        _result = self.travel(Direction.ASTERN, _distance_cm, True)
+        _log.info(Fore.MAGENTA + 'travel complete, returned: {} '.format(_result))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def get_motor(self, orientation):
@@ -712,6 +745,18 @@ class MotorController(Component):
         self._stbd_motor.slew_limiter.reset()
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def wait_til_stopped(self, timeout_sec=3):
+        '''
+        Returns either after all motors have stopped, or the timeout, whichever
+        is first. The default timeout is 3 seconds.
+        '''
+        for _count in range(timeout_sec):
+            _count += 1
+            time.sleep(1.0)
+            if self.stopped:
+                break
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def stopped(self):
         '''
@@ -720,15 +765,16 @@ class MotorController(Component):
         return self._port_motor.velocity == 0 and self._stbd_motor.velocity == 0
 
   # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    @property
     def is_in_motion(self):
         '''
-        Returns true if either motor is moving.
+        Returns true if either motor is moving, i.e., if the motor power of
+        either motor is greater than zero.
         '''
-        return self._port_motor.is_in_motion() or self._stbd_motor.is_in_motion()
+        return self._port_motor.is_in_motion or self._stbd_motor.is_in_motion
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def print_info(self, count):
-        self._log.info('motor controller:')
         if self.stopped:
             self._log.info(('[{:04d}] '.format(count) if count else '') + 'velocity: stopped.')
         else:
@@ -799,10 +845,11 @@ class MotorController(Component):
             self._log.warning('already enabled.')
         else:
             Component.enable(self)
-            if not self._ext_clock and not self.loop_is_running():
+            if not self._ext_clock and not self.loop_is_running:
                 self.start_loop()
             self._port_motor.enable()
             self._stbd_motor.enable()
+            self._travel.enable()
             self._log.info('enabled.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -815,9 +862,10 @@ class MotorController(Component):
             self.stop_loop() # stop loop thread
             Component.disable(self)
             _count = 0
-            while _count < 10 and self.is_in_motion(): # if we're moving then halt
+            while _count < 10 and self.is_in_motion: # if we're moving then halt
                 _count += 1
                 self._log.warning('[{:d}] event: motors are in motion (halting).'.format(_count))
+                self._travel.disable()
                 self._port_motor.stop()
                 self._stbd_motor.stop()
                 time.sleep(0.1)
