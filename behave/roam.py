@@ -152,6 +152,10 @@ class Roam(Behaviour):
             self._wait_count = self._wait_ticks # reset wait
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def _get_bar(self):
+        return Util.repeat('█', 4 - self._wait_count) + Util.repeat('░', self._wait_count)
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _tick(self):
         '''
         This uses a leaky integrator to set a target forward velocity after
@@ -160,10 +164,12 @@ class Roam(Behaviour):
         continually auto-trigger.
         '''
         if not self.suppressed:
-            self._log.info('tick;\twait count: {:d}; suppressed: {};\t'.format( self._wait_count, self.suppressed))
+            self._log.info('tick; wait: {} ({:d}); suppressed: {};\t'.format(self._get_bar(), self._wait_count, self.suppressed))
             # wait ten counts before trying to move
             if self._wait_count == 0:
-                self._log.info('stable.')
+                self._log.info('roaming;\t' 
+                        + Fore.RED   + 'port: {:5.2f}cm/s;\t'.format(self._port_motor.velocity)
+                        + Fore.GREEN + 'stbd: {:5.2f}cm/s'.format(self._stbd_motor.velocity))
             elif self._wait_count == 1:
                 self._log.info(' cruise triggered.')
                 self._log.info('cruise triggered at: {} ({:5.2f}cm/sec)'.format(self._cruising_speed.name, self._cruising_velocity))

@@ -25,6 +25,7 @@ from core.speed import Speed, Direction
 from core.event import Event
 from core.rate import Rate
 from core.message_bus import MessageBus
+from core.system import System
 from hardware.motor_configurer import MotorConfigurer
 from hardware.slew import SlewRate
 from hardware.motor import Motor
@@ -96,6 +97,9 @@ class MotorController(Component):
         self._log.info('spin speed:\t{}'.format(self._spin_speed.name))
         self._millis               = lambda: int(round(time.time() * 1000))
         self._start_time           = self._millis()
+        # perverse access to KROS instance
+        self._behaviour_mgr = System.kros.get_behaviour_manager()
+        self._log.info(Fore.MAGENTA + 'kros: {}'.format(type(self._kros)))
         # configure travel behaviour
         self._travel = Travel(config, motor_configurer, level)
         self._log.info('motors ready.')
@@ -537,7 +541,7 @@ class MotorController(Component):
     def backup_cm(self, dist_cm):
         _distance_cm = 10
         _result = self.travel(Direction.ASTERN, _distance_cm, True)
-        _log.info(Fore.MAGENTA + 'travel complete, returned: {} '.format(_result))
+        self._log.info(Fore.MAGENTA + 'travel complete, returned: {} '.format(_result))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def get_motor(self, orientation):
@@ -638,10 +642,10 @@ class MotorController(Component):
         '''
         Stops both motors immediately, with no slewing.
         '''
-        self._log.info('💀 stopping...')
         if self.stopped:
             self._log.warning('already stopped.')
         else:
+            self._log.info('stopping...')
             if self.loop_is_running:
                 if self._slew_limiter_enabled:
                     self._log.info('stopping soft...')

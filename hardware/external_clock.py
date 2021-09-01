@@ -52,7 +52,7 @@ class ExternalClock(Component):
         self._last_time       = self._millis()
         self._last_slow_time  = self._millis()
         self._int_callback    = None
-        _pin = _cfg.get('pin')
+        self._pin = _cfg.get('pin')
         self._log.info('ready.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -71,11 +71,10 @@ class ExternalClock(Component):
                     self._pi = pigpio.pi()
                     if not self._pi.connected:
                         raise Exception('unable to establish connection to Pi.')
-                    self._log.info('establishing callback on pin {:d}.'.format(_pin))
-                    self._pi.set_mode(gpio=_pin, mode=pigpio.INPUT) # GPIO 12 as input
-                    self._int_callback = self._pi.callback(_pin, pigpio.EITHER_EDGE, self._callback_method)
-                    if callback:
-                        self.add_callback(callback)
+                    self._log.info('establishing callback on pin {:d}.'.format(self._pin))
+                    self._pi.set_mode(gpio=self._pin, mode=pigpio.INPUT) # GPIO 12 as input
+                    self._int_callback = self._pi.callback(self._pin, pigpio.EITHER_EDGE, self._callback_method)
+#                   self.add_callback(self._int_callback)
                     self._log.info('configured external clock.')
                 except Exception as e:
                     self._log.error('unable to enable external clock: {}'.format(e))

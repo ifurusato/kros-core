@@ -40,26 +40,10 @@ class BehaviourManager(Subscriber):
         self._active_behaviour = None
         self._behaviours       = {}
 
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def _register_behaviour(self, behaviour):
-        '''
-        Register a Behaviour with the manager, referenced by its trigger
-        Event type.
-
-        This is called by the Behaviour's constructor and should not be
-        called directly.
-        '''
-        self._behaviours[behaviour.trigger_event] = behaviour
-        self.add_event(behaviour.trigger_event)
-        self._log.info(Fore.MAGENTA + 'added behaviour \'{}\' linked to trigger event \'{}\' to manager.'.format(behaviour.name, behaviour.trigger_event))
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def get_behavior_for_trigger_event(self, event):
-        '''
-        Return the behaviour corresponding to the (trigger) event type, null
-        if no such behaviour has been registered with the manager.
-        '''
-        return self._behaviours.get(event)
+#       methods = [func for func in dir(BehaviourManager) if callable(getattr(BehaviourManager, func)) and not func.startswith("__")]
+#       methods = [func for func in dir(BehaviourManager) if callable(getattr(BehaviourManager, func))]
+#       for method in methods:
+#           print(method)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def start(self):
@@ -73,23 +57,77 @@ class BehaviourManager(Subscriber):
         Subscriber.start(self)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def enable_behaviours(self):
+    def enable_all_behaviours(self):
+        '''
+        Enable all registered behaviours.
+        '''
         if not self.closed:
-            self._log.info('enable behaviours...')
+            self._log.info('enable all behaviours...')
             for _key, _behaviour in self._behaviours.items():
                 _behaviour.enable()
+                self._log.info('{} behaviour enabled.'.format(_behaviour.name))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def suppress_behaviours(self):
-        self._log.info('suppress behaviours...')
-        for _key, _behaviour in self._behaviours.items():
-            _behaviour.suppress()
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def disable_behaviours(self):
-        self._log.info('disable behaviours...')
+    def disable_all_behaviours(self):
+        '''
+        Disable all registered behaviours.
+        '''
+        self._log.info('disable all behaviours...')
         for _key, _behaviour in self._behaviours.items():
             _behaviour.disable()
+            self._log.info('{} behaviour disabled.'.format(_behaviour.name))
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def suppress_all_behaviours(self):
+        '''
+        Suppress all registered behaviours.
+        '''
+        self._log.info('suppress all behaviours...')
+        for _key, _behaviour in self._behaviours.items():
+            _behaviour.suppress()
+            self._log.info('{} behaviour suppressed.'.format(_behaviour.name))
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def release_all_behaviours(self):
+        '''
+        Release (un-suppress) all registered behaviours.
+        '''
+        if not self.closed:
+            self._log.info('release all behaviours...')
+            for _key, _behaviour in self._behaviours.items():
+                _behaviour.release()
+                self._log.info('{} behaviour released.'.format(_behaviour.name))
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def close_all_behaviours(self):
+        '''
+        Permanently close all registered behaviours. They cannot be reopened
+        or otherwise enabled after this.
+        '''
+        for _key, _behaviour in self._behaviours.items():
+            _behaviour.close()
+            self._log.info('{} behaviour closed.'.format(_behaviour.name))
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def _register_behaviour(self, behaviour):
+        '''
+        Register a Behaviour with the manager, referenced by its trigger
+        Event type.
+
+        This is called by the Behaviour's constructor and should not be
+        called directly.
+        '''
+        self._behaviours[behaviour.trigger_event] = behaviour
+        self.add_event(behaviour.trigger_event)
+        self._log.info('added behaviour \'{}\' linked to trigger event \'{}\' to manager.'.format(behaviour.name, behaviour.trigger_event))
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def _get_behavior_for_trigger_event(self, event):
+        '''
+        Return the behaviour corresponding to the (trigger) event type, null
+        if no such behaviour has been registered with the manager.
+        '''
+        return self._behaviours.get(event)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def process_message(self, message):
@@ -117,7 +155,7 @@ class BehaviourManager(Subscriber):
         if not isinstance(event, Event):
             raise ValueError('expected event argument, not {}'.format(type(event)))
         # get behaviour for event type
-        _behaviour = self.get_behavior_for_trigger_event(event)
+        _behaviour = self._get_behavior_for_trigger_event(event)
         if _behaviour is None:
             self._log.warning('cannot act: no behaviour associated with event {}, from {:d} registered behaviours ({}).'.format(
                     event.label, len(self._behaviours), self._behaviours))
@@ -168,7 +206,8 @@ class BehaviourManager(Subscriber):
         Disable the behaviour manager and all behaviours.
         '''
         self._log.debug('disable behaviour manager and all behaviours...')
-        self.disable_behaviours()
+        self.suppress_all_behaviours()
+        self.disable_all_behaviours()
         Subscriber.disable(self)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -178,7 +217,6 @@ class BehaviourManager(Subscriber):
         '''
         if not self.closed:
             Subscriber.close(self) # will call disable
-            for _key, _behaviour in self._behaviours.items():
-                _behaviour.close()
+            self.close_all_behaviours()
 
 #EOF

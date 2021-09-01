@@ -11,6 +11,7 @@
 #
 
 import time
+from datetime import datetime as dt
 from colorama import init, Fore, Style
 init()
 
@@ -22,6 +23,29 @@ class Util(object):
     def __init__(self):
         super().__init__()
         self._log = Logger('util', level)
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    @staticmethod
+    def is_true(value):
+        '''
+        Returns True if the value is a 1, a "1", "y", "yes", or "true" (with 
+        case-insensitive matching).
+        '''
+        if value:
+            if isinstance(value, int):
+                return value == 1
+            else:
+                _value = value.lower()
+                return _value == "1" or _value == "y" or _value == "yes" or _value == "true"
+        return False
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    @staticmethod
+    def get_timestamp():
+        '''
+        Return an ISO UTC timestamp.
+        '''
+        return dt.utcfromtimestamp(dt.utcnow().timestamp()).isoformat() #.replace(':','_').replace('-','_').replace('.','_')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @staticmethod

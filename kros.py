@@ -35,6 +35,7 @@ from core.controller import Controller
 from core.publisher import Publisher
 from core.subscriber import Subscriber, GarbageCollector
 from core.system_subscriber import SystemSubscriber
+from core.util import Util
 
 from hardware.i2c_scanner import I2CScanner
 from hardware.battery import BatteryCheck
@@ -129,18 +130,15 @@ class KROS(Component, FiniteStateMachine):
         # configuration from command line arguments ............................
 
         _args = self._config['kros'].get('arguments')
-        # copy argument-based configuration over to _config
+        # copy argument-based configuration over to _config (changing the names!)
 
 #       self._log.info('argument gamepad:     {}'.format(arguments.gamepad))
         _args['gamepad_enabled'] = arguments.gamepad
         self._log.info('gamepad enabled:      {}'.format(_args['gamepad_enabled']))
-#       self._log.info('argument video:       {}'.format(arguments.video))
         _args['video_enabled']   = arguments.video
         self._log.info('video enabled:        {}'.format(_args['video_enabled']))
-#       self._log.info('argument no-motors:   {}'.format(arguments.no_motors))
         _args['motors_enabled']  = not arguments.no_motors
         self._log.info('motors enabled:       {}'.format(_args['motors_enabled']))
-#       self._log.info('argument mock:        {}'.format(arguments.mock))
         _args['mock_enabled']    = arguments.mock
         self._log.info('mock enabled:         {}'.format(_args['mock_enabled']))
 
@@ -195,7 +193,7 @@ class KROS(Component, FiniteStateMachine):
 
         _cfg = self._config['kros'].get('component')
 
-        # create publishers ....................................................
+        # create publishers ................................
 
         _pubs = arguments.pubs if arguments.pubs else ''
         _enable_ifs_publisher = _cfg.get('enable_ifs_publisher') or 'i' in _pubs
@@ -222,7 +220,7 @@ class KROS(Component, FiniteStateMachine):
         if _enable_killswitch and _pigpio_available:
             self._killswitch = KillSwitch(self._config, self, level=self._level)
 
-        # create subscribers ...................................................
+        # create subscribers ...............................
 
         _subs = arguments.subs if arguments.subs else ''
         if _cfg.get('enable_system_subscriber') or 's' in _subs:
@@ -234,13 +232,13 @@ class KROS(Component, FiniteStateMachine):
         if _cfg.get('enable_infrared_subscriber') or 'i' in _subs:
             self._infrared_subscriber = InfraredSubscriber(self._config, self._message_bus, self._motor_ctrl, level=self._level) # reacts to IR sensors
         self._garbage_collector   = GarbageCollector(self._config, self._message_bus, level=self._level)
-    #   _message_bus.print_subscribers()
 
-        # create behaviours ....................................................
-        _enable_behaviours = _cfg.get('enable_behaviours') or arguments.behave
+        # create behaviours ................................
+
+        _enable_behaviours = _cfg.get('enable_behaviours') or Util.is_true(arguments.behave)
         if _enable_behaviours:
+            self._log.info(Style.BRIGHT + 'behaviours enabled.')
             self._behaviour_mgr = BehaviourManager(self._config, self._message_bus, self._level) # a specialised subscriber
-#           self._behaviour_mgr = None
             _bcfg = self._config['kros'].get('behaviour')
             # create and register behaviours (listed in priority order)
             if _bcfg.get('enable_avoid_behaviour'):
@@ -253,6 +251,9 @@ class KROS(Component, FiniteStateMachine):
                 self._sniff = Sniff(self._config, self._message_bus, self._message_factory, self._motor_ctrl, self._level)
             if _bcfg.get('enable_idle_behaviour'):
                 self._idle  = Idle(self._config, self._message_bus, self._message_factory, self._level)
+        self._export_config = False
+        if self._export_config:
+            self.export_config()
         self._log.info('configured.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -294,6 +295,13 @@ class KROS(Component, FiniteStateMachine):
         self._log.info('main loop closed.')
 
         # end main loop ....................................
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def get_behaviour_manager(self):
+        '''
+        Returns the BehaviourManager, None if not used.
+        '''
+        return self._behaviour_mgr
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def get_external_clock(self):
@@ -403,6 +411,19 @@ class KROS(Component, FiniteStateMachine):
 #           sys.exit(0)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def export_config(self):
+        '''
+        Exports the current configuration to a YAML file named ".config.yaml".
+        '''
+        self._log.info('exporting configuration to file...')
+        _loader.export(self._config, comments=[ \
+            '┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈', \
+            '      YAML configuration for K-Series Robot Operating System (KROS)           ', \
+            '┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈', \
+            '', \
+            'exported: {}'.format(Util.get_timestamp()) ])
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _print_banner(self):
         '''
         Display banner on console.
@@ -459,7 +480,7 @@ def parse_args():
     parser.add_argument('--video',       '-v', action='store_true', help='enable video if installed')
     parser.add_argument('--pubs',        '-P', help='enable publishers as identified by first character')
     parser.add_argument('--subs',        '-S', help='enable subscribers as identified by first character')
-    parser.add_argument('--behave',      '-B', action='store_true', help='enable behaviours')
+    parser.add_argument('--behave',      '-B', help='override behaviour configuration (1, y, yes or true, otherwise false)')
     parser.add_argument('--mock',        '-m', action='store_true', help='permit mocked libraries (e.g., when not on a Pi)')
     parser.add_argument('--config-file', '-f', help='use alternative configuration file')
     parser.add_argument('--level',       '-l', help='specify logging level \'DEBUG\'|\'INFO\'|\'WARN\'|\'ERROR\' (default: \'INFO\')')

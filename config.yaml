@@ -11,11 +11,11 @@ kros:
     use_external_clock:               True       # if True use external clock, ignoring loop delay value
     component:                                   # enable specific publish/subscribe components
         enable_killswitch:            True       # kill switch
-        enable_behaviours:           False       # enable BehaviourManager (Behaviours enabled individually)
+        enable_behaviours:            True       # enable BehaviourManager (Behaviours enabled individually)
         # publishers .............................
         enable_ifs_publisher:         True       # enable Integrated Front Sensor publisher
         enable_event_publisher:       True       # keyboard robot simulator (kinda necessary for running CLI)
-        enable_battery_publisher:    False       # battery check publisher
+        enable_battery_publisher:     True       # battery check publisher
         enable_velocity_publisher:   False       # velocity control potentiometer publisher
         # subscribers ............................
         enable_system_subscriber:     True       # system events subscriber

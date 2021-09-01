@@ -48,4 +48,19 @@ class ConfigLoader(object):
         self._log.info('configuration read.')
         return _config
 
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def export(self, config, filename='.config.yaml', comments=None):
+        '''
+        Export the provided YAML configuration to a file.
+
+        The optional list of comments are written to the beginning of the file.
+        '''
+        with open(filename, 'w') as fout:
+            if comments:
+                for comment in comments:
+                    fout.write('# {}\n'.format(comment))
+                fout.write('#\n\n')
+            yaml.dump(config, fout, default_flow_style=False)
+        self._log.info('configuration written to {}.'.format(filename))
+
 #EOF
