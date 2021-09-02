@@ -169,7 +169,7 @@ class IntegratedFrontSensor(Component):
 #               self._log.info(Fore.BLUE + 'ANALOG IR CENTER:\t' + (Fore.RED if (_cntr_ir_data > 100.0) else Fore.YELLOW)
 #                       + Style.BRIGHT + '{:d} exceeds trigger of {:d}'.format(_cntr_ir_data, self._cntr_raw_min_trigger)
 #                       + Style.DIM + '\t(analog value 0-255)')
-                _value = self._get_mean_distance(Orientation.CNTR, self._convert_to_distance(_cntr_ir_data))
+                _value = self._get_mean_distance(Orientation.CNTR, self.convert_to_distance(_cntr_ir_data))
                 if _value != None and _value < self._cntr_trigger_distance_cm:
 #                   self._log.info(Fore.BLUE + Style.NORMAL + 'CNTR\tmean distance:\t{:5.2f}/{:5.2f}cm'.format(\
 #                           _value, self._cntr_trigger_distance_cm) + Style.DIM + '; raw: {:d}'.format(_cntr_ir_data))
@@ -192,7 +192,7 @@ class IntegratedFrontSensor(Component):
         if _port_ir_data > self._oblq_raw_min_trigger:
             self._log.info('ANALOG IR OBLIQUE:\t' + (Fore.RED if (_port_ir_data > 100.0) else Fore.YELLOW) \
                     + Style.BRIGHT + '{:d}'.format(_port_ir_data) + Style.DIM + '\t(analog value 0-255)')
-            _value = self._get_mean_distance(Orientation.PORT, self._convert_to_distance(_port_ir_data))
+            _value = self._get_mean_distance(Orientation.PORT, self.convert_to_distance(_port_ir_data))
             if _value != None and _value < self._oblq_trigger_distance_cm:
                 self._log.info(Fore.RED + Style.DIM + 'PORT     \tmean distance:\t{:5.2f}/{:5.2f}cm'.format(\
                         _value, self._oblq_trigger_distance_cm) + Style.DIM + '; raw: {:d}'.format(_port_ir_data))
@@ -202,7 +202,7 @@ class IntegratedFrontSensor(Component):
         if _stbd_ir_data > self._oblq_raw_min_trigger:
             self._log.info('ANALOG IR OBLIQUE:\t' + (Fore.RED if (_stbd_ir_data > 100.0) else Fore.YELLOW) \
                     + Style.BRIGHT + '{:d}'.format(_stbd_ir_data) + Style.DIM + '\t(analog value 0-255)')
-            _value = self._get_mean_distance(Orientation.STBD, self._convert_to_distance(_stbd_ir_data))
+            _value = self._get_mean_distance(Orientation.STBD, self.convert_to_distance(_stbd_ir_data))
             if _value != None and _value < self._oblq_trigger_distance_cm:
                 self._log.info(Fore.GREEN + Style.DIM + 'STBD     \tmean distance:\t{:5.2f}/{:5.2f}cm'.format(\
                         _value, self._oblq_trigger_distance_cm) + Style.DIM + '; raw: {:d}'.format(_stbd_ir_data))
@@ -219,7 +219,7 @@ class IntegratedFrontSensor(Component):
         if _port_side_ir_data > self._side_raw_min_trigger:
             self._log.info(Fore.RED + 'ANALOG IR SIDE:\t' + (Fore.RED if (_port_side_ir_data > 100.0) else Fore.YELLOW) \
                     + Style.BRIGHT + '{:d}'.format(_port_side_ir_data) + Style.DIM + '\t(analog value 0-255)')
-            _value = self._get_mean_distance(Orientation.PORT_SIDE, self._convert_to_distance(_port_side_ir_data))
+            _value = self._get_mean_distance(Orientation.PORT_SIDE, self.convert_to_distance(_port_side_ir_data))
             if _value != None and _value < self._side_trigger_distance_cm:
                 self._log.info(Fore.RED + Style.DIM + 'PORT_SIDE\tmean distance:\t{:5.2f}/{:5.2f}cm'.format(\
                         _value, self._side_trigger_distance_cm) + Style.DIM + '; raw: {:d}'.format(_port_side_ir_data))
@@ -229,7 +229,7 @@ class IntegratedFrontSensor(Component):
         if _stbd_side_ir_data > self._side_raw_min_trigger:
             self._log.info('ANALOG IR SIDE:\t' + (Fore.RED if (_stbd_side_ir_data > 100.0) else Fore.YELLOW) \
                     + Style.BRIGHT + '{:d}'.format(_stbd_side_ir_data) + Style.DIM + '\t(analog value 0-255)')
-            _value = self._get_mean_distance(Orientation.STBD_SIDE, self._convert_to_distance(_stbd_side_ir_data))
+            _value = self._get_mean_distance(Orientation.STBD_SIDE, self.convert_to_distance(_stbd_side_ir_data))
             if _value != None and _value < self._side_trigger_distance_cm:
                 self._log.info(Fore.GREEN + Style.DIM + 'STBD_SIDE\tmean distance:\t{:5.2f}/{:5.2f}cm'.format(\
                         _value, self._side_trigger_distance_cm) + Style.DIM + '; raw: {:d}'.format(_stbd_side_ir_data))
@@ -267,7 +267,7 @@ class IntegratedFrontSensor(Component):
             return _mean
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def _convert_to_distance(self, value):
+    def convert_to_distance(self, value):
         '''
         Converts the value returned by the IR sensor to a distance in centimeters.
 

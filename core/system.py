@@ -30,9 +30,8 @@ class System(object):
         self._log.info('ready.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    @property
     @staticmethod
-    def kros():
+    def get_kros():
         '''
         This (perversely) provides static method access to the KROS instance
         so we don't have to pass it around.

@@ -98,8 +98,8 @@ class MotorController(Component):
         self._millis               = lambda: int(round(time.time() * 1000))
         self._start_time           = self._millis()
         # perverse access to KROS instance
-        self._behaviour_mgr = System.kros.get_behaviour_manager()
-        self._log.info(Fore.MAGENTA + 'kros: {}'.format(type(self._kros)))
+        self._behaviour_mgr = System.get_kros().get_behaviour_manager()
+        self._log.info(Fore.MAGENTA + 'kros: {}'.format(type(self._behaviour_mgr)))
         # configure travel behaviour
         self._travel = Travel(config, motor_configurer, level)
         self._log.info('motors ready.')
@@ -644,27 +644,38 @@ class MotorController(Component):
         '''
         if self.stopped:
             self._log.warning('already stopped.')
+            # but we do it anyway...
         else:
             self._log.info('stopping...')
-            if self.loop_is_running:
-                if self._slew_limiter_enabled:
-                    self._log.info('stopping soft...')
-                    self._reset_slew_rate() # use default FAST rate
+        if self.loop_is_running:
+            if self._slew_limiter_enabled:
+                self._log.info('stopping soft...')
+                try:
+                    # disable slew if enabled
+                    _port_slew_limiter_suppressed = self._port_motor.slew_limiter.suppressed
+                    _stbd_slew_limiter_suppressed = self._port_motor.slew_limiter.suppressed
+#                   self._set_slew_rate(self._emergency_slew_rate) 
                     self._port_motor.target_velocity = 0.0
                     self._stbd_motor.target_velocity = 0.0
-                else:
-                    # the last two blocks aren't currently very different from each other
-                    self._log.info('stopping hard...')
-                    # set velocity but don't wait, just call stop
-                    self._reset_slew_rate() # use default FAST rate
-                    self._port_motor.target_velocity = 0.0
-                    self._stbd_motor.target_velocity = 0.0
-                    # we rely on this ultimately
-                    self._port_motor.stop()
-                    self._stbd_motor.stop()
+                finally:
+                    if not _port_slew_limiter_suppressed:
+                        self._port_motor.slew_limiter.release
+                    if not _stbd_slew_limiter_suppressed:
+                        self._stbd_motor.slew_limiter.release
+#                   self._reset_slew_rate()
             else:
-                self.emergency_stop()
-            self._log.info('stopped.')
+                # the last two blocks aren't currently very different from each other
+                self._log.info('stopping hard...')
+                # set velocity but don't wait, just call stop
+                self._reset_slew_rate() # use default FAST rate
+                self._port_motor.target_velocity = 0.0
+                self._stbd_motor.target_velocity = 0.0
+                # we rely on this ultimately
+                self._port_motor.stop()
+                self._stbd_motor.stop()
+        else:
+            self.emergency_stop()
+        self._log.info('stopped.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def halt(self):
@@ -672,24 +683,28 @@ class MotorController(Component):
         Quickly (but not immediately) stops both motors.
         '''
         if self.stopped:
-            self._log.debug('already halted.')
+            self._log.warning('already halted.')
+            # but we do it anyway...
         else:
-            if self._ext_clock or self._loop_enabled:
-                if self._slew_limiter_enabled:
-                    self._log.info('🌞 halting soft...')
+            self._log.info('halting...')
+        if self._ext_clock or self._loop_enabled:
+            if self._slew_limiter_enabled:
+                self._log.info('🌞 halting soft...')
+                try:
                     # use slew limiter for halting if available
                     self._set_slew_rate(self._halt_slew_rate)
                     self._port_motor.target_velocity = 0.0
                     self._stbd_motor.target_velocity = 0.0
-                else:
-                    self._log.info('🌞 halting hard...')
-                    self._port_motor.target_velocity = 0.0
-                    self._stbd_motor.target_velocity = 0.0
+                finally:
+                    self._reset_slew_rate()
             else:
-                self._log.info('🌞 halting very hard...')
-                self.emergency_stop()
-            self._log.info('halted.')
-#       self._reset_slew_rate()
+                self._log.info('🌞 halting hard...')
+                self._port_motor.target_velocity = 0.0
+                self._stbd_motor.target_velocity = 0.0
+        else:
+            self._log.info('🌞 halting very hard...')
+            self.emergency_stop()
+        self._log.info('halted.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def brake(self):
@@ -698,24 +713,27 @@ class MotorController(Component):
         '''
         if self.stopped:
             self._log.warning('already braked.')
+            # but we do it anyway...
         else:
-            if self._ext_clock or self._loop_enabled:
-                if self._slew_limiter_enabled:
-                    self._log.info('🌞 braking soft...')
+            self._log.info('braking...')
+        if self._ext_clock or self._loop_enabled:
+            if self._slew_limiter_enabled:
+                self._log.info('🌞 braking soft...')
+                try:
                     # use slew limiter for halting if available
                     self._set_slew_rate(self._brake_slew_rate)
                     self._port_motor.target_velocity = 0.0
                     self._stbd_motor.target_velocity = 0.0
-                    pass
-                else:
-                    self._log.info('🌞 braking hard...')
-                    self._port_motor.target_velocity = 0.0
-                    self._stbd_motor.target_velocity = 0.0
+                finally:
+                    self._reset_slew_rate()
             else:
-                self._log.info('🌞 braking very hard...')
-                self.emergency_stop()
-            self._log.info('braked.')
-#       self._reset_slew_rate()
+                self._log.info('🌞 braking hard...')
+                self._port_motor.target_velocity = 0.0
+                self._stbd_motor.target_velocity = 0.0
+        else:
+            self._log.info('🌞 braking very hard...')
+            self.emergency_stop()
+        self._log.info('braked.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def emergency_stop(self):
