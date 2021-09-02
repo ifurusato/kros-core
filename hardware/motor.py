@@ -84,7 +84,7 @@ class Motor(Component):
         self._decoder            = None  # motor encoder
         self._slew_limiter       = None
         self._jerk_limiter       = None
-        self._velocity_lambda    = None
+        self.__velocity_lambdas  = {}
         # slew limiter ...............................................
         _enable_slew_limiter     = _cfg.get('enable_slew_limiter')
         _suppress_slew_limiter   = not _enable_slew_limiter
@@ -154,19 +154,22 @@ class Motor(Component):
 #       '''
 #       self._max_fwd_velocity = maximum_velocity
 
-    def set_velocity_multiplier(self, lambda_function):
+    def add_velocity_multiplier(self, name, lambda_function):
         '''
-        Sets the velocity multiplier to the provided lambda function.
+        Adds a name velocity multiplier to the dict of lambda functions.
 
-        If non-null this is a function that alters the target velocity as a multiplier.
+        This is a function that alters the target velocity as a multiplier.
         '''
-        self._velocity_lambda = lambda_function
+        self._log.info(Fore.MAGENTA + 'adding \'{}\' lambda to motor...'.format(name))
+        if name in self.__velocity_lambdas:
+            self._log.warning('motor already contains a \'{}\' lambda.'.format(name))
+        self.__velocity_lambdas[name] = lambda_function
 
     def reset_velocity_multiplier(self):
         '''
         Resets the velocity multiplier to None, i.e., no function.
         '''
-        self._velocity_lambda = None
+        self.__velocity_lambdas.clear()
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
@@ -308,11 +311,14 @@ class Motor(Component):
             if self._slew_limiter and self._slew_limiter.is_active:
                 _current_target_velocity = self._slew_limiter.limit(self.velocity, _current_target_velocity)
 
+            if len(self.__velocity_lambdas) > 0:
+#               self._log.info(Fore.MAGENTA + 'processing {:d} lambdas...'.format(len(self.__velocity_lambdas)))
+                for _name, _lambda in self.__velocity_lambdas.items():
+#                   self._log.info(Fore.MAGENTA + 'processing {} lambda for {} motor.'.format(_name, self._orientation.label))
+                    _current_target_velocity = _lambda * _current_target_velocity
+
             # use velocity clipper as a sanity checker
             _current_target_velocity = self._velocity_clip(_current_target_velocity)
-
-            if self._velocity_lambda is not None:
-                _current_target_velocity = self._velocity_lambda * _current_target_velocity
 
             # we now convert velocity to power, either by passing the target velocity to the PID controller (when active)
             # otherwise directly setting power to the motor via the proportional interpolator from the Speed Enum.

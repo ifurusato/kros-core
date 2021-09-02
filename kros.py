@@ -335,7 +335,8 @@ class KROS(Component, FiniteStateMachine):
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def shutdown(self):
         '''
-        Demands a sudden halt of all activities and shut down.
+        This halts any motor activity, demands a sudden halt of all tasks,
+        then shuts down the OS.
         '''
         self._log.info(Fore.MAGENTA + '👾 shutdown: ' + Style.BRIGHT + 'kill! kill! kill! kill!')
         self.close()
@@ -382,6 +383,8 @@ class KROS(Component, FiniteStateMachine):
             self._log.warning('already closing.')
         else:
             self._log.info('closing...')
+            if self._motor_ctrl:
+                self._motor_ctrl.close()
             while not Component.close(self): # will call disable()
                 self._log.info('closing...')
             self._closing = True

@@ -901,6 +901,11 @@ class MotorController(Component):
         Halts, turn everything off and stop doing anything.
         '''
         if not self.closed:
+            # if we're moving let's halt first
+            if self.is_in_motion or not self.stopped:
+                self.halt()
+                while self.wait_til_stopped():
+                    pass
             Component.close(self) # calls disable
             self._port_motor.close()
             self._stbd_motor.close()

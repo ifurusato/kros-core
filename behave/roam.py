@@ -187,10 +187,10 @@ class Roam(Behaviour):
     def _set_velocity_multiplier(self, reason, lambda_function):
 
 #       if not isinstance(message_bus, lambda):
-
+        _lambda_name = 'roam'
         self._log.info(Fore.GREEN + 'set max fwd velocity: ' + '{}'.format(reason))
-        self._port_motor.set_velocity_multiplier(lambda_function)
-        self._stbd_motor.set_velocity_multiplier(lambda_function)
+        self._port_motor.add_velocity_multiplier(_lambda_name, lambda_function)
+        self._stbd_motor.add_velocity_multiplier(_lambda_name, lambda_function)
         pass
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
