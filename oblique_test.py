@@ -19,7 +19,7 @@
 #
 
 import pytest
-import time, traceback
+import time, itertools, traceback
 from colorama import init, Fore, Style
 init()
 
@@ -61,7 +61,9 @@ def test_oblique():
     _matrices = Matrices(True, True, Level.INFO)
 
     try:
-        for i in range(100000):
+        _counter = itertools.count()
+        while True:
+            _count = next(_counter)
             _port_raw = _ioe.get_port_ir_value()
             _stbd_raw = _ioe.get_stbd_ir_value()
 
@@ -81,10 +83,12 @@ def test_oblique():
                 _stbd_em = Style.NORMAL
             _log.info(Fore.RED   + _port_em + 'IR {:6.3f} / {:6.3f}cm\t'.format(_port_raw, _port_cm)
                     + Fore.GREEN + _stbd_em + '{:6.3f} / {:6.3f}cm\t'.format(_stbd_raw, _stbd_cm)
-                    + Fore.WHITE + Style.NORMAL + 'ratio: {:4.1f}%'.format(_percent))
+                    + Fore.WHITE + Style.NORMAL + 'ratio: {:4.1f}\t'.format(_ratio)
+                    + Fore.BLUE  + 'percent: {:4.1f}%'.format(_percent))
 
-            _log.info('i={:d}\n'.format(i))
+            _log.info('count={:d}\n'.format(_count))
             time.sleep(0.33)
+
     except KeyboardInterrupt:
         print(Fore.RED + 'Ctrl-C caught; exiting...' + Style.RESET_ALL)
     except Exception as e:
