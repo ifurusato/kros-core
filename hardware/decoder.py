@@ -102,8 +102,7 @@ class Decoder(object):
             import pigpio
         except ImportError as ie:
         #   import mock.pigpio as pigpio
-            print(Fore.RED + "This script requires the pigpio module.\n"\
-                + Fore.YELLOW + "Install with: pip3 install --user pigpio" + Style.RESET_ALL)
+            print("This script requires the pigpio module.\nInstall with: pip3 install --user pigpio")
 #           raise ModuleNotFoundError('pigpio not installed.')
             return None
         try:

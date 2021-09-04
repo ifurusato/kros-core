@@ -13,7 +13,7 @@
 import pytest
 import sys, traceback
 from colorama import init, Fore, Style
-init()
+init(autoreset=True)
 
 from core.logger import Logger, Level
 
@@ -53,7 +53,7 @@ def main():
         print('Ctrl-C caught: test interrupted.')
         sys.exit(0)
     except Exception as e:
-        print(Fore.RED + 'Error in test: {} / {}'.format(e, traceback.format_exc()) + Style.RESET_ALL)
+        print(Fore.RED + 'Error in test: {} / {}'.format(e, traceback.format_exc()))
         sys.exit(1)
     finally:
         pass

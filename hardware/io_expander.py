@@ -19,7 +19,7 @@ from threading import Thread # TEMP
 
 import sys, itertools, random
 from colorama import init, Fore, Style
-init()
+init(autoreset=True)
 
 from core.logger import Logger, Level
 from core.event import Event
@@ -214,10 +214,10 @@ class IoExpander(Component):
     def get_cntr_bmp_value(self):
         _value = self._ioe.input(self._cntr_bmp_pin)
         if _value == 0:
-            print(Fore.GREEN + 'get_cntr_bmp_value({}): {}'.format(type(_value), _value) + Style.RESET_ALL)
+            print(Fore.GREEN + 'get_cntr_bmp_value({}): {}'.format(type(_value), _value))
             return True
         else:
-            print(Fore.RED + 'get_cntr_bmp_value({}): {}'.format(type(_value), _value) + Style.RESET_ALL)
+            print(Fore.RED + 'get_cntr_bmp_value({}): {}'.format(type(_value), _value))
             return False
 
     def get_stbd_bmp_value(self):

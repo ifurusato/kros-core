@@ -18,7 +18,7 @@ import pytest
 import sys, numpy, time, traceback
 from datetime import datetime as dt
 from colorama import init, Fore, Style
-init()
+init(autoreset=True)
 
 from core.message_bus import MessageBus
 from core.message_factory import MessageFactory
@@ -73,7 +73,7 @@ def main():
     try:
         test_motors()
     except Exception as e:
-        print(Fore.RED + 'error in motor test: {}'.format(e) + Style.RESET_ALL)
+        print(Fore.RED + 'error in motor test: {}'.format(e))
         traceback.print_exc(file=sys.stdout)
     finally:
         pass

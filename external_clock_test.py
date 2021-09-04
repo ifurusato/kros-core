@@ -11,7 +11,7 @@ import itertools
 from datetime import datetime as dt
 import os, sys, signal, time
 from colorama import init, Fore, Style
-init()
+init(autoreset=True)
 
 from core.logger import Logger, Level
 from core.config_loader import ConfigLoader
@@ -32,7 +32,7 @@ def ext_callback_method():
     _count = next(_x_counter)
     if _count % _modulo == 0.0:
         _elapsed_ms = (dt.now() - _timestamp).total_seconds() * 1000.0
-        print(Fore.BLUE + 'external callback;\t' + Fore.YELLOW + ' {:7.4f}ms elapsed.'.format(_elapsed_ms) + Style.RESET_ALL)
+        print(Fore.BLUE + 'external callback;\t' + Fore.YELLOW + ' {:7.4f}ms elapsed.'.format(_elapsed_ms))
         _timestamp = dt.now()
 
 # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -41,7 +41,7 @@ def ext_slow_callback_method():
     _count = next(_x_counter)
     if _count % _slow_modulo == 0.0:
         _elapsed_ms = (dt.now() - _slow_timestamp).total_seconds() * 1000.0
-        print(Fore.GREEN + 'external slow callback;\t' + Fore.YELLOW + ' {:7.4f}ms elapsed.'.format(_elapsed_ms) + Style.RESET_ALL)
+        print(Fore.GREEN + 'external slow callback;\t' + Fore.YELLOW + ' {:7.4f}ms elapsed.'.format(_elapsed_ms))
         _slow_timestamp = dt.now()
 
 # main ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈

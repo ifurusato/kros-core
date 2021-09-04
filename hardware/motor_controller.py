@@ -201,7 +201,6 @@ class MotorController(Component):
             self._stbd_motor.update_target_velocity()
             _elapsed = _now - self._start_time
             self._start_time = _now
-#           print(Fore.BLACK + 'callback; {:6.3f}ms elapsed.'.format(_elapsed) + Style.RESET_ALL) # display loop-elapsed time
             if self._verbose: # print stats
                 self.print_info(next(self._event_counter))
 

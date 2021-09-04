@@ -20,7 +20,10 @@ import os, sys, signal, time, threading, traceback
 import argparse, psutil
 from pathlib import Path
 from colorama import init, Fore, Style
-init()
+init(autoreset=True)
+
+import core.globals as globals
+globals.init()
 
 from core.logger import Logger, Level
 from core.event import Event, Group
@@ -74,19 +77,16 @@ class KROS(Component, FiniteStateMachine):
     to determine the highest priority action to execute for that task cycle,
     by passing it on to the Controller.
 
-    There is also a krosd linux daemon, which can be used to start, enable
-    and disable kros.
-
-    :param mutex:   the optional logging mutex, passed on from krosd
+    There is also a krosd linux daemon, which can be used to start, enable and
+    disable kros.
     '''
-    def __init__(self, mutex=None, level=Level.INFO):
+    def __init__(self, level=Level.INFO):
         '''
         This initialises KROS and calls the YAML configurer.
         '''
         _name = 'kros'
-        self._mutex = mutex if mutex is not None else threading.Lock()
         self._level = level
-        self._log = Logger(_name, self._level, mutex=self._mutex)
+        self._log = Logger(_name, self._level)
         self._print_banner()
         self._log.info('…')
         Component.__init__(self, self._log, suppressed=False, enabled=False)
@@ -141,6 +141,8 @@ class KROS(Component, FiniteStateMachine):
         self._log.info('motors enabled:       {}'.format(_args['motors_enabled']))
         _args['mock_enabled']    = arguments.mock
         self._log.info('mock enabled:         {}'.format(_args['mock_enabled']))
+        _args['log_enabled']    = arguments.log
+        self._log.info('write log enabled:    {}'.format(_args['log_enabled']))
 
         # print remaining arguments
         self._log.info('argument config-file: {}'.format(arguments.config_file))
@@ -486,7 +488,9 @@ def parse_args():
     parser.add_argument('--behave',      '-B', help='override behaviour configuration (1, y, yes or true, otherwise false)')
     parser.add_argument('--mock',        '-m', action='store_true', help='permit mocked libraries (e.g., when not on a Pi)')
     parser.add_argument('--config-file', '-f', help='use alternative configuration file')
+    parser.add_argument('--log',         '-L', action='store_true', help='write log to timestamped file')
     parser.add_argument('--level',       '-l', help='specify logging level \'DEBUG\'|\'INFO\'|\'WARN\'|\'ERROR\' (default: \'INFO\')')
+
     try:
         args = parser.parse_args()
         if args.docs:
@@ -502,6 +506,7 @@ def parse_args():
             print(Style.RESET_ALL)
             return -1
         else:
+            globals.put('log_to_file', args.log)
             return args
     except NotImplementedError as nie:
         _log.error('unrecognised log level \'{}\': {}'.format(args.level, nie))
@@ -515,10 +520,10 @@ def parse_args():
 # execution handler ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 def signal_handler(signal, frame):
     global _kros
-    print('\nsignal handler    :' + Fore.MAGENTA + Style.BRIGHT + ' INFO  : Ctrl-C caught: exiting...' + Style.RESET_ALL)
+    print('\nsignal handler    :' + Fore.MAGENTA + Style.BRIGHT + ' INFO  : Ctrl-C caught: exiting...')
     if _kros and not ( _kros.closing or _kros.closed ):
         _kros.close()
-    print(Fore.MAGENTA + 'exit.' + Style.RESET_ALL)
+    print(Fore.MAGENTA + 'exit.')
 #   sys.stderr = DevNull()
     sys.exit(0)
 
@@ -528,9 +533,7 @@ _kros = None
 
 def main(argv):
     global _kros
-
     signal.signal(signal.SIGINT, signal_handler)
-
     _suppress = False
     _log = Logger("main", Level.INFO)
     try:
@@ -541,6 +544,7 @@ def main(argv):
         elif _args == -1:
             _suppress = True # help or docs
         else:
+            # write log_to_file to global symbol table
             _level = Level.from_string(_args.level) if _args.level != None else Level.INFO
             _log.level = _level
             _log.debug('arguments: {}'.format(_args))
@@ -553,9 +557,9 @@ def main(argv):
                 _kros.start()
             # kros is now running...
     except KeyboardInterrupt:
-        print(Style.BRIGHT + 'caught Ctrl-C; exiting...' + Style.RESET_ALL)
+        print(Style.BRIGHT + 'caught Ctrl-C; exiting...')
     except Exception:
-        print(Fore.RED + Style.BRIGHT + 'error starting kros: {}'.format(traceback.format_exc()) + Style.RESET_ALL)
+        print(Fore.RED + Style.BRIGHT + 'error starting kros: {}'.format(traceback.format_exc()))
     finally:
         if not _suppress:
             _log.info('kros exit.')

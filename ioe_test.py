@@ -17,7 +17,7 @@
 import pytest
 import time, traceback
 from colorama import init, Fore, Style
-init()
+init(autoreset=True)
 
 from core.logger import Logger, Level
 from core.config_loader import ConfigLoader
@@ -49,9 +49,9 @@ def test_ioe():
     for i in range(100000):
         # infrared sensors .........................................................
         if _show_ir:
-            _ir_port_side_value = _ioe.get_raw_port_side_ir_value() 
+            _ir_port_side_value = _ioe.get_raw_port_side_ir_value()
             _ir_port_value      = _ioe.get_raw_port_ir_value()
-            _ir_cntr_value      = _ioe.get_raw_cntr_ir_value() 
+            _ir_cntr_value      = _ioe.get_raw_cntr_ir_value()
             _ir_stbd_value      = _ioe.get_raw_stbd_ir_value()
             _ir_stbd_side_value = _ioe.get_raw_stbd_side_ir_value()
             _log.info(Fore.RED   + 'IR {:8.5f}\t'.format(_ir_port_side_value) \
@@ -91,9 +91,9 @@ def main():
     try:
         test_ioe()
     except KeyboardInterrupt:
-        print(Fore.RED + 'Ctrl-C caught; exiting...' + Style.RESET_ALL)
+        print(Fore.RED + 'Ctrl-C caught; exiting...')
     except Exception as e:
-        print(Fore.RED + Style.BRIGHT + 'error testing ifs: {}\n{}'.format(e, traceback.format_exc()) + Style.RESET_ALL)
+        print(Fore.RED + Style.BRIGHT + 'error testing ifs: {}\n{}'.format(e, traceback.format_exc()))
 
 if __name__== "__main__":
     main()

@@ -176,7 +176,6 @@ class Message(object):
         Garbage collect this message. This sets the 'gc' flag and nullifies
         the event and value properties so no further processing is possible.
         '''
-#       print(Fore.CYAN + 'gc: {}'.format(self.name) + Style.RESET_ALL)
         if self._gc:
             raise Exception('already garbage collected.')
         self._gc = True
@@ -235,11 +234,7 @@ class Message(object):
         if len(self._subscribers) == 0:
             raise Exception('no subscribers set ({}).'.format(self._instance_name))
         if self._subscribers[subscriber]: # if acknowledged already by the subscriber
-            if subscriber.is_gc:
-#               print(Fore.YELLOW + 'WARNING: ' + Fore.CYAN + 'message {} already acknowledged by subscriber: {}'.format(
-#                       self.name, subscriber.name) + Style.RESET_ALL)
-                pass
-            else:
+            if not subscriber.is_gc:
                 raise Exception('message {} already acknowledged by subscriber: {}'.format(self.name, subscriber.name))
         else:
             self._subscribers[subscriber] = True

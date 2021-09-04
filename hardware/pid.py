@@ -153,8 +153,6 @@ class PID(object):
         elif dt <= 0:
             raise ValueError("dt has nonpositive value {}. Must be positive.".format(dt))
         # display dt in milliseconds
-#       print(Fore.MAGENTA + Style.BRIGHT + 'dt: {:7.4f}ms;'.format(dt * 1000.0) + Style.RESET_ALL)
-
         if dt < self._period_sec and not math.isclose(dt, self._period_sec) and self._last_output is not None:
             # only update every period
             output = self._last_output
@@ -162,16 +160,16 @@ class PID(object):
             # compute error terms
             _error = self._setpoint - target
             d_input = target - (self._last_input if self._last_input is not None else target)
-    
+
             # compute the proportional, integral and derivative terms
             self._proportional = self._kp * _error
             self._integral    += self._ki * _error * dt
             self._integral     = self._clip(self._integral) # avoid integral windup
             self._derivative   = -self._kd * d_input / dt
-    
+
             # compute output, clipped to limits
             output = self._clip(self._proportional + self._integral + self._derivative)
-    
+
             kp, ki, kd = self.constants
             cp, ci, cd = self.components
 #           self._log.info('dt={:7.4f}ms '.format(dt * 1000.0) \

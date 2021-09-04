@@ -6,7 +6,7 @@
 
 import sys, time, traceback
 from colorama import init, Fore, Style
-init()
+init(autoreset=True)
 
 from hardware.hcsr04 import HCSR04
 
@@ -20,17 +20,17 @@ def main(argv):
 
         while True:
             distance = int(_hcsr04.getDistance())
-            print(Fore.CYAN + 'Distance:\t' + Fore.YELLOW + '{0:>3}cm'.format(distance) + Style.RESET_ALL)
+            print(Fore.CYAN + 'Distance:\t' + Fore.YELLOW + '{0:>3}cm'.format(distance))
             time.sleep(0.5)
 
     except KeyboardInterrupt:
-        print(Style.BRIGHT + 'caught Ctrl-C; exiting...' + Style.RESET_ALL)
+        print(Style.BRIGHT + 'caught Ctrl-C; exiting...')
     except Exception:
-        print(Fore.RED + Style.BRIGHT + 'error starting kros: {}'.format(traceback.format_exc()) + Style.RESET_ALL)
+        print(Fore.RED + Style.BRIGHT + 'error starting kros: {}'.format(traceback.format_exc()))
         sys.exit(1)
     finally:
         _hcsr04.cleanup()
-       
+
 # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 if __name__== "__main__":
     main(sys.argv[1:])

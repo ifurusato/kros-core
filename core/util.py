@@ -13,7 +13,7 @@
 import time
 from datetime import datetime as dt
 from colorama import init, Fore, Style
-init()
+init(autoreset=True)
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Util(object):
@@ -28,7 +28,7 @@ class Util(object):
     @staticmethod
     def is_true(value):
         '''
-        Returns True if the value is a 1, a "1", "y", "yes", or "true" (with 
+        Returns True if the value is a 1, a "1", "y", "yes", or "true" (with
         case-insensitive matching).
         '''
         if value:
@@ -90,10 +90,10 @@ class Util(object):
         '''
         Print the methods of the provided class.
         '''
-        print(Fore.CYAN + "methods of class: {}".format(type(cls)) + Style.RESET_ALL)
+        print(Fore.CYAN + "methods of class: {}".format(type(cls)))
         method_list = [func for func in dir(cls) if callable(getattr(cls, func))]
         for m in method_list:
-            print(Fore.CYAN + '    method:\t' + Fore.YELLOW + '{}'.format(m) + Style.RESET_ALL)
+            print(Fore.CYAN + '    method:\t' + Fore.YELLOW + '{}'.format(m))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @staticmethod

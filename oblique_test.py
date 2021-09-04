@@ -40,10 +40,10 @@ def test_oblique():
     Test the basic functionality of the IO Expander's connections to the IR
     and bumper sensors.
     '''
-    _log = Logger("test-ioe", Level.INFO)
+    _log = Logger("test-ioe", log_to_file=True, level=Level.INFO)
 
     # read YAML configuration
-    _loader = ConfigLoader(Level.INFO)
+    _loader = ConfigLoader(level=Level.INFO)
     filename = 'config.yaml'
     _config = _loader.configure(filename)
 

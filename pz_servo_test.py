@@ -8,7 +8,7 @@
 import time
 import sys, tty, termios
 from colorama import init, Fore, Style
-init()
+init(autoreset=True)
 
 from hardware.picon_zero import PiconZero
 
@@ -50,7 +50,7 @@ def print_intro():
   Press <?> key for help.
   Press Ctrl-C to end.
 
-''' + Style.RESET_ALL)
+''')
 
 # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 def print_help():
@@ -65,7 +65,7 @@ def print_help():
   <space>          :  center
   <q> or Ctrl-C    :  quit
   ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-''' + Style.RESET_ALL)
+''')
 
 # main loop ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
@@ -99,22 +99,22 @@ try:
         keyp = readkey()
         if keyp == 'w' or ord(keyp) == 16:
             _pan_value = max (0, _pan_value - 5)
-            print(Fore.CYAN + '↑ Up:   \t' + Fore.YELLOW + '{0:>3}'.format(_pan_value) + Style.RESET_ALL)
+            print(Fore.CYAN + '↑ Up:   \t' + Fore.YELLOW + '{0:>3}'.format(_pan_value))
         elif keyp == 'z' or ord(keyp) == 17:
             _pan_value = min (180, _pan_value + 5)
-            print(Fore.CYAN + '↓ Down: \t' + Fore.YELLOW + '{0:>3}'.format(_pan_value) + Style.RESET_ALL)
+            print(Fore.CYAN + '↓ Down: \t' + Fore.YELLOW + '{0:>3}'.format(_pan_value))
         elif keyp == 's' or ord(keyp) == 18:
             _tilt_value = max (0, _tilt_value - 5)
-            print(Fore.CYAN + '→ Right:\t' + Fore.YELLOW + '{0:>3}'.format(_tilt_value) + Style.RESET_ALL)
+            print(Fore.CYAN + '→ Right:\t' + Fore.YELLOW + '{0:>3}'.format(_tilt_value))
         elif keyp == 'a' or ord(keyp) == 19:
             _tilt_value = min (180, _tilt_value + 5)
-            print(Fore.CYAN + '← Left: \t' + Fore.YELLOW + '{0:>3}'.format(_tilt_value) + Style.RESET_ALL)
+            print(Fore.CYAN + '← Left: \t' + Fore.YELLOW + '{0:>3}'.format(_tilt_value))
         elif keyp == 'g':
             _grip_value = max (0, _grip_value - 5)
-            print(Fore.CYAN + '- Open: \t' + Fore.YELLOW + '{0:>3}'.format(_grip_value) + Style.RESET_ALL)
+            print(Fore.CYAN + '- Open: \t' + Fore.YELLOW + '{0:>3}'.format(_grip_value))
         elif keyp == 'h':
             _grip_value = min (180, _grip_value + 5)
-            print(Fore.CYAN + '- Close:\t' + Fore.YELLOW + '{0:>3}'.format(_grip_value) + Style.RESET_ALL)
+            print(Fore.CYAN + '- Close:\t' + Fore.YELLOW + '{0:>3}'.format(_grip_value))
         elif keyp == ' ':
             _pan_value = _tilt_value = _grip_value = 90
             print(Fore.CYAN + '- Center')

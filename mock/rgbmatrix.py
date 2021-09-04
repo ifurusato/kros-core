@@ -16,7 +16,7 @@ import sys, time, colorsys
 from threading import Thread
 from enum import Enum
 from colorama import init, Fore, Style
-init()
+init(autoreset=True)
 
 try:
     import numpy
@@ -25,16 +25,16 @@ except ImportError:
 try:
     import smbus
 except ImportError:
-    print(Fore.RED + "This script requires the smbus module. Some features will be disabled.\nInstall with: pip3 install --user smbus" + Style.RESET_ALL)
+    print(Fore.RED + "This script requires the smbus module. Some features will be disabled.\nInstall with: pip3 install --user smbus")
 try:
     import psutil
 except ImportError:
-    print(Fore.RED + "This script requires the psutil module. Some features will be disabled.\nInstall with: pip3 install --user psutil" + Style.RESET_ALL)
+    print(Fore.RED + "This script requires the psutil module. Some features will be disabled.\nInstall with: pip3 install --user psutil")
 try:
     from rgbmatrix5x5 import RGBMatrix5x5
 except ImportError:
     from mock.rgbmatrix5x5 import MockRGBMatrix5x5 as RGBMatrix5x5
-    print(Fore.RED + 'This script requires the rgbmatrix5x5 module. Some features will be disabled.\nInstall with: sudo pip3 install smbus' + Style.RESET_ALL)
+    print(Fore.RED + 'This script requires the rgbmatrix5x5 module. Some features will be disabled.\nInstall with: sudo pip3 install smbus')
 
 from core.logger import Level, Logger
 from hardware.i2c_scanner import I2CScanner

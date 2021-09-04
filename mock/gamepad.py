@@ -62,7 +62,6 @@ class Gamepad():
 
            message_bus:      the message bus to receive messages from this task
            message_factory:  the factory for creating messages
-           mutex:            vs godzilla
         '''
         self._level = level
         self._log = Logger("gamepad", level)
