@@ -16,13 +16,13 @@ def init():
     Creates an application-global dictionary as a way to share objects across
     all modules. Typical usage:
 
-        import core.globalz as globalz
-        globalz.init()
+        import core.globals as globals
+        globals.init()
 
-        globalz.put('variable_name', _value)
-        _value = globalz.get('variable_name')
+        globals.put('variable_name', _value)
+        _value = globals.get('variable_name')
 
-    Note that you should only need to call 'globalz.init()' on your first
+    Note that you should only need to call 'globals.init()' on your first
     module access or your main() method.
     '''
     global gvars

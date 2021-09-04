@@ -57,7 +57,9 @@ def test_oblique():
     _ifs = IntegratedFrontSensor(_config, _message_bus, _message_factory, level=Level.INFO)
     _ifs.enable()
 
-    _ranger = Ranger(-1.0, 1.0, 0, 100)
+    _ranger   = Ranger(-1.0, 1.0, 0, 100)
+    _port_ranger = Ranger(0.0, 255.0, 0.0, -100.0)
+    _stbd_ranger = Ranger(0.0, 255.0, 0.0, -100.0)
     _matrices = Matrices(True, True, Level.INFO)
 
     try:
@@ -70,6 +72,12 @@ def test_oblique():
             _port_pc  = _port_raw / 255.0
             _stbd_pc  = _stbd_raw / 255.0
             _ratio    = _port_pc - _stbd_pc
+
+            _raw_diff = _port_raw - _stbd_raw
+
+            _out_port = _port_ranger.convert(_port_raw)
+            _out_stbd = _stbd_ranger.convert(_stbd_raw)
+
             _percent  = _ranger.convert(_ratio)
             _matrices.percent(_percent)
 
@@ -84,7 +92,9 @@ def test_oblique():
             _log.info(Fore.RED   + _port_em + 'IR {:6.3f} / {:6.3f}cm\t'.format(_port_raw, _port_cm)
                     + Fore.GREEN + _stbd_em + '{:6.3f} / {:6.3f}cm\t'.format(_stbd_raw, _stbd_cm)
                     + Fore.WHITE + Style.NORMAL + 'ratio: {:4.1f}\t'.format(_ratio)
-                    + Fore.BLUE  + 'percent: {:4.1f}%'.format(_percent))
+                    + Fore.RED + 'port: {:4.1f}\t'.format(_out_port)
+                    + Fore.GREEN + 'stbd: {:4.1f}\t'.format(_out_stbd))
+#                   + Fore.BLUE  + 'percent: {:4.1f}%'.format(_percent))
 
             _log.info('count={:d}\n'.format(_count))
             time.sleep(0.33)

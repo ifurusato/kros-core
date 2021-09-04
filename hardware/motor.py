@@ -154,9 +154,10 @@ class Motor(Component):
 #       '''
 #       self._max_fwd_velocity = maximum_velocity
 
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def add_velocity_multiplier(self, name, lambda_function):
         '''
-        Adds a name velocity multiplier to the dict of lambda functions.
+        Adds a named velocity multiplier to the dict of lambda functions.
 
         This is a function that alters the target velocity as a multiplier.
         '''
@@ -165,7 +166,19 @@ class Motor(Component):
             self._log.warning('motor already contains a \'{}\' lambda.'.format(name))
         self.__velocity_lambdas[name] = lambda_function
 
-    def reset_velocity_multiplier(self):
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def remove_velocity_multiplier(self, name):
+        '''
+        Removes a named velocity multiplier from the dict of lambda functions.
+        '''
+        if name in self.__velocity_lambdas:
+            self._log.info(Fore.MAGENTA + '😨 removing \'{}\' lambda from motor...'.format(name))
+            del self.__velocity_lambdas[name]
+        else:
+            self._log.warning('😨 motor did not contains a \'{}\' lambda.'.format(name))
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def _reset_velocity_multiplier(self):
         '''
         Resets the velocity multiplier to None, i.e., no function.
         '''

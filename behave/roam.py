@@ -25,6 +25,9 @@ from hardware.motor_controller import MotorController
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Roam(Behaviour):
+
+    _LAMBDA_NAME = 'roam'
+
     '''
     Implements a roaming behaviour. The end result of this Behaviour is to
     provide a forward speed limit for both motors based on a distance value
@@ -187,17 +190,18 @@ class Roam(Behaviour):
     def _set_velocity_multiplier(self, reason, lambda_function):
 
 #       if not isinstance(message_bus, lambda):
-        _lambda_name = 'roam'
         self._log.info(Fore.GREEN + 'set max fwd velocity: ' + '{}'.format(reason))
-        self._port_motor.add_velocity_multiplier(_lambda_name, lambda_function)
-        self._stbd_motor.add_velocity_multiplier(_lambda_name, lambda_function)
+        self._port_motor.add_velocity_multiplier(Roam._LAMBDA_NAME, lambda_function)
+        self._stbd_motor.add_velocity_multiplier(Roam._LAMBDA_NAME, lambda_function)
         pass
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _reset_velocity_multiplier(self, reason):
-        self._log.info(Fore.MAGENTA + 'reset max fwd velocity: ' + Fore.YELLOW + '{}'.format(reason))
-        self._port_motor.reset_velocity_multiplier()
-        self._stbd_motor.reset_velocity_multiplier()
+        self._log.info(Fore.MAGENTA + '😨 reset max fwd velocity: ' + Fore.YELLOW + '{}'.format(reason))
+#       self._port_motor.reset_velocity_multiplier()
+#       self._stbd_motor.reset_velocity_multiplier()
+        self._port_motor.remove_velocity_multiplier(Roam._LAMBDA_NAME)
+        self._stbd_motor.remove_velocity_multiplier(Roam._LAMBDA_NAME)
         pass
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -223,6 +227,15 @@ class Roam(Behaviour):
         Suppresses this Component.
         '''
         Component.suppress(self)
+        self._reset_velocity_multiplier('supressing roam.')
         self._log.info(Fore.BLUE + '💙 roam suppressed.')
+
+    def disable(self):
+        '''
+        Disables this Component.
+        '''
+        Component.disable(self)
+        self._reset_velocity_multiplier('disabling roam.')
+        self._log.info(Fore.BLUE + '💙 roam disabled.')
 
 #EOF
