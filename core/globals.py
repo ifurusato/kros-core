@@ -9,10 +9,6 @@
 # created:  2021-09-03
 # modified: 2021-09-03
 #
-# global variables shared across all modules
-
-from colorama import init, Fore, Style
-init(autoreset=True)
 
 # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 def init():
@@ -26,17 +22,15 @@ def init():
         globalz.put('variable_name', _value)
         _value = globalz.get('variable_name')
 
-    You should only need to call 'globalz.init()' on your first module access
-    or your main() method.
+    Note that you should only need to call 'globalz.init()' on your first
+    module access or your main() method.
     '''
     global gvars
     try:
-        print(Fore.YELLOW + '📀 globalz.init()')
         if gvars:
             pass
     except Exception as e:
         gvars = {}
-        print(Fore.YELLOW + '📀 globalz.init() ' + Style.BRIGHT + 'DEFINE' + Style.NORMAL + ' gvars; error: {}'.format(e))
 
 # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 def has(key):

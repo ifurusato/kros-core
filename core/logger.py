@@ -84,11 +84,10 @@ class Logger(object):
         # configuration preliminaries ............
         if log_to_file:
             _log_to_file = log_to_file
-            globals.put('log_to_file', True) # also write log_to_file to global symbol table
-        elif globals and globals.has('log_to_file'): # get existing value from global symbol table
+            globals.put('log_to_file', True)
+        elif globals and globals.has('log_to_file'):
             _log_to_file = globals.get('log_to_file')
         else:
-            print(Fore.MAGENTA + Style.DIM + 'setting log_to_file to False.' + Style.RESET_ALL)
             _log_to_file = False
 
         # configuration ..........................
