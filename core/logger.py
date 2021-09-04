@@ -94,7 +94,6 @@ class Logger(object):
         # configuration ..........................
         _strip_ansi_codes       = True # used only with file output, to strip ANSI characters from log data
         self._include_timestamp = True
-        self.__log.propagate    = False
         self._date_format       = '%Y-%m-%dT%H:%M:%S'
 #       self._date_format       = '%Y-%m-%dT%H:%M:%S.%f'
 #       self._date_format       = '%H:%M:%S'
@@ -109,6 +108,7 @@ class Logger(object):
         # create logger ..........................
         self.__mutex = threading.Lock()
         self.__log   = logging.getLogger(name)
+        self.__log.propagate = False
         self._name   = name
         self._fh     = None # optional file handler
         self._sh     = None # optional stream handler
