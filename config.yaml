@@ -23,7 +23,7 @@ kros:
         enable_bumper_subscriber:     True       # bumper events subscriber
         enable_infrared_subscriber:   True       # infrared events subscriber
     behaviour:
-        enable_avoid_behaviour:      False       # enable avoidance behaviour
+        enable_avoid_behaviour:       True       # enable avoidance behaviour
         enable_roam_behaviour:        True       # enable roam behaviour
         enable_moth_behaviour:       False       # enable moth behaviour
         enable_sniff_behaviour:      False       # enable sniff behaviour
@@ -78,7 +78,7 @@ kros:
             raw_battery_threshold:   17.74       # raw and 5v regulator thresholds set from known measurements:
 #           raw_battery_threshold:   11.00       # raw and 5v regulator thresholds set from known measurements:
             low_5v_threshold:         4.75       # really 4.82v
-            loop_delay_sec:          30          # sample loop delay (sec)
+            loop_delay_sec:          60          # sample loop delay (sec)
         external_clock:
 #           pin:                     21          # pin connected to external clock source from TinyPICO
             pin:                      6          # pin connected to external clock source from Itsy Bitsy RP2040

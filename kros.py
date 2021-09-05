@@ -93,6 +93,7 @@ class KROS(Component, FiniteStateMachine):
         FiniteStateMachine.__init__(self, self._log, _name)
         self._system        = System(self, level)
         self._system.set_nice()
+        globals.put('kros', self)
         # configuration...
         self._config        = None
         self._message_bus   = None
@@ -246,7 +247,7 @@ class KROS(Component, FiniteStateMachine):
             _bcfg = self._config['kros'].get('behaviour')
             # create and register behaviours (listed in priority order)
             if _bcfg.get('enable_avoid_behaviour'):
-                self._avoid = Avoid(self._config, self._message_bus, self._message_factory, self._motor_ctrl, self._level)
+                self._avoid  = Avoid(self._config, self._message_bus, self._message_factory, self._motor_ctrl, external_clock=self._ext_clock, level=self._level)
             if _bcfg.get('enable_roam_behaviour'):
                 self._roam  = Roam(self._config, self._message_bus, self._message_factory, self._motor_ctrl, external_clock=self._ext_clock, level=self._level)
             if _bcfg.get('enable_moth_behaviour'):

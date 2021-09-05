@@ -116,7 +116,6 @@ def test_motors():
         _log.error('no potentiometer found, exiting.')
         _errcode = 1
     except Exception as e:
-        print(Fore.RED + 'EXCEPTION' + Style.RESET_ALL)
         _log.error('{} encountered, exiting: {}'.format(type(e), e))
         _errcode = 1
     finally:

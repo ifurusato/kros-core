@@ -5,27 +5,35 @@
 # see the LICENSE file included as part of this package.
 #
 # author:   Murray Altheim
-# created:  2021-08-25
-# modified: 2021-08-27
+# created:  2021-08-26
+# modified: 2021-09-06
 #
 
 from machine import Pin, Timer
 import utime
 
-# display distinctive hello pattern ........................
-
 _led = Pin(11, Pin.OUT)
+_value = False
+
+# display distinctive hello pattern
 for i in range(16, 0, -1):
-    _led.toggle()
+    _value = not _value
+    _led.value(_value)
     utime.sleep(i / 24)
 for j in range(0, 7):
-    _led.toggle()
+    _value = not _value
+    _led.value(_value)
     utime.sleep(0.1)
-_led.off()
 
-# define GPIO 9 on pin 7 and start Timer ...................
+_led.value(False)
 
+# define pin GPIO 9 on pin 7
 _pin = Pin(7, Pin.OUT)
 _timer = Timer(period=50, mode=Timer.PERIODIC, callback=lambda n: _pin.toggle())
+
+while True:
+    _value = not _value
+    _led.value(_value)
+    utime.sleep(1.0)
 
 #EOF

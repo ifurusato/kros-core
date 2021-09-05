@@ -62,11 +62,11 @@ class EventPublisher(Publisher):
         ( 106, Event.BUMPER_PORT ),
         ( 107, Event.BUMPER_CNTR ),
         ( 108, Event.BUMPER_STBD ),
-        ( 109, Event.AVOID ),
+        ( 109, Event.MOTH ),
         ( 110, Event.SPIN_STBD ),
         ( 114, Event.ROAM ),
         ( 115, Event.INFRARED_PORT ),
-        ( 116, Event.MOTH ),
+        ( 116, Event.AVOID ),
         ( 117, Event.IDLE ),
         ( 120, Event.SPIN_PORT ),
         ( 121, Event.SNIFF ),
@@ -79,7 +79,7 @@ class EventPublisher(Publisher):
             Event.INCREASE_VELOCITY, Event.DECREASE_VELOCITY,
             Event.BRAKE, Event.HALT, Event.STOP,
             Event.AHEAD, Event.ASTERN,
-            Event.AVOID, Event.ROAM, Event.SNIFF, Event.MOTH, Event.IDLE,
+            Event.ROAM, Event.AVOID, Event.MOTH, Event.SNIFF, Event.IDLE,
             Event.NOOP, Event.SHUTDOWN,
         ]
 
@@ -568,13 +568,13 @@ class EventPublisher(Publisher):
       ┃ FUL AST ┃ HAF AST ┃ SLO AST ┃ DSL AST ┃  HALT   ┃ DSL AHD ┃ SLO AHD ┃ HAF AHD ┃ FUL AHD ┃  STOP   ┃  BRAKE  ┃  EVEN   ┃ SHUTDWN ┃
  ┏━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┛
  ┃   TAB   ┃    Q    ┃    W    ┃    E    ┃    R    ┃    T    ┃    Y    ┃    U    ┃    I    ┃    O    ┃    P    ┃    [    ┃    ]    ┃
- ┃ GAMEPAD ┃  QUIT   ┃  FLOOD  ┃   POT   ┃  ROAM   ┃  MOTH   ┃  SNIFF  ┃  IDLE   ┃  INFO   ┃ CLR TSK ┃ POP_MSG ┃ IN_PORT ┃ IN_STBD ┃
+ ┃ GAMEPAD ┃  QUIT   ┃  FLOOD  ┃   POT   ┃  ROAM   ┃  AVOID  ┃  SNIFF  ┃  IDLE   ┃  INFO   ┃ CLR TSK ┃ POP_MSG ┃ IN_PORT ┃ IN_STBD ┃
  ┗━━━━━━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┓
                 ┃    A    ┃    S    ┃    D    ┃    F    ┃    G    ┃    H    ┃    J    ┃    K    ┃    L    ┃    :    ┃    "    ┃   RET   ┃
                 ┃ IR_PSID ┃ IR_PORT ┃ IR_CNTR ┃ IR_STBD ┃ IR_SSID ┃  HELP   ┃ BM_PORT ┃ BM_CNTR ┃ BM_STBD ┃ DE_PORT ┃ DE_STBD ┃  CLEAR  ┃
                 ┗━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┛
                      ┃    Z    ┃    X    ┃    C    ┃    V    ┃    B    ┃    N    ┃    M    ┃    <    ┃    >    ┃    ?    ┃    \    ┃
-                     ┃ MTR_INF ┃ SP_PORT ┃ TN_PORT ┃ VERBOSE ┃ TN_STBD ┃ SP_STBD ┃  AVOID  ┃ DE_VELO ┃ IN_VELO ┃  HELP   ┃  CLOCK  ┃
+                     ┃ MTR_INF ┃ SP_PORT ┃ TN_PORT ┃ VERBOSE ┃ TN_STBD ┃ SP_STBD ┃  MOTH   ┃ DE_VELO ┃ IN_VELO ┃  HELP   ┃  CLOCK  ┃
                      ┗━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┻━━━━━━━━━┛
 
                                TAB:      toggle gamepad
@@ -582,9 +582,9 @@ class EventPublisher(Publisher):
   HAF AST:   half astern       FLOOD:    toggle flood publisher       IR_PORT:  port infrared                SP_PORT:  spin port
   SLO AST:   slow astern       POT:      toggle potentiometer         IR_CNTR:  center infrared              TN_PORT:  turn to port
   DSL AST:   dead slow astern  ROAM:     trigger roam behaviour       IR_STBD:  starboard infrared           VERBOSE:  toggle verbosity
-  HALT:      halt              MOTH:     trigger moth behaviour       IR_SSID:  starboard side infrared      TN_STBD:  turn to starboard
+  HALT:      halt              AVOID:    trigger avoid behaviour      IR_SSID:  starboard side infrared      TN_STBD:  turn to starboard
   DSL AHD:   dead slow ahead   SNIFF:    trigger sniff behaviour      HELP:     print help                   SP_STBD:  spin starboard
-  SLO AHD:   slow ahead        IDLE:     send idle message            BM_PORT:  port bumper                  AVOID:    trigger avoid behaviour
+  SLO AHD:   slow ahead        IDLE:     send idle message            BM_PORT:  port bumper                  MOTH:     trigger moth behaviour
   HAF AHD:   half ahead        INFO:     print system information     BM_CNTR:  center bumper                DE_VELO:  decrease velocity
   FUL AHD:   full ahead        CLR_TSK:  clear completed tasks        BM_STBD:  starboard bumper             IN_VELO:  increase velocity
   STOP:      stop              POP_MSG:  pop messages from queue      DE_PORT:  decrease port velocity       HELP:     print help

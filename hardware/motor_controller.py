@@ -18,6 +18,7 @@ from datetime import datetime as dt
 from colorama import init, Fore, Style
 init()
 
+import core.globals as globals
 from core.logger import Logger, Level
 from core.component import Component
 from core.orient import Orientation
@@ -25,7 +26,6 @@ from core.speed import Speed, Direction
 from core.event import Event
 from core.rate import Rate
 from core.message_bus import MessageBus
-from core.system import System
 from hardware.motor_configurer import MotorConfigurer
 from hardware.slew import SlewRate
 from hardware.motor import Motor
@@ -412,14 +412,12 @@ class MotorController(Component):
             pass
         elif _event is Event.TURN_AHEAD_PORT:
             self._log.info('theta TURN_AHEAD_PORT event.')
-            self.set_motor_velocity(Orientation.PORT, Speed.HALF.value)
-            self.set_motor_velocity(Orientation.STBD, Speed.FULL.value)
-            pass
+            self.set_motor_velocity(Orientation.PORT, Speed.HALF.velocity)
+            self.set_motor_velocity(Orientation.STBD, Speed.FULL.velocity)
         elif _event is Event.TURN_ASTERN_PORT:
             self._log.info('theta TURN_ASTERN_PORT event.')
-            self.set_motor_velocity(Orientation.PORT, -1 * Speed.HALF.value)
-            self.set_motor_velocity(Orientation.STBD, -1 * Speed.FULL.value)
-            pass
+            self.set_motor_velocity(Orientation.PORT, -1 * Speed.HALF.velocity)
+            self.set_motor_velocity(Orientation.STBD, -1 * Speed.FULL.velocity)
         elif _event is Event.TURN_TO_PORT:
             self._log.info('theta TURN_TO_PORT event (unimplemented).')
             pass
@@ -435,13 +433,13 @@ class MotorController(Component):
             pass
         elif _event is Event.TURN_AHEAD_STBD:
             self._log.info('theta TURN_AHEAD_STBD event.')
-            self.set_motor_velocity(Orientation.PORT, Speed.FULL.value)
-            self.set_motor_velocity(Orientation.STBD, Speed.HALF.value)
+            self.set_motor_velocity(Orientation.PORT, Speed.FULL.velocity)
+            self.set_motor_velocity(Orientation.STBD, Speed.HALF.velocity)
             pass
         elif _event is Event.TURN_ASTERN_STBD:
             self._log.info('theta TURN_ASTERN_STBD event.')
-            self.set_motor_velocity(Orientation.PORT, -1 * Speed.FULL.value)
-            self.set_motor_velocity(Orientation.STBD, -1 * Speed.HALF.value)
+            self.set_motor_velocity(Orientation.PORT, -1 * Speed.FULL.velocity)
+            self.set_motor_velocity(Orientation.STBD, -1 * Speed.HALF.velocity)
             pass
         elif _event is Event.TURN_TO_STBD:
             self._log.info('theta TURN_TO_STBD event (unimplemented).')
@@ -519,18 +517,22 @@ class MotorController(Component):
             return
         _event = payload.event
         _value = payload.value
+        _ENABLE_TRAVEL_HERE = False
         if _event is Event.BUMPER_PORT:
             self._log.info(Fore.RED + 'BUMPER PORT.')
-            self.emergency_stop()
-            self.backup_cm(10)
+            if _ENABLE_TRAVEL_HERE:
+                self.emergency_stop()
+                self.backup_cm(10)
         elif _event is Event.BUMPER_CNTR:
             self._log.info(Fore.BLUE + 'BUMPER CNTR.')
-            self.emergency_stop()
-            self.backup_cm(10)
+            if _ENABLE_TRAVEL_HERE:
+                self.emergency_stop()
+                self.backup_cm(10)
         elif _event is Event.BUMPER_STBD:
             self._log.info(Fore.GREEN + 'BUMPER STBD.')
-            self.emergency_stop()
-            self.backup_cm(10)
+            if _ENABLE_TRAVEL_HERE:
+                self.emergency_stop()
+                self.backup_cm(10)
         else:
             raise ValueError('unrecognised bumper event {}'.format(_event.label))
 
@@ -563,19 +565,25 @@ class MotorController(Component):
         When the motor controller is disabled any calls to this method
         will override the target velocity argument and set it to zero.
         '''
+        self._log.info('🐱 1. set motor velocity.')
         if not self.enabled:
             self._log.error('motor controller not enabled.')
             target_velocity = 0.0
+        self._log.info('🐱 2. set motor velocity.')
         if isinstance(target_velocity, int):
+            self._log.info('🐱 3. set motor velocity.')
             self._log.warning('expected target velocity as float not int.')
             target_velocity = float(target_velocity)
         if not isinstance(target_velocity, float):
+            self._log.info('🐱 4. set motor velocity.')
             raise ValueError('expected float, not {}'.format(type(target_velocity)))
         if orientation is Orientation.PORT:
+            self._log.info('🐱 5. set motor velocity.')
 #           if self._port_motor.target_velocity != target_velocity:
 #               self._log.info('setting velocity of port motor to: ' + Fore.RED + '{:5.2f}'.format(target_velocity))
             self._port_motor.target_velocity = target_velocity
         elif orientation is Orientation.STBD:
+            self._log.info('🐱 6. set motor velocity.')
 #           if self._stbd_motor.target_velocity != target_velocity:
 #               self._log.info('setting velocity of stbd motor to: ' + Fore.GREEN + '{:5.2f}'.format(target_velocity))
             self._stbd_motor.target_velocity = target_velocity
@@ -633,6 +641,23 @@ class MotorController(Component):
             self._log.info('increment stbd motor velocity:' + Fore.GREEN + ' {:5.2f} + {:5.2f} ➔ {:<5.2f}'.format(\
                     self._stbd_motor.velocity, increment, _updated_target_velocity))
         self.set_motor_velocity(orientation, _updated_target_velocity)
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def emergency_stop(self):
+        self._log.info('emergency stop...')
+        # suppress any behaviours
+        self._suppress_behaviours()
+        # now stop very fast
+        self._set_slew_rate(self._emergency_slew_rate)
+        self._port_motor.target_velocity = 0.0
+        self._stbd_motor.target_velocity = 0.0
+        # we rely on this ultimately
+#       self._port_motor.stop()
+#       self._stbd_motor.stop()
+#       self._port_motor.off()
+#       self._stbd_motor.off()
+#       self._reset_slew_rate()
+        self._log.info('emergency stopped.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def stop(self):
@@ -736,20 +761,6 @@ class MotorController(Component):
             self._log.info('🌞 braking very hard...')
             self.emergency_stop()
         self._log.info('braked.')
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def emergency_stop(self):
-        self._log.info('emergency stop...')
-        self._set_slew_rate(self._emergency_slew_rate)
-        self._port_motor.target_velocity = 0.0
-        self._stbd_motor.target_velocity = 0.0
-        # we rely on this ultimately
-#       self._port_motor.stop()
-#       self._stbd_motor.stop()
-#       self._port_motor.off()
-#       self._stbd_motor.off()
-#       self._reset_slew_rate()
-        self._log.info('emergency stopped.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _suppress_behaviours(self):
@@ -877,7 +888,8 @@ class MotorController(Component):
         else:
             Component.enable(self)
             if not self._behaviour_mgr: # attach behaviour manager if available
-                self._behaviour_mgr = System.get_kros().get_behaviour_manager()
+                _kros = globals.get('kros')
+                self._behaviour_mgr = _kros.get_behaviour_manager() if _kros != None else None
             if not self._ext_clock and not self.loop_is_running:
                 self.start_loop()
             self._port_motor.enable()

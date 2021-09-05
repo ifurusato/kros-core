@@ -60,8 +60,8 @@ def test_oblique():
     _ifs.enable()
 
     _ranger   = Ranger(-1.0, 1.0, 0, 100)
-    _port_ranger = Ranger(0.0, 255.0, 0.0, -100.0)
-    _stbd_ranger = Ranger(0.0, 255.0, 0.0, -100.0)
+    _port_ranger = Ranger(0.0, 255.0, 0.0, -1.0)
+    _stbd_ranger = Ranger(0.0, 255.0, 0.0, -1.0)
 
     _i2c_scanner = I2CScanner(_config, Level.DEBUG)
     # 11x7 white LED matrix

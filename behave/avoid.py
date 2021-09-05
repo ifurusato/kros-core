@@ -45,8 +45,10 @@ class Avoid(Behaviour, Publisher):
     :param motor_ctrl:      the motor controller
     :param level:           the optional log level
     '''
-    def __init__(self, config, message_bus, message_factory, motor_ctrl, level=Level.INFO):
-        Behaviour.__init__(self, 'avoid', config, message_bus, message_factory, level)
+#   def __init__(self, config, message_bus, message_factory, motor_ctrl, level=Level.INFO):
+#       Behaviour.__init__(self, 'avoid', config, message_bus, message_factory, level)
+    def __init__(self, config, message_bus, message_factory, motor_ctrl, external_clock, suppressed=True, enabled=True, level=Level.INFO):
+        Behaviour.__init__(self, 'avoid', config, message_bus, message_factory, suppressed=suppressed, enabled=enabled, level=level)
         Publisher.__init__(self, 'avoid', config, message_bus, message_factory, suppressed=True, level=level)
         if not isinstance(motor_ctrl, MotorController):
             raise ValueError('wrong type for motor_ctrl argument: {}'.format(type(motor_ctrl)))
@@ -58,12 +60,14 @@ class Avoid(Behaviour, Publisher):
         self._publish_loop_running = False
         self._delay_ticks = 0
         self._counter = itertools.count()
-        self.add_events([ Group.INFRARED, Group.BUMPER ])
+#       self.add_events([ Group.INFRARED, Group.BUMPER ])
+        self.add_events([ Group.BUMPER ])
         self._log.info('ready.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def get_trigger_behaviour(self, event):
-        return TriggerBehaviour.TOGGLE # or RELEASE
+#       return TriggerBehaviour.RELEASE
+        return TriggerBehaviour.TOGGLE
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
@@ -155,7 +159,8 @@ class Avoid(Behaviour, Publisher):
                         # pop queue and publish...
                         _message = self._queue.get()
                         _last_event = _message.event
-                        self._log.info('💠 avoid-publishing message:' + Fore.WHITE + ' {}; event: {} for {:d} ticks.'.format(_message.name, _message.event.label, _message.payload.value))
+                        self._log.info('💠 avoid-publishing message:' + Fore.WHITE + ' {}; event: {} for {:d} ticks.'.format(
+                                _message.name, _message.event.label, _message.payload.value))
                         await Publisher.publish(self, _message)
                         self._log.debug('avoid-published message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
                         # add loop/tick delay if provided...
@@ -208,71 +213,78 @@ class Avoid(Behaviour, Publisher):
             else:
                 _elapsed_ms = (dt.now() - _timestamp).total_seconds() * 1000.0
                 self._log.info('avoid loop execute; {}'.format(Util.get_formatted_time('message age:', _elapsed_ms)))
-            if self.enabled:
-                _payload = message.payload
-                _event   = _payload.event
-                _value   = _payload.value
-                self._log.info('avoid enabled, execution on message {}; '.format(message.name) + Fore.YELLOW + ' event: {}; value: {}'.format(_event.label, _value))
+            if not self.enabled:
+                self._log.info('avoid disabled, execution on message {}; '.format(message.name) + Fore.YELLOW + ' event: {}; value: {}'.format(_event.label, _value))
+                return
 
+            _payload = message.payload
+            _event   = _payload.event
+            _value   = _payload.value
+            self._log.info('avoid enabled, execution on message {}; '.format(message.name) + Fore.YELLOW + ' event: {}; value: {}'.format(_event.label, _value))
+
+
+#           # David Anderson's IR bumper behaviour .........................................
+#           void bumper_behavior()      /* Collision recovery as concurrent task */
+#           {
+#           extern LAYER bump;      // C structure for behavior output
+#           int bumper;             // local to hold bumper switches status
+
+#           while (1) {             // endless loop
+#               bumper = read_bumper_switches();   // read the bumper switches
+#               if (bumper) {                   // if any switches are closed
+
+            if Event.is_bumper_event(_event):
+
+                # Ballistic segment 1 ........................
+                self._queue_directive(Event.SLOW_ASTERN, 6000)
+                # bump.cmd = BACKUP_SLOW;     // request reverse low speed
+                # bump.arg = 0;               // straight back
+                # bump.flag = TRUE;           // signal arbitrator
+                # msleep(1000);               // suspend and back up for 1 second
+
+                # Ballistic segment 2 ........................
+                # bump.cmd = HALF_SPEED;      // then request forward at half speed
+                # if (bump == LEFT)           // and turn away from the bump
+                # bump.arg = RIGHT_TURN;
+                # else bump.arg = LEFT_TURN;
+
+                _turn_ahead_delay = 3000
+                if _event is Event.BUMPER_PORT:
+                    self._log.info('avoid; event: {}; value: {}'.format(_event.label, _value))
+                    self._queue_directive(Event.TURN_AHEAD_STBD, _turn_ahead_delay)
+
+                elif _event is Event.BUMPER_STBD:
+                    self._log.info('avoid; event: {}; value: {}'.format(_event.label, _value))
+                    self._queue_directive(Event.TURN_AHEAD_PORT, _turn_ahead_delay)
+
+                elif _event is Event.BUMPER_CNTR:
+                    self._log.info('avoid; event: {}; value: {}'.format(_event.label, _value))
+                    self._queue_directive(Event.TURN_AHEAD_PORT, _turn_ahead_delay) # same as starboard
+
+                # msleep(500);                // suspend and turn for 1/2 second
+
+                # Ballistic segment 3 ........................
+                # bump.cmd = top_speed;       // request full speed
+                self._queue_directive(Event.HALF_AHEAD, 1000)
+                # bump.arg = 0;               // straight forward
+                # bump.flag = TRUE;           // signal arbitrator
+                # msleep(250);               // suspend and back up for 1/4 second
+
+                # Ballistic segments complete
+                # bump.flag = FALSE;          // then reset arbitration flag and loop
+
+                #  } else {                         // else if no bumps,
+                #       bump.flag = FALSE;	        // reset flag and	
+                #       msleep(10);                 // loop at 100Hz, looking for bumps
+                #  }
+                # }
+                # }
+
+            elif Event.is_infrared_event(_event):
                 # process value
                 if _value < self._min_distance:
                     self._log.info(Fore.YELLOW + 'avoid: value below threshold; event: {}; value: {}'.format(_event.label, _value))
-
-#                   # David Anderson's IR bumper behaviour .........................................
-#                   void bumper_behavior()      /* Collision recovery as concurrent task */
-#                   {
-#                   extern LAYER bump;      // C structure for behavior output
-#                   int bumper;             // local to hold bumper switches status
-#
-#                   while (1) {             // endless loop
-#                       bumper = read_bumper_switches();   // read the bumper switches
-#                       if (bumper) {                   // if any switches are closed
-                    if Event.is_bumper_event(_event):
-                        # Ballistic segment 1 ........................
-                        self._queue_directive(Event.SLOW_ASTERN, 6000)
-                        # bump.cmd = BACKUP_SLOW;     // request reverse low speed
-                        # bump.arg = 0;               // straight back
-                        # bump.flag = TRUE;           // signal arbitrator
-                        # msleep(1000);               // suspend and back up for 1 second
-
-
-                        # Ballistic segment 2 ........................
-                        # bump.cmd = HALF_SPEED;      // then request forward at half speed
-                        # if (bump == LEFT)           // and turn away from the bump
-                        # bump.arg = RIGHT_TURN;
-                        # else bump.arg = LEFT_TURN;
-                        _turn_ahead_delay = 3000
-                        if _event is Event.BUMPER_PORT:
-                            self._log.info('avoid; event: {}; value: {}'.format(_event.label, _value))
-                            self._queue_directive(Event.TURN_AHEAD_STBD, _turn_ahead_delay)
-
-                        elif _event is Event.BUMPER_STBD:
-                            self._log.info('avoid; event: {}; value: {}'.format(_event.label, _value))
-                            self._queue_directive(Event.TURN_AHEAD_PORT, _turn_ahead_delay)
-
-                        elif _event is Event.BUMPER_CNTR:
-                            self._log.info('avoid; event: {}; value: {}'.format(_event.label, _value))
-                            self._queue_directive(Event.TURN_AHEAD_PORT, _turn_ahead_delay) # same as starboard
-                        # msleep(500);                // suspend and turn for 1/2 second
-
-                        # Ballistic segment 3 ........................
-                        # bump.cmd = top_speed;       // request full speed
-                        self._queue_directive(Event.FULL_AHEAD, 4000)
-                        # bump.arg = 0;               // straight forward
-                        # bump.flag = TRUE;           // signal arbitrator
-                        # msleep(250);               // suspend and back up for 1/4 second
-
-                        # Ballistic segments complete
-                        # bump.flag = FALSE;          // then reset arbitration flag and loop
-
-                        #  } else {                         // else if no bumps,
-                        #       bump.flag = FALSE;	        // reset flag and	
-                        #       msleep(10);                 // loop at 100Hz, looking for bumps
-                        #  }
-                        # }
-                        # }
-
-                    elif _event is Event.INFRARED_PORT_SIDE:
+                    if _event is Event.INFRARED_PORT_SIDE:
                         self._log.info('avoid; event: {}; value: {}'.format(_event.label, _value))
                     elif _event is Event.INFRARED_PORT:
                         self._log.info('avoid; event: {}; value: {}'.format(_event.label, _value))
@@ -284,7 +296,8 @@ class Avoid(Behaviour, Publisher):
                         self._log.info('avoid; event: {}; value: {}'.format(_event.label, _value))
                     else:
                         raise ValueError('expected a bumper or infrared event, not {}'.format(_event.label))
-                    # David Anderson's IR collision avoidance behaviour ............................
+
+#                   # David Anderson's IR collision avoidance behaviour ............................
 #                   int ir_task()
 #                   {
 #                       extern LAYER ir;                       // C structure for task output
@@ -309,9 +322,8 @@ class Avoid(Behaviour, Publisher):
 #                           }
 #                       }
 #                   }
+
                 else:
                     self._log.info('avoid (no action): value above threshold; event: {}; value: {}'.format(_event.label, _value))
-            else:
-                self._log.info('avoid disabled, execution on message {}; '.format(message.name) + Fore.YELLOW + ' event: {}; value: {}'.format(_event.label, _value))
 
 #EOF
