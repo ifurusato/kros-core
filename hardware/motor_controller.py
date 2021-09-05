@@ -75,6 +75,7 @@ class MotorController(Component):
         self._loop_enabled         = False
         self._event_counter        = itertools.count()
         self._last_velocity        = None
+        self._behaviour_mgr        = None
         # configured constants
         self._slew_limiter_enabled = config['kros'].get('motor').get('enable_slew_limiter')
         _cfg = config['kros'].get('motor').get('motor_controller')
@@ -97,9 +98,6 @@ class MotorController(Component):
         self._log.info('spin speed:\t{}'.format(self._spin_speed.name))
         self._millis               = lambda: int(round(time.time() * 1000))
         self._start_time           = self._millis()
-        # perverse access to KROS instance
-        self._behaviour_mgr = System.get_kros().get_behaviour_manager()
-        self._log.info(Fore.MAGENTA + 'kros: {}'.format(type(self._behaviour_mgr)))
         # configure travel behaviour
         self._travel = Travel(config, motor_configurer, level)
         self._log.info('motors ready.')
@@ -640,12 +638,17 @@ class MotorController(Component):
     def stop(self):
         '''
         Stops both motors immediately, with no slewing.
+
+        This differs from both halt() and brake() in that it also suppresses
+        all behaviours.
         '''
         if self.stopped:
             self._log.warning('already stopped.')
             # but we do it anyway...
         else:
             self._log.info('stopping...')
+        # suppress any behaviours
+        self._suppress_behaviours()
         if self.loop_is_running:
             if self._slew_limiter_enabled:
                 self._log.info('stopping soft...')
@@ -749,6 +752,14 @@ class MotorController(Component):
         self._log.info('emergency stopped.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def _suppress_behaviours(self):
+        if self._behaviour_mgr:
+            self._behaviour_mgr.suppress_all_behaviours()
+            self._log.info('🍊 all behaviours suppressed.')
+        else:
+            self._log.warning('🍊 no behaviour manager availabe: cannot suppress behaviours.')
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _set_slew_rate(self, slew_rate):
         '''
         Set the slew rate for both motors to the argument.
@@ -761,7 +772,6 @@ class MotorController(Component):
         '''
         Halts any automated deceleration.
         '''
-#       self._log.warning(Fore.BLUE + 'reset slew rate.')
         self._port_motor.slew_limiter.reset()
         self._stbd_motor.slew_limiter.reset()
 
@@ -866,6 +876,8 @@ class MotorController(Component):
             self._log.warning('already enabled.')
         else:
             Component.enable(self)
+            if not self._behaviour_mgr: # attach behaviour manager if available
+                self._behaviour_mgr = System.get_kros().get_behaviour_manager()
             if not self._ext_clock and not self.loop_is_running:
                 self.start_loop()
             self._port_motor.enable()

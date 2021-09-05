@@ -42,6 +42,9 @@ class BatteryCheck(Publisher):
     input battery voltage of the ThunderBorg. This is generally the same value but
     this class enumerates the value so that its state is more obvious.
 
+    Note that this uses a different version of the Color enum whose values are
+    suited to the ThunderBorg's RGB LED inputs.
+
     Configuration:
     battery_channel:       the ADS1015 channel: 0, 1 or 2 used to measure the raw battery voltage
     five_volt_a_channel:   the ADS1015 channel: 0, 1 or 2 used to measure the 5v regulator battery voltage

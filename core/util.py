@@ -13,7 +13,7 @@
 import time
 from datetime import datetime as dt
 from colorama import init, Fore, Style
-init(autoreset=True)
+init()
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Util(object):
@@ -90,10 +90,10 @@ class Util(object):
         '''
         Print the methods of the provided class.
         '''
-        print(Fore.CYAN + "methods of class: {}".format(type(cls)))
+        print(Fore.CYAN + "methods of class: {}".format(type(cls)) + Style.RESET_ALL)
         method_list = [func for func in dir(cls) if callable(getattr(cls, func))]
         for m in method_list:
-            print(Fore.CYAN + '    method:\t' + Fore.YELLOW + '{}'.format(m))
+            print(Fore.CYAN + '    method:\t' + Fore.YELLOW + '{}'.format(m) + Style.RESET_ALL)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @staticmethod

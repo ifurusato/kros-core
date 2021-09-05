@@ -29,6 +29,7 @@ from core.message_bus import MessageBus
 from core.orient import Orientation
 from core.message_factory import MessageFactory
 from core.ranger import Ranger
+from hardware.i2c_scanner import I2CScanner
 from hardware.io_expander import IoExpander
 from hardware.ifs import IntegratedFrontSensor
 from hardware.matrix import Matrices
@@ -60,7 +61,12 @@ def test_oblique():
     _ranger   = Ranger(-1.0, 1.0, 0, 100)
     _port_ranger = Ranger(0.0, 255.0, 0.0, -100.0)
     _stbd_ranger = Ranger(0.0, 255.0, 0.0, -100.0)
-    _matrices = Matrices(True, True, Level.INFO)
+
+    _i2c_scanner = I2CScanner(_config, Level.DEBUG)
+    _enable_port = _i2c_scanner.has_address([0x77])
+    _enable_stbd = _i2c_scanner.has_address([0x75])
+
+    _matrices = Matrices(_enable_port, _enable_stbd, Level.INFO)
 
     try:
         _counter = itertools.count()

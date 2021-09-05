@@ -39,9 +39,7 @@ def test_motors():
     try:
 
         # read YAML configuration
-        _loader = ConfigLoader(Level.INFO)
-        filename = 'config.yaml'
-        _config = _loader.configure(filename)
+        _config = ConfigLoader(Level.INFO).configure()
 
 #       _log.info('creating message factory...')
 #       _message_factory = MessageFactory(Level.INFO)

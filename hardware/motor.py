@@ -175,7 +175,7 @@ class Motor(Component):
             self._log.info(Fore.MAGENTA + '😨 removing \'{}\' lambda from motor...'.format(name))
             del self.__velocity_lambdas[name]
         else:
-            self._log.warning('😨 motor did not contains a \'{}\' lambda.'.format(name))
+            self._log.warning('😨 motor did not contain a \'{}\' lambda.'.format(name))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _reset_velocity_multiplier(self):

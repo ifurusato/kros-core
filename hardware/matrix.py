@@ -19,7 +19,6 @@ init()
 from core.logger import Level, Logger
 from core.orient import Orientation
 from core.ranger import Ranger
-from hardware.i2c_scanner import I2CScanner
 
 try:
 #   print('importing Matrix11x7...')
@@ -46,30 +45,25 @@ class Matrices(object):
     We go to a little trouble to permit zero, one or two matrix displays
     to be installed.
 
-    :param config:        the application configuration
     :param enable_port:   enable/disable the port matrix (default True)
     :param enable_stbd:   enable/disable the starboard matrix (default True)
     :param level:         the log level
     '''
-    def __init__(self, config, enable_port=True, enable_stbd=True, level=Level.INFO):
+    def __init__(self, enable_port=True, enable_stbd=True, level=Level.INFO):
         self._log = Logger("matrices", level)
-        _i2c_scanner = I2CScanner(config, Level.DEBUG)
         self._enabled = True
-
-        if enable_port and _i2c_scanner.has_address([0x77]): # port
+        if enable_port:
             self._port_matrix = Matrix(Orientation.PORT, Level.INFO)
             self._log.info('port-side matrix available.')
         else:
             self._port_matrix = None
             self._log.warning('no port-side matrix available.')
-
-        if enable_stbd and _i2c_scanner.has_address([0x75]): # starboard
+        if enable_stbd:
             self._stbd_matrix = Matrix(Orientation.STBD, Level.INFO)
             self._log.info('starboard-side matrix available.')
         else:
             self._stbd_matrix = None
             self._log.warning('no starboard-side matrix available.')
-
         if not self._port_matrix and not self._stbd_matrix:
             self._enabled = False
             self._log.warning('no matrix displays available.')
@@ -144,14 +138,20 @@ class Matrices(object):
 #       self._stbd_matrix.clear()
         if col < 11:
 #           self._log.info(Fore.GREEN + 'displaying column {:d} on starboard matrix...'.format(col))   
-            self._port_matrix._blank()
-            self._stbd_matrix.column(col, blank=True)
+            if self._port_matrix:
+                self._port_matrix._blank()
+            if self._stbd_matrix:
+                self._stbd_matrix.column(col, blank=True)
         else:
 #           self._log.info(Fore.RED   + 'displaying column {:d} on port matrix...'.format(col))   
-            self._stbd_matrix._blank()
-            self._port_matrix.column(col-11, blank=True)
-        self._stbd_matrix.show()
-        self._port_matrix.show()
+            if self._stbd_matrix:
+                self._stbd_matrix._blank()
+            if self._port_matrix:
+                self._port_matrix.column(col-11, blank=True)
+        if self._stbd_matrix:
+            self._stbd_matrix.show()
+        if self._port_matrix:
+            self._port_matrix.show()
 
     # ..........................................................................
     def horizontal_gradient(self, cols):

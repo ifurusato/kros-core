@@ -20,7 +20,7 @@ import os, sys, signal, time, threading, traceback
 import argparse, psutil
 from pathlib import Path
 from colorama import init, Fore, Style
-init(autoreset=True)
+init()
 
 import core.globals as globals
 globals.init()
@@ -106,6 +106,7 @@ class KROS(Component, FiniteStateMachine):
         self._killswitch    = None
         self._disable_leds  = False
         self._closing       = False
+        self._log.info('oid: {}'.format(id(self)))
         self._log.info('initialised.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -239,8 +240,9 @@ class KROS(Component, FiniteStateMachine):
 
         _enable_behaviours = _cfg.get('enable_behaviours') or Util.is_true(arguments.behave)
         if _enable_behaviours:
-            self._log.info(Style.BRIGHT + 'behaviours enabled.')
             self._behaviour_mgr = BehaviourManager(self._config, self._message_bus, self._level) # a specialised subscriber
+            self._log.info(Style.BRIGHT + 'behaviour manager enabled.')
+
             _bcfg = self._config['kros'].get('behaviour')
             # create and register behaviours (listed in priority order)
             if _bcfg.get('enable_avoid_behaviour'):
@@ -303,6 +305,7 @@ class KROS(Component, FiniteStateMachine):
         '''
         Returns the BehaviourManager, None if not used.
         '''
+        self._log.info(Fore.MAGENTA + '👾 from KROS, beh_mgr: {}'.format(type(self._behaviour_mgr)))
         return self._behaviour_mgr
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -451,23 +454,31 @@ class KROS(Component, FiniteStateMachine):
 
 
 # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-def print_documentation():
+def print_documentation(console=True):
     '''
-    Print the extended documentation.
+    Print the extended documentation as imported from the help.txt file. If
+    'console' is false, just return its contents.
     '''
     _help_file = Path("help.txt")
     if _help_file.is_file():
         with open(_help_file) as f:
             _content = f.read()
-            print(_content)
+            if console:
+                return _content
+            else:
+                print(_content)
     else:
-        print('{} not found.'.format(_help_file))
+        if console:
+            return 'help file not found.'
+        else:
+            print('{} not found.'.format(_help_file))
 
 # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 def parse_args():
     '''
     Parses the command line arguments and return the resulting args object.
-    Help is available via '--help', '-h', or calling the script with no arguments.
+    Help is available via '--help', '-h', or '--docs', '-d' (for extended help),
+    or calling the script with no arguments.
     '''
     _log = Logger('parse-args', Level.INFO)
     _log.debug('parsing...')
@@ -492,18 +503,13 @@ def parse_args():
     parser.add_argument('--level',       '-l', help='specify logging level \'DEBUG\'|\'INFO\'|\'WARN\'|\'ERROR\' (default: \'INFO\')')
 
     try:
+        print('')
         args = parser.parse_args()
         if args.docs:
-            print(Fore.CYAN)
-            parser.print_help()
-            print('')
-            print_documentation()
-            print(Style.RESET_ALL)
+            print(Fore.CYAN + '{}\n{}'.format(parser.format_help(), print_documentation(True)) + Style.RESET_ALL)
             return -1
         elif not args.configure and not args.start:
-            print(Fore.CYAN)
-            parser.print_help()
-            print(Style.RESET_ALL)
+            print(Fore.CYAN + '{}'.format(parser.format_help()) + Style.RESET_ALL)
             return -1
         else:
             globals.put('log_to_file', args.log)
@@ -520,10 +526,10 @@ def parse_args():
 # execution handler ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 def signal_handler(signal, frame):
     global _kros
-    print('\nsignal handler    :' + Fore.MAGENTA + Style.BRIGHT + ' INFO  : Ctrl-C caught: exiting...')
+    print('\nsignal handler    :' + Fore.MAGENTA + Style.BRIGHT + ' INFO  : Ctrl-C caught: exiting...' + Style.RESET_ALL)
     if _kros and not ( _kros.closing or _kros.closed ):
         _kros.close()
-    print(Fore.MAGENTA + 'exit.')
+    print(Fore.MAGENTA + 'exit.' + Style.RESET_ALL)
 #   sys.stderr = DevNull()
     sys.exit(0)
 
@@ -557,9 +563,9 @@ def main(argv):
                 _kros.start()
             # kros is now running...
     except KeyboardInterrupt:
-        print(Style.BRIGHT + 'caught Ctrl-C; exiting...')
+        print(Style.BRIGHT + 'caught Ctrl-C; exiting...' + Style.RESET_ALL)
     except Exception:
-        print(Fore.RED + Style.BRIGHT + 'error starting kros: {}'.format(traceback.format_exc()))
+        print(Fore.RED + Style.BRIGHT + 'error starting kros: {}'.format(traceback.format_exc()) + Style.RESET_ALL)
     finally:
         if not _suppress:
             _log.info('kros exit.')

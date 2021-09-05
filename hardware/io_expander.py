@@ -19,7 +19,7 @@ from threading import Thread # TEMP
 
 import sys, itertools, random
 from colorama import init, Fore, Style
-init(autoreset=True)
+init()
 
 from core.logger import Logger, Level
 from core.event import Event
@@ -64,14 +64,14 @@ class IoExpander(Component):
             self._log.info('infrared pin assignments:\t' \
                     + Fore.RED + ' port side={:d}; port={:d};'.format(self._port_side_ir_pin, self._port_ir_pin) \
                     + Fore.BLUE + ' center={:d};'.format(self._cntr_ir_pin) \
-                    + Fore.GREEN + ' stbd={:d}; stbd side={:d}'.format(self._stbd_ir_pin, self._stbd_side_ir_pin))
+                    + Fore.GREEN + ' stbd={:d}; stbd side={:d}'.format(self._stbd_ir_pin, self._stbd_side_ir_pin) + Style.RESET_ALL)
         # moth/anti-moth
         self._port_moth_pin = _config.get('port_moth_pin')  # pin connected to port moth sensor
         self._stbd_moth_pin = _config.get('stbd_moth_pin')  # pin connected to starboard moth sensor
         if enable_moth:
             self._log.info('moth pin assignments:\t' \
                     + Fore.RED + ' moth port={:d};'.format(self._port_moth_pin) \
-                    + Fore.GREEN + ' moth stbd={:d};'.format(self._stbd_moth_pin))
+                    + Fore.GREEN + ' moth stbd={:d};'.format(self._stbd_moth_pin) + Style.RESET_ALL)
         # bumpers
         self._port_bmp_pin     = _config.get('port_bmp_pin')      # pin connected to port bumper
         self._cntr_bmp_pin     = _config.get('cntr_bmp_pin')      # pin connected to center bumper
@@ -80,7 +80,7 @@ class IoExpander(Component):
             self._log.info('bumper pin assignments:\t' \
                     + Fore.RED + ' port={:d};'.format(self._port_bmp_pin) \
                     + Fore.BLUE + ' center={:d};'.format(self._cntr_bmp_pin) \
-                    + Fore.GREEN + ' stbd={:d}'.format(self._stbd_bmp_pin))
+                    + Fore.GREEN + ' stbd={:d}'.format(self._stbd_bmp_pin) + Style.RESET_ALL)
         # debouncing "charge pumps"
         self._port_bmp_pump = 0
         self._cntr_bmp_pump = 0
@@ -93,25 +93,25 @@ class IoExpander(Component):
         try:
             import ioexpander as io
             if self._callback:
-                self._log.info(Fore.WHITE + '🍅 configuring interrupts...')
+                self._log.info(Fore.WHITE + 'configuring interrupts...' + Style.RESET_ALL)
                 self._ioe = io.IOE(i2c_addr=0x18, interrupt_pin=4)
                 # swap the interrupt pin for the Rotary Encoder breakout
 
                 self._ioe.enable_interrupt_out()
 #               self._ioe.enable_interrupt_out(pin_swap=True)
-                self._log.info(Fore.WHITE + '🍅 adding callback on interrupt...')
+                self._log.info(Fore.WHITE + 'adding callback on interrupt...' + Style.RESET_ALL)
                 self._ioe.on_interrupt(self._callback_method)
-                self._log.info(Fore.WHITE + '🍅 added callback on interrupt.')
+                self._log.info(Fore.WHITE + 'added callback on interrupt.' + Style.RESET_ALL)
 
                 self._rate = Rate(20)
                 self._thread_enabled = True
-                self._log.info(Fore.WHITE + '🍅 added monitoring thread...')
+                self._log.info(Fore.WHITE + 'added monitoring thread...' + Style.RESET_ALL)
                 self._thread = Thread(name='monitor', target=self._monitor_interrupt_loop, args=[lambda: self._thread_enabled])
                 self._thread.start()
 
             else:
                 # no interrupt
-                self._log.info(Fore.RED + '🍅 configuring without interrupts...')
+                self._log.info(Fore.RED + 'configuring without interrupts...' + Style.RESET_ALL)
                 self._ioe = io.IOE(i2c_addr=0x18)
 
             self._ioe.set_adc_vref(3.3)  # input voltage of IO Expander, this is 3.3 on Breakout Garden
@@ -142,39 +142,39 @@ class IoExpander(Component):
    
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _monitor_interrupt_loop(self, f_is_enabled):
-        self._log.info(Fore.RED + Style.NORMAL + '🖤 _monitoring interrupt... ')
+        self._log.info(Fore.RED + Style.NORMAL + '🖤 _monitoring interrupt... ' + Style.RESET_ALL)
         while f_is_enabled():
             if self._ioe.get_interrupt():
 
-                self._log.info(Fore.RED + Style.NORMAL + '💔💔💔🖤 interrupt TRIGGERED! ')
+                self._log.info(Fore.RED + Style.NORMAL + '💔💔💔🖤 interrupt TRIGGERED! ' + Style.RESET_ALL)
                 _interrupt_value = self._ioe.get_interrupt()
                 if _interrupt_value == 0:
-                    self._log.info(Fore.RED + Style.NORMAL + '🖤 triggering callback method...; interrupt: {:d}'.format(_interrupt_value))
+                    self._log.info(Fore.RED + Style.NORMAL + '🖤 triggering callback method...; interrupt: {:d}'.format(_interrupt_value) + Style.RESET_ALL)
                 else:
-                    self._log.info(Fore.RED + Style.BRIGHT + '💔 triggering callback method...; interrupt: {:d}'.format(_interrupt_value))
+                    self._log.info(Fore.RED + Style.BRIGHT + '💔 triggering callback method...; interrupt: {:d}'.format(_interrupt_value) + Style.RESET_ALL)
 
                 self._callback(_interrupt_value)
 
                 _interrupt_value = self._ioe.get_interrupt()
                 if _interrupt_value == 0:
-                    self._log.info(Fore.RED + Style.NORMAL + '🖤🖤 triggered callback method...; interrupt: {:d}'.format(_interrupt_value))
+                    self._log.info(Fore.RED + Style.NORMAL + '🖤🖤 triggered callback method...; interrupt: {:d}'.format(_interrupt_value) + Style.RESET_ALL)
                 else:
-                    self._log.info(Fore.RED + Style.BRIGHT + '💔💔 triggered callback method...; interrupt: {:d}'.format(_interrupt_value))
+                    self._log.info(Fore.RED + Style.BRIGHT + '💔💔 triggered callback method...; interrupt: {:d}'.format(_interrupt_value) + Style.RESET_ALL)
 
-                self._log.debug(Fore.BLACK + '🖤 CLEAR interrupt...')
+                self._log.debug(Fore.BLACK + '🖤 CLEAR interrupt...' + Style.RESET_ALL)
                 self._ioe.clear_interrupt()
             else:
-                self._log.debug(Fore.BLACK + '🖤 waiting...')
+                self._log.debug(Fore.BLACK + '🖤 waiting...' + Style.RESET_ALL)
             self._rate.wait()
 
-        self._log.info(Fore.GREEN + Style.NORMAL + '💛 exit _monitoring loop. ')
+        self._log.info(Fore.GREEN + Style.NORMAL + '💛 exit _monitoring loop. ' + Style.RESET_ALL)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _callback_method(self, *argv):
-        self._log.info(Fore.YELLOW + Style.BRIGHT + '💛 triggering callback method...; interrupt: {:d}'.format(self._ioe.get_interrupt()))
+        self._log.info(Fore.YELLOW + Style.BRIGHT + '💛 triggering callback method...; interrupt: {:d}'.format(self._ioe.get_interrupt()) + Style.RESET_ALL)
         self._callback(argv)
         self._ioe.clear_interrupt()
-        self._log.info(Fore.YELLOW + Style.BRIGHT + '💛 triggered callback method; interrupt: {:d}'.format(self._ioe.get_interrupt()))
+        self._log.info(Fore.YELLOW + Style.BRIGHT + '💛 triggered callback method; interrupt: {:d}'.format(self._ioe.get_interrupt()) + Style.RESET_ALL)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
@@ -214,10 +214,10 @@ class IoExpander(Component):
     def get_cntr_bmp_value(self):
         _value = self._ioe.input(self._cntr_bmp_pin)
         if _value == 0:
-            print(Fore.GREEN + 'get_cntr_bmp_value({}): {}'.format(type(_value), _value))
+            print(Fore.GREEN + 'get_cntr_bmp_value({}): {}'.format(type(_value), _value) + Style.RESET_ALL)
             return True
         else:
-            print(Fore.RED + 'get_cntr_bmp_value({}): {}'.format(type(_value), _value))
+            print(Fore.RED + 'get_cntr_bmp_value({}): {}'.format(type(_value), _value) + Style.RESET_ALL)
             return False
 
     def get_stbd_bmp_value(self):
@@ -267,11 +267,11 @@ class IoExpander(Component):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def close(self):
-        self._log.info(Fore.WHITE + 'close()')
+        self._log.info(Fore.WHITE + 'close()' + Style.RESET_ALL)
         self._thread_enabled = False
         Component.close(self)
         if self._thread != None:
             self._thread.join(timeout=1.0)
-            self._log.info(Fore.WHITE + 'thread joined.')
+            self._log.info(Fore.WHITE + 'thread joined.' + Style.RESET_ALL)
 
 # EOF

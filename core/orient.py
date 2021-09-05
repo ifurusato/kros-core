@@ -13,6 +13,7 @@
 #
 
 from enum import Enum
+from hardware.color import Color
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Orientation(Enum):
