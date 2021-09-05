@@ -19,6 +19,7 @@ init()
 
 from core.logger import Logger, Level
 from core.config_loader import ConfigLoader
+from hardware.i2c_scanner import I2CScanner
 from hardware.matrix import Matrices
 
 # ..............................................................................
@@ -35,14 +36,20 @@ def test_matrix():
 
         _log.info(Fore.CYAN + 'start matrices test...')
 
-        _enable_port = True
-        _enable_stbd = True
+        _i2c_scanner = I2CScanner(_config, Level.WARN)
+        if not _i2c_scanner.has_address([0x75, 0x77]):
+            _log.warning('test ignored: no rgbmatrix displays found.')
+            return
+        _addresses = _i2c_scanner.get_int_addresses()
+        _enable_port = 0x77 in _addresses
+        _enable_stbd = 0x75 in _addresses
+
         _matrices = Matrices(_enable_port, _enable_stbd, level=Level.INFO)
 
         _log.info('matrix write text...')
         _matrices.text('HE', 'LP')
         time.sleep(3)
-        _matrices.clear()
+        _matrices.clear_all()
         time.sleep(1)
 
         _log.info('matrix on...')
@@ -50,7 +57,7 @@ def test_matrix():
         time.sleep(2)
 
         _log.info('matrix off...')
-        _matrices.clear()
+        _matrices.clear_all()
         time.sleep(1)
 
         _log.info('manual gradient wipes...')
@@ -73,19 +80,19 @@ def test_matrix():
         _matrices.wipe(Matrices.DOWN, True, 0.00)
         time.sleep(0.0)
         _matrices.wipe(Matrices.DOWN, False, 0.00)
-        _matrices.clear()
+        _matrices.clear_all()
         time.sleep(1)
 
         _log.info('starting matrix horizontal wipe right...')
         _matrices.wipe(Matrices.RIGHT, True, 0.00)
         time.sleep(0.0)
         _matrices.wipe(Matrices.RIGHT, False, 0.00)
-        _matrices.clear()
+        _matrices.clear_all()
         # UP and LEFT not implemented
 
         # now the cylon scanning loop ......
-        _matrices.clear()
-        _log.info('starting column on ranged matrices, Ctrl-C to quit.')
+        _matrices.clear_all()
+        _log.info('starting column on ranged matrices, ' + Fore.YELLOW + 'Ctrl-C to quit.')
         while True:
             for c in range(0,22):
                 _matrices.column(c)
@@ -94,14 +101,14 @@ def test_matrix():
                 _matrices.column(c)
                 time.sleep(0.001)
         time.sleep(0.5)
-        _matrices.clear()
+        _matrices.clear_all()
 
     except KeyboardInterrupt:
         _log.info(Fore.MAGENTA + 'Ctrl-C caught: interrupted.')
     finally:
         _log.info('closing matrix test...')
         if _matrices:
-            _matrices.clear()
+            _matrices.clear_all()
 
 
 # call main ......................................

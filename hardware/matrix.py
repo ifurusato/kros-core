@@ -139,13 +139,13 @@ class Matrices(object):
         if col < 11:
 #           self._log.info(Fore.GREEN + 'displaying column {:d} on starboard matrix...'.format(col))   
             if self._port_matrix:
-                self._port_matrix._blank()
+                self._port_matrix.clear(False)
             if self._stbd_matrix:
                 self._stbd_matrix.column(col, blank=True)
         else:
 #           self._log.info(Fore.RED   + 'displaying column {:d} on port matrix...'.format(col))   
             if self._stbd_matrix:
-                self._stbd_matrix._blank()
+                self._stbd_matrix.clear(False)
             if self._port_matrix:
                 self._port_matrix.column(col-11, blank=True)
         if self._stbd_matrix:
@@ -234,7 +234,7 @@ class Matrices(object):
             time.sleep(delay_secs)
 
     # ..........................................................................
-    def clear(self):
+    def clear_all(self):
         '''
         Turns the lights off and disables any running threads.
         '''
@@ -344,7 +344,7 @@ class Matrix(object):
         self._enabled = True
         self._matrix11x7.set_brightness(1.0)
         if blank:
-            self._blank()
+            self.clear(False)
         x = col
         rows = 7
         for y in range(0, rows):
@@ -394,7 +394,7 @@ class Matrix(object):
         self._log.debug('matrix display ({},{})'.format(rows, cols))
         self._enabled = True
         self._matrix11x7.set_brightness(1.0)
-        self._blank()
+        self.clear(False)
         for x in range(0, cols):
             for y in range(0, rows):
                 v = 0.7
@@ -402,30 +402,24 @@ class Matrix(object):
         self._matrix11x7.show()
 
     # ..........................................................................
-    def _blank(self):
+    def show(self):
+        self._matrix11x7.show()
+
+    # ..........................................................................
+    def clear(self, show=True):
         '''
-        Turn off all LEDs but don't show the change.
+        Turn off all LEDs. If 'show' is True (default) then show the change.
         '''
+        if not self._matrix11x7:
+            self._log.debug('no matrix 11x7 display available.')
+            return
         self._matrix11x7.set_brightness(0.5)
         for x in range(0, self._matrix11x7.width):
             for y in range(0, self._matrix11x7.height):
                 v = 0.7
                 self._matrix11x7.pixel(x, y, 0.0)
-
-    # ..........................................................................
-    def show(self):
-        self._matrix11x7.show()
-
-    # ..........................................................................
-    def clear(self):
-        '''
-        Turn off all LEDs.
-        '''
-        if not self._matrix11x7:
-            self._log.debug('no matrix 11x7 display available.')
-            return
-        self._blank()
-        self._matrix11x7.show()
+        if show:
+            self._matrix11x7.show()
 
     # ..........................................................................
     def disable(self):

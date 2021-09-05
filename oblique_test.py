@@ -33,6 +33,7 @@ from hardware.i2c_scanner import I2CScanner
 from hardware.io_expander import IoExpander
 from hardware.ifs import IntegratedFrontSensor
 from hardware.matrix import Matrices
+from hardware.rgbmatrix import RgbMatrix
 
 # ..............................................................................
 @pytest.mark.unit
@@ -63,10 +64,21 @@ def test_oblique():
     _stbd_ranger = Ranger(0.0, 255.0, 0.0, -100.0)
 
     _i2c_scanner = I2CScanner(_config, Level.DEBUG)
-    _enable_port = _i2c_scanner.has_address([0x77])
-    _enable_stbd = _i2c_scanner.has_address([0x75])
-
-    _matrices = Matrices(_enable_port, _enable_stbd, Level.INFO)
+    # 11x7 white LED matrix
+    _enable_port_11x7 = _i2c_scanner.has_address([0x77])
+    _enable_stbd_11x7 = _i2c_scanner.has_address([0x75])
+    _use_11x7         = _enable_port_11x7 and _enable_stbd_11x7 
+    # 5x5 RGB LED matrix
+    _enable_port_5x5  = _i2c_scanner.has_address([0x77])
+    _enable_stbd_5x5  = _i2c_scanner.has_address([0x74])
+    _use_5x5          = _enable_port_5x5 and _enable_stbd_5x5
+    # choose based on what's available
+    if _use_11x7:
+        _matrices = Matrices(_enable_port_11x7, _enable_stbd_11x7, Level.INFO)
+    elif _use_5x5:
+        _matrices = RgbMatrix(_enable_port_5x5, _enable_stbd_5x5, Level.INFO)
+    else:
+         raise Exception('could not find suitable pair of displays.')
 
     try:
         _counter = itertools.count()
@@ -110,7 +122,7 @@ def test_oblique():
     except Exception as e:
         print(Fore.RED + Style.BRIGHT + 'error testing ifs: {}\n{}'.format(e, traceback.format_exc()) + Style.RESET_ALL)
     finally:
-        _matrices.clear()
+        _matrices.clear_all()
 
 # ..............................................................................
 def main():

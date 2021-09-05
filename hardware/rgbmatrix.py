@@ -38,6 +38,7 @@ except ImportError:
 
 from core.logger import Level, Logger
 from core.orient import Orientation
+from core.ranger import Ranger
 from hardware.color import Color
 from mock.rgbmatrix import MockRGBMatrix5x5 # for testing and simulation
 
@@ -61,26 +62,26 @@ class RgbMatrix(object):
         self._log = Logger("rgbmatrix", level)
 
         if enable_port:
-            self._rgbmatrix5x5_PORT = RGBMatrix5x5(address=0x77)
+            self._port_rgbmatrix = RGBMatrix5x5(address=0x77)
             self._log.info('port rgbmatrix at 0x77.')
-            self._rgbmatrix5x5_PORT.set_brightness(0.8)
-            self._rgbmatrix5x5_PORT.set_clear_on_exit()
+            self._port_rgbmatrix.set_brightness(0.8)
+            self._port_rgbmatrix.set_clear_on_exit()
         else:
             self._log.info('no port rgbmatrix found, using mock.')
-            self._rgbmatrix5x5_PORT = MockRGBMatrix5x5(address=0x77)
+            self._port_rgbmatrix = MockRGBMatrix5x5(address=0x77)
             self._height = 5
             self._width  = 5
 
         if enable_stbd:
-            self._rgbmatrix5x5_STBD = RGBMatrix5x5(address=0x74)
+            self._stbd_rgbmatrix = RGBMatrix5x5(address=0x74)
             self._log.info('starboard rgbmatrix at 0x74.')
-            self._rgbmatrix5x5_STBD.set_brightness(0.8)
-            self._rgbmatrix5x5_STBD.set_clear_on_exit()
-            self._height = self._rgbmatrix5x5_STBD.height
-            self._width  = self._rgbmatrix5x5_STBD.width
+            self._stbd_rgbmatrix.set_brightness(0.8)
+            self._stbd_rgbmatrix.set_clear_on_exit()
+            self._height = self._stbd_rgbmatrix.height
+            self._width  = self._stbd_rgbmatrix.width
         else:
             self._log.info('no starboard rgbmatrix found.')
-            self._rgbmatrix5x5_STBD = MockRGBMatrix5x5(address=0x74)
+            self._stbd_rgbmatrix = MockRGBMatrix5x5(address=0x74)
             self._height = 5
             self._width  = 5
 
@@ -92,11 +93,13 @@ class RgbMatrix(object):
         self._closing = False
         self._closed = False
         self._display_type = DisplayType.DARK # default
+        # define percentage to column converter
+        self._percent_to_column = Ranger(0, 100, 0, 9)
         # color used by wipe display
         self._wipe_color = Color.WHITE # default
         # used by _cpu:
         self._max_value = 0.0 # TEMP
-        self._buf = numpy.zeros((self._rgbmatrix5x5_STBD.width, self._rgbmatrix5x5_STBD.width))
+        self._buf = numpy.zeros((self._stbd_rgbmatrix.width, self._stbd_rgbmatrix.width))
         self._colors = [ Color.GREEN, Color.YELLOW_GREEN, Color.YELLOW, Color.ORANGE, Color.RED ]
         self._log.info('ready.')
 
@@ -132,23 +135,17 @@ class RgbMatrix(object):
             if self._thread_PORT is None and self._thread_STBD is None:
                 enabled = True
                 _target = self._get_target()
-                if self._rgbmatrix5x5_PORT:
-                    self._thread_PORT = Thread(name='rgb-port', target=_target[0], args=[self, self._rgbmatrix5x5_PORT, _target[1]])
+                if self._port_rgbmatrix:
+                    self._thread_PORT = Thread(name='rgb-port', target=_target[0], args=[self, self._port_rgbmatrix, _target[1]])
                     self._thread_PORT.start()
-                if self._rgbmatrix5x5_STBD:
-                    self._thread_STBD = Thread(name='rgb-stbd', target=_target[0], args=[self, self._rgbmatrix5x5_STBD, _target[1]])
+                if self._stbd_rgbmatrix:
+                    self._thread_STBD = Thread(name='rgb-stbd', target=_target[0], args=[self, self._stbd_rgbmatrix, _target[1]])
                     self._thread_STBD.start()
                 self._log.debug('enabled.')
             else:
                 self._log.warning('cannot enable: process already running.')
         else:
             self._log.warning('cannot enable: already closed.')
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def clear(self):
-        if self._rgbmatrix5x5_PORT:
-            self._clear(self._rgbmatrix5x5_PORT)
-        self._clear(self._rgbmatrix5x5_STBD)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def is_disabled(self):
@@ -160,17 +157,26 @@ class RgbMatrix(object):
         global enabled
         self._log.debug('disabling...')
         enabled = False
-        if self._rgbmatrix5x5_PORT:
-            self._clear(self._rgbmatrix5x5_PORT)
-        self._clear(self._rgbmatrix5x5_STBD)
+        if self._port_rgbmatrix:
+            self._clear(self._port_rgbmatrix)
+        if self._stbd_rgbmatrix:
+            self._clear(self._stbd_rgbmatrix)
         if self._thread_PORT != None:
-            self._thread_PORT.join(timeout=1.0)
-            self._log.debug('port rgbmatrix thread joined.')
-            self._thread_PORT = None
+            try:
+                self._thread_PORT.join(timeout=1.0)
+                self._log.debug('port rgbmatrix thread joined.')
+            except Exception:
+                pass
+            finally:
+                self._thread_PORT = None
         if self._thread_STBD != None:
-            self._thread_STBD.join(timeout=1.0)
-            self._log.debug('starboard rgbmatrix thread joined.')
-            self._thread_STBD = None
+            try:
+                self._thread_STBD.join(timeout=1.0)
+                self._log.debug('starboard rgbmatrix thread joined.')
+            except Exception:
+                pass
+            finally:
+                self._thread_STBD = None
         self._log.debug('disabled.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -389,10 +395,10 @@ class RgbMatrix(object):
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def show_color(self, color, orientation):
         self.set_solid_color(color)
-        if orientation is Orientation.PORT or orientation is Orientation.BOTH and self._rgbmatrix5x5_PORT:
-            self._set_color(self._rgbmatrix5x5_PORT, self._color)
+        if orientation is Orientation.PORT or orientation is Orientation.BOTH and self._port_rgbmatrix:
+            self._set_color(self._port_rgbmatrix, self._color)
         if orientation is Orientation.STBD or orientation is Orientation.BOTH:
-            self._set_color(self._rgbmatrix5x5_STBD, self._color)
+            self._set_color(self._stbd_rgbmatrix, self._color)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def get_rgbmatrix(self, orientation):
@@ -400,9 +406,9 @@ class RgbMatrix(object):
         Return the port or starboard RGB matrix.
         '''
         if orientation is Orientation.PORT:
-            return self._rgbmatrix5x5_PORT
+            return self._port_rgbmatrix
         if orientation is Orientation.STBD:
-            return self._rgbmatrix5x5_STBD
+            return self._stbd_rgbmatrix
         else:
             return None
 
@@ -417,12 +423,12 @@ class RgbMatrix(object):
         r = int(rgb[0]*255.0)
         g = int(rgb[1]*255.0)
         b = int(rgb[2]*255.0)
-        if orientation is Orientation.PORT or orientation is Orientation.BOTH and self._rgbmatrix5x5_PORT:
-            self._rgbmatrix5x5_PORT.set_all(r, g, b)
-            self._rgbmatrix5x5_PORT.show()
+        if orientation is Orientation.PORT or orientation is Orientation.BOTH and self._port_rgbmatrix:
+            self._port_rgbmatrix.set_all(r, g, b)
+            self._port_rgbmatrix.show()
         if orientation is Orientation.STBD or orientation is Orientation.BOTH:
-            self._rgbmatrix5x5_STBD.set_all(r, g, b)
-            self._rgbmatrix5x5_STBD.show()
+            self._stbd_rgbmatrix.set_all(r, g, b)
+            self._stbd_rgbmatrix.show()
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _solid(self, rgbmatrix5x5, arg):
@@ -431,8 +437,10 @@ class RgbMatrix(object):
         '''
         global enabled
 #       self.set_color(self._color)
-#       self._set_color(self._rgbmatrix5x5_PORT, self._color)
-        self._set_color(self._rgbmatrix5x5_STBD, self._color)
+        if self._port_rgbmatrix:
+            self._set_color(self._port_rgbmatrix, self._color)
+        if self._stbd_rgbmatrix:
+            self._set_color(self._stbd_rgbmatrix, self._color)
         self._log.info('starting solid color to {}...'.format(str.lower(self._color.name)))
         while enabled:
             time.sleep(0.2)
@@ -447,6 +455,68 @@ class RgbMatrix(object):
         self.set_color(Color.BLACK)
         while enabled:
             time.sleep(0.2)
+
+    # ..........................................................................
+    def percent(self, value):
+        '''
+        Displays a vertical bar expressing a percentage between the pair of
+        matrix displays.
+        '''
+        self.column(self._percent_to_column.convert(value))
+
+    # ..........................................................................
+    def column(self, col):
+        '''
+        Turn on a single column of the LEDs at maximum brightness. Because
+        this is using both port and starboard, it references any column
+        number over 5 onto the port display, so the full range is 0-9.
+
+        This will blank both displays on each call.
+        '''
+        #self._port_rgbmatrix.clear()
+#       self._port_rgbmatrix.clear()
+#       self._stbd_rgbmatrix.clear()
+        if col < 5: # cols 0-4
+#           self._log.info(Fore.GREEN + 'displaying column {:d} on starboard matrix...'.format(col))   
+            if self._port_rgbmatrix:
+                self.clear(Orientation.PORT, False)
+            if self._stbd_rgbmatrix:
+                self._column(Orientation.STBD, col, blank=True)
+        else: # cols 5-9
+#           self._log.info(Fore.RED   + 'displaying column {:d} on port matrix...'.format(col))   
+            if self._stbd_rgbmatrix:
+                self.clear(Orientation.STBD, False)
+            if self._port_rgbmatrix:
+                self._column(Orientation.PORT, col-5, blank=True)
+        if self._stbd_rgbmatrix:
+            self._stbd_rgbmatrix.show()
+        if self._port_rgbmatrix:
+            self._port_rgbmatrix.show()
+
+    # ..........................................................................
+    def _column(self, orientation, col, blank=True):
+        '''
+        Turn on a single column of the LEDs at maximum brightness.
+        '''
+        _rgbmatrix = self._port_rgbmatrix if orientation is Orientation.PORT else self._stbd_rgbmatrix
+        if not _rgbmatrix:
+            self._log.debug('no {} RGB matrix display available.'.format(orientation.label))
+            return
+        if col < 0 or col > 10:
+            raise ValueError('column argument \'{:d}\' out of range (0-10)'.format(col))
+#       self._log.info('{} matrix display column {:d}'.format(self._orientation.label, col))
+
+#       _color = Color.FUCHSIA
+#       _color = Color.RED
+        _color = Color.RED if orientation is Orientation.PORT else Color.GREEN
+        _rgbmatrix.set_brightness(1.0)
+        if blank:
+            self.clear(orientation, False)
+        x = col
+        rows = 5
+        for y in range(0, rows):
+            _rgbmatrix.set_pixel(y, x, _color.red, _color.green, _color.blue)
+        _rgbmatrix.show()
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @staticmethod
@@ -565,28 +635,41 @@ class RgbMatrix(object):
         self._log.info('random ended.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def set_color(self, color):
+    def set_color(self, color, show=True):
         '''
         Set the color of both RGB Matrix displays.
         '''
-        if self._rgbmatrix5x5_PORT:
-            self._set_color(self._rgbmatrix5x5_PORT, color)
-        self._set_color(self._rgbmatrix5x5_STBD, color)
+        if self._port_rgbmatrix:
+            self._set_color(self._port_rgbmatrix, color, show)
+        if self._stbd_rgbmatrix:
+            self._set_color(self._stbd_rgbmatrix, color, show)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def _set_color(self, rgbmatrix5x5, color):
+    def _set_color(self, rgbmatrix5x5, color, show=True):
         '''
         Set the color of the RGB Matrix.
         '''
         rgbmatrix5x5.set_all(color.red, color.green, color.blue)
-        rgbmatrix5x5.show()
+        if show:
+            rgbmatrix5x5.show()
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def _clear(self, rgbmatrix5x5):
+    def clear_all(self):
+        self.clear(Orientation.BOTH)
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def clear(self, orientation, show=True):
+        if self._port_rgbmatrix and orientation is Orientation.PORT or orientation is Orientation.BOTH:
+            self._clear(self._port_rgbmatrix, show)
+        if self._stbd_rgbmatrix and orientation is Orientation.STBD or orientation is Orientation.BOTH:
+            self._clear(self._stbd_rgbmatrix, show)
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def _clear(self, rgbmatrix5x5, show=True):
         '''
         Clears the RGB Matrix by setting its color to black.
         '''
-        self._set_color(rgbmatrix5x5, Color.BLACK)
+        self._set_color(rgbmatrix5x5, Color.BLACK, show)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def set_display_type(self, display_type):
