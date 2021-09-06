@@ -174,7 +174,7 @@ class Roam(Behaviour):
                         + Fore.RED   + 'port: {:5.2f}cm/s;\t'.format(self._port_motor.velocity)
                         + Fore.GREEN + 'stbd: {:5.2f}cm/s'.format(self._stbd_motor.velocity))
             elif self._wait_count == 1:
-                self._log.info(' cruise triggered.')
+                self._log.info('cruise triggered.')
                 self._log.info('cruise triggered at: {} ({:5.2f}cm/sec)'.format(self._cruising_speed.name, self._cruising_velocity))
                 self._wait_count = 0
                 # we change state in the transition from wait count 1 to 0 (0 being a steady state)
@@ -227,7 +227,7 @@ class Roam(Behaviour):
         Suppresses this Component.
         '''
         Component.suppress(self)
-        self._reset_velocity_multiplier('supressing roam.')
+        self._reset_velocity_multiplier('suppressing roam.')
         self._log.info(Fore.BLUE + '💙 roam suppressed.')
 
     def disable(self):

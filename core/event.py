@@ -62,6 +62,7 @@ class Event(Enum):
     BUMPER_PORT            = ( 110, "bumper port",             40,   Group.BUMPER )
     BUMPER_CNTR            = ( 111, "bumper center",           40,   Group.BUMPER )
     BUMPER_STBD            = ( 112, "bumper stbd",             40,   Group.BUMPER )
+    BUMPER_BACK            = ( 113, "bumper back",             40,   Group.BUMPER )
 
     # infrared ..............................................................................
     INFRARED_PORT_SIDE     = ( 120, "infrared port side",      50,   Group.INFRARED )
