@@ -51,6 +51,7 @@ from hardware.bumper_subscriber import BumperSubscriber
 from hardware.infrared_subscriber import InfraredSubscriber
 
 from hardware.ifs_publisher import IfsPublisher
+from hardware.bumper_publisher import BumperPublisher
 from mock.event_publisher import EventPublisher
 from mock.velocity_publisher import VelocityPublisher
 from mock.mock_pot_publisher import MockPotPublisher
@@ -200,10 +201,13 @@ class KROS(Component, FiniteStateMachine):
         # create publishers ................................
 
         _pubs = arguments.pubs if arguments.pubs else ''
+
         _enable_ifs_publisher = _cfg.get('enable_ifs_publisher') or 'i' in _pubs
         if _enable_ifs_publisher:
             self._ifs_publisher = IfsPublisher(self._config, self._message_bus, self._message_factory, level=self._level)
-
+        _enable_bumper_publisher = _cfg.get('enable_bumper_publisher') or 'b' in _pubs
+        if _enable_bumper_publisher:
+            self._bumper_publisher = BumperPublisher(self._config, self._message_bus, self._message_factory, level=self._level)
         _enable_event_publisher = _cfg.get('enable_event_publisher') or 'e' in _pubs
         if _enable_event_publisher:
             self._event_publisher = EventPublisher(self._config, self._message_bus, self._message_factory, self._motor_ctrl, self._system, level=self._level)
@@ -216,7 +220,7 @@ class KROS(Component, FiniteStateMachine):
 #               self._pot_publisher = MockPotPublisher(self._config, self._message_bus, self._message_factory, level=self._level)
 
         # add battery check publisher
-        if _cfg.get('enable_battery_publisher') or 'b' in _pubs:
+        if _cfg.get('enable_battery_publisher') or 'p' in _pubs:
             self._battery = BatteryCheck(self._config, self._message_bus, self._message_factory, self._level)
     #   _message_bus.print_publishers()
 

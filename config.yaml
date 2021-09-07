@@ -14,6 +14,7 @@ kros:
         enable_behaviours:            True       # enable BehaviourManager (Behaviours enabled individually)
         # publishers .............................
         enable_ifs_publisher:         True       # enable Integrated Front Sensor publisher
+        enable_bumper_publisher:      True       # enable bumper publisher
         enable_event_publisher:       True       # keyboard robot simulator (kinda necessary for running CLI)
         enable_battery_publisher:     True       # battery check publisher
         enable_velocity_publisher:   False       # velocity control potentiometer publisher
@@ -199,10 +200,12 @@ kros:
     publisher:
         integrated_front_sensor:
             loop_freq_hz:            20          # polling loop frequency (Hz)
-            debounce_ms:             50          # switch debounce time in milliseconds
+        bumper:
+            loop_freq_hz:            20          # polling loop frequency (Hz)
             port_bmp_pin:            21          # GPIO pin connected to port bumper
             cntr_bmp_pin:            20          # GPIO pin connected to center bumper
             stbd_bmp_pin:            16          # GPIO pin connected to starboard bumper
+            debounce_ms:             50          # switch debounce time in milliseconds
             one_shot:             False          # if True then require reset before retriggering
     mock:
         potentiometer:

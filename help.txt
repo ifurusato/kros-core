@@ -2,8 +2,9 @@ The --pubs and --subs arguments override the values in the YAML configuration fi
 
 publishers  ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
-  'b':      battery check publisher
+  'p':      battery check (power) publisher
   'e':      keyboard events publisher
+  'b':      bumper publisher
   'i':      Integrated Front Sensor publisher
   'v':      velocity publisher
   'k':      kill switch publisher
