@@ -28,6 +28,7 @@ from hardware.ifs import IntegratedFrontSensor
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class IfsPublisher(Publisher):
 
+    CLASS_NAME = 'ifs'
     _LISTENER_LOOP_NAME = '__ifs_listener_loop'
 
     '''
@@ -44,7 +45,7 @@ class IfsPublisher(Publisher):
         if not isinstance(level, Level):
             raise ValueError('wrong type for log level argument: {}'.format(type(level)))
         self._level = level
-        Publisher.__init__(self, 'ifs', config, message_bus, message_factory, level=self._level)
+        Publisher.__init__(self, IfsPublisher.CLASS_NAME, config, message_bus, message_factory, level=self._level)
         # during calibration the IFS uses DEBUG level
         self._use_analog_pot  = config['kros'].get('integrated_front_sensor').get('use_analog_potentiometer')
         self._use_digital_pot = config['kros'].get('integrated_front_sensor').get('use_digital_potentiometer')

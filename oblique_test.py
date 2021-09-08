@@ -80,6 +80,8 @@ def test_oblique():
     else:
          raise Exception('could not find suitable pair of displays.')
 
+    # we have ten columns and 25.5 is 10% of 255, but we want a wide deadband
+    _tolerance = 30.0
     try:
         _counter = itertools.count()
         while True:
@@ -97,7 +99,6 @@ def test_oblique():
             _out_stbd = _stbd_ranger.convert(_stbd_raw)
 
             _percent  = _ranger.convert(_ratio)
-            _matrices.percent(_percent)
 
             _port_cm  = _ifs.convert_to_distance(_port_raw)
             _stbd_cm  = _ifs.convert_to_distance(_stbd_raw)
@@ -107,12 +108,20 @@ def test_oblique():
             else:
                 _port_em = Style.BRIGHT
                 _stbd_em = Style.NORMAL
-            _log.info(Fore.RED   + _port_em + 'IR {:6.3f} / {:6.3f}cm\t'.format(_port_raw, _port_cm)
-                    + Fore.GREEN + _stbd_em + '{:6.3f} / {:6.3f}cm\t'.format(_stbd_raw, _stbd_cm)
-                    + Fore.WHITE + Style.NORMAL + 'ratio: {:4.1f}\t'.format(_ratio)
-                    + Fore.RED + 'port: {:4.1f}\t'.format(_out_port)
-                    + Fore.GREEN + 'stbd: {:4.1f}\t'.format(_out_stbd))
-#                   + Fore.BLUE  + 'percent: {:4.1f}%'.format(_percent))
+
+            if compare(_port_raw, _stbd_raw, _tolerance):
+                _matrices.clear_all()
+                _log.info(Fore.RED   + _port_em + 'IR {:6.3f} / {:6.3f}cm\t'.format(_port_raw, _port_cm)
+                        + Fore.GREEN + _stbd_em + '{:6.3f} / {:6.3f}cm\t'.format(_stbd_raw, _stbd_cm)
+                        + Fore.WHITE + Style.NORMAL + 'ratio: SAME')
+            else:
+                _matrices.percent(_percent)
+                _log.info(Fore.RED   + _port_em + 'IR {:6.3f} / {:6.3f}cm\t'.format(_port_raw, _port_cm)
+                        + Fore.GREEN + _stbd_em + '{:6.3f} / {:6.3f}cm\t'.format(_stbd_raw, _stbd_cm)
+                        + Fore.WHITE + Style.NORMAL + 'ratio: {:4.1f}\t'.format(_ratio)
+                        + Fore.RED + 'port: {:4.1f}\t'.format(_out_port)
+                        + Fore.GREEN + 'stbd: {:4.1f}\t'.format(_out_stbd))
+    #                   + Fore.BLUE  + 'percent: {:4.1f}%'.format(_percent))
 
             _log.info('count={:d}\n'.format(_count))
             time.sleep(0.33)
@@ -123,6 +132,10 @@ def test_oblique():
         print(Fore.RED + Style.BRIGHT + 'error testing ifs: {}\n{}'.format(e, traceback.format_exc()) + Style.RESET_ALL)
     finally:
         _matrices.clear_all()
+
+def compare(a, b, tol):
+#   print('> compare {} with {}'.format(a,b))
+    return abs(a-b) < tol
 
 # ..............................................................................
 def main():

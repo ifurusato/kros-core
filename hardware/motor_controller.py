@@ -109,14 +109,14 @@ class MotorController(Component):
 
 #   # traveling behaviours ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
-    def travel(self, direction, distance_cm, wait_til_stop=False):
+    def travel(self, direction, port_distance_cm, stbd_distance_cm, wait_til_stop=False):
         '''
         Travel a fixed distance in the indicated direction, as a ballistic
         behaviour, then stop. Returns the number of ticks traveled for the
         port and starboard motor, respectively.
         '''
-        self._log.info('travel {} for {}cm, wait til stop? {}'.format(direction.label, distance_cm, wait_til_stop))
-        _result = self._travel.travel(direction, distance_cm)
+        self._log.info('travel {} for port: {:d}cm; stbd: {:d}cm, wait til stop? {}'.format(direction.label, port_distance_cm, stbd_distance_cm, wait_til_stop))
+        _result = self._travel.travel(direction, port_distance_cm, stbd_distance_cm)
         if wait_til_stop:
             _is_stopped = self.wait_til_stopped()
         self._log.info('travel complete.')
@@ -485,7 +485,7 @@ class MotorController(Component):
         _event = payload.event
         _value = payload.value
         self._log.info('dispatch infrared event: {}; with value: {:5.2f}'.format(_event.label, _value))
-        if _event is Event.INFRARED_PORT_SIDE:
+        if _event is Event.INFRARED_PSID:
             self._log.info('INFRARED PORT SIDE.')
 #           self._brake()
         elif _event is Event.INFRARED_PORT:
@@ -497,49 +497,15 @@ class MotorController(Component):
         elif _event is Event.INFRARED_STBD:
             self._log.info('INFRARED STBD.')
 #           self._brake()
-        elif _event is Event.INFRARED_STBD_SIDE:
+        elif _event is Event.INFRARED_SSID:
             self._log.info('INFRARED STBD SIDE.')
 #           self._brake()
         else:
             raise ValueError('unrecognised bumper event {}'.format(_event.label))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def dispatch_bumper_event(self, payload):
-        '''
-        A dispatcher for bumper events, e.g., from port, center or starboard.
-
-        This currently causes the robot to halt.
-
-        THIS SHOULD BE MOVED OUT OF THE MOTOR CONTROLLER.
-        '''
-        if not self.enabled:
-            self._log.warning('disabled: ignoring bumper dispatch.')
-            return
-        _event = payload.event
-        _value = payload.value
-        _ENABLE_TRAVEL_HERE = False
-        if _event is Event.BUMPER_PORT:
-            self._log.info(Fore.RED + 'BUMPER PORT.')
-            if _ENABLE_TRAVEL_HERE:
-                self.emergency_stop()
-                self.backup_cm(10)
-        elif _event is Event.BUMPER_CNTR:
-            self._log.info(Fore.BLUE + 'BUMPER CNTR.')
-            if _ENABLE_TRAVEL_HERE:
-                self.emergency_stop()
-                self.backup_cm(10)
-        elif _event is Event.BUMPER_STBD:
-            self._log.info(Fore.GREEN + 'BUMPER STBD.')
-            if _ENABLE_TRAVEL_HERE:
-                self.emergency_stop()
-                self.backup_cm(10)
-        else:
-            raise ValueError('unrecognised bumper event {}'.format(_event.label))
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def backup_cm(self, dist_cm):
-        _distance_cm = 10
-        _result = self.travel(Direction.ASTERN, _distance_cm, True)
+    def astern_cm(self, port_distance_cm, stbd_distance_cm, wait_til_stopped=True):
+        _result = self.travel(Direction.ASTERN, port_distance_cm, stbd_distance_cm, True)
         self._log.info(Fore.MAGENTA + 'travel complete, returned: {} '.format(_result))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈

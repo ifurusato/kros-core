@@ -271,7 +271,7 @@ class GamepadPublisher(Publisher):
         elif och == 46:  # .
             return Event.INCREASE_VELOCITY
         elif och == 97:  # a
-            return Event.INFRARED_PORT_SIDE
+            return Event.INFRARED_PSID
         elif och == 98:  # b
             return Event.BRAKE
         elif och == 100: # d
@@ -281,7 +281,7 @@ class GamepadPublisher(Publisher):
         elif och == 102: # f
             return Event.INFRARED_STBD
         elif och == 103: # g
-            return Event.INFRARED_STBD_SIDE
+            return Event.INFRARED_SSID
         elif och == 106: # j
             return Event.BUMPER_PORT
         elif och == 107: # k

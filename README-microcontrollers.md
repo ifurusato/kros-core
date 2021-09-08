@@ -22,4 +22,13 @@ When in rshell, the executable script can be found at:  /pyboard/main.py
 
 The 'edit' command will by default open vim.
 
+NeoPixel Support 
+----------------
+
+A NeoPixel support library in MicroPython on the RP2040 may be found at:
+
+    https://github.com/blaz-r/pi_pico_neopixel
+
+The neopixel.py file should be copied to /pyboard/ on the microcontroller.
+
 #EOF

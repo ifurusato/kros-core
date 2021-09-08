@@ -53,12 +53,12 @@ class EventPublisher(Publisher):
         ( 61,  Event.EVEN ),
         ( 91,  Event.INCREASE_PORT_VELOCITY ),
         ( 93,  Event.INCREASE_STBD_VELOCITY ),
-        ( 97,  Event.INFRARED_PORT_SIDE ),
+        ( 97,  Event.INFRARED_PSID ),
         ( 98,  Event.TURN_TO_STBD ),
         ( 99,  Event.TURN_TO_PORT ),
         ( 100, Event.INFRARED_CNTR ),
         ( 102, Event.INFRARED_STBD ),
-        ( 103, Event.INFRARED_STBD_SIDE ),
+        ( 103, Event.INFRARED_SSID ),
         ( 106, Event.BUMPER_PORT ),
         ( 107, Event.BUMPER_CNTR ),
         ( 108, Event.BUMPER_STBD ),
@@ -74,7 +74,7 @@ class EventPublisher(Publisher):
     ])
 
     _RANDOM_EVENTS = [
-            Event.INFRARED_PORT_SIDE, Event.INFRARED_PORT, Event.INFRARED_CNTR, Event.INFRARED_STBD, Event.INFRARED_STBD_SIDE,
+            Event.INFRARED_PSID, Event.INFRARED_PORT, Event.INFRARED_CNTR, Event.INFRARED_STBD, Event.INFRARED_SSID,
             Event.BUMPER_PORT, Event.BUMPER_CNTR, Event.BUMPER_STBD,
             Event.INCREASE_VELOCITY, Event.DECREASE_VELOCITY,
             Event.BRAKE, Event.HALT, Event.STOP,
@@ -506,7 +506,7 @@ class EventPublisher(Publisher):
             self._print_event(Fore.GREEN, _event, message.value)
             if self._triggered_bmp_stbd < self._message_limit:
                 self._triggered_bmp_stbd += 1
-        elif _event is Event.INFRARED_PORT_SIDE:
+        elif _event is Event.INFRARED_PSID:
             self._print_event(Fore.RED, _event, message.value)
             if self._triggered_ir_port_side < self._message_limit:
                 self._triggered_ir_port_side += 1
@@ -522,7 +522,7 @@ class EventPublisher(Publisher):
             self._print_event(Fore.GREEN, _event, message.value)
             if self._triggered_ir_stbd < self._message_limit:
                 self._triggered_ir_stbd += 1
-        elif _event is Event.INFRARED_STBD_SIDE:
+        elif _event is Event.INFRARED_SSID:
             self._print_event(Fore.GREEN, _event, message.value)
             if self._triggered_ir_stbd_side < self._message_limit:
                 self._triggered_ir_stbd_side += 1

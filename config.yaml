@@ -47,8 +47,9 @@ kros:
             idle_loop_delay_sec:      1.0        # main loop delay in seconds
         travel:
             accel_range_cm:          25.0        # the distance used for acceleration and deceleration (cm)
-            cruising_speed:         'SLOW'       # cruising speed (recovery speed)
-            targeting_speed:   'DEAD_SLOW'       # low velocity from which we're prepared to immediately halt upon reaching a step target 
+            cruising_speed:        'SLOW'        # cruising speed (recovery speed)
+            turning_speed:         'HALF'        # speed necessary to create a curve
+            targeting_speed:  'DEAD_SLOW'        # low velocity from which we're prepared to immediately halt upon reaching a step target 
     message_bus:
         max_age_ms:                  20.0        # maximum age of a message before expiry
         publish_delay_sec:            0.05       # publishing delay loop
@@ -174,9 +175,9 @@ kros:
         cntr_ir_pin:                11           # pin connected to center infrared
         stbd_ir_pin:                 9           # pin connected to starboard infrared
         stbd_side_ir_pin:            7           # pin connected to starboard side infrared
-        port_bmp_pin:                6           # pin connected to port bumper
-        cntr_bmp_pin:                4           # pin connected to center bumper
-        stbd_bmp_pin:                5           # pin connected to starboard bumper
+#       port_bmp_pin:                6           # pin connected to port bumper
+#       cntr_bmp_pin:                4           # pin connected to center bumper
+#       stbd_bmp_pin:                5           # pin connected to starboard bumper
         port_moth_pin:              13           # pin connected to port moth sensor
         stbd_moth_pin:              14           # pin connected to starboard moth sensor
     integrated_front_sensor:
@@ -202,11 +203,17 @@ kros:
             loop_freq_hz:            20          # polling loop frequency (Hz)
         bumper:
             loop_freq_hz:            20          # polling loop frequency (Hz)
-            port_bmp_pin:            21          # GPIO pin connected to port bumper
-            cntr_bmp_pin:            20          # GPIO pin connected to center bumper
-            stbd_bmp_pin:            16          # GPIO pin connected to starboard bumper
-            debounce_ms:             50          # switch debounce time in milliseconds
             one_shot:             False          # if True then require reset before retriggering
+            debounce_ms:             50          # switch debounce time in milliseconds
+            bmp_port_pin:            21          # GPIO pin connected to port bumper
+            bmp_cntr_pin:            20          # GPIO pin connected to center bumper
+            bmp_stbd_pin:            16          # GPIO pin connected to starboard bumper
+            bmp_paft_pin:            26          # GPIO pin connected to port aft digital infrared sensor
+            bmp_mast_pin:             8          # GPIO pin connected to mast digital infrared sensor
+            bmp_saft_pin:            19          # GPIO pin connected to starboard aft digital infrared sensor
+    subscriber:
+        bumper:
+            shutdown_on_mast:      False         # if True then mast triggers shutdown
     mock:
         potentiometer:
             loop_delay_sec:           0.05       # loop delay

@@ -65,8 +65,10 @@ class Travel(Component):
         self._accel_range_cm  = _config.get('accel_range_cm')
         self._log.info('acceleration range: {:5.2f}cm'.format(self._accel_range_cm))
         self._cruising_speed  = Speed.from_string(_config.get('cruising_speed'))
+        self._turning_speed   = Speed.from_string(_config.get('turning_speed'))
         self._targeting_speed = Speed.from_string(_config.get('targeting_speed'))
-        self._log.info('cruising speed: {}; targeting speed: {}'.format(self._cruising_speed.label, self._targeting_speed.label))
+        self._log.info('cruising speed: {}; turning speed: {}, targeting speed: {}'.format(
+                self._cruising_speed.label, self._turning_speed.label, self._targeting_speed.label))
         self._port_motor      = motor_configurer.get_motor(Orientation.PORT)
         self._stbd_motor      = motor_configurer.get_motor(Orientation.STBD)
         self._port_complete   = False
@@ -88,13 +90,27 @@ class Travel(Component):
             self._log.info('travel enabled.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def travel(self, direction, distance_cm):
+    def straight(self, direction, distance_cm):
+        '''
+        Travel the designated distance on both motors in a straight line.
+        '''
+        self.travel(direction, distance_cm, distance_cm)
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def travel(self, direction, port_distance_cm, stbd_distance_cm):
+        '''
+        Travel the designated distances on the port and starboard motors. If the
+        port and starboard distances differ the motion will result in a curve.
+
+        In such a case we also juice the motor needing to travel a bit more
+        to better force a curve.
+        '''
         if self.closed:
             self._log.warning('cannot enable loop: already closed.')
         elif not self.enabled:
             self._log.warning('travel not enabled.')
         else:
-            self._log.info(Fore.YELLOW + 'call to travel distance: {:d}'.format(distance_cm))
+            self._log.info(Fore.YELLOW + 'call to travel {} distance to port: {:d}cm; stbd: {:d}cm'.format(direction.label, port_distance_cm, stbd_distance_cm))
             self._port_complete = False
             self._stbd_complete = False
 
@@ -110,16 +126,28 @@ class Travel(Component):
 #           self._port_motor.slew_limiter.slew_rate = SlewRate.VERY_FAST
 #           self._stbd_motor.slew_limiter.slew_rate = SlewRate.VERY_FAST
       
+            # curve or straight?
+            if port_distance_cm > stbd_distance_cm:
+                port_speed = self._turning_speed
+                stbd_speed = self._cruising_speed
+            elif port_distance_cm < stbd_distance_cm:
+                port_speed = self._cruising_speed
+                stbd_speed = self._turning_speed
+            else:
+                port_speed = stbd_speed = self._cruising_speed
+
             try:
 
                 _use_threads = True # False DOES NOT WORK
                 if _use_threads:
-                    self._port_proc = Thread(name='travel-port', target=self._travel, args=(direction, distance_cm, self._port_motor, self._travel_callback_port), daemon=True)
-                    self._stbd_proc = Thread(name='travel-stbd', target=self._travel, args=(direction, distance_cm, self._stbd_motor, self._travel_callback_stbd), daemon=True)
+                    self._port_proc = Thread(name='travel-port', target=self._travel,
+                            args=(direction, port_speed, port_distance_cm, self._port_motor, self._travel_callback_port), daemon=True)
+                    self._stbd_proc = Thread(name='travel-stbd', target=self._travel,
+                            args=(direction, stbd_speed, stbd_distance_cm, self._stbd_motor, self._travel_callback_stbd), daemon=True)
                 else:
                     raise Exception('unsupported operation.')
-#                   self._port_proc = Process(name='travel-port', target=self._travel, args=(direction, distance_cm, self._port_motor, self._travel_callback_port))
-#                   self._stbd_proc = Process(name='travel-stbd', target=self._travel, args=(direction, distance_cm, self._stbd_motor, self._travel_callback_stbd))
+#                   self._port_proc = Process(name='travel-port', target=self._travel, args=(direction, port_distance_cm, self._port_motor, self._travel_callback_port))
+#                   self._stbd_proc = Process(name='travel-stbd', target=self._travel, args=(direction, stbd_distance_cm, self._stbd_motor, self._travel_callback_stbd))
     
                 self._port_proc.start()
                 self._stbd_proc.start()
@@ -166,7 +194,10 @@ class Travel(Component):
             return value1 > value2
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def _travel(self, direction, distance_cm, motor, callback):
+    def _travel(self, direction, speed, distance_cm, motor, callback):
+        '''
+        Performs the travel for the given direction, speed and distance.
+        '''
         self._log.info(Fore.YELLOW + 'travel direction: {}; distance: {:d}'.format(direction.label, distance_cm))
 
         _distance_cm = distance_cm
@@ -209,7 +240,7 @@ class Travel(Component):
         _rate = Rate(20)
 
         # accelerate to cruising velocity ............................................
-        motor.target_velocity = _multiplier * float(self._cruising_speed.velocity)
+        motor.target_velocity = _multiplier * float(speed.velocity)
         self._log.info(Fore.BLUE + '1. {} motor accelerating to velocity: {}...'.format(motor.orientation.label, motor.target_velocity))
 #       self._log.info(Fore.MAGENTA + '1a. {} while {} < {}...'.format(motor.orientation.label, motor.steps, _accel_target_steps))
         while self._compare(motor.steps, _accel_target_steps, direction):
@@ -218,14 +249,14 @@ class Travel(Component):
 
         # cruise until 3/4 of range ..................................................
         self._log.info(Fore.BLUE + '2. {} motor reached cruising velocity...'.format(motor.orientation.label))
-        motor.target_velocity = _multiplier * float(self._cruising_speed.velocity)
+        motor.target_velocity = _multiplier * float(speed.velocity)
 #       self._log.debug(Fore.MAGENTA + '2a. {} while {} < {}...'.format(motor.orientation.label, motor.steps, _decel_target_steps))
         while self._compare(motor.steps, _decel_target_steps, direction):
             _rate.wait()
 
         # slow down until we reach 9/10 of range
         self._log.info(Fore.BLUE + '3. slowing {} motor until within range...'.format(motor.orientation.label))
-        motor.target_velocity = _multiplier * ( self._cruising_speed.velocity + self._targeting_speed.velocity ) / 2.0
+        motor.target_velocity = _multiplier * ( speed.velocity + self._targeting_speed.velocity ) / 2.0
 #       self._log.info(Fore.MAGENTA + '3a. {} while {} < {}...'.format(motor.orientation.label, motor.steps, _decel_target_steps))
         while self._compare(motor.steps, _decel_target_steps, direction): 
             _rate.wait()

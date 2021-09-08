@@ -9,6 +9,7 @@
 # created:  2020-03-16
 # modified: 2020-06-12
 #
+#
 
 import sys, itertools, traceback
 import asyncio
@@ -55,6 +56,13 @@ class BatteryCheck(Publisher):
     :param level:          the logging level
 
     How many times should we sample before accepting a first value?
+
+    KR01 Power Supply Notes: 
+      26: 19v raw battery
+      27: 5v fore (clockwise increase)
+      28: 5v aft  (ditto)
+      29: gnd
+      30: 5v ThunderBorg supply
     '''
     def __init__(self, config, message_bus, message_factory, level):
         Publisher.__init__(self, 'battery', config, message_bus, message_factory, level=level)

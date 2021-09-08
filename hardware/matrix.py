@@ -238,7 +238,7 @@ class Matrices(object):
         '''
         Turns the lights off and disables any running threads.
         '''
-        self._log.debug('clear.')
+        self._log.debug('clear all.')
         if self._port_matrix:
             self._port_matrix.disable()
             self._port_matrix.clear()

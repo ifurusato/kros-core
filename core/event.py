@@ -62,14 +62,16 @@ class Event(Enum):
     BUMPER_PORT            = ( 110, "bumper port",             40,   Group.BUMPER )
     BUMPER_CNTR            = ( 111, "bumper center",           40,   Group.BUMPER )
     BUMPER_STBD            = ( 112, "bumper stbd",             40,   Group.BUMPER )
-    BUMPER_BACK            = ( 113, "bumper back",             40,   Group.BUMPER )
+    BUMPER_MAST            = ( 113, "bumper mast",             40,   Group.BUMPER )
+    BUMPER_PAFT            = ( 114, "bumper port aft",         40,   Group.BUMPER )
+    BUMPER_SAFT            = ( 115, "bumper port aft",         40,   Group.BUMPER )
 
     # infrared ..............................................................................
-    INFRARED_PORT_SIDE     = ( 120, "infrared port side",      50,   Group.INFRARED )
+    INFRARED_PSID          = ( 120, "infrared port side",      50,   Group.INFRARED )
     INFRARED_PORT          = ( 121, "infrared port",           50,   Group.INFRARED )
     INFRARED_CNTR          = ( 122, "infrared cntr",           50,   Group.INFRARED )
     INFRARED_STBD          = ( 123, "infrared stbd",           50,   Group.INFRARED )
-    INFRARED_STBD_SIDE     = ( 124, "infrared stbd side",      50,   Group.INFRARED )
+    INFRARED_SSID          = ( 124, "infrared stbd side",      50,   Group.INFRARED )
 
     # velocity directives ...................................................................
     VELOCITY               = ( 200, "velocity",               100,   Group.VELOCITY ) # with value

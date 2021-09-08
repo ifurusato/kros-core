@@ -17,13 +17,16 @@ from hardware.color import Color
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Orientation(Enum):
-    NONE  = ( 0, "none", "none")
-    BOTH  = ( 1, "both", "both")
-    PORT  = ( 2, "port", "port")
-    CNTR  = ( 3, "center", "cntr")
-    STBD  = ( 4, "starboard", "stbd")
-    PORT_SIDE = ( 5, "port-side", "psid") # only used with infrareds
-    STBD_SIDE = ( 6, "stbd-side", "ssid") # only used with infrareds
+    NONE  = ( 0, "none",          "none")
+    BOTH  = ( 1, "both",          "both")
+    PORT  = ( 2, "port",          "port")
+    CNTR  = ( 3, "center",        "cntr")
+    STBD  = ( 4, "starboard",     "stbd")
+    PSID  = ( 5, "port-side",     "psid")
+    SSID  = ( 6, "stbd-side",     "ssid")
+    PAFT  = ( 7, "port-aft",      "paft")
+    SAFT  = ( 8, "starboard-aft", "saft")
+    MAST  = ( 9, "mast",          "mast")
 
     # ignore the first param since it's already set by __new__
     def __init__(self, num, name, label):

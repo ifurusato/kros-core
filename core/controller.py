@@ -130,7 +130,7 @@ class Controller(Component):
 #          self._log.info('event: "bumper stbd"')
 
         # infrared events ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-#       elif _event is Event.INFRARED_PORT_SIDE:           # 120, "infrared port side"
+#       elif _event is Event.INFRARED_PSID:                # 120, "infrared port side"
 #          self._log.info('event: "infrared port side"')
 #       elif _event is Event.INFRARED_PORT:                # 121, "infrared port"
 #          self._log.info('event: "infrared port"')
@@ -138,7 +138,7 @@ class Controller(Component):
 #          self._log.info('event: "infrared cntr"')
 #       elif _event is Event.INFRARED_STBD:                # 123, "infrared stbd"
 #          self._log.info('event: "infrared stbd"')
-#       elif _event is Event.INFRARED_STBD_SIDE:           # 124, "infrared stbd side"
+#       elif _event is Event.INFRARED_SSID:                # 124, "infrared stbd side"
 #          self._log.info('event: "infrared stbd side"')
 
         # velocity directives ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
