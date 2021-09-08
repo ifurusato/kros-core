@@ -20,6 +20,7 @@ import time, gc
 COLOR_GREEN     = ( 0, 64, 0, 1 )
 COLOR_TURQUOISE = ( 0, 10, 7, 1 )
 COLOR_RED       = ( 64, 0, 0, 1 )
+COLOR_YELLOW    = ( 64, 64, 0, 1 )
 COLOR_BLACK     = ( 0, 0, 0, 10 )
 
 # configure SPI for controlling the DotStar
@@ -43,13 +44,13 @@ def check_ram():
 # check the RAM
 check_ram()
 
-# signal readiness...
+# signal readiness ...............................
+
 for j in range(0, 3):
-    dotstar[0] = COLOR_TURQUOISE
+    dotstar[0] = COLOR_YELLOW
     time.sleep_ms(333)
     dotstar[0] = COLOR_BLACK
     time.sleep_ms(333)
-
 
 # now the raison d'etre ..........................
 
@@ -66,7 +67,15 @@ def tick():
 _timer = Timer(1)
 _timer.init(period=50, mode=Timer.PERIODIC, callback=lambda n: tick())
 #_timer.init(period=50, mode=Timer.PERIODIC, callback=lambda n: _pin.toggle())
-
 #_pwm = PWM(_pin, freq=200, duty_u16=32767)
+
+# health ping ....................................
+
+while True:
+    for j in range(0, 3):
+        dotstar[0] = COLOR_TURQUOISE
+        time.sleep_ms(5)
+        dotstar[0] = COLOR_BLACK
+        time.sleep_ms(2995)
 
 #EOF
