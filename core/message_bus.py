@@ -68,7 +68,8 @@ class MessageBus(Component):
         self._subscribers            = []
         self._loop                   = None
         self._last_message_timestamp = None
-        self._clip_event_list        = False # used for printing only
+        self._clip_event_list        = _cfg.get('clip_event_list') # used for printing only
+        self._clip_length            = _cfg.get('clip_length')
         self._closing                = False # used during shutdown
         self._log.info('ready.')
 
@@ -289,7 +290,7 @@ class MessageBus(Component):
         self._log.info('{} subscriber{}:'.format(Numbers.from_number(len(self._subscribers)), 's' if len(self._subscribers) > 1 else ''))
         for subscriber in self._subscribers:
             if self._clip_event_list:
-                _event_list = Util.ellipsis(subscriber.print_events(), 45)
+                _event_list = Util.ellipsis(subscriber.print_events(), self._clip_length)
             else:
                 _event_list = subscriber.print_events()
             self._log.info(Fore.YELLOW + '\t{}'.format(subscriber.name)

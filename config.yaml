@@ -13,9 +13,9 @@ kros:
         enable_killswitch:            True       # kill switch
         enable_behaviours:            True       # enable BehaviourManager (Behaviours enabled individually)
         # publishers .............................
-        enable_ifs_publisher:         True       # enable Integrated Front Sensor publisher
-        enable_bumper_publisher:      True       # enable bumper publisher
-        enable_event_publisher:       True       # keyboard robot simulator (kinda necessary for running CLI)
+        enable_ifs_publisher:        False       # enable Integrated Front Sensor publisher
+        enable_bumper_publisher:     False       # enable bumper publisher
+        enable_event_publisher:       True       # keyboard robot simulator (required for running CLI)
         enable_battery_publisher:     True       # battery check publisher
         enable_velocity_publisher:   False       # velocity control potentiometer publisher
         # subscribers ............................
@@ -53,6 +53,8 @@ kros:
     message_bus:
         max_age_ms:                  20.0        # maximum age of a message before expiry
         publish_delay_sec:            0.05       # publishing delay loop
+        clip_event_list:             True        # if True clip length of displayed event list 
+        clip_length:                 42          # max length of displayed event list 
     hardware:
         digital_potentiometer:                   # IO Expander-based RGB Potentiometer board
             i2c_address:             0x0E        # I²C address for the device

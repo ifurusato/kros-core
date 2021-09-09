@@ -116,7 +116,6 @@ class ExternalClock(Component):
                 self._last_time = _now
         else:
             self._log.warning('external clock disabled: {:5.2f}ms elapsed.')
-            pass
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def close(self):

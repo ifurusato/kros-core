@@ -10,6 +10,7 @@
 # modified: 2021-08-05
 #
 
+import math
 from colorama import init, Fore, Style
 init()
 
@@ -29,6 +30,10 @@ class MockVelocity(object):
     def __init__(self, orientation, level=Level.INFO):
         self._log = Logger('mock-velo:{}'.format(orientation.label), level)
         self._velocity = 0.0
+        self._steps_per_rotation = 494 # encoder steps per wheel rotation
+        self._wheel_diameter = 68.0
+        self._wheel_circumference = self._wheel_diameter * math.pi / 10.0
+        self._steps_per_cm = self._steps_per_rotation / self._wheel_circumference
         self._log.info('ready.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -47,5 +52,15 @@ class MockVelocity(object):
     def velocity(self, velocity):
         self._log.info('setting velocity: {}'.format(velocity))
         self._velocity = velocity
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    @property
+    def steps_per_rotation(self):
+        return self._steps_per_rotation
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    @property
+    def steps_per_cm(self):
+        return self._steps_per_cm
 
 #EOF

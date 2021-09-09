@@ -531,27 +531,17 @@ class MotorController(Component):
         When the motor controller is disabled any calls to this method
         will override the target velocity argument and set it to zero.
         '''
-        self._log.info('🐱 1. set motor velocity.')
         if not self.enabled:
             self._log.error('motor controller not enabled.')
             target_velocity = 0.0
-        self._log.info('🐱 2. set motor velocity.')
         if isinstance(target_velocity, int):
-            self._log.info('🐱 3. set motor velocity.')
             self._log.warning('expected target velocity as float not int.')
             target_velocity = float(target_velocity)
         if not isinstance(target_velocity, float):
-            self._log.info('🐱 4. set motor velocity.')
             raise ValueError('expected float, not {}'.format(type(target_velocity)))
         if orientation is Orientation.PORT:
-            self._log.info('🐱 5. set motor velocity.')
-#           if self._port_motor.target_velocity != target_velocity:
-#               self._log.info('setting velocity of port motor to: ' + Fore.RED + '{:5.2f}'.format(target_velocity))
             self._port_motor.target_velocity = target_velocity
         elif orientation is Orientation.STBD:
-            self._log.info('🐱 6. set motor velocity.')
-#           if self._stbd_motor.target_velocity != target_velocity:
-#               self._log.info('setting velocity of stbd motor to: ' + Fore.GREEN + '{:5.2f}'.format(target_velocity))
             self._stbd_motor.target_velocity = target_velocity
         else:
             raise Exception('expected PORT or STBD orientation.')

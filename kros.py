@@ -52,7 +52,9 @@ from hardware.infrared_subscriber import InfraredSubscriber
 
 from hardware.ifs_publisher import IfsPublisher
 from hardware.bumper_publisher import BumperPublisher
+
 from mock.event_publisher import EventPublisher
+from mock.external_clock import MockExternalClock
 from mock.velocity_publisher import VelocityPublisher
 from mock.mock_pot_publisher import MockPotPublisher
 #from mock.gamepad_publisher import GamepadPublisher
@@ -185,7 +187,9 @@ class KROS(Component, FiniteStateMachine):
             self._ext_clock = ExternalClock(self._config, None, self._level)
             self._ext_clock.enable()
         else:
-            self._use_external_clock = False
+            self._ext_clock = MockExternalClock(self._config, None, self._level)
+            # TODO only if mocks permitted?
+            self._use_external_clock = True
 
         # add motor controller ................................................
         self._log.info('configure motor controller...')
@@ -310,7 +314,6 @@ class KROS(Component, FiniteStateMachine):
         '''
         Returns the BehaviourManager, None if not used.
         '''
-        self._log.info(Fore.MAGENTA + '👾 from KROS, beh_mgr: {}'.format(type(self._behaviour_mgr)))
         return self._behaviour_mgr
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈

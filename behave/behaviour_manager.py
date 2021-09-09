@@ -17,6 +17,7 @@ from colorama import init, Fore, Style
 init()
 
 from core.logger import Logger, Level
+from core.component import Component
 from core.orient import Orientation
 from core.event import Event, Group
 from core.subscriber import Subscriber
@@ -29,6 +30,10 @@ class BehaviourManager(Subscriber):
     '''
     Extends Subscriber as a manager of high-level, low-priority behaviours.
     This subscribes to all events grouped as an Event.BEHAVIOUR.
+
+    Note that suppressing the BehaviourManager will also suppress all
+    existing Behaviours, but releasing it won't release any Behaviours
+    (we don't store state).
 
     :param name:         the subscriber name (for logging)
     :param config:       the application configuration
@@ -76,6 +81,14 @@ class BehaviourManager(Subscriber):
         for _key, _behaviour in self._behaviours.items():
             _behaviour.disable()
             self._log.info('{} behaviour disabled.'.format(_behaviour.name))
+
+    def suppress(self):
+        '''
+        Suppresses the Behaviour Manager as well as any registered Behaviours.
+        '''
+        Component.suppress(self)
+        self.suppress_all_behaviours()
+        self._log.info('suppressed.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def suppress_all_behaviours(self):

@@ -98,6 +98,7 @@ class Motor(Component):
 #           raise Exception('using mocked velocity.')
         else:
             self._velocity       = Velocity(config, self, level=level)
+            raise Exception('using un-mocked velocity.')
             # add callback from motor's update method
             self.add_callback(self._velocity.tick)
             self._velocity.enable()
@@ -175,7 +176,7 @@ class Motor(Component):
             self._log.info(Fore.MAGENTA + '😨 removing \'{}\' lambda from motor...'.format(name))
             del self.__velocity_lambdas[name]
         else:
-            self._log.warning('😨 motor did not contain a \'{}\' lambda.'.format(name))
+            self._log.debug('motor did not contain a \'{}\' lambda.'.format(name))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _reset_velocity_multiplier(self):
@@ -262,8 +263,8 @@ class Motor(Component):
 #       self._log.info('set target velocity: {:5.2f} of {} motor.'.format(target_velocity, self._orientation.name))
         self.__target_velocity = target_velocity
         if self._using_mocks:
-#           self._velocity.velocity = target_velocity
-            raise Exception('using velocity mock!')
+#           raise Exception('using velocity mock!')
+            self._velocity.velocity = target_velocity
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
