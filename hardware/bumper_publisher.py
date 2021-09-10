@@ -37,6 +37,11 @@ class BumperPublisher(Publisher):
     latter are connected directly to GPIO pins and use pigpio for interrupt
     handling.
 
+    This publisher functions with the inputs mapped directly to the GPIO pins.
+    The newer alternative to this Publisher is the ExternalBumperPublisher,
+    where the bumpers are connected to an external microcontroller and their
+    events are sent to the Pi using a bespoke 5 pin communications protocol.
+
     :param config:            the application configuration
     :param message_bus:       the asynchronous message bus
     :param message_factory:   the factory for creating messages

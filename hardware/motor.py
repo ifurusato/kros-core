@@ -98,7 +98,7 @@ class Motor(Component):
 #           raise Exception('using mocked velocity.')
         else:
             self._velocity       = Velocity(config, self, level=level)
-            raise Exception('using un-mocked velocity.')
+#           raise Exception('using un-mocked velocity.')
             # add callback from motor's update method
             self.add_callback(self._velocity.tick)
             self._velocity.enable()

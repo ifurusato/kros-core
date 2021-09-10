@@ -52,6 +52,7 @@ from hardware.infrared_subscriber import InfraredSubscriber
 
 from hardware.ifs_publisher import IfsPublisher
 from hardware.bumper_publisher import BumperPublisher
+from hardware.ext_bmp_publisher import ExternalBumperPublisher
 
 from mock.event_publisher import EventPublisher
 from mock.external_clock import MockExternalClock
@@ -211,7 +212,11 @@ class KROS(Component, FiniteStateMachine):
             self._ifs_publisher = IfsPublisher(self._config, self._message_bus, self._message_factory, level=self._level)
         _enable_bumper_publisher = _cfg.get('enable_bumper_publisher') or 'b' in _pubs
         if _enable_bumper_publisher:
-            self._bumper_publisher = BumperPublisher(self._config, self._message_bus, self._message_factory, level=self._level)
+            _use_external_bumper_publisher = self._config['kros'].get('use_external_bumper_publisher')
+            if _use_external_bumper_publisher:
+                self._bumper_publisher = ExternalBumperPublisher(self._config, self._message_bus, self._message_factory, level=self._level)
+            else:
+                self._bumper_publisher = BumperPublisher(self._config, self._message_bus, self._message_factory, level=self._level)
         _enable_event_publisher = _cfg.get('enable_event_publisher') or 'e' in _pubs
         if _enable_event_publisher:
             self._event_publisher = EventPublisher(self._config, self._message_bus, self._message_factory, self._motor_ctrl, self._system, level=self._level)

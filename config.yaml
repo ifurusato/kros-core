@@ -9,12 +9,13 @@
 kros:
     exit_on_dire_event:              False       # if True exit if encountering a dire event
     use_external_clock:               True       # if True use external clock, ignoring loop delay value
+    use_external_bumper_publisher:    True       # use ExternalBumperPublisher instead of BumperPublisher
     component:                                   # enable specific publish/subscribe components
         enable_killswitch:            True       # kill switch
         enable_behaviours:            True       # enable BehaviourManager (Behaviours enabled individually)
         # publishers .............................
-        enable_ifs_publisher:        False       # enable Integrated Front Sensor publisher
-        enable_bumper_publisher:     False       # enable bumper publisher
+        enable_ifs_publisher:         True       # enable Integrated Front Sensor publisher
+        enable_bumper_publisher:      True       # enable bumper publisher
         enable_event_publisher:       True       # keyboard robot simulator (required for running CLI)
         enable_battery_publisher:     True       # battery check publisher
         enable_velocity_publisher:   False       # velocity control potentiometer publisher
@@ -85,7 +86,7 @@ kros:
             loop_delay_sec:          60          # sample loop delay (sec)
         external_clock:
 #           pin:                     21          # pin connected to external clock source from TinyPICO
-            pin:                      6          # pin connected to external clock source from Itsy Bitsy RP2040
+            pin:                      5          # pin connected to external clock source from Itsy Bitsy RP2040
         killswitch:
              pin:                     7          # pin connected to hardware kill switch
     geometry:                                    # robot geometry (e.g., KR01)
@@ -213,6 +214,13 @@ kros:
             bmp_paft_pin:            26          # GPIO pin connected to port aft digital infrared sensor
             bmp_mast_pin:             8          # GPIO pin connected to mast digital infrared sensor
             bmp_saft_pin:            19          # GPIO pin connected to starboard aft digital infrared sensor
+        external_bumper:
+            loop_freq_hz:            20          # polling loop frequency (Hz)
+            ack_pin:                 21          # GPIO pin connected to acknowledge pin (white)
+            int_pin:                 26          # GPIO pin connected to interrupt pin (grey)
+            d0_pin:                  20          # GPIO pin connected to data 0 pin (red) was 20 or 6
+            d1_pin:                  16          # GPIO pin connected to data 1 pin (green)
+            d2_pin:                  19          # GPIO pin connected to data 2 pin (blue)
     subscriber:
         bumper:
             shutdown_on_mast:      False         # if True then mast triggers shutdown

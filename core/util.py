@@ -105,6 +105,27 @@ class Util(object):
         '''
         return min_value if value <= min_value else max_value if value >= max_value else value
 
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    @staticmethod
+    def to_bin(decimal):
+        return '{0:08b}'.format(decimal)
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    @staticmethod
+    def to_bin_v2(x):
+        return int(bin(x)[2:])
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    @staticmethod
+    def to_decimal(binary):
+        b = str(binary)
+        binary_len = len(b)
+        decimal = 0
+        for x in b:
+            binary_len = binary_len - 1
+            decimal += pow(2,binary_len) * int(x)
+        return decimal
+
 #   @staticmethod
 #   def clip_alt(n, minimum, maximum):
 #       '''
