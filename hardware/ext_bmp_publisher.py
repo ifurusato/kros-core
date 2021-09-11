@@ -13,9 +13,8 @@
 # Transmits interrupt-drive BCD data over 5 wires.
 #
 
-import sys, time, itertools, random, traceback
+import sys, time, itertools
 import asyncio
-import concurrent.futures
 from datetime import datetime as dt
 from colorama import init, Fore, Style
 init()

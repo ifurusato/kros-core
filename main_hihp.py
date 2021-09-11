@@ -1,4 +1,4 @@
-# MicroPython External Clock for TinyPICO
+# Handshaking Interrupt-Driven Hexadecimal Protocol (HIHP) for the TinyPICO
 #
 # Copyright 2020-2021 by Murray Altheim. All rights reserved. This file is part
 # of the Robot Operating System project, released under the MIT License. Please
@@ -7,6 +7,8 @@
 # author:   Murray Altheim
 # created:  2021-08-26
 # modified: 2021-09-11
+#
+# Server for the Handshaking Interrupt-Driven Hexadecimal Protocol (HIHP).
 #
 
 from machine import Timer
@@ -40,10 +42,11 @@ PIN_CNTR = 26 # center bumper switch
 PIN_STBD = 25 # starboard bumper switch
 
 PIN_ACK  = 23 # acknowledge pin (in)
-PIN_INT  = 21 # interrupt pin (out)
-PIN_D0   = 18 # data 0 pin (out) was 19 or 32
-PIN_D1   =  5 # data 1 pin (out)
-PIN_D2   = 22 # data 2 pin (out)
+PIN_INT  = 18 # interrupt pin (out)
+PIN_D0   =  5 # data 0 pin (out) was 19 or 32
+PIN_D1   = 22 # data 1 pin (out)
+PIN_D2   = 21 # data 2 pin (out)
+PIN_D3   = 32 # data 3 pin (out)
 
 # define constant colours on the Dotstar ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 COLOR_BLACK        = (  0,  0,  0, 10 )
@@ -86,12 +89,13 @@ _cntr_pin = Pin(PIN_CNTR, Pin.IN)
 _port_pin = Pin(PIN_PORT, Pin.IN)
 
 # coms pins ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-#               pin                 wire    use    Pi
-_ack_pin  = Pin(PIN_ACK, Pin.IN)  # white   ACK    21
-_int_pin  = Pin(PIN_INT, Pin.OUT) # grey    INT    26
-_d0_pin   = Pin(PIN_D0, Pin.OUT)  # red     D0     20
-_d1_pin   = Pin(PIN_D1, Pin.OUT)  # green   D1     16
-_d2_pin   = Pin(PIN_D2, Pin.OUT)  # blue    D2     19
+#               pin                 wire    use
+_ack_pin  = Pin(PIN_ACK, Pin.IN)  # white   ACK
+_int_pin  = Pin(PIN_INT, Pin.OUT) # grey    INT
+_d0_pin   = Pin(PIN_D0, Pin.OUT)  # red     D0
+_d1_pin   = Pin(PIN_D1, Pin.OUT)  # green   D1
+_d2_pin   = Pin(PIN_D2, Pin.OUT)  # blue    D2
+_d3_pin   = Pin(PIN_D3, Pin.OUT)  # blue    D3
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #                                  INITIALISE
@@ -174,10 +178,11 @@ def ready():
 
 # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 def clear_data():
-    global _d0_pin, _d1_pin, _d2_pin
+    global _d0_pin, _d1_pin, _d2_pin, _d3_pin
     _d0_pin.value(0)
     _d1_pin.value(0)
     _d2_pin.value(0)
+    _d3_pin.value(0)
 
 # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 def interrupt(state):
@@ -193,7 +198,7 @@ def interrupt(state):
 
 # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 def triggered(orientation):
-    global g_acknowledged, g_enabled, _d0_pin, _d1_pin, _d2_pin
+    global g_acknowledged, g_enabled, _d0_pin, _d1_pin, _d2_pin, _d3_pin
     '''
     If an orientation > 0 arrives we set the LED accordingly,
     and set the INT pin low.
@@ -215,13 +220,15 @@ def triggered(orientation):
     else:
         # FIXME should we do this based on g_acknowledged?
         # orientation = ORIENTATION_ALL # testing: all bits high
-        _d2 = orientation[0]
-        _d1 = orientation[1]
-        _d0 = orientation[2]
-        print("♒ TRANSMIT:\t  {};\t{:d}{:d}{:d}".format(orientation[3], _d2, _d1, _d0))
+        _d3 = orientation[0]
+        _d2 = orientation[1]
+        _d1 = orientation[2]
+        _d0 = orientation[3]
+        print("♒ TRANSMIT:\t  {};\t{:d}{:d}{:d}{:d}".format(orientation[3], _d3, _d2, _d1, _d0))
         _d0_pin.value(_d0)
         _d1_pin.value(_d1)
         _d2_pin.value(_d2)
+        _d3_pin.value(_d3)
         # trigger interrupt until ACK
         interrupt(True)
     time.sleep_ms(5)
@@ -302,7 +309,7 @@ def poll_data():
 check_ram()
 
 # init (active low)
-interrupt(False) 
+interrupt(False)
 
 clear_data()
 

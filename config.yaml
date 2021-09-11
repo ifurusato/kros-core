@@ -221,6 +221,13 @@ kros:
             d0_pin:                  20          # GPIO pin connected to data 0 pin (red) was 20 or 6
             d1_pin:                  16          # GPIO pin connected to data 1 pin (green)
             d2_pin:                  19          # GPIO pin connected to data 2 pin (blue)
+    hhip:
+        ack_pin:                     21          # GPIO pin connected to acknowledge pin (white)
+        int_pin:                     26          # GPIO pin connected to interrupt pin (grey)
+        d0_pin:                      20          # GPIO pin connected to data 0 pin (red) was 20 or 6
+        d1_pin:                      16          # GPIO pin connected to data 1 pin (green)
+        d2_pin:                      19          # GPIO pin connected to data 2 pin (blue)
+        d3_pin:                      13          # GPIO pin connected to data 3 pin (orange)
     subscriber:
         bumper:
             shutdown_on_mast:      False         # if True then mast triggers shutdown
