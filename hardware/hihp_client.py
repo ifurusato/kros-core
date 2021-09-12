@@ -28,18 +28,17 @@ from core.publisher import Publisher
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class HihpClient():
 
-    # constants matching microcontroller .......
-    ORIENTATION_NONE = [ 0, Fore.BLACK   + 'none' ]
-    ORIENTATION_PORT = [ 1, Fore.RED     + 'port' ]
-    ORIENTATION_CNTR = [ 2, Fore.BLUE    + 'cntr' ]
-    ORIENTATION_STBD = [ 3, Fore.GREEN   + 'stbd' ]
-    ORIENTATION_PAFT = [ 4, Fore.CYAN    + 'paft' ]
-    ORIENTATION_MAST = [ 5, Fore.YELLOW  + 'mast' ]
-    ORIENTATION_SAFT = [ 6, Fore.MAGENTA + 'saft' ]
-    ORIENTATION_ALL  = [ 7, Fore.WHITE   + 'all'  ]
+    # constants copied from microcontroller ................
+    #                     3  2  1  0  D   DESC
+    ORIENTATION_NONE  = [ 0, 0, 0, 0, 0, Fore.BLACK   + 'none' ] # none
+    ORIENTATION_PORT  = [ 0, 0, 0, 1, 1, Fore.RED     + 'port' ] # port
+    ORIENTATION_CNTR  = [ 0, 0, 1, 0, 2, Fore.BLUE    + 'cntr' ] # center
+    ORIENTATION_STBD  = [ 0, 0, 1, 1, 3, Fore.GREEN   + 'stbd' ] # starboard
+    ORIENTATION_PAFT  = [ 0, 1, 0, 0, 4, Fore.CYAN    + 'paft' ] # port-aft
+    ORIENTATION_MAST  = [ 0, 1, 0, 1, 5, Fore.YELLOW  + 'mast' ] # mast
+    ORIENTATION_SAFT  = [ 0, 1, 1, 0, 6, Fore.MAGENTA + 'saft' ] # starboard-aft    s
+    ORIENTATION_ALL   = [ 1, 1, 1, 1, 7, Fore.WHITE   + 'all'  ] # unused (all bits high)
     ORIENTATIONS = [ ORIENTATION_NONE, ORIENTATION_PORT, ORIENTATION_CNTR, ORIENTATION_STBD, ORIENTATION_PAFT, ORIENTATION_MAST, ORIENTATION_SAFT, ORIENTATION_ALL ]
-
-    _LISTENER_LOOP_NAME = '__bmp_listener_loop'
 
     '''
     Implements the BHIP (BCD Handshaking Interrupt-Driven Protocol). This uses
@@ -63,14 +62,11 @@ class HihpClient():
     def __init__(self, config, level=Level.INFO):
         if not isinstance(level, Level):
             raise ValueError('wrong type for log level argument: {}'.format(type(level)))
-        self._level = level
+        self._log = Logger('rate', level)
         # configuration ................
         self._counter = itertools.count()
         self._pi      = None
-        _cfg = config['kros'].get('hhip')
-        _loop_freq_hz = _cfg.get('loop_freq_hz')
-        self._publish_delay_sec = 1.0 / _loop_freq_hz
-        self._initd   = False
+        _cfg = config['kros'].get('hihp')
         # pin assignments
         self._ack_pin = _cfg.get('ack_pin') # ACK pin (output)
         self._int_pin = _cfg.get('int_pin') # INT pin
@@ -85,14 +81,18 @@ class HihpClient():
                 + Fore.GREEN    + ' d1={:d};'.format(self._d1_pin) \
                 + Fore.BLUE     + ' d2={:d};'.format(self._d2_pin) \
                 + Fore.YELLOW   + ' d3={:d};'.format(self._d3_pin))
+        self._ack_delay_sec     = 0.05 # ACK normal acknowledgement
+        self._enable_delay_sec  = 0.66  # ACK for this time will enable server
+        self._disable_delay_sec = 1.2  # ACK for this time will disable server
+        self._enabled = False
         self._log.info('ready.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def _init(self):
+    def enable(self):
         '''
         Imports pigpio and initialises the input and output pins.
         '''
-        if not self._initd:
+        if not self._enabled:
             try:
                 self._log.info('importing pigpio ...')
                 import pigpio
@@ -120,21 +120,28 @@ class HihpClient():
             except Exception as e:
                 self._log.warning('error configuring bumper interrupt: {}'.format(e))
             finally:
-                self._initd = True
+                self._enabled = True
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def send_ack(self):
         self._log.info(Fore.YELLOW + 'send: ' + Style.BRIGHT + 'ACK')
-        self._pi.write(self._ack_pin, 1) # set ACK high
-        time.sleep(0.1)
-        self._pi.write(self._ack_pin, 0) # set ACK low
+        self._pi.write(self._ack_pin, 0)
+        time.sleep(self._ack_delay_sec)
+        self._pi.write(self._ack_pin, 1)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def send_enable(self):
         self._log.info(Fore.YELLOW + 'send: ' + Style.BRIGHT + 'ENABLE')
-        self._pi.write(self._ack_pin, 1) # set ACK high
-        time.sleep(1.0)
-        self._pi.write(self._ack_pin, 0) # set ACK low
+        self._pi.write(self._ack_pin, 0)
+        time.sleep(self._enable_delay_sec)
+        self._pi.write(self._ack_pin, 1)
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def send_disable(self):
+        self._log.info(Fore.YELLOW + 'send: ' + Style.BRIGHT + 'DISABLE')
+        self._pi.write(self._ack_pin, 0)
+        time.sleep(self._disable_delay_sec)
+        self._pi.write(self._ack_pin, 1)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _interrupt_callback(self, gpio, level, ticks):
@@ -144,17 +151,27 @@ class HihpClient():
         pins and then sends an ACK message back to the TinyPICO. The TinyPICO
         awaits this and upon receiving ACK drops all the data lines to zero.
         '''
+        #                       0  1  2  3  4  5
+        #                       3  2  1  0  D  Description
+        # ORIENTATION_MAST  = [ 0, 1, 0, 1, 5, Fore.YELLOW  + 'mast' ] # mast
         _d0 = self._pi.read(self._d0_pin)
         _d1 = self._pi.read(self._d1_pin)
         _d2 = self._pi.read(self._d2_pin) 
         _d3 = self._pi.read(self._d3_pin) 
         _dec = int('{}{}{}{}'.format(_d3, _d2, _d1, _d0)[:4], 2)
         _dec2 = Util.to_decimal('{}{}{}{}'.format(_d3, _d2, _d1, _d0))
-        _orientation = ExternalBumperPublisher.ORIENTATIONS[_dec]
-        _orientation_name = _orientation[1]
+        _orientation = HihpClient.ORIENTATIONS[_dec]
+        _desc = _orientation[5]
 
-        self._log.info(Fore.BLUE + 'interrupt callback:\t' + Style.BRIGHT + '{}-{}-{}-{}; dec: {:d}; name: {}'.format(_d3, _d2, _d1, _d0, _dec, _orientation_name))
+        self._log.info(Fore.BLUE + 'interrupt callback:\t' + Style.BRIGHT + '{}-{}-{}-{}; dec: {:d}; name: {}'.format(_d3, _d2, _d1, _d0, _dec, _desc))
         self.send_ack()
         self._log.info(Fore.WHITE + 'interrupt callback:\t' + Style.BRIGHT + 'sent ACK.')
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def close(self):
+        self.send_disable()
+        if self._pi:
+            self._pi.stop()
+        self._log.info('closed.')
 
 #EOF

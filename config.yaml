@@ -68,7 +68,7 @@ kros:
             out_min:                -80.0        # minimum scaled output value
             out_max:                 80.0        # maximum scaled output value
         analog_potentiometer:                    # analog potentiometer connected as voltage divider
-            pin:                     14          # pin connected to wiper
+            pin:                     -1          # pin connected to wiper
             in_min:                   0          # minimum analog value from IO Expander
             in_max:                 330          # maximum analog value from IO Expander
             out_min:                  0.0        # minimum scaled output value
@@ -172,7 +172,7 @@ kros:
 #               THREE_QUARTER:       60.0
 #               FULL:                80.0
 #               MAXIMUM:             90.0
-    io_expander:
+    io_expander: # note: these are IO Expander pins, not RPi pins
         port_side_ir_pin:            8           # pin connected to port side infrared
         port_ir_pin:                10           # pin connected to port infrared
         cntr_ir_pin:                11           # pin connected to center infrared
@@ -221,7 +221,7 @@ kros:
             d0_pin:                  20          # GPIO pin connected to data 0 pin (red) was 20 or 6
             d1_pin:                  16          # GPIO pin connected to data 1 pin (green)
             d2_pin:                  19          # GPIO pin connected to data 2 pin (blue)
-    hhip:
+    hihp:
         ack_pin:                     21          # GPIO pin connected to acknowledge pin (white)
         int_pin:                     26          # GPIO pin connected to interrupt pin (grey)
         d0_pin:                      20          # GPIO pin connected to data 0 pin (red) was 20 or 6

@@ -13,18 +13,15 @@
 #
 
 import pytest
-import sys, itertools, traceback
+import sys, time, itertools, traceback
 from datetime import datetime as dt
 from colorama import init, Fore, Style
 init()
 
-from core.message_bus import MessageBus
-from core.message_factory import MessageFactory
-from core.orient import Orientation
 from core.rate import Rate
 from core.logger import Logger, Level
 from core.config_loader import ConfigLoader
-from hardware.ext_bmp_publisher import ExternalBumperPublisher
+from hardware.hihp_client import HihpClient
 
 _log = Logger('test', Level.INFO)
 
@@ -32,7 +29,7 @@ _log = Logger('test', Level.INFO)
 @pytest.mark.unit
 def test_external_bumper_publisher():
 
-    _ebp = None
+    _client = None
     _start_time = dt.now()
 
     try:
@@ -43,22 +40,30 @@ def test_external_bumper_publisher():
         filename = 'config.yaml'
         _config = _loader.configure(filename)
 
-        _log.info('creating message bus...')
-        _message_bus = MessageBus(_config, _level)
-        _log.info('creating message factory...')
-        _message_factory = MessageFactory(_message_bus, _level)
-
-        _ebp = ExternalBumperPublisher(_config, _message_bus, _message_factory, Level.INFO)
-        _ebp._init()
+        _log.info('creating HIHP client...')
+        _client = HihpClient(_config, Level.INFO)
+        _log.info('enabling client...')
+        _client.enable()
+        _log.info('client enabled.')
  
-        _log.info(Fore.YELLOW + '🌼 send enable...')
-        _ebp.send_enable()
-#       _ebp.enable()
+#       _log.info(Fore.YELLOW + '🌼 send enable...')
+#       _client.send_enable()
+#       time.sleep(3)
 
-#       _ebp.send_ack()
+        while True:
+            _log.info(Fore.YELLOW + '🌼 sending enable...')
+            _client.send_enable()
 
-#       _log.info('starting message bus...')
-#       _message_bus.enable()
+            time.sleep(4)
+
+            _log.info(Fore.BLUE   + '🌺 sending disable...')
+            _client.send_disable()
+
+            time.sleep(4)
+
+
+#       _log.info(Fore.YELLOW + '🍀 send ack...')
+#       _client.send_ack()
 
         # ..............................
         _log.info('starting test...')
@@ -82,8 +87,8 @@ def test_external_bumper_publisher():
 #           _port_motor.set_motor_power(0.0)
 #       if _stbd_motor != None:
 #           _stbd_motor.set_motor_power(0.0)
-        if _ebp:
-            _ebp.close()
+        if _client:
+            _client.close()
         pass
 
     _elapsed_ms = round(( dt.now() - _start_time ).total_seconds() * 1000.0)
