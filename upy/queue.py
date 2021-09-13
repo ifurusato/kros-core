@@ -37,6 +37,13 @@ class Queue(object):
         return len(self._queue)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def clear(self):
+        '''
+        Clears the contents of the queue.
+        '''
+        self._queue.clear()
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def empty(self):
         '''
         Returns True if the queue is empty.
@@ -54,35 +61,35 @@ class Queue(object):
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def peek(self):
         '''
-        Return the smallest item on the queue without popping it.
+        Return the smallest item on the queue without getting it.
         '''
         if self.empty():
             raise Empty()
         return self._queue[0] 
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def push_as_set(self, item):
+    def put_as_set(self, item):
         '''
-        This pushes the item into the queue only if it doesn't already exist,
+        This puts the item onto the queue only if it doesn't already exist,
         creating a Set behaviour. This doesn't change the order of the existing
         items in the queue.
         '''
         if item not in self._queue:
-            self.push(item)
+            self.put(item)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def push(self, item):
+    def put(self, item):
         '''
-        Push item onto queue, maintaining the queue invariant.
+        Put item onto queue, maintaining the queue invariant.
         '''
         if self.full():
             raise Full()
         hq.heappush(self._queue, item)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def pop(self):
+    def get(self):
         '''
-        Pop the smallest item off the queue, maintaining the queue invariant.
+        Get (pop) the smallest item from the queue, maintaining the queue invariant.
         '''
         if self.empty():
             raise Empty()
@@ -97,9 +104,9 @@ class Queue(object):
         return hq.heapreplace(self._queue, item)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def pushpop(self, item):
+    def putget(self, item):
         '''
-        Fast version of a push followed by a pop.
+        Fast version of a put (push) followed by a get (pop).
         '''
         return hq.heappushpop(self._queue, item)
 

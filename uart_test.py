@@ -7,7 +7,7 @@
 #
 # author:   Murray Altheim
 # created:  2021-09-10
-# modified: 2021-09-10
+# modified: 2021-09-13
 #
 
 import serial
@@ -17,36 +17,41 @@ from colorama import init, Fore, Style
 init()
 
 from core.logger import Logger, Level
+from core.orient import Orientation
 
 # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 def main():
 
     _log = Logger('test', Level.INFO)
     _start_time = dt.now()
+
+    _port = '/dev/serial0'
 #   _baud_rate = 4800
+#   _baud_rate = 9600
     _baud_rate = 19200
 
     try:
-
-        _log.info('🌼 starting...\t' + Fore.YELLOW + 'type Ctrl-C to exit.')
-        _port = '/dev/serial0'
-#       _baud_rate = 9600
+        _log.info('starting...\t' + Fore.YELLOW + 'type Ctrl-C to exit.')
         uart = serial.Serial(port=_port, baudrate=_baud_rate, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE) # timeout=1)
         while True:
             try:
 #               with serial.Serial(_port, _baud_rate, timeout=3) as uart:
 #               _bytes = uart.readline() # read until '\n' terminated line
                 _bytes = uart.read_until() # read until '\n' terminated line
-                _log.info('🌼 a. read {:d} of type {}'.format(len(_bytes), type(_bytes)))
                 if len(_bytes) > 1:
                     _data = _bytes.decode('UTF-8')
-                    _log.info('🌼 b. _data TYPE: {}'.format(type(_data)))
-                    _log.info('🌼 c. _data: {}'.format(_data))
+                    if len(_data) == 5:
+                        _label = _data.strip()
+                        _orientation = Orientation.from_label(_label)
+                        if _orientation:
+                            _log.info('orientation:\t' + Fore.YELLOW + '{} ({})'.format(_orientation.name, _orientation.label))
+                        else:
+                            _log.warning('unmatched: \'{}\'; ({:d} chars)'.format(_data, len(_data)))
+                    else:
+                        _log.warning('errant data \'{}\'; type: \'{}\'; length: {:d} chars.'.format(_data, type(_data), len(_data)))
                 time.sleep(0.1)
-
             except UnicodeDecodeError as ude:
-                _log.error('UnicodeDecodeError: {} (ignoring)'.format(ude))
-
+                _log.error(Fore.BLACK + 'UnicodeDecodeError: {} (ignoring)'.format(ude))
     except KeyboardInterrupt:
         _log.info('Ctrl-C caught; exiting...')
     except Exception as e:

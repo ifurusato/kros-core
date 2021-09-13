@@ -49,6 +49,17 @@ class Orientation(Enum):
         '''
         return self._label
 
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    @staticmethod
+    def from_label(label):
+        '''
+        Returns the Orientation matching the label or None.
+        '''
+        for o in Orientation:
+            if label == o.label:
+                return o
+        return None
+
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Rotation(Enum):
     COUNTER_CLOCKWISE = 0
