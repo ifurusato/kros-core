@@ -9,6 +9,12 @@
 # created:  2020-05-19
 # modified: 2021-09-06
 #
+# TODO:
+#  * Copy guts of Avoid to copy of Roam
+#  * move Travel from MotorController to Avoid to replace as much ballistic behaviour as possible. Perhaps only backup.
+#  * There needs to be a decision-making event where the robot chooses where to go to avoid obstacles, perhaps a LIDAR or ultrasonic scan.
+#  * Integrate Travel into Avoid, and also re-use specific event types, with either timer or prescribed distance.
+#
 
 from colorama import init, Fore, Style
 init()
@@ -29,7 +35,7 @@ class Avoid(Behaviour):
     _LAMBDA_NAME = 'avoid'
 
     '''
-    Implements an avoidance behaviour. 
+    Implements an avoidance behaviour.
 
     The Behaviour subscribes to infrared and bumper events, and should
     an infrared event appear with a distance less than the minimum distance
