@@ -31,9 +31,8 @@ class BehaviourManager(Subscriber):
     Extends Subscriber as a manager of high-level, low-priority behaviours.
     This subscribes to all events grouped as an Event.BEHAVIOUR.
 
-    Note that suppressing the BehaviourManager will also suppress all
-    existing Behaviours, but releasing it won't release any Behaviours
-    (we don't store state).
+    See the note under suppress_all_behaviours() regarding the stored state
+    of Behaviours when this manager is itself suppressed.
 
     :param name:         the subscriber name (for logging)
     :param config:       the application configuration
@@ -43,6 +42,7 @@ class BehaviourManager(Subscriber):
     def __init__(self, config, message_bus, level=Level.INFO):
         Subscriber.__init__(self, BehaviourManager.CLASS_NAME, config, message_bus=message_bus, suppressed=False, enabled=True, level=Level.INFO)
         self._active_behaviour = None
+        self._was_suppressed   = None
         self._behaviours       = {}
 
 #       methods = [func for func in dir(BehaviourManager) if callable(getattr(BehaviourManager, func)) and not func.startswith("__")]
@@ -81,7 +81,9 @@ class BehaviourManager(Subscriber):
         for _key, _behaviour in self._behaviours.items():
             _behaviour.disable()
             self._log.info('{} behaviour disabled.'.format(_behaviour.name))
+        self._was_suppressed = None
 
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def suppress(self):
         '''
         Suppresses the Behaviour Manager as well as any registered Behaviours.
@@ -91,25 +93,59 @@ class BehaviourManager(Subscriber):
         self._log.info('suppressed.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def suppress_all_behaviours(self):
+    def suppress_all_behaviours(self, store_states=True):
         '''
-        Suppress all registered behaviours.
+        Suppresses all registered behaviours. This stores the suppressed state
+        of each Behaviour.
+
+        STORAGE POLICY
+
+        Note that suppressing the BehaviourManager (or alternately calling
+        this method, which calls this method) will suppress all existing
+        Behaviours and store their respective suppression states. If there
+        is a set of stored states upon releasing the BehaviourManager, those
+        states will be restored.
         '''
         self._log.info('suppress all behaviours...')
+        self._was_suppressed = {}
         for _key, _behaviour in self._behaviours.items():
-            _behaviour.suppress()
-            self._log.info('{} behaviour suppressed.'.format(_behaviour.name))
+            self._was_suppressed[_behaviour] = _behaviour.suppressed
+            if not _behaviour.suppressed:
+                _behaviour.suppress()
+                self._log.info('{} behaviour suppressed.'.format(_behaviour.name))
+            else:
+                self._log.info('{} behaviour not suppressed (was not active).'.format(_behaviour.name))
+        if not store_states:
+            self._was_suppressed = None
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def release(self):
+        '''
+        Releases (un-suppresses) the BehaviourManager and releases all
+        Behaviours according to the storage policy.
+        '''
+        Component.release(self)
+        self.release_all_behaviours()
+        self._log.info('released.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def release_all_behaviours(self):
         '''
         Release (un-suppress) all registered behaviours.
+
+        If the suppressed state of each Behaviour has been stored this will
+        determine whether a given Behaviour is released.
         '''
         if not self.closed:
             self._log.info('release all behaviours...')
             for _key, _behaviour in self._behaviours.items():
-                _behaviour.release()
+                if self._was_suppressed:
+                    if not self._was_suppressed[_behaviour]:
+                        _behaviour.release()
+                else:
+                    _behaviour.release()
                 self._log.info('{} behaviour released.'.format(_behaviour.name))
+            self._was_suppressed = None
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def close_all_behaviours(self):

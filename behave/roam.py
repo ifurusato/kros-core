@@ -32,13 +32,13 @@ class Roam(Behaviour):
     Implements a roaming behaviour. The end result of this Behaviour is to
     provide a forward speed limit for both motors based on a distance value
     provided by the center infrared sensor, i.e., the distance to an obstacle
-    in cm. If no obstacle is perceived within the range of the sensor, the 
+    in cm. If no obstacle is perceived within the range of the sensor, the
     velocity limit is removed.
 
     Because we only know how far the obstacle is based on incoming events,
     if we haven't seen an event in awhile we may assume there is nothing
     there and start moving again, at "cruising" speed. But we need to wait
-    a bit after reacting to an obstacle before attempting to start moving 
+    a bit after reacting to an obstacle before attempting to start moving
     again.
 
     The Roam behaviour is by default suppressed.
@@ -170,7 +170,7 @@ class Roam(Behaviour):
             self._log.info('tick; wait: {} ({:d}); suppressed: {};\t'.format(self._get_bar(), self._wait_count, self.suppressed))
             # wait ten counts before trying to move
             if self._wait_count == 0:
-                self._log.info('roaming;\t' 
+                self._log.info('roaming;\t'
                         + Fore.RED   + 'port: {:5.2f}cm/s;\t'.format(self._port_motor.velocity)
                         + Fore.GREEN + 'stbd: {:5.2f}cm/s'.format(self._stbd_motor.velocity))
             elif self._wait_count == 1:
@@ -188,8 +188,8 @@ class Roam(Behaviour):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _set_velocity_multiplier(self, reason, lambda_function):
-
-#       if not isinstance(message_bus, lambda):
+        if not isinstance(lambda_function, function):
+            raise TypeError('expected lambda function, not {}'.format(type(lambda_function)))
         self._log.info(Fore.GREEN + 'set max fwd velocity: ' + '{}'.format(reason))
         self._port_motor.add_velocity_multiplier(Roam._LAMBDA_NAME, lambda_function)
         self._stbd_motor.add_velocity_multiplier(Roam._LAMBDA_NAME, lambda_function)
@@ -198,8 +198,6 @@ class Roam(Behaviour):
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _reset_velocity_multiplier(self, reason):
         self._log.info(Fore.MAGENTA + '😨 reset max fwd velocity: ' + Fore.YELLOW + '{}'.format(reason))
-#       self._port_motor.reset_velocity_multiplier()
-#       self._stbd_motor.reset_velocity_multiplier()
         self._port_motor.remove_velocity_multiplier(Roam._LAMBDA_NAME)
         self._stbd_motor.remove_velocity_multiplier(Roam._LAMBDA_NAME)
         pass

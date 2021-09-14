@@ -332,7 +332,7 @@ class EventPublisher(Publisher):
     def _print_power_info(self):
         _battery_check = self._message_bus.get_publisher('battery')
         if _battery_check:
-            _msg = _battery_check.get_battery_info() 
+            _msg = _battery_check.get_battery_info()
         else:
             _msg = 'no power information available.'
         self._log.info('power supply: \t' + Fore.YELLOW + '{}'.format(_msg))
