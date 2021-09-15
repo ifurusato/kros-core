@@ -10,8 +10,8 @@
 # modified: 2021-09-13
 #
 
+import os, sys, time, traceback
 import serial
-import sys, time, traceback
 from datetime import datetime as dt
 from colorama import init, Fore, Style
 init()
@@ -25,19 +25,24 @@ def main():
     _log = Logger('test', Level.INFO)
     _start_time = dt.now()
 
+#   _port = '/dev/ttyUSB0'
+#   _port = '/dev/ttyACM0'
     _port = '/dev/serial0'
 #   _baud_rate = 4800
 #   _baud_rate = 9600
     _baud_rate = 19200
+#   _baud_rate = 115200
 
     try:
         _log.info('starting...\t' + Fore.YELLOW + 'type Ctrl-C to exit.')
-        uart = serial.Serial(port=_port, baudrate=_baud_rate, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE) # timeout=1)
+        if not os.path.exists(_port):
+            raise Exception('port {} does not exist.'.format(_port))
+        _serial = serial.Serial(port=_port, baudrate=_baud_rate, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE) # timeout=1)
         while True:
             try:
 #               with serial.Serial(_port, _baud_rate, timeout=3) as uart:
-#               _bytes = uart.readline() # read until '\n' terminated line
-                _bytes = uart.read_until() # read until '\n' terminated line
+                _bytes = _serial.readline() # read until '\n' terminated line
+#               _bytes = _serial.read_until() # read until '\n' terminated line
                 if len(_bytes) > 1:
                     _data = _bytes.decode('UTF-8')
                     if len(_data) == 5:

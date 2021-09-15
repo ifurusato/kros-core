@@ -1,4 +1,4 @@
-# UART Data Transmitter for Sensor Data (UDT4SD)
+# MicroPython External Clock for Itsy Bitsy RP2040
 #
 # Copyright 2020-2021 by Murray Altheim. All rights reserved. This file is part
 # of the Robot Operating System project, released under the MIT License. Please
@@ -6,7 +6,11 @@
 #
 # author:   Murray Altheim
 # created:  2021-08-26
-# modified: 2021-09-13
+# modified: 2021-09-08
+#
+# Uses the Neopixel library downloadable from:
+#
+#    https://github.com/blaz-r/pi_pico_neopixel
 #
 
 from machine import UART
@@ -27,16 +31,26 @@ import upy_utils as ut
 
 # pin definitions ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
-IN_D0_PIN = 27 # port bumper switch
-IN_D1_PIN = 26 # center bumper switch
-IN_D2_PIN = 25 # starboard bumper switch
-IN_D3_PIN = 15 # port aft infrared
-IN_D4_PIN = 14 # mast infrared
-IN_D5_PIN =  4 # starboard aft infrared
+# GPIO   BAT   G   USB  11   10    9    8    7    6   16    3    2    0    1
+#  PIN   BAT   G   USB  13   12   11!  10    9    7    5!  SCL  SDA  TX   RX
+#         ◆    ◆    ◆    ◆    ◆    ◆    ◆    ◆    ◆    ◆    ◆    ◆    ◆    ◆
+#                        A    B    x    C    D    E    x    F
+# NOTE: specify GPIO (back of board) not Pin number (front of board)
+# NOTE: You can't use GPIO 16 as that's the NeoPixel's power pin!
+#       You also can't use GPIO 11 as that's the red LED.
 
-TX_PIN    = 23 # connect to Rx on Pi
-RX_PIN    = 19 # connect to Tx on Pi
-BAUD_RATE = 19200
+IN_D3_PIN = 11  # A. port aft infrared
+IN_D4_PIN = 10  # B, mast infrared
+IN_D5_PIN =  8  # C. starboard aft infrared
+
+IN_D0_PIN =  7  # port bumper switch
+IN_D1_PIN =  6  # center bumper switch
+IN_D2_PIN =  3  # starboard bumper switch
+
+UART_ID    =  0  # UART 0 or 1?
+#TX_PIN    =  0  # TX/GP00 - The main UART0 TX pin, connect to Rx on Pi.
+#RX_PIN    =  1  # RX/GP01 - The main UART0 RX pin, connect to Tx on Pi.
+BAUD_RATE = 9600
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #                                   FUNCTIONS
@@ -51,7 +65,7 @@ def irq_callback(pin):
     If we're transmitting then further data is likely noise.
     '''
     global g_transmitting, g_queue, g_pins
-    if not g_transmitting: 
+    if not g_transmitting:
         # only enqueue the record if not already present in queue.
 #       g_queue.put_as_set(g_pins.get(id(pin)))
         # or just shove it in there anyway...
@@ -81,7 +95,7 @@ def define_pin(pin_num, message, color, is_switch):
 def poll():
     '''
     Pop all elements of the queue, transmitting them to the
-    UART recipient.
+    UART recipient. This gets called every 50ms.
     '''
     global g_uart, g_queue, g_transmitting, g_counter
     if not g_transmitting and not g_queue.empty():
@@ -89,14 +103,14 @@ def poll():
         try:
             while not g_queue.empty():
                 _data, _color = g_queue.get()
+#               print("writing data: {}; color: {}".format(_data, _color))
                 ut.rgb_led(_color)
-#               print("🌞 WRITE: {}".format(_data))
                 g_uart.write(_data)
                 time.sleep_ms(50)
-#           time.sleep_ms(4)
+            time.sleep_ms(10)
         except Exception as e:
-#           print(e)
-            ut.rgb_led(ut.COLOR_RED)
+            print("ERROR: {}".format(e))
+            ut.error()
             time.sleep(2.0)
         finally:
             g_queue.clear()
@@ -104,7 +118,8 @@ def poll():
     else:
         if next(g_counter) % 20 == 0.0:
             ut.rgb_led(ut.COLOR_TURQUOISE)
-            time.sleep_ms(4)
+            time.sleep_ms(10)
+    time.sleep_ms(10)
     ut.rgb_led(ut.COLOR_BLACK)
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -117,26 +132,36 @@ def poll():
 #dotstar = DotStar(spi, 1, brightness = 0.5)    # just one DotStar, half brightness
 #TinyPICO.set_dotstar_power(True)               # turn on the power to the DotStar
 
-g_counter = itertools.count()
-g_queue   = Queue()
+try:
 
-g_transmitting = False
+    g_counter = itertools.count()
+    g_queue   = Queue()
 
-g_uart = UART(1, baudrate=BAUD_RATE, parity=None, tx=TX_PIN, rx=RX_PIN, stop=1)
+    g_transmitting = False
 
-# pin configuration
-g_pins = {}
-_pin_0 = define_pin(IN_D0_PIN, 'port\n', ut.COLOR_RED, True)
-_pin_1 = define_pin(IN_D1_PIN, 'cntr\n', ut.COLOR_BLUE, True)
-_pin_2 = define_pin(IN_D2_PIN, 'stbd\n', ut.COLOR_GREEN, True)
-_pin_3 = define_pin(IN_D3_PIN, 'paft\n', ut.COLOR_CYAN, False)
-_pin_4 = define_pin(IN_D4_PIN, 'mast\n', ut.COLOR_YELLOW, False)
-_pin_5 = define_pin(IN_D5_PIN, 'saft\n', ut.COLOR_MAGENTA, False)
+    #tx_pin = Pin(TX_PIN)
+    #rx_pin = Pin(RX_PIN)
+    #g_uart = UART(UART_ID, baudrate=BAUD_RATE, parity=None, tx=_tx_pin, rx=_rx_pin, stop=1)
+    g_uart = UART(UART_ID, baudrate=BAUD_RATE, parity=None) #tx=_tx_pin, rx=_rx_pin, stop=1)
 
-# start polling loop with frequency of 20Hz (50ms)
-_timer = Timer(1)
-_timer.init(period=50, mode=Timer.PERIODIC, callback=lambda n: poll())
+    # pin configuration
+    g_pins = {}
+    _pin_0 = define_pin(IN_D0_PIN, 'port\n', ut.COLOR_RED,     False)
+    _pin_1 = define_pin(IN_D1_PIN, 'cntr\n', ut.COLOR_BLUE,    False)
+    _pin_2 = define_pin(IN_D2_PIN, 'stbd\n', ut.COLOR_GREEN,   False)
+    _pin_3 = define_pin(IN_D3_PIN, 'paft\n', ut.COLOR_CYAN,    False)
+    _pin_4 = define_pin(IN_D4_PIN, 'mast\n', ut.COLOR_YELLOW,  False)
+    _pin_5 = define_pin(IN_D5_PIN, 'saft\n', ut.COLOR_MAGENTA, False)
 
-ut.ready()
+    # start polling loop with frequency of 20Hz (50ms)
+    _timer = Timer(period=50, mode=Timer.PERIODIC, callback=lambda n: poll())
+
+    ut.ready()
+
+except Exception as e:
+    print("error: {}".format(e))
+    ut.error()
+finally:
+    ut.red_led(0)
 
 #EOF

@@ -5,14 +5,19 @@
 The KR01 currently hosts two microcontrollers:
 
   1. an ESP32-based TinyPICO used as an external clock, and,
+
      mounted at:        /dev/ttyUSB0
      open with:         rshell -p /dev/ttyUSB0
      script installed:  ./main_ext_clock_esp32.py
 
-  2. an Itsy Bitsy RP2040, currently not doing much of anything
+  2. an Itsy Bitsy RP2040, handling the three front bumpers, the mast, 
+     back port and starboard digital infrared sensors. This communicates
+     over UART to Tx/Rx on the Pi.
+
      mounted at:        /dev/ttyACM0
      open with:         rshell -p /dev/ttyACM0
-     script installed:  ./main_ext_clock_rp2040.py
+     script installed:  ./main_hihp_rp2040.py
+     libraries at:      ./upy/
 
 Note that on your own computer the actual tty used may differ.
 
