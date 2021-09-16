@@ -68,6 +68,7 @@ class IfsPublisher(Publisher):
             else:
                 self._log.info('creating task for ifs listener loop...')
                 self._message_bus.loop.create_task(self._ifs_listener_loop(lambda: self.enabled), name=IfsPublisher._LISTENER_LOOP_NAME)
+                self._ifs.enable()
                 self._log.info('enabled.')
         else:
             self._log.warning('failed to enable publisher.')
@@ -131,9 +132,12 @@ class IfsPublisher(Publisher):
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def disable(self):
         '''
-        Disable this publisher as well as shut down the message bus.
+        Disable this publisher as well as the IntegratedFrontSensor.
+
+        FIXME This currently shuts down the message bus.
         '''
         self._message_bus.disable()
+        self._ifs.disable()
         Publisher.disable(self)
         self._log.info('disabled publisher.')
 

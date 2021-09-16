@@ -246,6 +246,7 @@ class EventPublisher(Publisher):
                             self._message_bus.print_system_status()
                             self._motor_ctrl.print_motor_status()
                             self._motor_ctrl.print_info(None)
+                            self._print_ifs_info()
                             continue
                         elif och == 111: # 'o'
                             self._message_bus.clear_tasks()
@@ -336,6 +337,16 @@ class EventPublisher(Publisher):
         else:
             _msg = 'no power information available.'
         self._log.info('power supply: \t' + Fore.YELLOW + '{}'.format(_msg))
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def _print_ifs_info(self):
+        _battery_check = self._message_bus.get_publisher('battery')
+        _ifs = globals.get('ifs')
+        if _ifs:
+            _msg = _ifs.get_info()
+        else:
+            _msg = 'no ifs information available.'
+        self._log.info('ifs:          \t' + Fore.YELLOW + '{}'.format(_msg))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _get_infrared_value(self):

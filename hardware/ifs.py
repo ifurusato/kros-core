@@ -14,6 +14,7 @@ from collections import deque as Deque
 from colorama import init, Fore, Style
 init()
 
+import core.globals as globals
 from core.config_loader import ConfigLoader
 from core.logger import Logger, Level
 from core.orient import Orientation
@@ -47,12 +48,14 @@ class IntegratedFrontSensor(Component):
     this compromise is weighted towards closer range measurement, as accuracy
     at greater distances is less important than close to the robot.
 
+    Note that the initial state for this class is disabled and suppressed.
+
     :param config:            the YAML based application configuration
     :param message_bus:       the asynchronous message bus
     :param message_factory:   the factory for creating messages
     :param level:             the logging Level
     '''
-    def __init__(self, config, message_bus, message_factory, suppressed=False, enabled=True, level=Level.INFO):
+    def __init__(self, config, message_bus, message_factory, suppressed=True, enabled=False, level=Level.INFO):
         if not isinstance(level, Level):
             raise ValueError('wrong type for log level argument: {}'.format(type(level)))
         self._log = Logger("ifs", level)
@@ -98,6 +101,12 @@ class IntegratedFrontSensor(Component):
         self._deque_stbd      = Deque([], maxlen=_queue_limit)
         self._deque_port_side = Deque([], maxlen=_queue_limit)
         self._deque_stbd_side = Deque([], maxlen=_queue_limit)
+        self._cntr_count      = 0
+        self._port_count      = 0
+        self._stbd_count      = 0
+        self._port_side_count = 0
+        self._stbd_side_count = 0
+        globals.put('ifs', self)
         self._log.info('ready.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -105,25 +114,33 @@ class IntegratedFrontSensor(Component):
         return 'ifs'
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def get_info(self):
+
+        return 'ifs: {}; ioe: {}; psid: {:d}; port: {:d}; cntr: {:d}; stbd: {:d}; ssid: {:d}'.format(\
+                self.is_active, self._io_expander.is_active,
+                self._cntr_count, self._port_count, self._stbd_count, self._port_side_count, self._stbd_side_count)
+#               len(self._deque_port_side), len(self._deque_port), len(self._deque_cntr), len(self._deque_stbd), len(self._deque_stbd_side))
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def poll_port_bumper(self):
         '''
         Polls the port bumper, returning True if triggered.
         '''
-        return self._io_expander.get_raw_port_bmp_value() == 0
+        return self.is_active and self._io_expander.get_raw_port_bmp_value() == 0
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def poll_cntr_bumper(self):
         '''
         Polls the center bumper, returning True if triggered.
         '''
-        return self._io_expander.get_raw_cntr_bmp_value() == 0
+        return self.is_active and self._io_expander.get_raw_cntr_bmp_value() == 0
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def poll_stbd_bumper(self):
         '''
         Polls the starboard bumper, returning True if triggered.
         '''
-        return self._io_expander.get_raw_stbd_bmp_value() == 0
+        return self.is_active and self._io_expander.get_raw_stbd_bmp_value() == 0
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     # Group 0: the bumpers
@@ -135,6 +152,9 @@ class IntegratedFrontSensor(Component):
         Bumpers are not normally polled as a group as that's too slow;
         callbacks directly attached to the poll methods are more suitable.
         '''
+        if not self.is_active:
+            return None
+
         _port_bmp_message = None
         _cntr_bmp_message = None
         _stbd_bmp_message = None
@@ -163,7 +183,8 @@ class IntegratedFrontSensor(Component):
         Polls the center infrared sensor, returning the value or None if nothing
         is within range.
         '''
-        if self._io_expander.is_active:
+        if self.is_active and self._io_expander.is_active:
+            self._cntr_count += 1
             _cntr_ir_data = self._io_expander.get_cntr_ir_value()
             if _cntr_ir_data > self._cntr_raw_min_trigger:
 #               self._log.info(Fore.BLUE + 'ANALOG IR CENTER:\t' + (Fore.RED if (_cntr_ir_data > 100.0) else Fore.YELLOW)
@@ -185,11 +206,14 @@ class IntegratedFrontSensor(Component):
         Polls the port and starboard oblique infrared sensors, returning a tuple
         containing the results, where None means no value.
         '''
+        if not self.is_active:
+            return None
         _port_ir_message = None
         _stbd_ir_message = None
         # port analog infrared sensor ......................
         _port_ir_data      = self._io_expander.get_port_ir_value()
         if _port_ir_data > self._oblq_raw_min_trigger:
+            self._port_count += 1
             self._log.info('ANALOG IR OBLIQUE:\t' + (Fore.RED if (_port_ir_data > 100.0) else Fore.YELLOW) \
                     + Style.BRIGHT + '{:d}'.format(_port_ir_data) + Style.DIM + '\t(analog value 0-255)')
             _value = self._get_mean_distance(Orientation.PORT, self.convert_to_distance(_port_ir_data))
@@ -200,6 +224,7 @@ class IntegratedFrontSensor(Component):
         # starboard analog infrared sensor .................
         _stbd_ir_data      = self._io_expander.get_stbd_ir_value()
         if _stbd_ir_data > self._oblq_raw_min_trigger:
+            self._stbd_count += 1
             self._log.info('ANALOG IR OBLIQUE:\t' + (Fore.RED if (_stbd_ir_data > 100.0) else Fore.YELLOW) \
                     + Style.BRIGHT + '{:d}'.format(_stbd_ir_data) + Style.DIM + '\t(analog value 0-255)')
             _value = self._get_mean_distance(Orientation.STBD, self.convert_to_distance(_stbd_ir_data))
@@ -212,11 +237,12 @@ class IntegratedFrontSensor(Component):
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     # Group 3: the side infrared sensors
     def poll_side_infrared(self):
-        _port_side_ir_message = None
-        _stbd_side_ir_message = None
+        if not self.is_active:
+            return None
         # port side analog infrared sensor .................
         _port_side_ir_data = self._io_expander.get_port_side_ir_value()
         if _port_side_ir_data > self._side_raw_min_trigger:
+            self._port_side_count += 1
             self._log.info(Fore.RED + 'ANALOG IR SIDE:\t' + (Fore.RED if (_port_side_ir_data > 100.0) else Fore.YELLOW) \
                     + Style.BRIGHT + '{:d}'.format(_port_side_ir_data) + Style.DIM + '\t(analog value 0-255)')
             _value = self._get_mean_distance(Orientation.PSID, self.convert_to_distance(_port_side_ir_data))
@@ -224,9 +250,12 @@ class IntegratedFrontSensor(Component):
                 self._log.info(Fore.RED + Style.DIM + 'PSID\tmean distance:\t{:5.2f}/{:5.2f}cm'.format(\
                         _value, self._side_trigger_distance_cm) + Style.DIM + '; raw: {:d}'.format(_port_side_ir_data))
                 _port_side_ir_message = self._message_factory.create_message(Event.INFRARED_PSID, _value)
+        else:
+            _port_side_ir_message = None
         # starboard side analog infrared sensor ............
         _stbd_side_ir_data = self._io_expander.get_stbd_side_ir_value()
         if _stbd_side_ir_data > self._side_raw_min_trigger:
+            self._stbd_side_count += 1
             self._log.info('ANALOG IR SIDE:\t' + (Fore.RED if (_stbd_side_ir_data > 100.0) else Fore.YELLOW) \
                     + Style.BRIGHT + '{:d}'.format(_stbd_side_ir_data) + Style.DIM + '\t(analog value 0-255)')
             _value = self._get_mean_distance(Orientation.SSID, self.convert_to_distance(_stbd_side_ir_data))
@@ -234,6 +263,8 @@ class IntegratedFrontSensor(Component):
                 self._log.info(Fore.GREEN + Style.DIM + 'SSID\tmean distance:\t{:5.2f}/{:5.2f}cm'.format(\
                         _value, self._side_trigger_distance_cm) + Style.DIM + '; raw: {:d}'.format(_stbd_side_ir_data))
                 _stbd_side_ir_message = self._message_factory.create_message(Event.INFRARED_SSID, _value)
+        else:
+            _stbd_side_ir_message = None
         return [_port_side_ir_message, _stbd_side_ir_message]
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -324,6 +355,35 @@ class IntegratedFrontSensor(Component):
         elif self._digital_pot:
             self._log.debug(Fore.CYAN + 'value: {:>5.2f}; digital pot value: {:>5.2f}; '.format(value, _EXPONENT) + Fore.YELLOW + 'distance: {:>5.2f}cm'.format(_distance))
         return _distance
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def enable(self):
+        '''
+        Enable this Component.
+        '''
+        Component.enable(self)
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def suppress(self):
+        '''
+        Suppresses this Component.
+        '''
+        Component.suppress(self)
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def release(self):
+        '''
+        Releases (un-suppresses) this Component.
+        '''
+        Component.release(self)
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def disable(self):
+        '''
+        Disable this Component.
+        This returns a True value to force currency.
+        '''
+        Component.disable(self)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def close(self):

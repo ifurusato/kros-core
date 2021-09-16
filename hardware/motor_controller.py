@@ -261,11 +261,13 @@ class MotorController(Component):
                 + Fore.CYAN + 'suppressed: '
                 + Fore.YELLOW + '{}'.format(self._port_motor.pid_controller.suppressed))
 
-        self._log.info(Fore.RED + '\t{}'.format('jerk') \
-                + Fore.CYAN + ' {}enabled: '.format((' ' * max(0, (10 - len('port')))))
-                + Fore.YELLOW + '{}\t'.format(self._port_motor.jerk_limiter.enabled)
-                + Fore.CYAN + 'suppressed: '
-                + Fore.YELLOW + '{}'.format(self._port_motor.jerk_limiter.suppressed))
+        # we currently never enable the jerk limiter as it doesn't work...
+        if self._port_motor.jerk_limiter.enabled:
+            self._log.info(Fore.RED + '\t{}'.format('jerk') \
+                    + Fore.CYAN + ' {}enabled: '.format((' ' * max(0, (10 - len('port')))))
+                    + Fore.YELLOW + '{}\t'.format(self._port_motor.jerk_limiter.enabled)
+                    + Fore.CYAN + 'suppressed: '
+                    + Fore.YELLOW + '{}'.format(self._port_motor.jerk_limiter.suppressed))
 
         # starboard ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 

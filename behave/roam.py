@@ -188,8 +188,8 @@ class Roam(Behaviour):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _set_velocity_multiplier(self, reason, lambda_function):
-        if not isinstance(lambda_function, function):
-            raise TypeError('expected lambda function, not {}'.format(type(lambda_function)))
+#       if not isinstance(lambda_function, function):
+#           raise TypeError('expected lambda function, not {}'.format(type(lambda_function)))
         self._log.info(Fore.GREEN + 'set max fwd velocity: ' + '{}'.format(reason))
         self._port_motor.add_velocity_multiplier(Roam._LAMBDA_NAME, lambda_function)
         self._stbd_motor.add_velocity_multiplier(Roam._LAMBDA_NAME, lambda_function)

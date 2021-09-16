@@ -200,6 +200,10 @@ class BehaviourManager(Subscriber):
     def _alter_behaviour(self, event):
         '''
         Alters the Behaviour associated with the event.
+
+        This gets a bit complicated in that only one Behaviour can be running at
+        a time, but Behaviours can be disabled and/or suppressed, specifically
+        so that a different Behaviour can execute.
         '''
         if not isinstance(event, Event):
             raise ValueError('expected event argument, not {}'.format(type(event)))
@@ -221,6 +225,11 @@ class BehaviourManager(Subscriber):
         elif self._active_behaviour is _behaviour:
             # if the current active behaviour is already this one, we ignore the message
             self._log.info('the requested behaviour ' + Fore.YELLOW + '{}'.format(_behaviour.name) + Fore.CYAN + ' is already executing.')
+            _behaviour.on_trigger(event)
+
+        elif self._active_behaviour.suppressed:
+            self._log.info('current behaviour was suppressed; releasing behaviour ' + Fore.YELLOW + '{}'.format(_behaviour.name))
+            self._active_behaviour = _behaviour
             _behaviour.on_trigger(event)
 
         else:
