@@ -30,7 +30,7 @@ from hardware.digital_pot import DigitalPotentiometer # for calibration only
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class IntegratedFrontSensor(Component):
     '''
-    The IntegratedFrontSensor: communicates with the integrated front bumpers
+    The IntegratedFrontSensor communicates with the integrated front bumpers
     and infrared sensors, receiving messages via the IO Expander board or I²C
     Arduino slave, sending the messages with its events onto the message bus.
     For analog sensors the values are contained within the Payload of the

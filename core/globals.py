@@ -54,4 +54,12 @@ def get(key):
         return None
     return gvars.get(key)
 
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+class GlobalsError(Exception):
+    '''
+    This exception is thrown when any error occurs while referencing or
+    otherwise processing global variables. 
+    '''
+    pass
+
 #EOF

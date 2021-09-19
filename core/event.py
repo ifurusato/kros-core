@@ -15,19 +15,20 @@ from core.speed import Speed, Direction
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Group(Enum):
-    NONE      = 0
-    SYSTEM    = 1
-    GAMEPAD   = 2
-    STOP      = 3
-    BUMPER    = 4
-    INFRARED  = 5
-#   SENSOR    = 6
-    VELOCITY  = 7
-    THETA     = 8
-    CHADBURN  = 9
-    BEHAVIOUR = 10
-#   CLOCK     = 11
-    OTHER     = 12
+    NONE       = 0
+    SYSTEM     = 1
+    GAMEPAD    = 2
+    STOP       = 3
+    BUMPER     = 4
+    INFRARED   = 5
+#   SENSOR     = 6
+    VELOCITY   = 7
+    THETA      = 8
+    CHADBURN   = 9
+    BEHAVIOUR  = 10
+#   CLOCK      = 11
+    EXPERIMENT = 12
+    OTHER      = 13
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Event(Enum):
@@ -131,6 +132,15 @@ class Event(Enum):
     VIDEO                  = ( 508, "video",                  175,   Group.BEHAVIOUR ) # L1 Button
     IDLE                   = ( 509, "idle",                   180,   Group.BEHAVIOUR ) # A Button
 
+    # experiments (> 800) ...................................................................
+    EXPERIMENT_1           = ( 801, "experiment 1",           800,   Group.EXPERIMENT )
+    EXPERIMENT_2           = ( 802, "experiment 2",           800,   Group.EXPERIMENT )
+    EXPERIMENT_3           = ( 803, "experiment 3",           800,   Group.EXPERIMENT )
+    EXPERIMENT_4           = ( 804, "experiment 4",           800,   Group.EXPERIMENT )
+    EXPERIMENT_5           = ( 805, "experiment 5",           800,   Group.EXPERIMENT )
+    EXPERIMENT_6           = ( 806, "experiment 6",           800,   Group.EXPERIMENT )
+    EXPERIMENT_7           = ( 807, "experiment 7",           800,   Group.EXPERIMENT )
+
     # other events (> 900) ..................................................................
     NO_ACTION              = ( 999, "no action",              999,   Group.OTHER )
     ANY                    = ( 1000, "any",                  1000,   Group.OTHER )
@@ -148,6 +158,14 @@ class Event(Enum):
         self._group     = group
         self._direction = direction
         self._speed     = speed
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    @staticmethod
+    def from_number(value):
+        for e in Event:
+            if value == e._num:
+                return e
+        raise NotImplementedError
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @staticmethod

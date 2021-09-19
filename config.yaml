@@ -10,9 +10,12 @@ kros:
     exit_on_dire_event:              False       # if True exit if encountering a dire event
     use_external_clock:               True       # if True use external clock, ignoring loop delay value
     use_external_bumper_publisher:    True       # use ExternalBumperPublisher instead of BumperPublisher
+    experimental:                                # the list of experimental class names
+        uart_experiment:   'UartExperiment'      # experiment 1
     component:                                   # enable specific publish/subscribe components
         enable_killswitch:            True       # kill switch
-        enable_behaviours:            True       # enable BehaviourManager (Behaviours enabled individually)
+        enable_behaviours:           False       # enable BehaviourManager (Behaviours enabled individually)
+        enable_experimental:         False       # enable ExperimentManager and load any Experiments
         # publishers .............................
         enable_ifs_publisher:         True       # enable Integrated Front Sensor publisher
         enable_bumper_publisher:      True       # enable bumper publisher
@@ -248,6 +251,7 @@ kros:
     arguments:                                   # CLI arguments are copied here
         nada:                       False        # nada
         mock_enabled:               False        # permit mocks if real hardware is unavailable
+
 pi:
     disable_leds:                   False        # disable and re-enable Pi LEDs during operation?
     led_0_path:   '/sys/class/leds/led0/brightness'

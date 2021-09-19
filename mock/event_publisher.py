@@ -36,6 +36,13 @@ class EventPublisher(Publisher):
 
     _KEY_EVENT_MAP = dict([
         ( 27,  Event.SHUTDOWN ),
+        ( 33,  Event.EXPERIMENT_1 ), # '!' (on US keyboard)
+        ( 64,  Event.EXPERIMENT_2 ), # '@'
+        ( 35,  Event.EXPERIMENT_3 ), # '#'
+        ( 36,  Event.EXPERIMENT_4 ), # '$'
+        ( 37,  Event.EXPERIMENT_5 ), # '%'
+        ( 94,  Event.EXPERIMENT_6 ), # '^'
+        ( 38,  Event.EXPERIMENT_7 ), # '&'
         ( 39,  Event.DECREASE_STBD_VELOCITY ),
         ( 44,  Event.DECREASE_VELOCITY ),
         ( 45,  Event.BRAKE ),
@@ -240,13 +247,7 @@ class EventPublisher(Publisher):
                             self.print_help()
                             continue
                         elif och == 105: # 'i' print info
-                            self._log.heading('System Information','Memory, CPU and Message Bus Information.')
-                            self._system.print_sys_info()
-                            self._print_power_info()
-                            self._message_bus.print_system_status()
-                            self._motor_ctrl.print_motor_status()
-                            self._motor_ctrl.print_info(None)
-                            self._print_ifs_info()
+                            self._print_info()
                             continue
                         elif och == 111: # 'o'
                             self._message_bus.clear_tasks()
@@ -278,34 +279,40 @@ class EventPublisher(Publisher):
                         elif och == 122: # 'z' toggle motors loop
                             self._toggle_motors()
                             continue
+                        elif och in [ 33, 64, 35, 36, 37, 94, 38 ]: # shift-numeric
+                            _event = EventPublisher._KEY_EVENT_MAP[och]
+                            self._toggle_experiment(_event)
+                            continue
                         elif 65 <= och <= 90: # then we're uppercased alpha
                             self._ir_direction *= -1 # toggle direction
                             self._log.info('toggle increment direction: {:d}'.format(self._ir_direction))
                             och += 32
+                        else:
+#                           _event = Event.NOOP # what else?
+                            pass
+
                         # otherwise handle as event
                         if not _event:
                             _event = EventPublisher._KEY_EVENT_MAP[och]
                         if _event is not None:
-                            self._log.info('key \'{}\' ({}) pressed; key-publishing message for event: {}'.format(ch, och, _event))
+#                           self._log.debug('key \'{}\' ({}) pressed; key-publishing message for event: {}'.format(ch, och, _event))
                             _message = self._message_factory.create_message(_event, True)
-                            # FIXME TODO load message value for various event types correctly...
-#                           if _event is Event.INFRARED_CNTR:
                             if Event.is_infrared_event(_event):
                                 _message.value = self._get_infrared_value() # we use a rising and falling value
                             elif Event.is_bumper_event(_event):
                                 _message.value = 0 # bumpers by definition have a distance of zero
                             else:
                                 _message.value = dt.now() # we use a timestamp to guarantee each message is different
-                            self._log.debug('key-publishing message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
+#                           self._log.debug('key-publishing message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
                             await Publisher.publish(self, _message)
-                            self._log.debug('key-published message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
-                            # special case: check if all IFS sensors have been triggered 3 times; if so exit
-                            if Event.is_ifs_event(_event):
-                                self._accumulate_message(_message)
-                                self._print_waiting_for_message()
-                                if self.all_triggered:
-                                    self._log.info(Fore.YELLOW + 'exit having triggered all sensors...')
-                                    self.disable()
+#                           self._log.debug('key-published message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
+#                           # TEMP special case: check if all IFS sensors have been triggered 3 times; if so exit
+#                           if Event.is_ifs_event(_event):
+#                               self._accumulate_message(_message)
+#                               self._print_waiting_for_message()
+#                               if self.all_triggered:
+#                                   self._log.info(Fore.YELLOW + 'exit having triggered all sensors...')
+#                                   self.disable()
                         else:
                             self._log.warning('unmapped key \'{}\' ({}) pressed.'.format(ch, och))
                         await asyncio.sleep(self._publish_delay_sec)
@@ -325,9 +332,25 @@ class EventPublisher(Publisher):
 
                 self._log.debug('[{:03d}] END loop.'.format(_count))
             self._log.info('publish loop complete.')
+        except Exception as e:
+            self._log.error('error in publish loop: {}'.format(e))
         finally:
             if self._getch:
                 self._getch.close()
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def _print_info(self):
+        try:
+            self._log.heading('System Information','Memory, CPU and Message Bus Information.')
+            self._system.print_sys_info()
+            self._print_power_info()
+            self._message_bus.print_system_status()
+            self._motor_ctrl.print_motor_status()
+            self._motor_ctrl.print_info(None)
+            self._print_ifs_info()
+            self._print_experiment_info()
+        except Exception as e:
+            self._log.error('error printing system info: {}'.format(e))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _print_power_info(self):
@@ -347,6 +370,16 @@ class EventPublisher(Publisher):
         else:
             _msg = 'no ifs information available.'
         self._log.info('ifs:          \t' + Fore.YELLOW + '{}'.format(_msg))
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def _print_experiment_info(self):
+        _kros = globals.get('kros')
+        _experiment_mgr = _kros.get_experiment_manager()
+        if _experiment_mgr:
+            _experiment_mgr.print_info()
+        else:
+            self._log.info('experimental features:\t' + Fore.YELLOW + 'disabled.')
+
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _get_infrared_value(self):
@@ -459,6 +492,13 @@ class EventPublisher(Publisher):
 #           await asyncio.sleep(3.0) # delay before starting flood loop
             self._flood_enable = True
             self._log.info('flood enabled: ' + Fore.YELLOW + 'type \'w\' to disable.')
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def _toggle_experiment(self, event):
+        self._log.debug('😃 toggle experiment "{}"'.format(event))
+        _kros = globals.get('kros')
+        _experiment_mgr = _kros.get_experiment_manager()
+        _experiment_mgr.toggle_experiment(event)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _toggle_behaviour_manager(self):
@@ -591,7 +631,10 @@ class EventPublisher(Publisher):
 12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890''')
         self._log.info('''key map:
 
-       ┏━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┓
+       ┏━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┓
+       ┃ SHIFT-1 ┃ SHIFT-2 ┃ SHIFT-3 ┃ SHIFT-4 ┃ SHIFT-5 ┃ SHIFT-6 ┃ SHIFT-7 ┃
+       ┃  EXP 1  ┃  EXP 2  ┃  EXP 3  ┃  EXP 4  ┃  EXP 5  ┃  EXP 6  ┃  EXP 7  ┃
+       ┣━━━━━━━━━╋━━━━━━━━━╋━━━━━━━━━╋━━━━━━━━━╋━━━━━━━━━╋━━━━━━━━━╋━━━━━━━━━╋━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┓
        ┃    1    ┃    2    ┃    3    ┃    4    ┃    5    ┃    6    ┃    7    ┃    8    ┃    9    ┃    0    ┃    -    ┃    =    ┃   DEL   ┃
        ┃ FUL AST ┃ HAF AST ┃ SLO AST ┃ DSL AST ┃  HALT   ┃ DSL AHD ┃ SLO AHD ┃ HAF AHD ┃ FUL AHD ┃  STOP   ┃  BRAKE  ┃  EVEN   ┃ SHUTDWN ┃
   ┏━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┛

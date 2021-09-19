@@ -68,6 +68,8 @@ from behave.moth import Moth
 from behave.sniff import Sniff
 from behave.idle import Idle
 
+from experimental.experiment_mgr import ExperimentManager
+
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class KROS(Component, FiniteStateMachine):
     '''
@@ -95,22 +97,23 @@ class KROS(Component, FiniteStateMachine):
         self._log.info('…')
         Component.__init__(self, self._log, suppressed=False, enabled=False)
         FiniteStateMachine.__init__(self, self._log, _name)
-        self._system        = System(self, level)
+        self._system         = System(self, level)
         self._system.set_nice()
         globals.put('kros', self)
         # configuration...
-        self._config        = None
-        self._message_bus   = None
-        self._behaviour_mgr = None
-        self._arbitrator    = None
-        self._controller    = None
-        self._gamepad       = None
-        self._ext_clock     = None
-        self._motor_ctrl    = None
-        self._ifs           = None
-        self._killswitch    = None
-        self._disable_leds  = False
-        self._closing       = False
+        self._config         = None
+        self._message_bus    = None
+        self._behaviour_mgr  = None
+        self._experiment_mgr = None
+        self._arbitrator     = None
+        self._controller     = None
+        self._gamepad        = None
+        self._ext_clock      = None
+        self._motor_ctrl     = None
+        self._ifs            = None
+        self._killswitch     = None
+        self._disable_leds   = False
+        self._closing        = False
         self._log.info('oid: {}'.format(id(self)))
         self._log.info('initialised.')
 
@@ -147,6 +150,8 @@ class KROS(Component, FiniteStateMachine):
         self._log.info('motors enabled:       {}'.format(_args['motors_enabled']))
         _args['mock_enabled']    = arguments.mock
         self._log.info('mock enabled:         {}'.format(_args['mock_enabled']))
+        _args['experimental_enabled'] = arguments.experimental
+        self._log.info('experiment enabled:   {}'.format(_args['experimental_enabled']))
         _args['log_enabled']    = arguments.log
         self._log.info('write log enabled:    {}'.format(_args['log_enabled']))
 
@@ -250,6 +255,14 @@ class KROS(Component, FiniteStateMachine):
             self._infrared_subscriber = InfraredSubscriber(self._config, self._message_bus, self._motor_ctrl, level=self._level) # reacts to IR sensors
         self._garbage_collector   = GarbageCollector(self._config, self._message_bus, level=self._level)
 
+        _use_experiment_manager = self._config['kros'].get('component').get('enable_experimental') or Util.is_true(arguments.experimental)
+        if _use_experiment_manager:
+            self._log.info(Fore.YELLOW + '🍟 1. enabling experiment manager  ......................')
+            self._experiment_mgr = ExperimentManager(self._config, level=self._level)
+            self._log.info(Fore.YELLOW + '🍟 2. enabled experiment manager  .......................')
+        else:
+            self._log.info(Fore.YELLOW + '🍟 3. did not enable experimental mode.  ................')
+
         # create behaviours ................................
 
         _enable_behaviours = _cfg.get('enable_behaviours') or Util.is_true(arguments.behave)
@@ -291,6 +304,9 @@ class KROS(Component, FiniteStateMachine):
         if self._killswitch:
             self._killswitch.enable()
 
+        if self._experiment_mgr:
+            self._experiment_mgr.enable()
+
         # begin main loop ..................................
 
         self._log.notice('Press Ctrl-C to exit.')
@@ -315,11 +331,46 @@ class KROS(Component, FiniteStateMachine):
         # end main loop ....................................
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def get_config(self):
+        '''
+        Returns the application configuration.
+        '''
+        return self._config
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def get_level(self):
+        '''
+        Returns the log level of the application.
+        '''
+        return self._level
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def get_message_bus(self):
+        '''
+        Returns the MessageBus.
+        '''
+        return self._message_bus
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def get_message_factory(self):
+        '''
+        Returns the MessageFactory.
+        '''
+        return self._message_factory
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def get_behaviour_manager(self):
         '''
         Returns the BehaviourManager, None if not used.
         '''
         return self._behaviour_mgr
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def get_experiment_manager(self):
+        '''
+        Returns the ExperimentManager, None if not used.
+        '''
+        return self._experiment_mgr
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def get_external_clock(self):
@@ -370,6 +421,8 @@ class KROS(Component, FiniteStateMachine):
         elif self._closing:
             self._log.warning('already closing.')
         elif self.enabled:
+            if self._experiment_mgr:
+                self._experiment_mgr.disable()
             while not Component.disable(self):
                 self._log.info('disabling...')
             if self._motor_ctrl:
@@ -401,6 +454,8 @@ class KROS(Component, FiniteStateMachine):
             self._log.warning('already closing.')
         else:
             self._log.info('closing...')
+            if self._experiment_mgr:
+                self._experiment_mgr.close()
             if self._motor_ctrl:
                 self._motor_ctrl.close()
             while not Component.close(self): # will call disable()
@@ -501,19 +556,20 @@ def parse_args():
             description='Provides command line control of the K-Series Robot OS application.',
             epilog='This script may be executed by krosd (kros daemon) or run directly from the command line.')
 
-    parser.add_argument('--docs',        '-d', action='store_true', help='show the documentation message and exit')
-    parser.add_argument('--configure',   '-c', action='store_true', help='run configuration (included by -s)')
-    parser.add_argument('--start',       '-s', action='store_true', help='start kros')
-    parser.add_argument('--no-motors',   '-n', action='store_true', help='disable motors (uses mock)')
-    parser.add_argument('--gamepad',     '-g', action='store_true', help='enable bluetooth gamepad control')
-    parser.add_argument('--video',       '-v', action='store_true', help='enable video if installed')
-    parser.add_argument('--pubs',        '-P', help='enable publishers as identified by first character')
-    parser.add_argument('--subs',        '-S', help='enable subscribers as identified by first character')
-    parser.add_argument('--behave',      '-B', help='override behaviour configuration (1, y, yes or true, otherwise false)')
-    parser.add_argument('--mock',        '-m', action='store_true', help='permit mocked libraries (e.g., when not on a Pi)')
-    parser.add_argument('--config-file', '-f', help='use alternative configuration file')
-    parser.add_argument('--log',         '-L', action='store_true', help='write log to timestamped file')
-    parser.add_argument('--level',       '-l', help='specify logging level \'DEBUG\'|\'INFO\'|\'WARN\'|\'ERROR\' (default: \'INFO\')')
+    parser.add_argument('--docs',         '-d', action='store_true', help='show the documentation message and exit')
+    parser.add_argument('--configure',    '-c', action='store_true', help='run configuration (included by -s)')
+    parser.add_argument('--start',        '-s', action='store_true', help='start kros')
+    parser.add_argument('--experimental', '-x', action='store_true', help='enable experiment manager')
+    parser.add_argument('--no-motors',    '-n', action='store_true', help='disable motors (uses mock)')
+    parser.add_argument('--gamepad',      '-g', action='store_true', help='enable bluetooth gamepad control')
+    parser.add_argument('--video',        '-v', action='store_true', help='enable video if installed')
+    parser.add_argument('--pubs',         '-P', help='enable publishers as identified by first character')
+    parser.add_argument('--subs',         '-S', help='enable subscribers as identified by first character')
+    parser.add_argument('--behave',       '-B', help='override behaviour configuration (1, y, yes or true, otherwise false)')
+    parser.add_argument('--mock',         '-m', action='store_true', help='permit mocked libraries (e.g., when not on a Pi)')
+    parser.add_argument('--config-file',  '-f', help='use alternative configuration file')
+    parser.add_argument('--log',          '-L', action='store_true', help='write log to timestamped file')
+    parser.add_argument('--level',        '-l', help='specify logging level \'DEBUG\'|\'INFO\'|\'WARN\'|\'ERROR\' (default: \'INFO\')')
 
     try:
         print('')

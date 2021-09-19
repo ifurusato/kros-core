@@ -19,6 +19,13 @@ The KR01 currently hosts two microcontrollers:
      script installed:  ./main_hihp_rp2040.py
      libraries at:      ./upy/
 
+  3. a second RP2040, this time a QT Py RP2040 as an external clock
+     as an alternative to the TinyPICO.
+
+     mounted at:        /dev/ttyACM1
+     open with:         rshell -p /dev/ttyACM1 --buffer-size=32 --baud=115200
+     script installed:  ./main_qtpy_rp2040.py
+
 Note that on your own computer the actual tty used may differ.
 
 To connect to the microcontroller, use rshell with the board's port as an argument.
@@ -26,6 +33,17 @@ To connect to the microcontroller, use rshell with the board's port as an argume
 When in rshell, the executable script can be found at:  /pyboard/main.py
 
 The 'edit' command will by default open vim.
+
+
+Timeouts in rshell
+------------------
+
+If you have trouble copying files due to a timeout, use the following
+command arguments:
+```
+    rshell -p /dev/ttyXXXX --buffer-size=32 --baud=115200
+```
+
 
 NeoPixel Support 
 ----------------
