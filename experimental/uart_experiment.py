@@ -17,14 +17,16 @@
 import os, sys, time, traceback
 #import serial
 try:
+    import serial_asyncio
     import aioserial
     import asyncio
 except Exception as e:
-    print('exception type: {}'.format(type(e)))
+    print('{} thrown: {}'.format(type(e), e))
+
 import itertools
 from datetime import datetime as dt
 from colorama import init, Fore, Style
-init()
+init(autoreset=True)
 
 from core.logger import Logger, Level
 from core.event import Event
@@ -46,22 +48,50 @@ class UartExperiment(Experiment, Publisher):
         Publisher.__init__(self, self._name, config=self._config, message_bus=self._message_bus, 
                 message_factory=self._message_factory, suppressed=True, level=self._level)
         self._serial  = None
-        self._counter = itertools.count()
+        self._counter   = itertools.count()
+        self._loop_task   = None
         self._loop_delay_sec = 0.05 # _cfg.get('loop_delay_sec')
         self._sic_transit_gloria_mundi = False
 #       self._ext_clock.add_callback(self._callback)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def enable(self):
-
         if self.enabled:
             self._log.warning('💊 already enabled.')
         else:
             self._log.info('💊 enabling...')
             self._configure()
-#           Experiment.enable(self)
+            self._log.info('🌄 enabling A. enabled: {}'.format(self.enabled))
+            Experiment.enable(self)
+            self._log.info('🌄 enabling B. enabled: {}'.format(self.enabled))
             Publisher.enable(self)
+            self._log.info('🌄 enabling C. enabled: {}'.format(self.enabled))
             self._log.info('💊 enabled.')
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def disable(self):
+        self._log.info('🌄 disabling 1. enabled: {}'.format(self.enabled))
+        Experiment.disable(self)
+        self._log.info('🌄 disabling 2. enabled: {}'.format(self.enabled))
+        Publisher.disable(self)
+        self._log.info('🌄 disabling 3. enabled: {}'.format(self.enabled))
+        if self._serial:
+            try:
+                self._log.info('💊 closing serial port...')
+                self._serial.close()
+                self._log.info('💊 closed serial port.')
+            except Exception as e:
+                self._log.error('💊 error closing  serial port: {}'.format(e))
+        if self._loop_task:
+            try:
+                self._log.info('💊 cancelling loop task...')
+                self._loop_task.cancel()
+                self._log.info('💊 cancelled loop task.')
+            except Exception as e:
+                self._log.error('💊 error closing  serial port: {}'.format(e))
+            finally:
+                self._loop_task = None
+        self._log.info('💊 disabled.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _configure(self):
@@ -79,7 +109,7 @@ class UartExperiment(Experiment, Publisher):
             self._serial = aioserial.AioSerial(port=_port, baudrate=_baud_rate, parity=aioserial.PARITY_NONE, stopbits=aioserial.STOPBITS_ONE, \
                 loop=self._message_bus.loop, cancel_read_timeout=1, cancel_write_timeout=1) # timeout=1)
 
-            self._message_bus.loop.create_task(self._publisher_loop(lambda: self.enabled), name=UartExperiment._PUBLISHER_LOOP)
+            self._loop_task = self._message_bus.loop.create_task(self._publisher_loop(lambda: self.enabled), name=UartExperiment._PUBLISHER_LOOP)
 
             self.release() # FIXME TEMP
 
@@ -149,8 +179,10 @@ class UartExperiment(Experiment, Publisher):
                 else:
                     self._log.info(Fore.MAGENTA + Style.DIM + '💊 currently processing...')
 
-            self._log.info(Fore.MAGENTA + Style.DIM + '💊 loop delay...')
+            self._log.info(Fore.MAGENTA + Style.DIM + '💊 loop delay...                   💊💊💊' )
             await asyncio.sleep(self._loop_delay_sec)
+
+        self._log.info(Fore.MAGENTA + '💊 publisher loop complete. 👻 👻 👻 👻 👻 ')
 
 ## ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 #def main():
@@ -166,3 +198,62 @@ class UartExperiment(Experiment, Publisher):
 #    main()
 
 #EOF
+
+
+## ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#class Output(asyncio.Protocol):
+#
+#    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+#    def connection_made(self, transport):
+#        self.transport = transport
+#        print(Fore.GREEN + 'port opened'.format(transport))
+#        transport.serial.rts = False  # You can manipulate Serial object via transport
+#        transport.write(b'Hello, World!\n')  # Write serial data via transport
+#
+#    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+#    def data_received(self, data):
+#        global g_counter
+#        _count = next(g_counter)
+#        print(Fore.YELLOW + 'data {:d} received: {}'.format(_count, repr(data)))
+#        if b'\n' in data and _count > 5:
+#            self.transport.close()
+#
+#    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+#    def connection_lost(self, exc):
+#        print(Fore.RED + 'port closed')
+#        self.transport.loop.stop()
+#
+#    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+#    def pause_writing(self):
+#        print(Fore.MAGENTA + 'pause writing')
+#        print(self.transport.get_write_buffer_size())
+#
+#    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+#    def resume_writing(self):
+#        print(self.transport.get_write_buffer_size())
+#        print(Fore.CYAN + 'resume writing')
+#
+#
+## ┈┈┈┈ ┈┈┈┈ ┈┈┈┈ ┈┈┈┈ ┈┈┈┈ ┈┈┈┈ ┈┈┈┈ ┈┈┈┈ ┈┈┈┈ ┈┈┈┈ ┈┈┈┈ ┈┈┈┈ ┈┈┈┈ ┈┈┈┈ ┈┈┈┈ ┈┈┈
+#loop = None
+#
+#g_counter = itertools.count()
+#
+#try:
+#    _port = '/dev/serial0'
+#    _baud_rate = 38400
+#
+#    loop = asyncio.get_event_loop()
+#    coro = serial_asyncio.create_serial_connection(loop, Output, _port, baudrate=_baud_rate)
+#    loop.run_until_complete(coro)
+#    loop.run_forever()
+#
+#except KeyboardInterrupt:
+#    print(Style.BRIGHT + 'caught Ctrl-C; exiting...' + Style.RESET_ALL)
+#except Exception as e:
+#    print(e)
+#finally:
+#    if loop:
+#        loop.close()
+#
+#
