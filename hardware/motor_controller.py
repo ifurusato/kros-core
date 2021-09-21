@@ -99,7 +99,8 @@ class MotorController(Component):
         self._millis               = lambda: int(round(time.time() * 1000))
         self._start_time           = self._millis()
         # configure travel behaviour
-        self._travel = Travel(config, motor_configurer, level)
+        self._travel = None
+#       self._travel = Travel(config, motor_configurer, level)
         self._log.info('motors ready.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -852,7 +853,8 @@ class MotorController(Component):
                 self.start_loop()
             self._port_motor.enable()
             self._stbd_motor.enable()
-            self._travel.enable()
+            if self._travel:
+                self._travel.enable()
             self._log.info('enabled.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -868,7 +870,8 @@ class MotorController(Component):
             while _count < 10 and self.is_in_motion: # if we're moving then halt
                 _count += 1
                 self._log.warning('[{:d}] event: motors are in motion (halting).'.format(_count))
-                self._travel.disable()
+                if self._travel:
+                    self._travel.disable()
                 self._port_motor.stop()
                 self._stbd_motor.stop()
                 time.sleep(0.1)

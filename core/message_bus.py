@@ -461,7 +461,7 @@ class MessageBus(Component):
         '''
         Cleanup tasks tied to the service's shutdown.
         '''
-        self._log.info('🌄 shutdown...')
+        self._log.info('shutdown...')
         if signal:
             self._log.info('received exit signal {}...'.format(signal))
         self._log.info('nacking outstanding tasks...')
@@ -470,11 +470,11 @@ class MessageBus(Component):
         self._log.info('cancelling {:d} outstanding tasks...'.format(len(tasks)))
         _gathered_tasks = await asyncio.gather(*tasks, return_exceptions=False)
         self._log.info('stopping loop; gathered tasks: {}'.format(_gathered_tasks))
-        self._log.info('🌄 stopping event loop...')
+        self._log.info('stopping event loop...')
         if self.loop.is_running():
-            self._log.info('🌄 stopping event loop...')
+            self._log.info('stopping event loop...')
             self.loop.stop()
-            self._log.info('🌄 event loop stopped.')
+            self._log.info('event loop stopped.')
         self._log.info('shutting down...')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈

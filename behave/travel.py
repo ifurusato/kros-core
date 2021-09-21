@@ -12,11 +12,14 @@
 
 import sys, time, random
 from threading import Thread
+from datetime import datetime as dt
 #mport multiprocessing
 #rom multiprocessing import Process
 from colorama import init, Fore, Style
 init()
 
+import core.globals as globals
+from core.globals import GlobalsError
 from core.logger import Level, Logger
 from core.orient import Orientation
 from core.speed import Speed, Direction
@@ -75,9 +78,20 @@ class Travel(Component):
         self._stbd_complete   = False
         self._port_proc       = None
         self._stbd_proc       = None
+
+        _kros = globals.get('kros')
+        if _kros is None:
+            raise GlobalsError('unable to register experiment: no KROS application available as a global variable.')
+        self._ext_clock = _kros.get_external_clock()
+
 #       _cpu_count = multiprocessing.cpu_count()
 #       self._log.info('number of CPUs available: {:d}'.format(_cpu_count))
         self._log.info('ready.')
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def _tick(self):
+        self._log.info('😡  tick.')
+        pass # TODO
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def enable(self):
@@ -87,6 +101,7 @@ class Travel(Component):
             self._log.warning('travel already enabled.')
         else:
             Component.enable(self)
+            self._ext_clock.add_slow_callback(self._tick)
             self._log.info('travel enabled.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -110,7 +125,7 @@ class Travel(Component):
         elif not self.enabled:
             self._log.warning('travel not enabled.')
         else:
-            self._log.info(Fore.YELLOW + 'call to travel {} distance to port: {:d}cm; stbd: {:d}cm'.format(direction.label, port_distance_cm, stbd_distance_cm))
+            self._log.info(Fore.GREEN + '🤢 call to travel {} distance to port: {:d}cm; stbd: {:d}cm'.format(direction.label, port_distance_cm, stbd_distance_cm))
             self._port_complete = False
             self._stbd_complete = False
 
@@ -239,12 +254,16 @@ class Travel(Component):
 
         _rate = Rate(20)
 
+        _timeout_sec = 5
+        _start_time = dt.now()
+
         # accelerate to cruising velocity ............................................
         motor.target_velocity = _multiplier * float(speed.velocity)
         self._log.info(Fore.BLUE + '1. {} motor accelerating to velocity: {}...'.format(motor.orientation.label, motor.target_velocity))
 #       self._log.info(Fore.MAGENTA + '1a. {} while {} < {}...'.format(motor.orientation.label, motor.steps, _accel_target_steps))
         while self._compare(motor.steps, _accel_target_steps, direction):
-#           self._log.debug(Fore.BLUE + '{} motor accelerating from {} to {}...'.format(motor.orientation.label, motor.steps, _accel_target_steps))
+            _elapsed_ms = (dt.now() - _timestamp).total_seconds() * 1000.0
+            self._log.info(Fore.GREEN + '{} motor accelerating from {} to {}... ({}ms elapsed)'.format(motor.orientation.label, motor.steps, _accel_target_steps, _elapsed_ms))
             _rate.wait()
 
         # cruise until 3/4 of range ..................................................
@@ -286,8 +305,12 @@ class Travel(Component):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def disable(self):
-        Component.disable(self)
-        self._log.info(Fore.MAGENTA + 'disabled.')
+        if self.enabled:
+            Component.disable(self)
+            self._ext_clock.remove_slow_callback(self._tick)
+            self._log.info(Fore.MAGENTA + 'disabled.')
+        else:
+            self._log.warning('already disabled.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def get_cruising_velocity(self):

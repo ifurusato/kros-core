@@ -14,7 +14,9 @@
 def init():
     '''
     Creates an application-global dictionary as a way to share objects across
-    all modules. Typical usage:
+    all modules. This is only suitable for application-level singletons.
+
+    Typical usage:
 
         import core.globals as globals
         globals.init()

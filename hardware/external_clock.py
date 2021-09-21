@@ -91,12 +91,27 @@ class ExternalClock(Component):
         self.__callbacks.append(callback)
 
      # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def remove_callback(self, callback):
+        '''     
+        Removes the callback from those triggered by clock ticks.
+        ''' 
+        self.__callbacks.remove(callback)
+
+     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def add_slow_callback(self, callback):
         '''     
         Adds a 'slow' callback to those triggered by clock ticks. This is
         triggered at a slower (modulo) rate than the normal callback.
         ''' 
         self.__slow_callbacks.append(callback)
+
+     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def remove_slow_callback(self, callback):
+        '''     
+        Removes the callback from the slow callbacks those triggered by clock
+        ticks.
+        ''' 
+        self.__slow_callbacks.remove(callback)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _callback_method(self, gpio, level, tick):

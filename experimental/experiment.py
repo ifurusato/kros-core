@@ -14,8 +14,8 @@ from colorama import init, Fore, Style
 init()
 
 import core.globals as globals
-from core.logger import Logger, Level
 from core.globals import GlobalsError
+from core.logger import Logger, Level
 from core.component import Component
 from core.message_bus import MessageBus
 from core.message_factory import MessageFactory

@@ -194,6 +194,7 @@ class KROS(Component, FiniteStateMachine):
             self._ext_clock.enable()
         else:
             self._ext_clock = MockExternalClock(self._config, None, self._level)
+            self._ext_clock.enable()
             # TODO only if mocks permitted?
             self._use_external_clock = True
 

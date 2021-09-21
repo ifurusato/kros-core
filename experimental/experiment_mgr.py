@@ -38,7 +38,7 @@ class ExperimentManager(Component):
         Component.__init__(self, self._log, suppressed, enabled)
         if config is None:
             raise ValueError('no configuration provided.')
-        self._registry = { }
+        self._registry = {}
         self._config = config['kros'].get('experimental')
         self._directory_name = 'experimental'
         self._log.info('ready.')
@@ -117,7 +117,11 @@ class ExperimentManager(Component):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def print_info(self):
-        self._log.info('🦊 info')
+        self._log.info('experiments:')
+        for _event in self._registry.keys():
+            _experiment = self._registry.get(_event)
+            self._log.info('  experiment: ' + Fore.YELLOW + '{}'.format(_experiment.name)
+                    + Fore.CYAN + '; registered for event: ' + Fore.YELLOW + '{}'.format(_event.label))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def enable(self):

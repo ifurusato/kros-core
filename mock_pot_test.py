@@ -71,7 +71,7 @@ def test_motors():
     finally:
         pass
 
-    _elapsed_ms = round(( dt.now() - _start_time ).total_seconds() * 1000.0)
+    _elapsed_ms = round((dt.now() - _start_time).total_seconds() * 1000.0)
     _log.info(Fore.YELLOW + 'complete: elapsed: {:d}ms'.format(_elapsed_ms))
 
 # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈

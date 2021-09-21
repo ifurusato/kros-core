@@ -97,7 +97,7 @@ class MockExternalClock(Component):
         elif self._loop_thread is None:
             self._loop_enabled = True
             _is_daemon = False
-            self._loop_thread = Thread(name='ext_clock_loop', target=ExternalClock._loop, args=[self, lambda: self._loop_enabled], daemon=_is_daemon)
+            self._loop_thread = Thread(name='ext_clock_loop', target=MockExternalClock._loop, args=[self, lambda: self._loop_enabled], daemon=_is_daemon)
             self._loop_thread.start()
             self._log.info('loop enabled.')
         else:
@@ -154,7 +154,7 @@ class MockExternalClock(Component):
             except Exception as e:
                 self._log.error('error in loop: {}\n{}'.format(e, traceback.format_exc()))
             finally:
-                self._log.info(Fore.GREEN + 'exited motor control loop.')
+                self._log.info('exited motor control loop.')
         else:
             self._log.warning('external clock disabled: {:5.2f}ms elapsed.')
 

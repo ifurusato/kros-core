@@ -16,12 +16,16 @@
 
 import os, sys, time, traceback
 #import serial
+
+serial_asyncio_available = False
 try:
     import serial_asyncio
     import aioserial
     import asyncio
-except Exception as e:
-    print('{} thrown: {}'.format(type(e), e))
+    serial_asyncio_available = True
+except ModuleNotFoundError as e:
+    raise Exception('unable to load module: {}; install using: sudo pip3 install pyserial-asyncio; using mock.'.format(e))
+#   print('unable to load module: {}; using mock.'.format(e))
 
 import itertools
 from datetime import datetime as dt
@@ -57,63 +61,83 @@ class UartExperiment(Experiment, Publisher):
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def enable(self):
         if self.enabled:
-            self._log.warning('💊 already enabled.')
+            self._log.warning('⭐ already enabled.')
         else:
-            self._log.info('💊 enabling...')
+            self._log.info('⭐ enabling...')
             self._configure()
-            self._log.info('🌄 enabling A. enabled: {}'.format(self.enabled))
+            self._log.info('❄️  enabling A. enabled: {}'.format(self.enabled))
             Experiment.enable(self)
-            self._log.info('🌄 enabling B. enabled: {}'.format(self.enabled))
+            self._log.info('❄️  enabling B. enabled: {}'.format(self.enabled))
             Publisher.enable(self)
-            self._log.info('🌄 enabling C. enabled: {}'.format(self.enabled))
-            self._log.info('💊 enabled.')
+            self._log.info('❄️  enabling C. enabled: {}'.format(self.enabled))
+            self._log.info('⭐ enabled.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def disable(self):
-        self._log.info('🌄 disabling 1. enabled: {}'.format(self.enabled))
+        self._log.info('❄️  disabling 1. enabled: {}'.format(self.enabled))
         Experiment.disable(self)
-        self._log.info('🌄 disabling 2. enabled: {}'.format(self.enabled))
+        self._log.info('❄️  disabling 2. enabled: {}'.format(self.enabled))
         Publisher.disable(self)
-        self._log.info('🌄 disabling 3. enabled: {}'.format(self.enabled))
+        self._log.info('❄️  disabling 3. enabled: {}'.format(self.enabled))
         if self._serial:
             try:
-                self._log.info('💊 closing serial port...')
+                self._log.info('⭐ closing serial port...')
                 self._serial.close()
-                self._log.info('💊 closed serial port.')
+                self._log.info('⭐ closed serial port.')
             except Exception as e:
-                self._log.error('💊 error closing  serial port: {}'.format(e))
+                self._log.error('⭐ error closing  serial port: {}'.format(e))
         if self._loop_task:
             try:
-                self._log.info('💊 cancelling loop task...')
+                self._log.info('⭐ cancelling loop task...')
                 self._loop_task.cancel()
-                self._log.info('💊 cancelled loop task.')
+                self._log.info('⭐ cancelled loop task.')
             except Exception as e:
-                self._log.error('💊 error closing  serial port: {}'.format(e))
+                self._log.error('⭐ error closing  serial port: {}'.format(e))
             finally:
                 self._loop_task = None
-        self._log.info('💊 disabled.')
+        self._log.info('⭐ disabled.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _configure(self):
-        self._log.info('💊 configuring...')
+        self._log.info('⭐ configuring...')
         _port = '/dev/serial0'
         _baud_rate = 38400
 #       (50, 75, 110, 134, 150, 200, 300, 600, 1200, 1800, 2400, 4800, 9600, 19200, 38400, 57600, 115200, 230400,
 #        460800, 500000, 576000, 921600, 1000000, 1152000, 1500000, 2000000, 2500000, 3000000, 3500000, 4000000)
+
+        _loop = self._message_bus.loop
+
         try:
-            if not os.path.exists(_port):
-                raise Exception('port {} does not exist.'.format(_port))
 #           self._serial = serial.Serial(port='/dev/serial0', baudrate=19200) #parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE) # timeout=1)
 #           self._serial = serial.Serial(port=_port, baudrate=_baud_rate, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE) # timeout=1)
 
-            self._serial = aioserial.AioSerial(port=_port, baudrate=_baud_rate, parity=aioserial.PARITY_NONE, stopbits=aioserial.STOPBITS_ONE, \
-                loop=self._message_bus.loop, cancel_read_timeout=1, cancel_write_timeout=1) # timeout=1)
+            if serial_asyncio_available and os.path.exists(_port):
+#                   raise Exception('port {} does not exist.'.format(_port))
+                self._serial = None
+#               self._serial = aioserial.AioSerial(port=_port, baudrate=_baud_rate, parity=aioserial.PARITY_NONE, stopbits=aioserial.STOPBITS_ONE, \
+#                   loop=self._message_bus.loop, cancel_read_timeout=1, cancel_write_timeout=1) # timeout=1)
 
-            self._loop_task = self._message_bus.loop.create_task(self._publisher_loop(lambda: self.enabled), name=UartExperiment._PUBLISHER_LOOP)
+#                loop = asyncio.get_event_loop()
+#                coro = serial_asyncio.create_serial_connection(loop, Output, _port, baudrate=_baud_rate)
+#                loop.run_until_complete(coro)
+#                loop.run_forever()
+
+                self._log.info('⭐ configuring serial_asyncio...')
+#               loop = asyncio.get_event_loop()
+                coro = serial_asyncio.create_serial_connection(_loop, Output, _port, baudrate=_baud_rate)
+                _loop.run_until_complete(coro)
+#               _loop.run_forever()
+
+                self._loop_task = self._message_bus.loop.create_task(self._publisher_loop(lambda: self.enabled), name=UartExperiment._PUBLISHER_LOOP)
+
+            else:
+                self._log.info('⭐ using mock serial_asyncio...')
+#               self._serial = MockAioSerial()
+                self._serial = MockSerialAsyncio(_loop, Output)
 
             self.release() # FIXME TEMP
 
-            self._log.info('💊 configured.')
+            self._log.info('⭐ configured.')
         except Exception as e:
             self._log.error('{} encountered, exiting: {}'.format(type(e), e))
             traceback.print_exc(file=sys.stdout)
@@ -122,16 +146,16 @@ class UartExperiment(Experiment, Publisher):
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def _publisher_loop(self, f_is_enabled):
         if not self.enabled:
-            self._log.warning('💊 not enabled.')
+            self._log.warning('⭐ not enabled.')
             return
-        self._log.info(Fore.MAGENTA + '💊 start publisher loop...')
+        self._log.info(Fore.MAGENTA + '⭐ start publisher loop; enabled: {}'.format(f_is_enabled()))
         while f_is_enabled():
             _count = next(self._counter)
-            self._log.info('[{:03d}] 💊 begin publisher loop; suppressed: {}'.format(_count, self.suppressed))
+            self._log.info('[{:03d}] ⭐ begin publisher loop; suppressed: {}'.format(_count, self.suppressed))
             if _count > 10 and not self.suppressed:
                 if not self._sic_transit_gloria_mundi:
                     self._sic_transit_gloria_mundi = True
-                    self._log.info(Fore.MAGENTA + '💊 processing...')
+                    self._log.info(Fore.MAGENTA + '⭐ processing...')
                     _start_time = dt.now()
                     try:
                         self._log.info('😛 waiting for serial read line... ')
@@ -177,12 +201,37 @@ class UartExperiment(Experiment, Publisher):
                         self._log.info(Fore.YELLOW + 'complete: elapsed: {:d}ms'.format(_elapsed_ms))
                         self._sic_transit_gloria_mundi = False
                 else:
-                    self._log.info(Fore.MAGENTA + Style.DIM + '💊 currently processing...')
+                    self._log.info(Fore.MAGENTA + Style.DIM + '⭐ currently processing...')
 
-            self._log.info(Fore.MAGENTA + Style.DIM + '💊 loop delay...                   💊💊💊' )
+            self._log.info(Fore.MAGENTA + Style.DIM + '⭐ loop delay; enabled: {}'.format(f_is_enabled()))
             await asyncio.sleep(self._loop_delay_sec)
 
-        self._log.info(Fore.MAGENTA + '💊 publisher loop complete. 👻 👻 👻 👻 👻 ')
+        self._log.info(Fore.MAGENTA + '⭐ publisher loop complete. 🍠 ')
+
+
+## ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+class MockSerialAsyncio(object):
+
+    def __init__(self, loop, output_class, level=Level.INFO):
+        self._log = Logger('mock-ser-async', level)
+        self._loop = loop
+        self._output = output_class()
+        self._log.info('ready');
+
+    def close(self):
+        pass
+
+## ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+class MockAioSerial(object):
+
+    def __init__(self):
+        pass
+
+    async def read_until_async(self): # read until '\n' terminated line
+        return 'mast\n'
+
+    def close(self):
+        pass
 
 ## ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 #def main():
@@ -200,53 +249,46 @@ class UartExperiment(Experiment, Publisher):
 #EOF
 
 
-## ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#class Output(asyncio.Protocol):
-#
-#    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-#    def connection_made(self, transport):
-#        self.transport = transport
-#        print(Fore.GREEN + 'port opened'.format(transport))
-#        transport.serial.rts = False  # You can manipulate Serial object via transport
-#        transport.write(b'Hello, World!\n')  # Write serial data via transport
-#
-#    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-#    def data_received(self, data):
-#        global g_counter
-#        _count = next(g_counter)
-#        print(Fore.YELLOW + 'data {:d} received: {}'.format(_count, repr(data)))
-#        if b'\n' in data and _count > 5:
-#            self.transport.close()
-#
-#    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-#    def connection_lost(self, exc):
-#        print(Fore.RED + 'port closed')
-#        self.transport.loop.stop()
-#
-#    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-#    def pause_writing(self):
-#        print(Fore.MAGENTA + 'pause writing')
-#        print(self.transport.get_write_buffer_size())
-#
-#    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-#    def resume_writing(self):
-#        print(self.transport.get_write_buffer_size())
-#        print(Fore.CYAN + 'resume writing')
-#
-#
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+class Output(asyncio.Protocol):
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def connection_made(self, transport):
+        self.transport = transport
+        print(Fore.GREEN + 'port opened'.format(transport))
+        transport.serial.rts = False  # You can manipulate Serial object via transport
+        transport.write(b'Hello, World!\n')  # Write serial data via transport
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def data_received(self, data):
+        global g_counter
+        _count = next(g_counter)
+        print(Fore.YELLOW + 'data {:d} received: {}'.format(_count, repr(data)))
+        if b'\n' in data and _count > 5:
+            self.transport.close()
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def connection_lost(self, exc):
+        print(Fore.RED + 'port closed')
+        self.transport.loop.stop()
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def pause_writing(self):
+        print(Fore.MAGENTA + 'pause writing')
+        print(self.transport.get_write_buffer_size())
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def resume_writing(self):
+        print(self.transport.get_write_buffer_size())
+        print(Fore.CYAN + 'resume writing')
+
+
 ## ┈┈┈┈ ┈┈┈┈ ┈┈┈┈ ┈┈┈┈ ┈┈┈┈ ┈┈┈┈ ┈┈┈┈ ┈┈┈┈ ┈┈┈┈ ┈┈┈┈ ┈┈┈┈ ┈┈┈┈ ┈┈┈┈ ┈┈┈┈ ┈┈┈┈ ┈┈┈
 #loop = None
 #
 #g_counter = itertools.count()
 #
 #try:
-#    _port = '/dev/serial0'
-#    _baud_rate = 38400
-#
-#    loop = asyncio.get_event_loop()
-#    coro = serial_asyncio.create_serial_connection(loop, Output, _port, baudrate=_baud_rate)
-#    loop.run_until_complete(coro)
-#    loop.run_forever()
 #
 #except KeyboardInterrupt:
 #    print(Style.BRIGHT + 'caught Ctrl-C; exiting...' + Style.RESET_ALL)

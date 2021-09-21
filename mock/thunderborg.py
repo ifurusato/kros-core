@@ -19,6 +19,10 @@ This module is designed to communicate with a nonexistent (mock) ThunderBorg.
 It only provides for setting and getting the power setting of motors 1 and 2.
 """
 
+import itertools
+from colorama import init, Fore, Style
+init()
+
 from core.logger import Level, Logger
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -28,39 +32,13 @@ This module is designed to communicate with the ThunderBorg
     """
     def __init__(self, level):
         super().__init__()
-        self._log = Logger('thunderborg', level)
+        self._log = Logger('mock-thunderborg', level)
         self._log.info('ready.')
+        self._counter1     = itertools.count()
+        self._counter2     = itertools.count()
+        self._modulo       = 100
         self._motor1_power = 0.0
         self._motor2_power = 0.0
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def SetMotor2(self, power):
-        """
-SetMotor2(power)
-
-Sets the drive level for motor 2, from +1 to -1.
-e.g.
-SetMotor2(0)     -> motor 2 is stopped
-SetMotor2(0.75)  -> motor 2 moving forward at 75% power
-SetMotor2(-0.5)  -> motor 2 moving reverse at 50% power
-SetMotor2(1)     -> motor 2 moving forward at 100% power
-        """
-        self._log.info('SetMotor2() power: {:5.2f}'.format(power))
-        self._motor2_power = power
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def GetMotor2(self):
-        """
-power = GetMotor2()
-
-Gets the drive level for motor 2, from +1 to -1.
-e.g.
-0     -> motor 2 is stopped
-0.75  -> motor 2 moving forward at 75% power
--0.5  -> motor 2 moving reverse at 50% power
-1     -> motor 2 moving forward at 100% power
-        """
-        return self._motor2_power
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def SetMotor1(self, power):
@@ -74,7 +52,8 @@ SetMotor1(0.75)  -> motor 1 moving forward at 75% power
 SetMotor1(-0.5)  -> motor 1 moving reverse at 50% power
 SetMotor1(1)     -> motor 1 moving forward at 100% power
         """
-        self._log.info('SetMotor1() power: {:5.2f}'.format(power))
+        if next(self._counter1) % self._modulo == 0.0:
+            self._log.debug(Fore.RED + Style.DIM + 'SetMotor1() power: {:5.2f}'.format(power))
         self._motor1_power = power
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -90,6 +69,36 @@ e.g.
 1     -> motor 1 moving forward at 100% power
         """
         return self._motor1_power
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def SetMotor2(self, power):
+        """
+SetMotor2(power)
+
+Sets the drive level for motor 2, from +1 to -1.
+e.g.
+SetMotor2(0)     -> motor 2 is stopped
+SetMotor2(0.75)  -> motor 2 moving forward at 75% power
+SetMotor2(-0.5)  -> motor 2 moving reverse at 50% power
+SetMotor2(1)     -> motor 2 moving forward at 100% power
+        """
+        if next(self._counter2) % self._modulo == 0.0:
+            self._log.debug(Fore.GREEN + Style.DIM + 'SetMotor2() power: {:5.2f}'.format(power))
+        self._motor2_power = power
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def GetMotor2(self):
+        """
+power = GetMotor2()
+
+Gets the drive level for motor 2, from +1 to -1.
+e.g.
+0     -> motor 2 is stopped
+0.75  -> motor 2 moving forward at 75% power
+-0.5  -> motor 2 moving reverse at 50% power
+1     -> motor 2 moving forward at 100% power
+        """
+        return self._motor2_power
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def SetMotors(self, power):
