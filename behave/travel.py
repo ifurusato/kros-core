@@ -159,13 +159,12 @@ class Travel(Component):
                             args=(direction, port_speed, port_distance_cm, self._port_motor, self._travel_callback_port), daemon=True)
                     self._stbd_proc = Thread(name='travel-stbd', target=self._travel,
                             args=(direction, stbd_speed, stbd_distance_cm, self._stbd_motor, self._travel_callback_stbd), daemon=True)
+                    self._port_proc.start()
+                    self._stbd_proc.start()
                 else:
                     raise Exception('unsupported operation.')
 #                   self._port_proc = Process(name='travel-port', target=self._travel, args=(direction, port_distance_cm, self._port_motor, self._travel_callback_port))
 #                   self._stbd_proc = Process(name='travel-stbd', target=self._travel, args=(direction, stbd_distance_cm, self._stbd_motor, self._travel_callback_stbd))
-    
-                self._port_proc.start()
-                self._stbd_proc.start()
     
                 # .......................................     
                 _count = 0
