@@ -17,24 +17,27 @@ from core.speed import Speed, Direction
 class Group(Enum):
     NONE       = 0
     SYSTEM     = 1
-    GAMEPAD    = 2
-    STOP       = 3
-    BUMPER     = 4
-    INFRARED   = 5
-#   SENSOR     = 6
-    VELOCITY   = 7
-    THETA      = 8
-    CHADBURN   = 9
-    BEHAVIOUR  = 10
-#   CLOCK      = 11
-    EXPERIMENT = 12
-    OTHER      = 13
+    LAMBDA     = 2
+    GAMEPAD    = 3
+    STOP       = 4
+    BUMPER     = 5
+    INFRARED   = 6
+#   SENSOR     = 7
+    VELOCITY   = 8
+    THETA      = 9
+    CHADBURN   = 10
+    BEHAVIOUR  = 11
+#   CLOCK      = 12
+    EXPERIMENT = 13
+    OTHER      = 14
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Event(Enum):
     '''
     Events are used as part of a message Payload, which includes the Event
     as a type. The Payload may as well as contain a value.
+
+    TODO: define priority as an Enum rather than an int.
 
     Messages are prioritised by their Event type, where the priority operates
     in reverse-order: the smaller the number the higher the priority.
@@ -48,6 +51,9 @@ class Event(Enum):
     BATTERY_LOW            = ( 11, "battery low",               1,   Group.SYSTEM )
     HIGH_TEMPERATURE       = ( 12, "high temperature",          1,   Group.SYSTEM )
     COLLISION_DETECT       = ( 13, "collision detect",          2,   Group.SYSTEM )
+
+    # lambda events .........................................................................
+    LAMBDA                 = ( 20, "lambda function",           5,   Group.LAMBDA ) # with lambda as value
 
     # gamepad events ........................................................................
     GAMEPAD                = ( 40, "gamepad",                  10,   Group.GAMEPAD )
@@ -277,6 +283,15 @@ class Event(Enum):
         Return the string value returned for an enum.
         '''
         return self.name
+
+    def __lt__(self, other):
+        return self.__hash__() < other.__hash__()
+
+    def __hash__(self):
+        return hash(self._num)
+
+    def __eq__(self, other):
+        return isinstance(other, Event) and self.__hash__() is other.__hash__()
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @staticmethod
