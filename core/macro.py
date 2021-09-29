@@ -85,9 +85,8 @@ class MacroProcessor(Publisher):
         Creates a new, empty script with the provided name, returning it to be
         populated. This automatically adds it to the script library.
         '''
-        self._log.info('🕑 creating script with name \'{}\'.'.format(name))
         _script = Script(name, description)
-        self._log.info('🕑 created script with name \'{}\'.'.format(name))
+        self._log.info('created script with name \'{}\'.'.format(name))
         self.add_script_to_library(_script)
         return _script
 
@@ -97,7 +96,7 @@ class MacroProcessor(Publisher):
         Adds the script to the script library.
         '''
         self._library.put(script)
-        self._log.info('🕑 added script \'{}\' to library.'.format(script.name))
+        self._log.info('added script \'{}\' to library.'.format(script.name))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def queue_script(self, script):
@@ -105,7 +104,7 @@ class MacroProcessor(Publisher):
         Adds the script to the executable queue/stack.
         '''
         self._scripts.put(script)
-        self._log.info('🕑 queued script: {}'.format(script.name))
+        self._log.info('queued script: {}'.format(script.name))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def add_callback(self, callback):
@@ -130,14 +129,14 @@ class MacroProcessor(Publisher):
         must be called.
         '''
         _path = self._scripts_path
-        self._log.info('🌸 load scripts from path: {}'.format(_path))
+        self._log.info('load scripts from path: {}'.format(_path))
         for _file in Path(_path).glob('*.py'):
-            self._log.info('🙆 b. loading file: {}'.format(_file))
+            self._log.info('loading file: {}'.format(_file))
             try:
                 _split = os.path.split(_file)
                 _name = os.path.splitext(_split[1])[0]
-                self._log.info('🙆 loading script \'{}\'...'.format(_name))
                 exec(open(_file).read())
+                self._log.info('loaded script \'{}\'...'.format(_name))
             except Exception as e:
                 self._log.error('{} importing script: {}'.format(type(e), _file))
 
@@ -164,7 +163,7 @@ class MacroProcessor(Publisher):
         amount of time has passed, then either publish the Statement's Event
         or process its lambda.
         '''
-        self._log.info('🌸 starting macro listener loop.')
+        self._log.info('starting macro listener loop.')
         while f_is_enabled():
 
             # check if there's either a running script or one available
@@ -190,28 +189,28 @@ class MacroProcessor(Publisher):
                         # then execute the statement...
                         if self._statement.is_lambda:
                             _func = self._statement.function
-                            self._log.info(Fore.GREEN + '🌸 f. executing lambda: ' + Fore.YELLOW + '{}: (type: {})\t'.format(self._statement.label, type(_func)) + Fore.MAGENTA + '{:5.2f}ms elapsed.'.format(_elapsed_ms))
+                            self._log.info(Fore.GREEN + 'executing lambda: ' + Fore.YELLOW + '{}: (type: {})\t'.format(self._statement.label, type(_func)) + Fore.MAGENTA + '{:5.2f}ms elapsed.'.format(_elapsed_ms))
                             _func()
                         else:
                             _event = self._statement.event
-                            self._log.info(Fore.GREEN + '🌸 g. publishing event:  ' + Fore.YELLOW + '{}:\t'.format(self._statement.label) + Fore.MAGENTA + '{:5.2f}ms elapsed.'.format(_elapsed_ms))
+                            self._log.info(Fore.GREEN + 'publishing event:  ' + Fore.YELLOW + '{}:\t'.format(self._statement.label) + Fore.MAGENTA + '{:5.2f}ms elapsed.'.format(_elapsed_ms))
                             _message = self.message_factory.create_message(_event, self._statement.duration_ms)
                             if _message is not None:
-                                self._log.info(Style.BRIGHT + '🌸 h. macro-publishing message:' + Fore.WHITE + Style.NORMAL + ' {}'.format(_message.name)
+                                self._log.info(Style.BRIGHT + 'macro-publishing message:' + Fore.WHITE + Style.NORMAL + ' {}'.format(_message.name)
                                         + Fore.CYAN + ' event: {}; '.format(_message.event.label) + Fore.YELLOW + 'timestamp: {}'.format(_message.value))
                                 await Publisher.publish(self, _message)
-                                self._log.info(Style.BRIGHT + '🌸 i. macro-published message:' + Fore.WHITE + Style.NORMAL + ' {}'.format(_message.name)
+                                self._log.info(Style.BRIGHT + 'macro-published message:' + Fore.WHITE + Style.NORMAL + ' {}'.format(_message.name)
                                         + Fore.CYAN + ' event: {}; '.format(_message.event.label) + Fore.YELLOW + 'timestamp: {}'.format(_message.value))
                         # end loop
                         self._statement = None
                 else: # no statement so we do nothing...
-                    self._log.info(Fore.BLUE + '🌸 l. no active statement.')
+                    self._log.info(Style.DIM + 'no active statement.')
                     pass
 
                 if not self._statement and self._script.empty():
                     # we're finished with that script, so execute any callbacks...
                     for _callback in self.__callbacks:
-                        self._log.info('⛅ n. executing callback...')
+                        self._log.info('executing callback...')
                         _callback()
                     self.__callbacks.clear()
                     self._script = None
@@ -223,7 +222,7 @@ class MacroProcessor(Publisher):
                 await asyncio.sleep(self._quiescent_delay_sec)
 
         # end of while loop ........................
-        self._log.info('🍙 z. macro publish loop complete.')
+        self._log.info('macro publish loop complete.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def disable(self):

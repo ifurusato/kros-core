@@ -12,22 +12,23 @@
 import sys
 from core.logger import Logger, Level
 
-print('🍟 a. nada begin.')
+print('📃 nada script begin.')
 
 def main(argv):
 
-    print('🍟 main() start...')
+    print('📃 main() start...')
     _log = Logger('nada', Level.INFO)
-    _log.info('🍟 main() this doesn\'t get executed.')
+    _log.info('📃 main() this doesn\'t get executed.')
 
 # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-print('🍟 main test...')
+print('📃 main test...')
 if __name__== "__main__":
     main(sys.argv[1:])
 elif __name__== "core.macro":
-    print('🍟 this script is being run from core.macro...')
+    print('📃 this script is being run from core.macro...')
 else:
-    print('🍟 otherwise __name__: \'{}\''.format(__name__))
+    print('📃 otherwise __name__: \'{}\''.format(__name__))
 
-print('🍟 end.')
+print('📃 end.')
+
 #EOF
