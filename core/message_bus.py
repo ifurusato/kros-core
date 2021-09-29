@@ -133,6 +133,14 @@ class MessageBus(Component):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
+    def is_running(self):
+        '''
+        Returns True if the event loop is running.
+        '''
+        return self.loop.is_running() if self.loop else False
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    @property
     def queue(self):
         '''
         Returns the backing message queue.
@@ -331,8 +339,10 @@ class MessageBus(Component):
         Enable the publishers and then start the subscribers' consume cycle.
 
         This is the main event loop and remains active until the message bus
-        is disabled.
+        is disabled. If there are no registered subscribers the subscribe
+        loop will not be entered.
         '''
+        self._log.info('😈 starting consume loop 1. ')
         self._enable_publishers()
         self._log.info('starting {:d} subscriber{}...'.format(len(self._subscribers), '' if len(self._subscribers) == 1 else 's'))
         for subscriber in self._subscribers:
@@ -340,12 +350,17 @@ class MessageBus(Component):
         self._log.info('starting consume loop with {:d} subscriber{}...'.format(
                 len(self._subscribers), '' if len(self._subscribers) == 1 else 's'))
         try:
-            while self.enabled:
+            self._log.info('😈 starting consume loop 2. ')
+            while self.enabled and len(self._subscribers) > 0:
+                self._log.info('😈 starting consume loop 3. ')
                 for subscriber in self._subscribers:
+                    self._log.info('😈 starting consume loop 4. ')
 #                   self._log.debug('publishing to subscriber {}...'.format(subscriber.name))
                     await subscriber.consume()
 #                   self._log.debug('published to subscriber {}...'.format(subscriber.name))
+            self._log.info('😈 starting consume loop 5. ')
         finally:
+            self._log.info('😈 starting consume loop 6. finally. ')
             self._log.info('completed consume loop.')
 #           self._log.info('completed consume loop with {:d} subscriber{}...'.format(
 #                   len(self._subscribers), '' if len(self._subscribers) == 1 else 's'))

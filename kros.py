@@ -38,6 +38,7 @@ from core.controller import Controller
 from core.publisher import Publisher
 from core.subscriber import Subscriber, GarbageCollector
 from core.system_subscriber import SystemSubscriber
+from core.macro import MacroProcessor
 from core.util import Util
 
 from hardware.i2c_scanner import I2CScanner
@@ -216,6 +217,7 @@ class KROS(Component, FiniteStateMachine):
         _enable_ifs_publisher = _cfg.get('enable_ifs_publisher') or 'i' in _pubs
         if _enable_ifs_publisher:
             self._ifs_publisher = IfsPublisher(self._config, self._message_bus, self._message_factory, level=self._level)
+
         _enable_bumper_publisher = _cfg.get('enable_bumper_publisher') or 'b' in _pubs
         if _enable_bumper_publisher:
             _use_external_bumper_publisher = self._config['kros'].get('use_external_bumper_publisher')
@@ -223,6 +225,7 @@ class KROS(Component, FiniteStateMachine):
                 self._bumper_publisher = ExternalBumperPublisher(self._config, self._message_bus, self._message_factory, level=self._level)
             else:
                 self._bumper_publisher = BumperPublisher(self._config, self._message_bus, self._message_factory, level=self._level)
+
         _enable_event_publisher = _cfg.get('enable_event_publisher') or 'e' in _pubs
         if _enable_event_publisher:
             self._event_publisher = EventPublisher(self._config, self._message_bus, self._message_factory, self._motor_ctrl, self._system, level=self._level)
@@ -238,6 +241,12 @@ class KROS(Component, FiniteStateMachine):
         if _cfg.get('enable_battery_publisher') or 'p' in _pubs:
             self._battery = BatteryCheck(self._config, self._message_bus, self._message_factory, self._level)
     #   _message_bus.print_publishers()
+
+        if _cfg.get('enable_macro_processor') or 'm' in _pubs:
+            _callback = None
+            self._macro_processor = MacroProcessor(self._config, self._message_bus, self._message_factory, _callback, self._level)
+        else:
+            self._macro_processor = None
 
         _enable_killswitch= _cfg.get('enable_killswitch') or 'k' in _pubs
         if _enable_killswitch and _pigpio_available:

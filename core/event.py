@@ -53,7 +53,8 @@ class Event(Enum):
     COLLISION_DETECT       = ( 13, "collision detect",          2,   Group.SYSTEM )
 
     # lambda events .........................................................................
-    LAMBDA                 = ( 20, "lambda function",           5,   Group.LAMBDA ) # with lambda as value
+    MACRO                  = ( 20, "exec macro script",         5,   Group.LAMBDA ) # with script ID as value
+    LAMBDA                 = ( 21, "lambda function",           5,   Group.LAMBDA ) # with lambda as value
 
     # gamepad events ........................................................................
     GAMEPAD                = ( 40, "gamepad",                  10,   Group.GAMEPAD )
