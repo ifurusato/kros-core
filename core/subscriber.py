@@ -12,7 +12,7 @@
 
 import asyncio
 import random
-from typing import final
+#from typing import final
 from datetime import datetime as dt
 from colorama import init, Fore, Style
 init()
@@ -146,7 +146,7 @@ class Subscriber(Component, FiniteStateMachine):
         return message.event is Event.ANY or message.event in self._events
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    @final
+#   @final
     async def consume(self):
         '''
         Awaits a message on the message bus, first peeking at it from the queue,
