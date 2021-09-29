@@ -23,12 +23,12 @@ _kros = globals.get('kros')
 if _kros:
     try:
         _log.info('found KROS! begin loading script...')
-        _macro_processor = _kros.get_macro_processor()
-        if _macro_processor:
+        _macro_publisher = _kros.get_macro_publisher()
+        if _macro_publisher:
 
             _script_name = 'avoid'
             _script_description = 'a simple avoidance behaviour.' # optional
-            _script = _macro_processor.create_script(_script_name, _script_description)
+            _script = _macro_publisher.create_script(_script_name, _script_description)
 
             # come to a stop for 1 second
             _script.add_event(Event.STOP, 1000)

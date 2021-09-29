@@ -21,7 +21,7 @@ from core.event import Event
 from core.config_loader import ConfigLoader
 from core.message_bus import MessageBus
 from core.message_factory import MessageFactory
-from core.macro import MacroProcessor
+from core.macro_publisher import MacroPublisher
 
 # exception handler ............................................................
 def signal_handler(signal, frame):
@@ -51,10 +51,10 @@ def close_message_bus():
 
 # ..............................................................................
 @pytest.mark.unit
-def test_macro_processor():
+def test_macro_publisher():
     global _message_bus
 
-    _log = Logger('macro-test', Level.INFO)
+    _log = Logger('macro-pub-test', Level.INFO)
     _log.info('begin.')
     
     _start_time = dt.now()
@@ -72,8 +72,8 @@ def test_macro_processor():
         _log.info('🍅 creating message factory...')
         _message_factory = MessageFactory(_message_bus, _level)
 
-        _mp = MacroProcessor(_config, _message_bus, _message_factory, callback=close_message_bus, level=Level.INFO)
-        _script = _mp.create_script('test')
+        _macro_publisher = MacroPublisher(_config, _message_bus, _message_factory, callback=close_message_bus, level=Level.INFO)
+        _script = _macro_publisher.create_script('test')
         
         _event_queue = DeQueue(mode=DeQueue.QUEUE)
     
@@ -103,19 +103,19 @@ def test_macro_processor():
                 _script.add_function(_func, _duration_ms)
                 _log.info('🍅 added function...')
 
-        _mp.queue_script(_script)
+        _macro_publisher.queue_script(_script)
 
         _log.info('🍅 enabling message bus...')
         _message_bus.enable()
 
 #       _log.info('🍅 queue loaded; enabling macro processor...')
-#       _mp.enable()
+#       _macro_publisher.enable()
 
         if _message_bus:
             _message_bus.close()
 
 #       _log.info('queue loaded; starting process...')
-#       _mp.start()
+#       _macro_publisher.start()
 
     except KeyboardInterrupt:
         _log.info('🍅 Ctrl-C caught; exiting...')
@@ -137,7 +137,7 @@ def main():
 
     signal.signal(signal.SIGINT, signal_handler)
 
-    test_macro_processor()
+    test_macro_publisher()
 
 if __name__== "__main__":
     main()

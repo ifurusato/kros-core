@@ -19,6 +19,7 @@
 from colorama import init, Fore, Style
 init()
 
+import core.globals as globals
 from core.logger import Logger, Level
 from core.component import Component
 from core.event import Event, Group
@@ -31,9 +32,6 @@ from hardware.motor_controller import MotorController
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Avoid(Behaviour):
-
-    _LAMBDA_NAME = 'avoid'
-
     '''
     Implements an avoidance behaviour.
 
@@ -59,11 +57,12 @@ class Avoid(Behaviour):
         self._port_motor   = motor_ctrl.get_motor(Orientation.PORT)
         self._stbd_motor   = motor_ctrl.get_motor(Orientation.STBD)
         self._ext_clock    = external_clock
-        if self._ext_clock:
+        _use_clock_at_all  = False
+        if _use_clock_at_all and self._ext_clock:
             self._ext_clock.add_slow_callback(self._tick)
             pass
         else:
-            raise Exception('unable to enable avoid behaviour: no external clock available.')
+            self._log.warning('unable to enable avoid behaviour: no external clock available.')
         _cfg = config['kros'].get('behaviour').get('avoid')
         self._min_distance  = _cfg.get('min_distance')
         self._log.info(Style.BRIGHT + 'minimum distance:\t{:4.2f}cm'.format(self._min_distance))
@@ -80,8 +79,16 @@ class Avoid(Behaviour):
             self._log.info(Style.DIM + 'avoid suppressed; message: {}'.format(message.event.label))
         elif self.enabled:
             self._log.info('🌓 avoid; message: {}'.format(message.event.label))
-            pass # TODO
-
+            _kros = globals.get('kros')
+            self._log.info('🍏 found KROS! begin loading script...')
+            _macro_publisher = _kros.get_macro_publisher()
+            if _macro_publisher:
+                self._log.info('🍏 found MacroPublisher! queue avoid script...')
+                _macro_publisher.queue_script_by_name('avoid')
+                pass # TODO
+            else:
+                self._log.warning('macro processor not available..')
+            
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _tick(self):
         '''

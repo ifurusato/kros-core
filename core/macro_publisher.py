@@ -23,15 +23,15 @@ from core.event import Event
 from core.publisher import Publisher
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-class MacroProcessor(Publisher):
+class MacroPublisher(Publisher):
 
     CLASS_NAME = 'macro'
     _LISTENER_LOOP_NAME = '__macro_listener_loop'
 
     '''
-    A macro processor that schedules the future publication of a queue of
-    pre-loaded Events. This can include existing Event types or lambda
-    functions wrapped in Events.
+    A macro publisher/processor that schedules the future publication of a
+    queue of pre-loaded Events. This can include existing Event types or
+    lambda functions wrapped in Events.
 
     :param config:            the application configuration
     :param message_bus:       the asynchronous message bus
@@ -47,7 +47,7 @@ class MacroProcessor(Publisher):
         if callback:
             self.add_callback(callback)
         self._level             = level
-        Publisher.__init__(self, MacroProcessor.CLASS_NAME, config, message_bus, message_factory, level=self._level)
+        Publisher.__init__(self, MacroPublisher.CLASS_NAME, config, message_bus, message_factory, level=self._level)
         _cfg = config['kros'].get('publisher').get('macro')
         _loop_freq_hz           = _cfg.get('loop_freq_hz')
         self._loop_delay_sec = 1.0 / _loop_freq_hz
@@ -99,6 +99,16 @@ class MacroProcessor(Publisher):
         self._log.info('added script \'{}\' to library.'.format(script.name))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def queue_script_by_name(self, name):
+        '''
+        Adds the script (referenced by name) to the executable queue/stack.
+        '''
+        self._log.info('🐰 queued script: {}'.format(name))
+        # TODO
+#       self._scripts.put(script)
+#       self._log.info('queued script: {}'.format(script.name))
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def queue_script(self, script):
         '''
         Adds the script to the executable queue/stack.
@@ -143,7 +153,7 @@ class MacroProcessor(Publisher):
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def enable(self):
         if not self.enabled:
-            if self._message_bus.get_task_by_name(MacroProcessor._LISTENER_LOOP_NAME):
+            if self._message_bus.get_task_by_name(MacroPublisher._LISTENER_LOOP_NAME):
                 self._log.warning('already enabled.')
             else:
                 self._log.info('enabling...')
@@ -151,7 +161,7 @@ class MacroProcessor(Publisher):
                 if self._load_scripts:
                     self._load_script_files()
                 self._log.info('creating task for macro processor loop... (enabled? {})'.format(self.enabled))
-                self._message_bus.loop.create_task(self._macro_listener_loop(lambda: self.enabled), name=MacroProcessor._LISTENER_LOOP_NAME)
+                self._message_bus.loop.create_task(self._macro_listener_loop(lambda: self.enabled), name=MacroPublisher._LISTENER_LOOP_NAME)
                 self._log.info('enabled: macro loop task created.')
         else:
             self._log.warning('already enabled.')

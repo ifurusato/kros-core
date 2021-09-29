@@ -375,9 +375,9 @@ class EventPublisher(Publisher):
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _print_macro_info(self):
         _kros = globals.get('kros')
-        _macro_processor = _kros.get_macro_processor()
-        if _macro_processor:
-            _macro_processor.print_info()
+        _macro_publisher = _kros.get_macro_publisher()
+        if _macro_publisher:
+            _macro_publisher.print_info()
         else:
             self._log.info('macro:\t' + Fore.YELLOW + 'disabled.')
 

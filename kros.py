@@ -38,7 +38,7 @@ from core.controller import Controller
 from core.publisher import Publisher
 from core.subscriber import Subscriber, GarbageCollector
 from core.system_subscriber import SystemSubscriber
-from core.macro import MacroProcessor
+from core.macro_publisher import MacroPublisher
 from core.util import Util
 
 from hardware.i2c_scanner import I2CScanner
@@ -105,7 +105,7 @@ class KROS(Component, FiniteStateMachine):
         self._config         = None
         self._message_bus    = None
         self._behaviour_mgr  = None
-        self._macro_proc     = None
+        self._macro_pub      = None
         self._experiment_mgr = None
         self._arbitrator     = None
         self._controller     = None
@@ -243,9 +243,9 @@ class KROS(Component, FiniteStateMachine):
             self._battery = BatteryCheck(self._config, self._message_bus, self._message_factory, self._level)
     #   _message_bus.print_publishers()
 
-        if _cfg.get('enable_macro_processor') or 'm' in _pubs:
+        if _cfg.get('enable_macro_publisher') or 'm' in _pubs:
             _callback = None
-            self._macro_proc = MacroProcessor(self._config, self._message_bus, self._message_factory, _callback, self._level)
+            self._macro_pub = MacroPublisher(self._config, self._message_bus, self._message_factory, _callback, self._level)
 
         _enable_killswitch= _cfg.get('enable_killswitch') or 'k' in _pubs
         if _enable_killswitch and _pigpio_available:
@@ -375,11 +375,11 @@ class KROS(Component, FiniteStateMachine):
         return self._behaviour_mgr
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def get_macro_processor(self):
+    def get_macro_publisher(self):
         '''
-        Returns the MacroProcessor, None if not used.
+        Returns the MacroPublisher, None if not used.
         '''
-        return self._macro_proc
+        return self._macro_pub
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def get_experiment_manager(self):

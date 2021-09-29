@@ -6,7 +6,7 @@
 # see the LICENSE file included as part of this package.
 #
 # This Python script doesn't actually generate a script macro, but it will be
-# executed by the MacroProcessor if it's been enabled.
+# executed by the MacroPublisher if it's been enabled.
 #
 
 import sys
@@ -24,8 +24,8 @@ def main(argv):
 print('📃 main test...')
 if __name__== "__main__":
     main(sys.argv[1:])
-elif __name__== "core.macro":
-    print('📃 this script is being run from core.macro...')
+elif __name__== "core.macro_publisher":
+    print('📃 this script is being run from core.macro_publisher...')
 else:
     print('📃 otherwise __name__: \'{}\''.format(__name__))
 
