@@ -348,6 +348,7 @@ class EventPublisher(Publisher):
             self._motor_ctrl.print_motor_status()
             self._motor_ctrl.print_info(None)
             self._print_ifs_info()
+            self._print_macro_info()
             self._print_experiment_info()
         except Exception as e:
             self._log.error('error printing system info: {}'.format(e))
@@ -372,6 +373,15 @@ class EventPublisher(Publisher):
         self._log.info('ifs:          \t' + Fore.YELLOW + '{}'.format(_msg))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def _print_macro_info(self):
+        _kros = globals.get('kros')
+        _macro_processor = _kros.get_macro_processor()
+        if _macro_processor:
+            _macro_processor.print_info()
+        else:
+            self._log.info('macro:\t' + Fore.YELLOW + 'disabled.')
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _print_experiment_info(self):
         _kros = globals.get('kros')
         _experiment_mgr = _kros.get_experiment_manager()
@@ -379,7 +389,6 @@ class EventPublisher(Publisher):
             _experiment_mgr.print_info()
         else:
             self._log.info('experimental features:\t' + Fore.YELLOW + 'disabled.')
-
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _get_infrared_value(self):

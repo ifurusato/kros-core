@@ -10,15 +10,15 @@
 # modified: 2021-09-23
 #
 
-#from collections import deque as Deque
-import asyncio
-import itertools
+import importlib
+import sys, os, asyncio, itertools
+from pathlib import Path
 from datetime import datetime as dt
 from colorama import init, Fore, Style
 init(autoreset=True)
 
 from core.logger import Logger, Level
-from core.scripts import Scripts, Script, Statement
+from core.scripts import ScriptLibrary, Scripts, Script, Statement
 from core.event import Event
 from core.publisher import Publisher
 
@@ -57,6 +57,11 @@ class MacroProcessor(Publisher):
         self._log.info('quiescent loop frequency: {} Hz.'.format(_quiescent_loop_freq_hz))
         self._wait_limit_ms     = _cfg.get('wait_limit_ms') # the longest we will ever wait for anything
         self._log.info('wait limit: {:d}ms.'.format(self._wait_limit_ms))
+        self._load_scripts      = _cfg.get('load_scripts')
+        self._log.info('load scripts? {}'.format(self._load_scripts))
+        self._scripts_path      = _cfg.get('scripts_path')
+        self._log.info('scripts path: {}'.format(self._scripts_path))
+        self._library           = ScriptLibrary()
         self._scripts           = Scripts()
         self._counter           = itertools.count()
         # loop variables
@@ -71,12 +76,28 @@ class MacroProcessor(Publisher):
         return 'macro'
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def create_script(self, name):
+    def print_info(self):
+        self._library.print_info()
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def create_script(self, name, description=None):
         '''
         Creates a new, empty script with the provided name, returning it to be
-        populated.
+        populated. This automatically adds it to the script library.
         '''
-        return Script(name)
+        self._log.info('🕑 creating script with name \'{}\'.'.format(name))
+        _script = Script(name, description)
+        self._log.info('🕑 created script with name \'{}\'.'.format(name))
+        self.add_script_to_library(_script)
+        return _script
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def add_script_to_library(self, script):
+        '''
+        Adds the script to the script library.
+        '''
+        self._library.put(script)
+        self._log.info('🕑 added script \'{}\' to library.'.format(script.name))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def queue_script(self, script):
@@ -84,6 +105,7 @@ class MacroProcessor(Publisher):
         Adds the script to the executable queue/stack.
         '''
         self._scripts.put(script)
+        self._log.info('🕑 queued script: {}'.format(script.name))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def add_callback(self, callback):
@@ -100,19 +122,40 @@ class MacroProcessor(Publisher):
         self.__callbacks.remove(callback)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def _load_script_files(self):
+        '''
+        Loads the *.py script files from the ./script/ directory. If the
+        scripts use the create_script() method the script will automatically
+        be added to the script library, otherwise add_script_to_library()
+        must be called.
+        '''
+        _path = self._scripts_path
+        self._log.info('🌸 load scripts from path: {}'.format(_path))
+        for _file in Path(_path).glob('*.py'):
+            self._log.info('🙆 b. loading file: {}'.format(_file))
+            try:
+                _split = os.path.split(_file)
+                _name = os.path.splitext(_split[1])[0]
+                self._log.info('🙆 loading script \'{}\'...'.format(_name))
+                exec(open(_file).read())
+            except Exception as e:
+                self._log.error('{} importing script: {}'.format(type(e), _file))
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def enable(self):
-        self._log.warning('🌸 enable...')
-        Publisher.enable(self)
-        if self.enabled:
+        if not self.enabled:
             if self._message_bus.get_task_by_name(MacroProcessor._LISTENER_LOOP_NAME):
-                self._log.warning('🌸 already enabled.')
+                self._log.warning('already enabled.')
             else:
-                self._log.info('🌸 creating task for macro processor loop... (enabled? {})'.format(self.enabled))
+                self._log.info('enabling...')
+                Publisher.enable(self)
+                if self._load_scripts:
+                    self._load_script_files()
+                self._log.info('creating task for macro processor loop... (enabled? {})'.format(self.enabled))
                 self._message_bus.loop.create_task(self._macro_listener_loop(lambda: self.enabled), name=MacroProcessor._LISTENER_LOOP_NAME)
-                self._log.info('🌸 enabled: macro loop task created.')
+                self._log.info('enabled: macro loop task created.')
         else:
-            self._log.warning('🌸 failed to enable macro processor.')
-        self._log.warning('🌸 enabled.')
+            self._log.warning('already enabled.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def _macro_listener_loop(self, f_is_enabled):

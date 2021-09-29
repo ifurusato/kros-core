@@ -30,13 +30,12 @@ class DeQueue(object):
         self._maxsize = maxsize
         self._mode = mode
         if mode == DeQueue.LIFO:
+            # implemented as LIFO stack
             self._queue = LifoQueue(maxsize)
-            print('implemented as STACK')
         else:
-            print('implemented as QUEUE')
+            # implemented as FIFO queue
             self._queue = Queue(maxsize)
         self._backing_queue = self._queue.queue
-        print('type: {}'.format(type(self._backing_queue)))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property

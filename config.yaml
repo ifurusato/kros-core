@@ -22,7 +22,7 @@ kros:
         enable_event_publisher:       True       # keyboard robot simulator (required for running CLI)
         enable_battery_publisher:    False       # battery check publisher
         enable_velocity_publisher:   False       # velocity control potentiometer publisher
-        enable_macro_processor:      False       # macro processor/publisher
+        enable_macro_processor:       True       # macro processor/publisher
         # subscribers ............................
         enable_system_subscriber:     True       # system events subscriber
         enable_motor_subscriber:      True       # motor events subscriber
@@ -229,6 +229,8 @@ kros:
             loop_freq_hz:            10          # polling loop frequency (Hz)
             quiescent_loop_freq_hz:   5          # quiescent loop frequency (Hz)
             wait_limit_ms:         5000          # the longest we will ever wait for anything (because we are impatient)
+            scripts_path:      'scripts'         # the location of the scripts to load on startup
+            load_scripts:          True          # if True load scripts from ./scripts/ directory
     hihp:
         ack_pin:                     21          # GPIO pin connected to acknowledge pin (white)
         int_pin:                     26          # GPIO pin connected to interrupt pin (grey)

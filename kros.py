@@ -105,6 +105,7 @@ class KROS(Component, FiniteStateMachine):
         self._config         = None
         self._message_bus    = None
         self._behaviour_mgr  = None
+        self._macro_proc     = None
         self._experiment_mgr = None
         self._arbitrator     = None
         self._controller     = None
@@ -244,9 +245,7 @@ class KROS(Component, FiniteStateMachine):
 
         if _cfg.get('enable_macro_processor') or 'm' in _pubs:
             _callback = None
-            self._macro_processor = MacroProcessor(self._config, self._message_bus, self._message_factory, _callback, self._level)
-        else:
-            self._macro_processor = None
+            self._macro_proc = MacroProcessor(self._config, self._message_bus, self._message_factory, _callback, self._level)
 
         _enable_killswitch= _cfg.get('enable_killswitch') or 'k' in _pubs
         if _enable_killswitch and _pigpio_available:
@@ -374,6 +373,13 @@ class KROS(Component, FiniteStateMachine):
         Returns the BehaviourManager, None if not used.
         '''
         return self._behaviour_mgr
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def get_macro_processor(self):
+        '''
+        Returns the MacroProcessor, None if not used.
+        '''
+        return self._macro_proc
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def get_experiment_manager(self):

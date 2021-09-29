@@ -675,7 +675,7 @@ class MotorController(Component):
             self._log.info('halting...')
         if self._ext_clock or self._loop_enabled:
             if self._slew_limiter_enabled:
-                self._log.info('🌞 halting soft...')
+                self._log.info('halting soft...')
                 try:
                     # use slew limiter for halting if available
                     self._set_slew_rate(self._halt_slew_rate)
@@ -684,11 +684,11 @@ class MotorController(Component):
                 finally:
                     self._reset_slew_rate()
             else:
-                self._log.info('🌞 halting hard...')
+                self._log.info('halting hard...')
                 self._port_motor.target_velocity = 0.0
                 self._stbd_motor.target_velocity = 0.0
         else:
-            self._log.info('🌞 halting very hard...')
+            self._log.info('halting very hard...')
             self.emergency_stop()
         self._log.info('halted.')
 
@@ -704,7 +704,7 @@ class MotorController(Component):
             self._log.info('braking...')
         if self._ext_clock or self._loop_enabled:
             if self._slew_limiter_enabled:
-                self._log.info('🌞 braking soft...')
+                self._log.info('braking soft...')
                 try:
                     # use slew limiter for halting if available
                     self._set_slew_rate(self._brake_slew_rate)
@@ -713,11 +713,11 @@ class MotorController(Component):
                 finally:
                     self._reset_slew_rate()
             else:
-                self._log.info('🌞 braking hard...')
+                self._log.info('braking hard...')
                 self._port_motor.target_velocity = 0.0
                 self._stbd_motor.target_velocity = 0.0
         else:
-            self._log.info('🌞 braking very hard...')
+            self._log.info('braking very hard...')
             self.emergency_stop()
         self._log.info('braked.')
 
@@ -725,9 +725,9 @@ class MotorController(Component):
     def _suppress_behaviours(self):
         if self._behaviour_mgr:
             self._behaviour_mgr.suppress_all_behaviours()
-            self._log.info('🍊 all behaviours suppressed.')
+            self._log.info('all behaviours suppressed.')
         else:
-            self._log.warning('🍊 no behaviour manager availabe: cannot suppress behaviours.')
+            self._log.warning('no behaviour manager available: cannot suppress behaviours.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _set_slew_rate(self, slew_rate):
