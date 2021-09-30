@@ -22,6 +22,7 @@ import core.globals as globals # needed for lambda support
 from core.logger import Logger, Level
 from core.scripts import ScriptLibrary, Scripts, Script, Statement
 from core.system import System
+from core.util import Util
 from core.event import Event
 from core.publisher import Publisher
 
@@ -143,24 +144,30 @@ class MacroPublisher(Publisher):
         self.__callbacks.remove(callback)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def _load_script_files(self):
+    def load_script_files(self):
         '''
-        Loads the *.py script files from the ./script/ directory. If the
-        scripts use the create_script() method the script will automatically
-        be added to the script library, otherwise add_script_to_library()
-        must be called.
+        Loads the *.py script files from the ./script/ directory by executing
+        the files. If the scripts use the create_script() method the script 
+        will automatically be added to the script library, otherwise the
+        add_script_to_library() method must be called.
+ 
+        If called subsequently this will overwrite scripts in the library
+        using the same name since the library is backed by a dictionary.
         '''
         _path = self._scripts_path
-        self._log.info('load scripts from path: {}'.format(_path))
+        self._log.info('loading scripts from path: {}'.format(_path))
         for _file in Path(_path).glob('*.py'):
-            self._log.info('loading file: {}'.format(_file))
+#           self._log.heading('Load Macro Script', 'Loading file: {}'.format(_file))
+            self._log.info(Fore.WHITE + Style.BRIGHT + '{}'.format(Util.repeat('━', 72)))
+            self._log.info('loading script file: ' + Fore.YELLOW + '{} '.format(_file) + Fore.WHITE + Style.BRIGHT + '{}'.format(Util.repeat('┈', 50 - len(str(_file)))))
             try:
                 _split = os.path.split(_file)
                 _name = os.path.splitext(_split[1])[0]
                 exec(open(_file).read())
-                self._log.info('loaded script \'{}\'...'.format(_name))
+                self._log.info('loaded script: ' + Fore.YELLOW + '{} '.format(_name) + Fore.WHITE + Style.BRIGHT + '{}\n'.format(Util.repeat('┈', 56 - len(_name))))
             except Exception as e:
                 self._log.error('{} importing script: {}'.format(type(e), _file))
+        self._log.info('loading complete: {} scripts in library'.format(self._library.size))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def enable(self):
@@ -171,7 +178,7 @@ class MacroPublisher(Publisher):
                 self._log.info('enabling...')
                 Publisher.enable(self)
                 if self._load_scripts:
-                    self._load_script_files()
+                    self.load_script_files()
                 self._log.info('creating task for macro processor loop... (enabled? {})'.format(self.enabled))
                 self._message_bus.loop.create_task(self._macro_listener_loop(lambda: self.enabled), name=MacroPublisher._LISTENER_LOOP_NAME)
                 self._log.info('enabled: macro loop task created.')

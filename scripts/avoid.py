@@ -20,12 +20,11 @@ from core.system import System
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 _log = Logger('avoid-macro', Level.INFO)
-print('👺 a. log: {}'.format(_log))
 _kros = globals.get('kros')
 if _kros:
     try:
         _log.info('found KROS! begin loading script...')
-        print('👺 b. log: {}'.format(_log))
+        _log.heading('Avoid Macro', 'An avoidance behaviour that backs away from an obstacle and turns.')
         _macro_publisher = _kros.get_macro_publisher()
         if _macro_publisher:
 
@@ -35,16 +34,17 @@ if _kros:
 
             # come to a stop for 1 second
             _script.add_event(Event.STOP, 1000)
-            # move half astern for 3 seconds (duration argument is in milliseconds)
-            _script.add_event(Event.HALF_ASTERN, 3000)
+            # move half astern for 2.5 seconds (duration argument is in milliseconds)
+            _script.add_event(Event.HALF_ASTERN, 300)
             # slow the reversing of the port motor to turn to starboard for a half second
-            _script.add_event(Event.INCREASE_PORT_VELOCITY, 500)
-            # come to a halt for 2.5 seconds
-            _script.add_event(Event.HALT, 2500)
-            # print an emoji via a lambda function
-#           _func = lambda: System.log.info('😥')
-
-            _func = lambda: globals.get('kros').get_logger().info('😥  MESSAGE. ')
+            _script.add_event(Event.INCREASE_PORT_VELOCITY, 100)
+            _script.add_event(Event.INCREASE_PORT_VELOCITY, 100)
+            _script.add_event(Event.INCREASE_PORT_VELOCITY, 100)
+            # come to a halt for 2 seconds
+            _script.add_event(Event.HALT, 1000)
+            _script.add_event(Event.STOP, 50)
+            # print an emoji to the KROS log console via a lambda function
+            _func = lambda: globals.get('kros').get_logger().info('😥 Done!')
             _script.add_function(_func, 1)
             _log.info('loaded.')
 
@@ -52,13 +52,11 @@ if _kros:
             _log.warning('macro processor not available..')
 
     except Exception as e:
-        print('👺 c. log: {}'.format(_log))
         _log.error('{} encountered, exiting: {}'.format(type(e), e))
         traceback.print_exc(file=sys.stdout)
     finally:
         pass
 else:
-    print('👺 d. log: {}'.format(_log))
     _log.error('KROS not available.')
 
 #EOF

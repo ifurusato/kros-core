@@ -296,7 +296,13 @@ class Logger(object):
         :param message:  the optional message to display; if None only the title will be displayed.
         :param info:     an optional second message to display right-justified; ignored if None.
         '''
+
+# ▲ ▴ ▶ ▸ ☺ ☻ ― ‼ ¶ ▲ ▴ ▶ ▸ ▾ ◀ ─ ━ ┃ ┎ ┏ ┐ 
+# └ ┕ ┖ ┗ ┘ ┙ ┚ ┛ ┠ ┡ ┢ ┣ ┤  ┩ ┼ ╆ ╇ ╈ ╉ ╊ ╋ 
+# ╪ ╬ ╴ ╵ ╶ ╷ ╸ ╹ ╺ ╻ ╼ ╽ ╾ ╿
+
         if not self.suppressed:
+            _H = '┈'
             MAX_WIDTH = 100
             MARGIN = 27
             if title is None or len(title) == 0:
@@ -314,21 +320,28 @@ class Logger(object):
                     _message_2_right = info.rjust(_available_width - len(message) - 2)
                     self.info(Fore.WHITE + Style.BRIGHT + '{} {}'.format(message, _message_2_right))
                 # print footer
-                self.info(Fore.WHITE + Style.BRIGHT + Util.repeat('-', _available_width-1))
+                self.info(Fore.WHITE + Style.BRIGHT + Util.repeat(_H, _available_width-1))
             # print spacer
             self.info('')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _get_title_bar(self, message, MAX_WIDTH):
+#       _H = '┈'
+#       _H = '━'
+        _H = '═'
+#       _L = '┥ '
+        _L = '╡ '
+#       _R = ' ┝'
+        _R = ' ╞'
         _carrier_width = len(message) + 4
         _hyphen_width = math.floor( ( MAX_WIDTH - _carrier_width ) / 2 )
         if _hyphen_width <= 0:
             return message
         elif len(message) % 2 == 0: # message is even length
-            return Fore.WHITE + Style.BRIGHT + Util.repeat('-', _hyphen_width) + '< ' + Fore.CYAN + Style.NORMAL\
-                    + message + Fore.WHITE + Style.BRIGHT + ' >' + Util.repeat('-', _hyphen_width)
+            return Fore.WHITE + Style.BRIGHT + Util.repeat(_H, _hyphen_width) + _L + Fore.CYAN + Style.NORMAL\
+                    + message + Fore.WHITE + Style.BRIGHT + _R + Util.repeat(_H, _hyphen_width)
         else:
-            return Fore.WHITE + Style.BRIGHT + Util.repeat('-', _hyphen_width) + '< ' + Fore.CYAN + Style.NORMAL\
-                    + message + Fore.WHITE + Style.BRIGHT + ' >' + Util.repeat('-', _hyphen_width-1)
+            return Fore.WHITE + Style.BRIGHT + Util.repeat(_H, _hyphen_width) + _L + Fore.CYAN + Style.NORMAL\
+                    + message + Fore.WHITE + Style.BRIGHT + _R + Util.repeat(_H, _hyphen_width-1)
 
 #EOF
