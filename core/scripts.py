@@ -43,8 +43,18 @@ class ScriptLibrary():
         '''
         Add a Script to the dictionary.
         '''
-        self._log.info('added script \'{}\' to library.'.format(script.name))
-        self._scripts[script.name] = script
+        if isinstance(script, Script):
+            self._scripts[script.name] = script
+            self._log.info('added script \'{}\' to library.'.format(script.name))
+        else:
+            raise TypeError('expected script.')
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def get(self, name):
+        for _name, _script in self._scripts.items():
+            if _name == name:
+                return _script
+        return None
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def print_info(self):
@@ -55,13 +65,6 @@ class ScriptLibrary():
             for _name, _script in self._scripts.items():
                 self._log.info(Fore.YELLOW + '\t{} '.format(_name) + Style.DIM + '({:d} statements)'.format(_script.size) 
                         + Style.NORMAL + '{}'.format('\t: ' + _script.description if _script.description else ''))
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def get_script(self, name):
-        for _script in self._scripts.iterator:
-            if _script.name == name:
-                return _script
-        return None
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Scripts(DeQueue):
@@ -100,18 +103,22 @@ class Scripts(DeQueue):
 #       return None
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-class Script(DeQueue):
+class Script(object):
     '''
-    Extends DeQueue as a named, queued container for Statements.
+    A named, queued container for Statements.
 
     :param name:              the name of the script
     :param description:       an optional description of the script
+    :param queue:             an optional initial queue
     :param statement_limit:   optionally limits the size of the queue (unlimited/-1 default)
     '''
-    def __init__(self, name, description=None, statement_limit=-1):
+    def __init__(self, name, description=None, queue=None, statement_limit=-1):
         self._name = name
         self._description = description
-        DeQueue.__init__(self, maxsize=statement_limit, mode=DeQueue.QUEUE)
+        if queue:
+            self._queue = queue
+        else:
+            self._queue = DeQueue(maxsize=statement_limit, mode=DeQueue.QUEUE)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
@@ -120,8 +127,21 @@ class Script(DeQueue):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
+    def size(self):
+        return self._queue.size
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def empty(self):
+        return self._queue.empty()
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    @property
     def description(self):
         return self._description
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def poll(self):
+        return self._queue.poll()
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def add_event(self, event, duration_ms):
@@ -129,7 +149,7 @@ class Script(DeQueue):
         Add an Event to the queue.
         '''
         _statement = Statement('stmt-{:d}'.format(self.size), event, duration_ms)
-        self.put(_statement)
+        self._queue.put(_statement)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def add_function(self, function, duration_ms):
@@ -140,7 +160,16 @@ class Script(DeQueue):
 
         '''
         _statement = Statement('stmt-{:d}'.format(self.size), function, duration_ms)
-        self.put(_statement)
+        self._queue.put(_statement)
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def __deepcopy__(self, script):
+        print('❌ script: {}'.format(script))
+        _script = Script(self.name, self.description, self._queue)
+        for _key, _value in script.items():
+            print('❌ key: {}; value: {}'.format(_key, _value))
+#       raise Exception('❌ unimplemented: {}'.format(script))
+        return _script
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Statement(object):
@@ -193,5 +222,8 @@ class Statement(object):
 
     def __eq__(self, other):
         return isinstance(other, Statement) and self.__hash__() is other.__hash__()
+
+    def __deepcopy__(self, stmt):
+        raise Exception('🌵 statement unimplemented: {}'.format(stmt))
 
 #EOF

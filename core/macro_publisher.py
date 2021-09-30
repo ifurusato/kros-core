@@ -12,13 +12,16 @@
 
 import importlib
 import sys, os, asyncio, itertools
+from copy import deepcopy
 from pathlib import Path
 from datetime import datetime as dt
 from colorama import init, Fore, Style
 init(autoreset=True)
 
+import core.globals as globals # needed for lambda support
 from core.logger import Logger, Level
 from core.scripts import ScriptLibrary, Scripts, Script, Statement
+from core.system import System
 from core.event import Event
 from core.publisher import Publisher
 
@@ -95,18 +98,27 @@ class MacroPublisher(Publisher):
         '''
         Adds the script to the script library.
         '''
-        self._library.put(script)
-        self._log.info('added script \'{}\' to library.'.format(script.name))
+        if isinstance(script, Script):
+            self._library.put(script)
+            self._log.info('added script \'{}\' to library.'.format(script.name))
+        else:
+            raise TypeError('expected script.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def queue_script_by_name(self, name):
         '''
         Adds the script (referenced by name) to the executable queue/stack.
         '''
-        self._log.info('🐰 queued script: {}'.format(name))
-        # TODO
-#       self._scripts.put(script)
-#       self._log.info('queued script: {}'.format(script.name))
+        self._log.info('🐰 locating script: {}; {:d} items in library.'.format(name, self._library.size))
+        _script = self._library.get(name)
+        _copy = deepcopy(_script)
+        self._log.info('🐰 deep-copied script: {} to {}.'.format(id(_script), id(_copy)))
+        if _script:
+            self._log.info('🐰 queueing script: {}; {:d} items in library.'.format(_copy.name, self._library.size))
+            self.queue_script(_copy)
+            self._log.info('🐰 queueed script: {}; {:d} items in library.'.format(_copy.name, self._library.size))
+        else:
+            self._log.warning('count not find script: {}'.format(name))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def queue_script(self, script):

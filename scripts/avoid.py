@@ -16,13 +16,16 @@ import sys, traceback
 
 import core.globals as globals
 from core.logger import Logger, Level
+from core.system import System
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 _log = Logger('avoid-macro', Level.INFO)
+print('👺 a. log: {}'.format(_log))
 _kros = globals.get('kros')
 if _kros:
     try:
         _log.info('found KROS! begin loading script...')
+        print('👺 b. log: {}'.format(_log))
         _macro_publisher = _kros.get_macro_publisher()
         if _macro_publisher:
 
@@ -39,7 +42,9 @@ if _kros:
             # come to a halt for 2.5 seconds
             _script.add_event(Event.HALT, 2500)
             # print an emoji via a lambda function
-            _func = lambda: _log.info('😥')
+#           _func = lambda: System.log.info('😥')
+
+            _func = lambda: globals.get('kros').get_logger().info('😥  MESSAGE. ')
             _script.add_function(_func, 1)
             _log.info('loaded.')
 
@@ -47,11 +52,13 @@ if _kros:
             _log.warning('macro processor not available..')
 
     except Exception as e:
+        print('👺 c. log: {}'.format(_log))
         _log.error('{} encountered, exiting: {}'.format(type(e), e))
         traceback.print_exc(file=sys.stdout)
     finally:
         pass
 else:
+    print('👺 d. log: {}'.format(_log))
     _log.error('KROS not available.')
 
 #EOF
