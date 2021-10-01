@@ -123,8 +123,9 @@ class MessageBus(Component):
         '''
         _tasks = self.get_all_tasks()
         if len(_tasks) == 0:
-            self._log.debug('no outstanding tasks.')
+            self._log.info('no outstanding tasks.')
         else:
+            self._log.info('clearing {:d} outstanding tasks.'.format(len(_tasks)))
             for _task in _tasks:
                 if not _task.cancelled():
                     _task.cancel()
@@ -375,9 +376,9 @@ class MessageBus(Component):
         Prints the current system status to the console.
         '''
         self.print_task_info()
+        self.print_arbitrator_info()
         self.print_publishers()
         self.print_subscribers()
-        self.print_arbitrator_info()
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def print_task_info(self):

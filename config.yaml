@@ -31,12 +31,20 @@ kros:
     behaviour:
         enable_avoid_behaviour:       True       # enable avoidance behaviour
         enable_roam_behaviour:        True       # enable roam behaviour
+        enable_swerve_behaviour:      True       # enable swerve behaviour
         enable_moth_behaviour:       False       # enable moth behaviour
         enable_sniff_behaviour:      False       # enable sniff behaviour
         enable_idle_behaviour:       False       # enable idle behaviour
         avoid:
             min_distance:            20.0        # minimum distance in cm upon which we trigger avoidance behaviour
         roam:
+            min_distance:            25.0        # minimum distance in cm
+            max_distance:            60.0        # maximum distance in cm
+            min_velocity:             0.0        # minimum motor target velocity
+            max_velocity:           100.0        # maximum motor target velocity
+            cruising_speed:        'SLOW'        # cruising speed (recovery speed)
+            cruise_wait_ticks:        3          # how many ticks to wait before cruising again
+        swerve:
             min_distance:            25.0        # minimum distance in cm
             max_distance:            60.0        # maximum distance in cm
             min_velocity:             0.0        # minimum motor target velocity

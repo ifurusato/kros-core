@@ -45,7 +45,6 @@ class ScriptLibrary():
         '''
         if isinstance(script, Script):
             self._scripts[script.name] = script
-            self._log.info('added script \'{}\' to library.'.format(script.name))
         else:
             raise TypeError('expected script.')
 

@@ -72,6 +72,7 @@ class EventPublisher(Publisher):
         ( 108, Event.BUMPER_STBD ),
         ( 109, Event.MOTH ),
         ( 110, Event.SPIN_STBD ),
+        ( 111, Event.SWERVE ),
         ( 114, Event.ROAM ),
         ( 115, Event.INFRARED_PORT ),
         ( 116, Event.AVOID ),
@@ -250,9 +251,9 @@ class EventPublisher(Publisher):
                         elif och == 105: # 'i' print info
                             self._print_info()
                             continue
-                        elif och == 111: # 'o'
-                            self._message_bus.clear_tasks()
-                            continue
+#                       elif och == 111: # 'o'
+#                           self._message_bus.clear_tasks()
+#                           continue
                         elif och == 112: # 'p'
 #                           raise NotImplementedError
                             await self._message_bus.pop_queue()
@@ -347,6 +348,7 @@ class EventPublisher(Publisher):
             self._system.print_sys_info()
             self._print_power_info()
             self._message_bus.print_system_status()
+            self._print_behaviour_info()
             self._motor_ctrl.print_motor_status()
             self._motor_ctrl.print_info(None)
             self._print_ifs_info()
@@ -528,6 +530,15 @@ class EventPublisher(Publisher):
         _experiment_mgr.toggle_experiment(event)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def _print_behaviour_info(self):
+        _kros = globals.get('kros')
+        _behaviour_mgr = _kros.get_behaviour_manager()
+        if _behaviour_mgr:
+            _behaviour_mgr.print_info()
+        else:
+            self._log.info('behaviour manager: ' + Fore.YELLOW + 'disabled')
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _toggle_behaviour_manager(self):
         _kros = globals.get('kros')
         _behaviour_mgr = _kros.get_behaviour_manager()
@@ -666,7 +677,7 @@ class EventPublisher(Publisher):
        ┃ FUL AST ┃ HAF AST ┃ SLO AST ┃ DSL AST ┃  HALT   ┃ DSL AHD ┃ SLO AHD ┃ HAF AHD ┃ FUL AHD ┃  STOP   ┃  BRAKE  ┃  EVEN   ┃ SHUTDWN ┃
   ┏━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┛
   ┃   TAB   ┃    Q    ┃    W    ┃    E    ┃    R    ┃    T    ┃    Y    ┃    U    ┃    I    ┃    O    ┃    P    ┃    [    ┃    ]    ┃
-  ┃ GAMEPAD ┃  QUIT   ┃ REL MAC ┃   POT   ┃  ROAM   ┃  AVOID  ┃ BEH_MGR ┃  IDLE   ┃  INFO   ┃ CLR TSK ┃ POP_MSG ┃ IN_PORT ┃ IN_STBD ┃
+  ┃ GAMEPAD ┃  QUIT   ┃ REL MAC ┃   POT   ┃  ROAM   ┃  AVOID  ┃ BEH_MGR ┃  IDLE   ┃  INFO   ┃ SWERVE  ┃ POP_MSG ┃ IN_PORT ┃ IN_STBD ┃
   ┗━━━━━━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┓
                  ┃    A    ┃    S    ┃    D    ┃    F    ┃    G    ┃    H    ┃    J    ┃    K    ┃    L    ┃    :    ┃    "    ┃   RET   ┃
                  ┃ IR_PSID ┃ IR_PORT ┃ IR_CNTR ┃ IR_STBD ┃ IR_SSID ┃  HELP   ┃ BM_PORT ┃ BM_CNTR ┃ BM_STBD ┃ DE_PORT ┃ DE_STBD ┃  CLEAR  ┃
@@ -680,11 +691,11 @@ class EventPublisher(Publisher):
   HAF AST:   half astern       REL MAC:  reload macro scripts         IR_PORT:  port infrared                SP_PORT:  spin port
   SLO AST:   slow astern       POT:      toggle potentiometer         IR_CNTR:  center infrared              TN_PORT:  turn to port
   DSL AST:   dead slow astern  ROAM:     trigger roam behaviour       IR_STBD:  starboard infrared           VERBOSE:  toggle verbosity
-  HALT:      halt              AVOID:    trigger avoid behaviour      IR_SSID:  starboard side infrared      TN_STBD:  turn to starboard
+  HALT:      halt              AVOID:    trigger avoidance behaviour  IR_SSID:  starboard side infrared      TN_STBD:  turn to starboard
   DSL AHD:   dead slow ahead   BEH_MGR:  toggle behaviour manager     HELP:     print help                   SP_STBD:  spin starboard
   SLO AHD:   slow ahead        IDLE:     send idle message            BM_PORT:  port bumper                  MOTH:     trigger moth behaviour
   HAF AHD:   half ahead        INFO:     print system information     BM_CNTR:  center bumper                DE_VELO:  decrease velocity
-  FUL AHD:   full ahead        CLR_TSK:  clear completed tasks        BM_STBD:  starboard bumper             IN_VELO:  increase velocity
+  FUL AHD:   full ahead        SWERVE:   toggle swerve behaviour      BM_STBD:  starboard bumper             IN_VELO:  increase velocity
   STOP:      stop              POP_MSG:  pop messages from queue      DE_PORT:  decrease port velocity       HELP:     print help
   BRAKE:     brake             IN_PORT:  increase port velocity       DE_STBD:  decrease starboard velocity  CLOCK:    toggle system clock
   EVEN:      even velocity     IN_STBD:  increase starboard velocity  RET:      clear display

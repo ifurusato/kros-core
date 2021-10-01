@@ -24,49 +24,34 @@ from behave.trigger_behaviour import TriggerBehaviour
 from hardware.motor_controller import MotorController
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-class Roam(Behaviour):
+class Swerve(Behaviour):
 
-    _LAMBDA_NAME = 'roam'
+    _LAMBDA_NAME = 'swerve'
 
     '''
-    Implements a roaming behaviour. The end result of this Behaviour is to
-    provide a forward speed limit for both motors based on a distance value
-    provided by the center infrared sensor, i.e., the distance to an obstacle
-    in cm. If no obstacle is perceived within the range of the sensor, the
-    velocity limit is removed.
+    Implements a swerving behaviour to avoid objects sensed at a distance,
+    swerving away from them.
 
-    Because we only know how far the obstacle is based on incoming events,
-    if we haven't seen an event in awhile we may assume there is nothing
-    there and start moving again, at "cruising" speed. But we need to wait
-    a bit after reacting to an obstacle before attempting to start moving
-    again.
+    The end result of this Behaviour is to provide an offset between the port
+    and starboard motors based on the difference in distance values provided
+    by the port and starboard (oblique) infrared sensors, i.e., the distance
+    to an obstacle in cm. If no obstacle is perceived within the range of
+    either sensor, using a configured hysteresis threshold that sets the
+    offset to zero to minimise meandering along a target path.
 
-    The Roam behaviour is by default suppressed.
+    The Swerve behaviour is by default suppressed.
 
     NOTES ....................
 
-    This is a Subscriber to INFRARED_CNTR events, altering the usage of the
-    center analog IR sensor to no longer function solely for obstacle
-    avoidance, but instead set the robot's target velocity as a proportion to
-    the perceived distance. I.e., if the sensor sees nothing at its maximum
-    range the robot's forward target velocity will be set to its maximum. As
-    the sensed distance is lessened the target velocity is likewise, until the
-    robot reaches a minimum distance in which it halts and then goes into an
-    obstacle avoidance behaviour (handled elsewhere).
+    This is a Subscriber to INFRARED_PORT and INFRARED_STARBOARD events,
+    using the two to create an offset between them used as a steering offset.
+    This is implemented by adding a lambda function multiplier into each of
+    the Motor's update_target_velocity methods, with the offset altering the
+    balance of forward motion to port or starboard proportionate to the offset.
 
-    This means that we will in the future need to suppress whatever is the
-    normal avoidance behaviour for the center IR sensor when this is active,
-    at least up to the minimum roam distance.
-
-    The external clock is required insofar as the Roam behaviour won't
-    function in its absence, as it is used for resetting the motor's maximum
+    The external clock is required insofar as this behaviour won't function
+    in its absence, as it is used for resetting the motor's maximum
     velocity setting.
-
-    This is implemented by adding a lambda function multiplier into the
-    Motor's update_target_velocity method. When absent there is no effect;
-    when closer than the minimum range a lambda that returns zero is set;
-    otherwise a lambda that converts the observed distance (cm) to a ratio
-    is used.
 
     :param config:           the application configuration
     :param message_bus:      the asynchronous message bus
@@ -78,7 +63,7 @@ class Roam(Behaviour):
     :param level:            the optional log level
     '''
     def __init__(self, config, message_bus, message_factory, motor_ctrl, external_clock, suppressed=True, enabled=True, level=Level.INFO):
-        Behaviour.__init__(self, 'roam', config, message_bus, message_factory, suppressed=suppressed, enabled=enabled, level=level)
+        Behaviour.__init__(self, 'swerve', config, message_bus, message_factory, suppressed=suppressed, enabled=enabled, level=level)
         if not isinstance(motor_ctrl, MotorController):
             raise ValueError('wrong type for motor_ctrl argument: {}'.format(type(motor_ctrl)))
         self._port_motor   = motor_ctrl.get_motor(Orientation.PORT)
@@ -88,8 +73,8 @@ class Roam(Behaviour):
             self._ext_clock.add_slow_callback(self._tick)
             pass
         else:
-            raise Exception('unable to enable roam behaviour: no external clock available.')
-        _cfg = config['kros'].get('behaviour').get('roam')
+            raise Exception('unable to enable swerve behaviour: no external clock available.')
+        _cfg = config['kros'].get('behaviour').get('swerve')
         self._modulo        = 5 # at 20Hz, every 20 ticks is 1 second, every 5 ticks 250ms
         self._min_distance  = _cfg.get('min_distance')
         self._max_distance  = _cfg.get('max_distance')
@@ -111,10 +96,9 @@ class Roam(Behaviour):
         self._cruising_velocity = float(self._cruising_speed.velocity)
         self._log.info(Style.BRIGHT + 'cruising speed:      \t{} ({:5.2f}cm/sec)'.format(self._cruising_speed.label, self._cruising_speed.velocity))
         self._wait_ticks    = _cfg.get('cruise_wait_ticks') # assumes slow tick at 1Hz
-        self._wait_count    = self._wait_ticks
         self._log.info(Style.BRIGHT + 'cruise wait time:    \t{:4.2f} ticks'.format(self._wait_ticks))
         # .................................
-        self.add_event(Event.INFRARED_CNTR)
+        self.add_events([ Event.INFRARED_PORT, Event.INFRARED_STBD ])
         self._log.info('ready.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -124,23 +108,27 @@ class Roam(Behaviour):
         :param message:  an Message passed along by the message bus
         '''
         if self.suppressed:
-            self._log.info(Style.DIM + 'roam suppressed; message: {}'.format(message.event.label))
+            self._log.info(Style.DIM + 'swerve suppressed; message: {}'.format(message.event.label))
         elif self.enabled:
-            if message.payload.event is Event.INFRARED_CNTR:
+            if message.payload.event is Event.INFRARED_PORT:
                 _distance_cm = message.payload.value
-                # TODO filter on distance here
-#               self._log.info('processing message {}; '.format(message.name)
-#                       + Fore.GREEN + ' distance: {:5.2f}cm\n'.format(_distance_cm))
-                self._set_max_fwd_velocity_by_distance(_distance_cm)
+                self._log.info('processing port message {}; '.format(message.name)
+                        + Fore.PORT  + ' distance: {:5.2f}cm\n'.format(_distance_cm))
+#               self._set_max_fwd_velocity_by_distance(_distance_cm)
+            elif message.payload.event is Event.INFRARED_STBD:
+                _distance_cm = message.payload.value
+                self._log.info('processing stbd message {}; '.format(message.name)
+                        + Fore.GREEN + ' distance: {:5.2f}cm\n'.format(_distance_cm))
+#               self._set_max_fwd_velocity_by_distance(_distance_cm)
             else:
-                raise ValueError('expected INFRARED_CNTR event not: {}'.format(message.event.label))
+                raise ValueError('expected INFRARED_PORT or INFRARED_STBD event not: {}'.format(message.event.label))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _set_max_fwd_velocity_by_distance(self, distance_cm):
         '''
         This sets the velocity limit for both motors based on the distance
-        argument. Both motors share the same limit, as there's no reason for
-        them to be different.
+        argument. The offset provides a differential between the port and 
+        starboard motors.
         '''
         print('')
         self._log.info('setting max fwd velocity from distance of {:<5.2f}cm'.format(distance_cm))
@@ -149,14 +137,8 @@ class Roam(Behaviour):
             self._reset_velocity_multiplier('no obstacle seen at {:>5.2f}cm.'.format(distance_cm))
         elif distance_cm < self._min_distance: # when distance < min_distance, set zero lambda
             self._set_velocity_multiplier(Fore.RED + 'too close', self._zero_velocity_ratio(distance_cm))
-            self._wait_count = self._wait_ticks # reset wait
         else: # otherwise set lambda that returns a ratio of distance to speed as the limit
             self._set_velocity_multiplier(Fore.WHITE + 'within range at {:5.2f}'.format(distance_cm), self._velocity_ratio(distance_cm))
-            self._wait_count = self._wait_ticks # reset wait
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def _get_bar(self):
-        return Util.repeat('█', 4 - self._wait_count) + Util.repeat('░', self._wait_count)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _tick(self):
@@ -167,39 +149,24 @@ class Roam(Behaviour):
         continually auto-trigger.
         '''
         if not self.suppressed:
-            self._log.info('tick; wait: {} ({:d}); suppressed: {};\t'.format(self._get_bar(), self._wait_count, self.suppressed))
-            # wait ten counts before trying to move
-            if self._wait_count == 0:
-                self._log.info('roaming;\t'
-                        + Fore.RED   + 'port: {:5.2f}cm/s;\t'.format(self._port_motor.velocity)
-                        + Fore.GREEN + 'stbd: {:5.2f}cm/s'.format(self._stbd_motor.velocity))
-            elif self._wait_count == 1:
-                self._log.info('cruise triggered.')
-                self._log.info('cruise triggered at: {} ({:5.2f}cm/sec)'.format(self._cruising_speed.name, self._cruising_velocity))
-                self._wait_count = 0
-                # we change state in the transition from wait count 1 to 0 (0 being a steady state)
-                self._reset_velocity_multiplier('recovered from encounter.')
-                self._port_motor.target_velocity = self._cruising_velocity
-                self._stbd_motor.target_velocity = self._cruising_velocity
-            else:
-                self._log.info('counting down from {:d}...'.format(self._wait_count))
-                self._wait_count -= 1
-                pass
+            self._log.info('tick; suppressed: {};\t'.format(self.suppressed))
+            self._log.info('swerving;\t'
+                    + Fore.RED   + 'port: {:5.2f}cm/s;\t'.format(self._port_motor.velocity)
+                    + Fore.GREEN + 'stbd: {:5.2f}cm/s'.format(self._stbd_motor.velocity))
+            pass
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _set_velocity_multiplier(self, reason, lambda_function):
-#       if not isinstance(lambda_function, function):
-#           raise TypeError('expected lambda function, not {}'.format(type(lambda_function)))
         self._log.info(Fore.GREEN + 'set max fwd velocity: ' + '{}'.format(reason))
-        self._port_motor.add_velocity_multiplier(Roam._LAMBDA_NAME, lambda_function)
-        self._stbd_motor.add_velocity_multiplier(Roam._LAMBDA_NAME, lambda_function)
+        self._port_motor.add_velocity_multiplier(Swerve._LAMBDA_NAME, lambda_function)
+        self._stbd_motor.add_velocity_multiplier(Swerve._LAMBDA_NAME, lambda_function)
         pass
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _reset_velocity_multiplier(self, reason):
         self._log.info(Fore.MAGENTA + '😨 reset max fwd velocity: ' + Fore.YELLOW + '{}'.format(reason))
-        self._port_motor.remove_velocity_multiplier(Roam._LAMBDA_NAME)
-        self._stbd_motor.remove_velocity_multiplier(Roam._LAMBDA_NAME)
+        self._port_motor.remove_velocity_multiplier(Swerve._LAMBDA_NAME)
+        self._stbd_motor.remove_velocity_multiplier(Swerve._LAMBDA_NAME)
         pass
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -211,29 +178,29 @@ class Roam(Behaviour):
         '''
         This returns the event used to enable/disable the behaviour manually.
         '''
-        return Event.ROAM
+        return Event.SWERVE
 
     def release(self):
         '''
         Releases (un-suppresses) this Component.
         '''
         Component.release(self)
-        self._log.info(Fore.GREEN + '💚 roam released.')
+        self._log.info(Fore.GREEN + '💚 swerve released.')
 
     def suppress(self):
         '''
         Suppresses this Component.
         '''
         Component.suppress(self)
-        self._reset_velocity_multiplier('suppressing roam.')
-        self._log.info(Fore.BLUE + '💙 roam suppressed.')
+        self._reset_velocity_multiplier('suppressing swerve.')
+        self._log.info(Fore.BLUE + '💙 swerve suppressed.')
 
     def disable(self):
         '''
         Disables this Component.
         '''
         Component.disable(self)
-        self._reset_velocity_multiplier('disabling roam.')
-        self._log.info(Fore.BLUE + '💙 roam disabled.')
+        self._reset_velocity_multiplier('disabling swerve.')
+        self._log.info(Fore.BLUE + '💙 swerve disabled.')
 
 #EOF

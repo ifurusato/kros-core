@@ -99,6 +99,7 @@ def test_oblique():
             _out_stbd = _stbd_ranger.convert(_stbd_raw)
 
             _percent  = _ranger.convert(_ratio)
+            _offset   = _percent - 50.0
 
             _port_cm  = _ifs.convert_to_distance(_port_raw)
             _stbd_cm  = _ifs.convert_to_distance(_stbd_raw)
@@ -120,8 +121,8 @@ def test_oblique():
                         + Fore.GREEN + _stbd_em + '{:6.3f} / {:6.3f}cm\t'.format(_stbd_raw, _stbd_cm)
                         + Fore.WHITE + Style.NORMAL + 'ratio: {:4.1f}\t'.format(_ratio)
                         + Fore.RED + 'port: {:4.1f}\t'.format(_out_port)
-                        + Fore.GREEN + 'stbd: {:4.1f}\t'.format(_out_stbd))
-    #                   + Fore.BLUE  + 'percent: {:4.1f}%'.format(_percent))
+                        + Fore.GREEN + 'stbd: {:4.1f}\t'.format(_out_stbd)
+                        + Fore.YELLOW  + 'offset: {:4.1f}%'.format(_offset))
 
             _log.info('count={:d}\n'.format(_count))
             time.sleep(0.33)

@@ -21,6 +21,7 @@ from core.component import Component
 from core.orient import Orientation
 from core.event import Event, Group
 from core.subscriber import Subscriber
+from core.util import Util
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class BehaviourManager(Subscriber):
@@ -44,7 +45,8 @@ class BehaviourManager(Subscriber):
         self._active_behaviour = None
         self._was_suppressed   = None
         self._behaviours       = {}
-
+        self._clip_event_list  = True #_cfg.get('clip_event_list') # used for printing only
+        self._clip_length      = 42   #_cfg.get('clip_length')
 #       methods = [func for func in dir(BehaviourManager) if callable(getattr(BehaviourManager, func)) and not func.startswith("__")]
 #       methods = [func for func in dir(BehaviourManager) if callable(getattr(BehaviourManager, func))]
 #       for method in methods:
@@ -257,6 +259,27 @@ class BehaviourManager(Subscriber):
                 self._log.info('requested behaviour ' + Fore.YELLOW + '{}'.format(event.label) + Fore.CYAN
                         + ' has the SAME priority as existing behaviour ' + Fore.YELLOW + '{}'.format(self._active_behaviour.name)
                         + Fore.CYAN + ' (no change)')
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def print_info(self):
+        '''
+        Print information about the currently registered Behaviours.
+        '''
+        self._log.info('behaviour manager:')
+        self._log.info('  suppressed:\t' + Fore.YELLOW + '{}'.format(self.suppressed))
+        self._log.info('  behaviours:')
+        for _key, _behaviour in self._behaviours.items():
+            if self._clip_event_list:
+                _event_list = Util.ellipsis(_behaviour.print_events(), self._clip_length)
+            else:
+                _event_list = _behaviour.print_events()
+            self._log.info(Fore.YELLOW + '\t{}'.format(_behaviour.name)
+                    + Fore.CYAN + ' {}enabled: '.format((' ' * max(0, (10 - len(_behaviour.name)))))
+                    + Fore.YELLOW + '{}\t'.format(_behaviour.enabled)
+                    + Fore.CYAN + 'suppressed: '
+                    + Fore.YELLOW + '{}\t'.format(_behaviour.suppressed)
+                    + Fore.CYAN + 'listening for: '
+                    + Fore.YELLOW + '{}'.format(_event_list))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def disable(self):

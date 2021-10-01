@@ -65,6 +65,7 @@ from mock.mock_pot_publisher import MockPotPublisher
 from behave.behaviour_manager import BehaviourManager
 from behave.avoid import Avoid
 from behave.roam import Roam
+from behave.swerve import Swerve
 from behave.moth import Moth
 from behave.sniff import Sniff
 from behave.idle import Idle
@@ -284,13 +285,15 @@ class KROS(Component, FiniteStateMachine):
             if _bcfg.get('enable_avoid_behaviour'):
                 self._avoid  = Avoid(self._config, self._message_bus, self._message_factory, self._motor_ctrl, external_clock=self._ext_clock, level=self._level)
             if _bcfg.get('enable_roam_behaviour'):
-                self._roam  = Roam(self._config, self._message_bus, self._message_factory, self._motor_ctrl, external_clock=self._ext_clock, level=self._level)
+                self._roam   = Roam(self._config, self._message_bus, self._message_factory, self._motor_ctrl, external_clock=self._ext_clock, level=self._level)
+            if _bcfg.get('enable_swerve_behaviour'):
+                self._swerve = Swerve(self._config, self._message_bus, self._message_factory, self._motor_ctrl, external_clock=self._ext_clock, level=self._level)
             if _bcfg.get('enable_moth_behaviour'):
-                self._moth  = Moth(self._config, self._message_bus, self._message_factory, self._motor_ctrl, self._level)
+                self._moth   = Moth(self._config, self._message_bus, self._message_factory, self._motor_ctrl, self._level)
             if _bcfg.get('enable_sniff_behaviour'):
-                self._sniff = Sniff(self._config, self._message_bus, self._message_factory, self._motor_ctrl, self._level)
+                self._sniff  = Sniff(self._config, self._message_bus, self._message_factory, self._motor_ctrl, self._level)
             if _bcfg.get('enable_idle_behaviour'):
-                self._idle  = Idle(self._config, self._message_bus, self._message_factory, self._level)
+                self._idle   = Idle(self._config, self._message_bus, self._message_factory, self._level)
         self._export_config = False
         if self._export_config:
             self.export_config()

@@ -121,6 +121,8 @@ class Subscriber(Component, FiniteStateMachine):
         '''
         Adds an event to the list that this subscriber accepts.
         '''
+        if not isinstance(event, Event):
+            raise TypeError('expected Event argument, not {}'.format(type(event)))
         self._events.append(event)
 #       self._log.debug('added \'{}\' event to subscriber {} ({:d} events).'.format(event.label, self._name, len(self._events)))
 
@@ -129,8 +131,10 @@ class Subscriber(Component, FiniteStateMachine):
             return '[ANY]'
         elif self._events:
             _events = []
-            for event in self._events:
-                _description = event.label.replace(' ','-')
+            for _event in self._events:
+                if not isinstance(_event, Event):
+                    raise TypeError('expected Event, not {}'.format(type(_event)))
+                _description = _event.label.replace(' ','-')
                 _events.append('{} '.format(_description))
             return ''.join(_events)
         else:

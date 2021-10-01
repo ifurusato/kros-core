@@ -147,10 +147,10 @@ class MacroPublisher(Publisher):
     def load_script_files(self):
         '''
         Loads the *.py script files from the ./script/ directory by executing
-        the files. If the scripts use the create_script() method the script 
+        the files. If the scripts use the create_script() method the script
         will automatically be added to the script library, otherwise the
         add_script_to_library() method must be called.
- 
+
         If called subsequently this will overwrite scripts in the library
         using the same name since the library is backed by a dictionary.
         '''

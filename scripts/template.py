@@ -22,7 +22,7 @@ _log = Logger('template-macro', Level.INFO)
 _kros = globals.get('kros')
 if _kros:
     try:
-        _log.info('🍏 found KROS! begin loading script...')
+        _log.info('found KROS! begin loading script...')
         _macro_publisher = _kros.get_macro_publisher()
         if _macro_publisher:
 
@@ -35,7 +35,7 @@ if _kros:
             # come to a halt for 2.5 seconds
             _script.add_event(Event.HALT, 2500)
             # print an emoji via a lambda function
-            _func = lambda: _log.info('😛')
+            _func = lambda: globals.get('kros').get_logger().info('😛 Done!')
             _script.add_function(_func, 1000)
             _log.info('loaded.')
 
