@@ -101,6 +101,16 @@ kros:
             pin:                      5          # pin connected to external clock source from Itsy Bitsy RP2040
         killswitch:
              pin:                     7          # pin connected to hardware kill switch
+        rfm69_radio:
+             frequency:   'FREQ_868MHZ'          # either "FREQ_868MHZ" or "FREQ_915MHZ" (default)
+             spi_device:              0          # SPI device (0 or 1)
+             network_id:            100          # network identifier (common between transceivers)
+             node_id:                 1          # source node identifier
+             recipient_id:            2          # target node identifier
+             interrupt_pin:          18          # BOARD pin number for interrupt (GPIO 24)
+             reset_pin:              29          # BOARD pin number for reset (GPIO 5)
+             promiscuous_mode:     True          # listen for any traffic?
+             transmit_enabled:     True          # transmit or only receive?
     geometry:                                    # robot geometry (e.g., KR01)
         wheel_diameter:              68.0        # wheel diameter (mm)
         wheelbase:                  160.0        # wheelbase (mm)

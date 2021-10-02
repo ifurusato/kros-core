@@ -41,12 +41,12 @@
 #
 
 import sys, signal, time, threading, traceback, itertools
-from RFM69 import Radio, FREQ_315MHZ, FREQ_433MHZ, FREQ_868MHZ, FREQ_915MHZ
+from RFM69 import Radio, FREQ_868MHZ, FREQ_915MHZ
 import RPi.GPIO as GPIO
 from colorama import init, Fore, Style
 init()
 
-from core.rate import Rate
+from core.config_loader import ConfigLoader
 from core.logger import Logger, Level
 
 # execution handler ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -60,30 +60,44 @@ def signal_handler(signal, frame):
 class Rfm69Radio(object):
     '''
     '''
-    def __init__(self, level=Level.INFO):
+    def __init__(self, config, level=Level.INFO):
         self._log = Logger('radio', level)
-        self._spi_device      = 0
-        self._network_id      = 100
-        self._log.info('SPI device {:d} on network ID {:d}'.format(self._spi_device, self._network_id))
-        self._node_id         = 2
-        self._recipient_id    = 1
-        self._log.info('node ID {:d} sending to recipient ID {:d}'.format(self._node_id, self._recipient_id))
-        self._interruptPin    = 18 # GPIO 24, was '15' in original code
-        self._reset_pin       = 29 # GPIO 5
-        self._promiscuousMode = True
-        if self._promiscuousMode:
-            self._log.info('receiving in promiscuous mode.')
+        if config is None:
+            raise ValueError('no configuration provided.')
+        _cfg = config['kros'].get('hardware').get('rfm69_radio')
+        # configuration ..............
+        self._frequency_name  = _cfg.get('frequency') # either 'FREQ_868MHZ' or default to FREQ_915MHZ
+        if self._frequency_name == 'FREQ_868MHZ':
+            self._log.info('frequency:\t868MHz')
+            self._frequency = FREQ_868MHZ
         else:
-            self._log.info('receiving in normal mode.')
+            self._log.info('frequency:\t915MHz')
+            self._frequency = FREQ_915MHZ
+        self._spi_device      = _cfg.get('spi_device') # 0
+        self._log.info('SPI device:    \t{:d}'.format(self._spi_device))
+        self._network_id      = _cfg.get('network_id') # 100
+        self._log.info('network ID:    \t{:d}'.format(self._network_id))
+        self._node_id         = _cfg.get('node_id')       # the node ID of this device
+        self._log.info('node ID:       \t{:d}'.format(self._node_id))
+        self._recipient_id    = _cfg.get('recipient_id')  # identifier for target of messages
+        self._log.info('recipient ID:  \t{:d}'.format(self._recipient_id))
+        self._interrupt_pin   = _cfg.get('interrupt_pin') # BOARD 18/GPIO 24
+        self._log.info('interrupt pin:  \t{:d}'.format(self._interrupt_pin))
+        self._reset_pin       = _cfg.get('reset_pin') # BOARD 29/GPIO 5
+        self._log.info('reset pin:      \t{:d}'.format(self._reset_pin))
+        self._promiscuousMode = _cfg.get('promiscuous_mode') 
+        self._log.info('listen mode:    \t{}'.format('promiscuous' if self._promiscuousMode else 'normal'))
         self._counter         = itertools.count()
         self._enabled         = False
-        self._tx_enabled      = True
+        self._tx_enabled      = _cfg.get('transmit_enabled')
+        self._log.info('operation mode: \t{}'.format('transmit/receive' if self._tx_enabled else 'receive only'))
+#       sys.exit(0) # TEMP
         # reset pin for radio (LOW is enabled)
         GPIO.setmode(GPIO.BOARD)
         GPIO.setup(self._reset_pin, GPIO.OUT)
 #       GPIO.output(self._reset_pin, GPIO.HIGH) # reset radio
         self._log.info("📡 enabling radio...")
-        GPIO.output(self._reset_pin, GPIO.LOW) # enable radio
+#       GPIO.output(self._reset_pin, GPIO.LOW) # enable radio
         self._log.info('ready')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -132,19 +146,19 @@ class Rfm69Radio(object):
         try:
             time.sleep(1.0)
             self._log.info("📡 creating link to radio...")
-            with Radio(FREQ_915MHZ,        \
+            with Radio(self._frequency,    \
                        self._node_id,      \
                        self._network_id,   \
                        isHighPower = True, \
                        verbose = True,     \
-                       interruptPin = self._interruptPin, \
+                       interruptPin = self._interrupt_pin, \
                        resetPin = 22,      \
                        promiscuousMode = self._promiscuousMode, \
                        spiDevice = self._spi_device) as _radio:
                 self._log.info("📡 established link to radio.")
 #               self._reset_radio(_radio)
 
-                self._log.info("Starting loop...")
+                self._log.info('starting loop:\t' + Fore.YELLOW + 'type Ctrl-C to exit.')
 
                 # create a thread to run _receive_function in the background and start it
                 receiveThread = threading.Thread(target = self._receive_function, args=(_radio, lambda: self._enabled))
@@ -179,7 +193,12 @@ def main(argv):
 
     signal.signal(signal.SIGINT, signal_handler)
 
-    _radio = Rfm69Radio()
+    # read YAML configuration
+    _loader = ConfigLoader(Level.INFO)
+    filename = 'config.yaml'
+    _config = _loader.configure(filename)
+
+    _radio = Rfm69Radio(_config)
     _radio.enable()
 
 # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
