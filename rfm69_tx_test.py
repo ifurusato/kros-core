@@ -71,9 +71,13 @@ class Rfm69Radio(object):
         self._interruptPin    = 18 # GPIO 24, was '15' in original code
         self._reset_pin       = 29 # GPIO 5
         self._promiscuousMode = True
+        if self._promiscuousMode:
+            self._log.info('receiving in promiscuous mode.')
+        else:
+            self._log.info('receiving in normal mode.')
         self._counter         = itertools.count()
         self._enabled         = False
-        self._tx_enabled      = False
+        self._tx_enabled      = True
         # reset pin for radio (LOW is enabled)
         GPIO.setmode(GPIO.BOARD)
         GPIO.setup(self._reset_pin, GPIO.OUT)
@@ -93,6 +97,8 @@ class Rfm69Radio(object):
             self._log.info(Fore.YELLOW + "Got a packet: ", end="")
             # process packet
             self._log.info(Fore.WHITE + '{}'.format(_packet))
+            self._log.info(Fore.BLUE + 'sending ack')
+            radio.send_ack(self._recipient_id)
         self._log.info("exit Rx loop.")
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -149,7 +155,8 @@ class Rfm69Radio(object):
                     _count = next(self._counter)
                     time.sleep(5)
                     if self._tx_enabled:
-                        self._log.info('[{:04d}] sending from node ID {:d} to recipient ID {:d}'.format(_count, self._node_id, self._recipient_id))
+                        self._log.info('[{:04d}] sending from node ID {:d} to recipient ID {:d} on network ID {:d}'.format(
+                                _count, self._node_id, self._recipient_id, self._network_id))
                         if _radio.send(self._recipient_id, "TEST", attempts=3, waitTime=100):
                             self._log.info(Fore.GREEN + "Acknowledgement received.")
                         else:
