@@ -42,6 +42,7 @@
 
 import sys, signal, time, threading, traceback, itertools
 from RFM69 import Radio, FREQ_315MHZ, FREQ_433MHZ, FREQ_868MHZ, FREQ_915MHZ
+import RPi.GPIO as GPIO
 from colorama import init, Fore, Style
 init()
 
@@ -61,16 +62,23 @@ class Rfm69Radio(object):
     '''
     def __init__(self, level=Level.INFO):
         self._log = Logger('radio', level)
-        self._spi_device      = 1
+        self._spi_device      = 0
         self._network_id      = 100
         self._log.info('SPI device {:d} on network ID {:d}'.format(self._spi_device, self._network_id))
-        self._node_id         = 1
-        self._recipient_id    = 2
+        self._node_id         = 2
+        self._recipient_id    = 1
         self._log.info('node ID {:d} sending to recipient ID {:d}'.format(self._node_id, self._recipient_id))
-        self._interruptPin    = 19 # was 15 in original code
+        self._interruptPin    = 18 # GPIO 24, was '15' in original code
+        self._reset_pin       = 29 # GPIO 5
         self._promiscuousMode = True
         self._counter         = itertools.count()
         self._enabled         = False
+        # reset pin for radio (LOW is enabled)
+        GPIO.setmode(GPIO.BOARD)
+        GPIO.setup(self._reset_pin, GPIO.OUT)
+#       GPIO.output(self._reset_pin, GPIO.HIGH) # reset radio
+        self._log.info("📡 enabling radio...")
+        GPIO.output(self._reset_pin, GPIO.LOW) # enable radio
         self._log.info('ready')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -86,6 +94,21 @@ class Rfm69Radio(object):
             self._log.info(Fore.WHITE + '{}'.format(_packet))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def _reset_radio(self, radio):
+        '''
+        Perform a hard reset on the RFM69 radio.
+        '''
+        if radio:
+            self._log.info('🤡 executing hard reset on radio...')
+            try:
+                radio._reset_radio()
+                self._log.info('🤡 hard reset complete.')
+            except Exception as e:
+                self._log.info('🤡 error performing hard reset: {}'.format(e))
+        else:
+            self._log.info('🤡 no radio available.')
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def enable(self):
         '''
         The following are for an Adafruit RFM69HCW Transceiver Radio Bonnet
@@ -99,6 +122,7 @@ class Rfm69Radio(object):
         _radio = None
 
         try:
+            time.sleep(1.0)
             self._log.info("📡 creating link to radio...")
             with Radio(FREQ_915MHZ,        \
                        self._node_id,      \
@@ -110,6 +134,7 @@ class Rfm69Radio(object):
                        promiscuousMode = self._promiscuousMode, \
                        spiDevice = self._spi_device) as _radio:
                 self._log.info("📡 established link to radio.")
+#               self._reset_radio(_radio)
 
                 self._log.info("Starting loop...")
 
@@ -131,13 +156,7 @@ class Rfm69Radio(object):
             self._log.info(Style.BRIGHT + 'caught Ctrl-C; exiting...')
         except Exception:
             self._log.error(Fore.RED + Style.BRIGHT + '🤡 error with radio: {}'.format(traceback.format_exc()))
-            if _radio:
-                self._log.info('🤡 executing hard reset on radio...')
-                try:
-                    _radio._reset_hard()
-                    self._log.info('🤡 hard reset complete.')
-                except Exception as e:
-                    self._log.info('🤡 hard reset error: {}'.format(e))
+#           self._reset_radio(_radio)
         finally:
             self._enabled = False
             self._log.info('finally.')
