@@ -73,6 +73,8 @@ class Rfm69Radio(object):
         else:
             self._log.info('frequency:\t915MHz')
             self._frequency = FREQ_915MHZ
+        self._spi_bus         = _cfg.get('spi_bus') # 0
+        self._log.info('SPI bus:       \t{:d}'.format(self._spi_bus))
         self._spi_device      = _cfg.get('spi_device') # 0
         self._log.info('SPI device:    \t{:d}'.format(self._spi_device))
         self._network_id      = _cfg.get('network_id') # 100
@@ -81,16 +83,16 @@ class Rfm69Radio(object):
         self._log.info('node ID:       \t{:d}'.format(self._node_id))
         self._recipient_id    = _cfg.get('recipient_id')  # identifier for target of messages
         self._log.info('recipient ID:  \t{:d}'.format(self._recipient_id))
-        self._interrupt_pin   = _cfg.get('interrupt_pin') # BOARD 18/GPIO 24
-        self._log.info('interrupt pin:  \t{:d}'.format(self._interrupt_pin))
+        self._int_pin         = _cfg.get('interrupt_pin') # BOARD 18/GPIO 24
+        self._log.info('interrupt pin:  \t{:d}'.format(self._int_pin))
         self._reset_pin       = _cfg.get('reset_pin') # BOARD 29/GPIO 5
         self._log.info('reset pin:      \t{:d}'.format(self._reset_pin))
-        self._promiscuousMode = _cfg.get('promiscuous_mode') 
-        self._log.info('listen mode:    \t{}'.format('promiscuous' if self._promiscuousMode else 'normal'))
-        self._counter         = itertools.count()
-        self._enabled         = False
+        self._prom_mode       = _cfg.get('promiscuous_mode') # bool
+        self._log.info('listen mode:    \t{}'.format('promiscuous' if self._prom_mode else 'normal'))
         self._tx_enabled      = _cfg.get('transmit_enabled')
         self._log.info('operation mode: \t{}'.format('transmit/receive' if self._tx_enabled else 'receive only'))
+        self._counter         = itertools.count()
+        self._enabled         = False
 #       sys.exit(0) # TEMP
         # reset pin for radio (LOW is enabled)
         GPIO.setmode(GPIO.BOARD)
@@ -146,15 +148,17 @@ class Rfm69Radio(object):
         try:
             time.sleep(1.0)
             self._log.info("📡 creating link to radio...")
-            with Radio(self._frequency,    \
-                       self._node_id,      \
-                       self._network_id,   \
-                       isHighPower = True, \
-                       verbose = True,     \
-                       interruptPin = self._interrupt_pin, \
-                       resetPin = 22,      \
-                       promiscuousMode = self._promiscuousMode, \
-                       spiDevice = self._spi_device) as _radio:
+            with Radio(self._frequency,              \
+                       spiBus = self._spi_bus,       \
+                       spiDevice = self._spi_device, \
+                       interruptPin = self._int_pin, \
+                       resetPin = self._reset_pin,   \
+                       nodeID = self._node_id,       \
+                       networkID = self._network_id, \
+                       auto_acknowledge = True,      \
+                       isHighPower = True,           \
+                       verbose = True,               \
+                       promiscuousMode = self._prom_mode ) as _radio:
                 self._log.info("📡 established link to radio.")
 #               self._reset_radio(_radio)
 
@@ -169,8 +173,8 @@ class Rfm69Radio(object):
                     _count = next(self._counter)
                     time.sleep(5)
                     if self._tx_enabled:
-                        self._log.info('[{:04d}] sending from node ID {:d} to recipient ID {:d} on network ID {:d}'.format(
-                                _count, self._node_id, self._recipient_id, self._network_id))
+                        self._log.info('[{:04d}] sending from node ID {:d} to recipient ID {:d}'.format(
+                                _count, self._node_id, self._recipient_id))
                         if _radio.send(self._recipient_id, "TEST", attempts=3, waitTime=100):
                             self._log.info(Fore.GREEN + "Acknowledgement received.")
                         else:
