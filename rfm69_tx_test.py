@@ -7,9 +7,9 @@
 #
 # author:   Murray Altheim
 # created:  2021-10-02
-# modified: 2021-10-02
+# modified: 2021-10-03
 #
-# Basic RFM69 transceiver.
+# An asynchronous RFM69 transceiver.
 #
 # Uses RFM69 library:  https://rpi-rfm69.readthedocs.io/en/latest/
 # Installed via:
@@ -41,30 +41,31 @@
 #
 
 import sys, signal, time, threading, traceback, itertools
+import asyncio
 from RFM69 import Radio, FREQ_868MHZ, FREQ_915MHZ
 import RPi.GPIO as GPIO
 from colorama import init, Fore, Style
-init()
+init(autoreset=True)
 
 from core.config_loader import ConfigLoader
 from core.logger import Logger, Level
 
 # execution handler ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 def signal_handler(signal, frame):
-    print('\nsignal handler    :' + Fore.MAGENTA + Style.BRIGHT + ' INFO  : Ctrl-C caught: exiting...' + Style.RESET_ALL)
-
-    print(Fore.MAGENTA + 'exit.' + Style.RESET_ALL)
+    print('\nsignal handler    :' + Fore.MAGENTA + Style.BRIGHT + ' INFO  : Ctrl-C caught: exiting...')
+    print(Fore.MAGENTA + 'exit.')
     sys.exit(0)
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Rfm69Radio(object):
     '''
     '''
-    def __init__(self, config, level=Level.INFO):
+    def __init__(self, config, loop, level=Level.INFO):
         self._log = Logger('radio', level)
         if config is None:
             raise ValueError('no configuration provided.')
         _cfg = config['kros'].get('hardware').get('rfm69_radio')
+        self._loop = loop
         # configuration ..............
         self._frequency_name  = _cfg.get('frequency') # either 'FREQ_868MHZ' or default to FREQ_915MHZ
         if self._frequency_name == 'FREQ_868MHZ':
@@ -91,6 +92,8 @@ class Rfm69Radio(object):
         self._log.info('listen mode:    \t{}'.format('promiscuous' if self._prom_mode else 'normal'))
         self._tx_enabled      = _cfg.get('transmit_enabled')
         self._log.info('operation mode: \t{}'.format('transmit/receive' if self._tx_enabled else 'receive only'))
+        self._attempts        = 5   # 3 default
+        self._wait_time_ms    = 100 # 100 default
         self._counter         = itertools.count()
         self._enabled         = False
 #       sys.exit(0) # TEMP
@@ -107,14 +110,17 @@ class Rfm69Radio(object):
         '''
         We'll run this function in a separate thread.
         '''
+        self._log.info(Fore.BLUE + "🌎 _receive_function() begin.")
         while f_is_enabled():
+            self._log.info(Fore.BLUE + "🌎 _receive_function() listening in loop...")
             # This call will block until a packet is received
             _packet = radio.get_packet()
             self._log.info(Fore.YELLOW + "Got a packet: ", end="")
             # process packet
             self._log.info(Fore.WHITE + '{}'.format(_packet))
-            self._log.info(Fore.BLUE + 'sending ack')
-            radio.send_ack(self._recipient_id)
+#           self._log.info(Fore.BLUE + 'sending ack')
+#           radio.send_ack(self._recipient_id)
+            self._log.info(Fore.BLUE + "🌎 _receive_function() end of loop.")
         self._log.info("exit Rx loop.")
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -133,6 +139,36 @@ class Rfm69Radio(object):
             self._log.info('🤡 no radio available.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    async def receiver(self, radio, f_is_enabled):
+        self._log.info(Fore.GREEN + 'receiver begin.')
+        while f_is_enabled():
+            self._log.info(Fore.GREEN + 'receiver loop.')
+            for packet in radio.get_packets():
+                self._log.info(Fore.GREEN + '🌎 packet received: {}'.format(packet.to_dict()))
+#               await call_API("http://httpbin.org/post", packet)
+            await asyncio.sleep(1.0)
+        self._log.info(Fore.GREEN + 'receiver end.')
+    
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    async def transmit(self, radio, f_is_enabled):
+        self._log.info(Fore.BLUE + 'transmit begin.')
+        self._ping_counter = itertools.count()
+        while f_is_enabled():
+            _count = next(self._ping_counter)
+            self._log.info(Fore.BLUE + 'transmit loop...')
+            await self.send(radio, "ping-{:04d}".format(_count))
+            await asyncio.sleep(5)
+        self._log.info(Fore.BLUE + 'transmit end.')
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    async def send(self, radio, message):
+        self._log.info(Fore.MAGENTA + 'sending message: \'{}\' to address {}'.format(message, self._recipient_id))
+        if radio.send(self._recipient_id, message, attempts=self._attempts, waitTime=self._wait_time_ms):
+            self._log.info(Fore.MAGENTA + Style.BRIGHT + 'acknowledgement received.')
+        else:
+            self._log.info(Fore.MAGENTA + 'no acknowledgement.')
+    
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def enable(self):
         '''
         The following are for an Adafruit RFM69HCW Transceiver Radio Bonnet
@@ -145,7 +181,11 @@ class Rfm69Radio(object):
         self._enabled = True
         _radio = None
 
+        if not self._loop:
+            self._loop = asyncio.get_event_loop()
+
         try:
+
             time.sleep(1.0)
             self._log.info("📡 creating link to radio...")
             with Radio(self._frequency,              \
@@ -161,35 +201,50 @@ class Rfm69Radio(object):
                        promiscuousMode = self._prom_mode ) as _radio:
                 self._log.info("📡 established link to radio.")
 #               self._reset_radio(_radio)
+#               _radio.begin_receive()
 
                 self._log.info('starting loop:\t' + Fore.YELLOW + 'type Ctrl-C to exit.')
+#               # create a thread to run _receive_function in the background and start it
+#               receiveThread = threading.Thread(target = self._receive_function, args=(_radio, lambda: self._enabled))
+#               receiveThread.start()
+                
+                self._log.info('creating receiver task...')
+                self._loop.create_task(self.receiver(_radio, lambda: self._enabled))
+                self._log.info('creating transmit task...')
+                self._loop.create_task(self.transmit(_radio, lambda: self._enabled))
 
-                # create a thread to run _receive_function in the background and start it
-                receiveThread = threading.Thread(target = self._receive_function, args=(_radio, lambda: self._enabled))
-                receiveThread.start()
+                self._log.info('run forever...')
+                self._loop.run_forever()
+                self._log.info('after forever.')
 
-                while self._enabled:
-                    # after 5 seconds send a message
-                    _count = next(self._counter)
-                    time.sleep(5)
-                    if self._tx_enabled:
-                        self._log.info('[{:04d}] sending from node ID {:d} to recipient ID {:d}'.format(
-                                _count, self._node_id, self._recipient_id))
-                        if _radio.send(self._recipient_id, "TEST", attempts=3, waitTime=100):
-                            self._log.info(Fore.GREEN + "Acknowledgement received.")
-                        else:
-                            self._log.info(Style.DIM + "No acknowledgement.")
-                    else:
-                        self._log.info(Style.DIM + '[{:04d}] Rx only.'.format(_count))
+#               while self._enabled:
+#                   # after 5 seconds send a message
+#                   _count = next(self._counter)
+#                   time.sleep(5)
+#                   if self._tx_enabled:
+#                       self._log.info('[{:04d}] sending from node ID {:d} to recipient ID {:d}'.format(
+#                               _count, self._node_id, self._recipient_id))
+#                       if _radio.send(self._recipient_id, "TEST", attempts=3, waitTime=100):
+#                           self._log.info(Fore.GREEN + "Acknowledgement received.")
+#                       else:
+#                           self._log.info(Style.DIM + "No acknowledgement.")
+#                   else:
+#                       self._log.info(Style.DIM + '[{:04d}] Rx only.'.format(_count))
 
         except KeyboardInterrupt:
+#           self._enabled = False
             self._log.info(Style.BRIGHT + 'caught Ctrl-C; exiting...')
         except Exception:
+#           self._enabled = False
             self._log.error(Fore.RED + Style.BRIGHT + '🤡 error with radio: {}'.format(traceback.format_exc()))
 #           self._reset_radio(_radio)
         finally:
+            self._log.info('closing...')
             self._enabled = False
-            self._log.info('finally.')
+            self._log.info('finally; enabled: {}'.format(self._enabled))
+            self._loop.close()
+            time.sleep(2.0)
+            self._log.info('closed.')
 
 # main ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -202,7 +257,7 @@ def main(argv):
     filename = 'config.yaml'
     _config = _loader.configure(filename)
 
-    _radio = Rfm69Radio(_config)
+    _radio = Rfm69Radio(_config, None)
     _radio.enable()
 
 # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
