@@ -20,8 +20,27 @@
 #
 # pylint: disable=missing-function-docstring,unused-import,redefined-outer-name
 #
+# ......................................
+# Notes on the Pimoroni Breakout Garden:
+#
+# On the single SPI slot version:
+#
+# The SPI slot on Breakout Garden Mini uses:
+# * chip select 1 (BCM 7) and
+# * the GPIO pin (BCM 19) for things like LCD backlights
+#
+# On the double SPI slot version:
+#
+# The top/back slot (closest to the Breakout Garden logo) uses:
+# * chip select 0 (BCM 8) and
+# * the GPIO pin (BCM 18) for things like LCD backlights
+#
+# The bottom/front slot uses
+# * chip select 1 (BCM 7) and
+# * the GPIO pin (BCM 19) for things like LCD backlights
+#
 
-import sys, signal, time, threading, traceback
+import sys, signal, time, threading, traceback, itertools
 from RFM69 import Radio, FREQ_315MHZ, FREQ_433MHZ, FREQ_868MHZ, FREQ_915MHZ
 from colorama import init, Fore, Style
 init()
@@ -38,13 +57,20 @@ def signal_handler(signal, frame):
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Rfm69Radio(object):
-
+    '''
+    '''
     def __init__(self, level=Level.INFO):
-        self._log = Logger('radio', Level.INFO)
-        self._node_id      = 2
-        self._network_id   = 100
-        self._recipient_id = 1
-        self._enabled      = False
+        self._log = Logger('radio', level)
+        self._spi_device      = 1
+        self._network_id      = 100
+        self._log.info('SPI device {:d} on network ID {:d}'.format(self._spi_device, self._network_id))
+        self._node_id         = 1
+        self._recipient_id    = 2
+        self._log.info('node ID {:d} sending to recipient ID {:d}'.format(self._node_id, self._recipient_id))
+        self._interruptPin    = 19 # was 15 in original code
+        self._promiscuousMode = True
+        self._counter         = itertools.count()
+        self._enabled         = False
         self._log.info('ready')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -66,8 +92,12 @@ class Rfm69Radio(object):
             https://www.adafruit.com/product/4072
         You should adjust them to whatever matches your radio.
         '''
-        _radio = None
+        if self._enabled:
+            self._log.warning("already enabled.")
+            return
         self._enabled = True
+        _radio = None
+
         try:
             self._log.info("📡 creating link to radio...")
             with Radio(FREQ_915MHZ,        \
@@ -75,10 +105,10 @@ class Rfm69Radio(object):
                        self._network_id,   \
                        isHighPower = True, \
                        verbose = True,     \
-                       interruptPin = 15,  \
+                       interruptPin = self._interruptPin, \
                        resetPin = 22,      \
-                       promiscuousMode = True, \
-                       spiDevice = 1) as _radio:
+                       promiscuousMode = self._promiscuousMode, \
+                       spiDevice = self._spi_device) as _radio:
                 self._log.info("📡 established link to radio.")
 
                 self._log.info("Starting loop...")
@@ -89,12 +119,13 @@ class Rfm69Radio(object):
 
                 while self._enabled:
                     # after 5 seconds send a message
+                    _count = next(self._counter)
                     time.sleep(5)
-                    self._log.info ("Sending...")
+                    self._log.info ('[{:04d}] sending...'.format(_count))
                     if _radio.send(self._recipient_id, "TEST", attempts=3, waitTime=100):
-                        self._log.info("Acknowledgement received.")
+                        self._log.info(Fore.GREEN + "Acknowledgement received.")
                     else:
-                        self._log.info("No acknowledgement.")
+                        self._log.info(Style.DIM + "No acknowledgement.")
 
         except KeyboardInterrupt:
             self._log.info(Style.BRIGHT + 'caught Ctrl-C; exiting...')
