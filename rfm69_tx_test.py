@@ -65,8 +65,8 @@ class Rfm69Radio(object):
         self._spi_device      = 0
         self._network_id      = 100
         self._log.info('SPI device {:d} on network ID {:d}'.format(self._spi_device, self._network_id))
-        self._node_id         = 2
-        self._recipient_id    = 1
+        self._node_id         = 1
+        self._recipient_id    = 2
         self._log.info('node ID {:d} sending to recipient ID {:d}'.format(self._node_id, self._recipient_id))
         self._interruptPin    = 18 # GPIO 24, was '15' in original code
         self._reset_pin       = 29 # GPIO 5
