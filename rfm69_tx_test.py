@@ -65,8 +65,8 @@ class Rfm69Radio(object):
         self._spi_device      = 0
         self._network_id      = 100
         self._log.info('SPI device {:d} on network ID {:d}'.format(self._spi_device, self._network_id))
-        self._node_id         = 1
-        self._recipient_id    = 2
+        self._node_id         = 2
+        self._recipient_id    = 1
         self._log.info('node ID {:d} sending to recipient ID {:d}'.format(self._node_id, self._recipient_id))
         self._interruptPin    = 18 # GPIO 24, was '15' in original code
         self._reset_pin       = 29 # GPIO 5
@@ -146,7 +146,7 @@ class Rfm69Radio(object):
                     # after 5 seconds send a message
                     _count = next(self._counter)
                     time.sleep(5)
-                    self._log.info ('[{:04d}] sending...'.format(_count))
+                    self._log.info('[{:04d}] sending from node ID {:d} to recipient ID {:d}'.format(_count, self._node_id, self._recipient_id))
                     if _radio.send(self._recipient_id, "TEST", attempts=3, waitTime=100):
                         self._log.info(Fore.GREEN + "Acknowledgement received.")
                     else:
