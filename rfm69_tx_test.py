@@ -73,6 +73,7 @@ class Rfm69Radio(object):
         self._promiscuousMode = True
         self._counter         = itertools.count()
         self._enabled         = False
+        self._tx_enabled      = False
         # reset pin for radio (LOW is enabled)
         GPIO.setmode(GPIO.BOARD)
         GPIO.setup(self._reset_pin, GPIO.OUT)
@@ -82,16 +83,17 @@ class Rfm69Radio(object):
         self._log.info('ready')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def receiveFunction(self, radio):
+    def _receive_function(self, radio, f_is_enabled):
         '''
         We'll run this function in a separate thread.
         '''
-        while True:
+        while f_is_enabled():
             # This call will block until a packet is received
             _packet = radio.get_packet()
             self._log.info(Fore.YELLOW + "Got a packet: ", end="")
             # process packet
             self._log.info(Fore.WHITE + '{}'.format(_packet))
+        self._log.info("exit Rx loop.")
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _reset_radio(self, radio):
@@ -138,19 +140,22 @@ class Rfm69Radio(object):
 
                 self._log.info("Starting loop...")
 
-                # Create a thread to run receiveFunction in the background and start it
-                receiveThread = threading.Thread(target = self.receiveFunction, args=(_radio,))
+                # create a thread to run _receive_function in the background and start it
+                receiveThread = threading.Thread(target = self._receive_function, args=(_radio, lambda: self._enabled))
                 receiveThread.start()
 
                 while self._enabled:
                     # after 5 seconds send a message
                     _count = next(self._counter)
                     time.sleep(5)
-                    self._log.info('[{:04d}] sending from node ID {:d} to recipient ID {:d}'.format(_count, self._node_id, self._recipient_id))
-                    if _radio.send(self._recipient_id, "TEST", attempts=3, waitTime=100):
-                        self._log.info(Fore.GREEN + "Acknowledgement received.")
+                    if self._tx_enabled:
+                        self._log.info('[{:04d}] sending from node ID {:d} to recipient ID {:d}'.format(_count, self._node_id, self._recipient_id))
+                        if _radio.send(self._recipient_id, "TEST", attempts=3, waitTime=100):
+                            self._log.info(Fore.GREEN + "Acknowledgement received.")
+                        else:
+                            self._log.info(Style.DIM + "No acknowledgement.")
                     else:
-                        self._log.info(Style.DIM + "No acknowledgement.")
+                        self._log.info(Style.DIM + '[{:04d}] Rx only.'.format(_count))
 
         except KeyboardInterrupt:
             self._log.info(Style.BRIGHT + 'caught Ctrl-C; exiting...')
