@@ -103,7 +103,7 @@ kros:
              pin:                     7          # pin connected to hardware kill switch
         rfm69_radio:
              frequency:   'FREQ_915MHZ'          # either "FREQ_868MHZ" or "FREQ_915MHZ" (default)
-             spi_bus:                 0          # SPI bus (default 0)
+             spi_bus:                 0          # SPI bus (0 or 1, default 0)
              spi_device:              0          # SPI device (0 or 1)
              network_id:            100          # network identifier (common between transceivers)
              node_id:                 1          # source node identifier
