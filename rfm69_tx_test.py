@@ -75,7 +75,11 @@ class Rfm69Radio(object):
         self._log.info('operation mode: \t{}'.format('transmit/receive' if self._tx_enabled else 'receive only'))
         self._auto_acknowledge = False
         self._high_power = False
-        self._counter    = itertools.count()
+        self._sent_counter   = itertools.count()
+        self._ack_counter    = itertools.count()
+        self._no_ack_counter = itertools.count()
+        self._tx_counter     = itertools.count()
+        self._rx_counter     = itertools.count()
         self._enabled    = False
         # configure reset pin for radio (LOW is enabled)
         GPIO.setmode(GPIO.BOARD)
@@ -116,12 +120,13 @@ class Rfm69Radio(object):
             self._log.info('🤡 no radio available.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    async def receive(self, radio, f_is_enabled):
+    async def _receive(self, radio, f_is_enabled):
         self._log.info(Fore.GREEN + 'receive begin.')
         while f_is_enabled():
             self._log.info(Fore.GREEN + 'receive loop.')
             for _packet in radio.get_packets():
-                self._log.info(Fore.GREEN + '🌎 packet received: {}'.format(_packet.to_dict()))
+                _rx_count = next(self._rx_counter)
+                self._log.info(Fore.GREEN + '[{:04d}] 🌎 packet received: {}'.format(_rx_count, _packet.to_dict()))
                 _message = self.message_factory.create_message(Event.RADIO_PACKET, _packet)
                 await self._message_bus.publish_message(self, _message)
 #               await call_API("http://httpbin.org/post", packet)
@@ -129,36 +134,34 @@ class Rfm69Radio(object):
         self._log.info(Fore.GREEN + 'receive end.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    async def transmit(self, radio, f_is_enabled):
+    async def _transmit(self, radio, f_is_enabled):
         self._log.info(Fore.BLUE + 'transmit begin.')
-        self._ping_counter = itertools.count()
         while f_is_enabled():
-            _count = next(self._ping_counter)
-            self._log.info(Fore.BLUE + 'transmit loop...')
-            await self.send(radio, "ping-{:04d}".format(_count))
+            _tx_count = next(self._tx_counter)
+            self._log.info(Fore.BLUE + '[{:04d}] transmitting message...'.format(_tx_count))
+            await self._send(radio, "ping-{:04d}".format(_tx_count))
             await asyncio.sleep(5)
         self._log.info(Fore.BLUE + 'transmit end.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    async def send(self, radio, message):
-        self._log.info(Fore.MAGENTA + 'sending message: \'{}\' to address {}'.format(message, self._rx_id))
+    async def _send(self, radio, message):
+        _sent_count = next(self._sent_counter)
+        self._log.info(Fore.MAGENTA + '[{:04d}] sending message: \'{}\' to address {}'.format(
+                _sent_count, message, self._rx_id))
         if radio.send(self._rx_id, message, attempts=self._attempts, waitTime=self._timeout_ms):
-            self._log.info(Fore.MAGENTA + Style.BRIGHT + 'acknowledgement received.')
+            _ack_count = next(self._ack_counter)
+            self._log.info(Fore.MAGENTA + Style.BRIGHT + 'acknowledgement received.'.format(_ack_count))
         else:
-            self._log.info(Fore.MAGENTA + 'no acknowledgement.')
+            _no_ack_count = next(self._no_ack_counter)
+            self._log.info(Fore.MAGENTA + '[{:04d}] no acknowledgement.'.format(_no_ack_count))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def enable(self):
-        '''
-        The following are for an Adafruit RFM69HCW Transceiver Radio Bonnet
-            https://www.adafruit.com/product/4072
-        You should adjust them to whatever matches your radio.
-        '''
         if self._enabled:
             self._log.warning("already enabled.")
             return
         self._enabled = True
-        self._log.info("📡 enabling radio...")
+        self._log.info("📡 enabling RFM69 radio...")
         GPIO.output(self._reset_pin, GPIO.LOW)
         time.sleep(1.0)
         _radio = None
@@ -180,9 +183,9 @@ class Rfm69Radio(object):
                 self._log.info("📡 established link to radio.")
 
                 self._log.info('creating receive task...')
-                self._loop.create_task(self.receive(_radio, lambda: self._enabled))
+                self._loop.create_task(self._receive(_radio, lambda: self._enabled))
                 self._log.info('creating transmit task...')
-                self._loop.create_task(self.transmit(_radio, lambda: self._enabled))
+                self._loop.create_task(self._transmit(_radio, lambda: self._enabled))
 
                 self._log.info('starting forever loop:\t' + Fore.YELLOW + 'type Ctrl-C to exit.')
                 self._loop.run_forever()
