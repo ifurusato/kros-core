@@ -123,7 +123,7 @@ class Rfm69Radio(object):
     async def _receive(self, radio, f_is_enabled):
         self._log.info(Fore.GREEN + 'receive begin.')
         while f_is_enabled():
-            self._log.info(Fore.GREEN + 'receive loop.')
+            self._log.info(Fore.GREEN + Style.DIM + 'receive loop.')
             for _packet in radio.get_packets():
                 _rx_count = next(self._rx_counter)
                 self._log.info(Fore.GREEN + '[{:04d}] 🌎 packet received: {}'.format(_rx_count, _packet.to_dict()))
@@ -153,7 +153,7 @@ class Rfm69Radio(object):
             self._log.info(Fore.MAGENTA + Style.BRIGHT + 'acknowledgement received.'.format(_ack_count))
         else:
             _no_ack_count = next(self._no_ack_counter)
-            self._log.info(Fore.MAGENTA + '[{:04d}] no acknowledgement.'.format(_no_ack_count))
+            self._log.info(Fore.MAGENTA + Style.DIM + '[{:04d}] no acknowledgement.'.format(_no_ack_count))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def enable(self):
