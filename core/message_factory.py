@@ -28,8 +28,8 @@ class MessageFactory(object):
         self._log = Logger("msgfactory", level)
         if message_bus is None:
             raise ValueError('null message bus argument.')
-        elif not isinstance(message_bus, MessageBus):
-            raise ValueError('wrong type for message bus: {}'.format(type(message_bus)))
+#       elif not isinstance(message_bus, MessageBus):
+#           raise ValueError('wrong type for message bus: {}'.format(type(message_bus)))
         self._message_bus = message_bus
         self._log.info('ready.')
 

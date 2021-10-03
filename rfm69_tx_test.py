@@ -48,6 +48,7 @@ from colorama import init, Fore, Style
 init(autoreset=True)
 
 from core.config_loader import ConfigLoader
+from core.message_factory import MessageFactory
 from core.logger import Logger, Level
 
 # execution handler ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -60,12 +61,13 @@ def signal_handler(signal, frame):
 class Rfm69Radio(object):
     '''
     '''
-    def __init__(self, config, message_bus, level=Level.INFO):
+    def __init__(self, config, message_bus, message_factory, level=Level.INFO):
         self._log = Logger('radio', level)
         if config is None:
             raise ValueError('no configuration provided.')
         _cfg = config['kros'].get('hardware').get('rfm69_radio')
-        self._message_bus = message_bus
+        self._message_bus     = message_bus
+        self._message_factory = message_factory
         self._loop = self._message_bus.loop
         # configuration ..............
         self._frequency_name  = _cfg.get('frequency') # either 'FREQ_868MHZ' or default to FREQ_915MHZ
@@ -89,12 +91,14 @@ class Rfm69Radio(object):
         self._log.info('interrupt pin:  \t{:d}'.format(self._int_pin))
         self._reset_pin  = _cfg.get('reset_pin') # BOARD 29/GPIO 5
         self._log.info('reset pin:      \t{:d}'.format(self._reset_pin))
+        self._attempts   = _cfg.get('attempts') # 3 attempts default
+        self._log.info('attempts:       \t{:d}'.format(self._attempts))
+        self._wait_time_ms = _cfg.get('wait_time_ms') # 100ms default
+        self._log.info('wait time:      \t{:d}ms'.format(self._wait_time_ms))
         self._prom_mode  = _cfg.get('promiscuous_mode') # bool
         self._log.info('listen mode:    \t{}'.format('promiscuous' if self._prom_mode else 'normal'))
         self._tx_enabled = _cfg.get('transmit_enabled')
         self._log.info('operation mode: \t{}'.format('transmit/receive' if self._tx_enabled else 'receive only'))
-        self._attempts   = 5   # 3 attempts default
-        self._wait_time_ms = 100 # 100ms default
         self._counter    = itertools.count()
         self._enabled    = False
         # configure reset pin for radio (LOW is enabled)
@@ -136,15 +140,17 @@ class Rfm69Radio(object):
             self._log.info('🤡 no radio available.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    async def receiver(self, radio, f_is_enabled):
-        self._log.info(Fore.GREEN + 'receiver begin.')
+    async def receive(self, radio, f_is_enabled):
+        self._log.info(Fore.GREEN + 'receive begin.')
         while f_is_enabled():
-            self._log.info(Fore.GREEN + 'receiver loop.')
-            for packet in radio.get_packets():
-                self._log.info(Fore.GREEN + '🌎 packet received: {}'.format(packet.to_dict()))
+            self._log.info(Fore.GREEN + 'receive loop.')
+            for _packet in radio.get_packets():
+                self._log.info(Fore.GREEN + '🌎 packet received: {}'.format(_packet.to_dict()))
+                _message = self.message_factory.create_message(Event.RADIO_PACKET, _packet)
+                await self._message_bus.publish_message(self, _message)
 #               await call_API("http://httpbin.org/post", packet)
             await asyncio.sleep(1.0)
-        self._log.info(Fore.GREEN + 'receiver end.')
+        self._log.info(Fore.GREEN + 'receive end.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def transmit(self, radio, f_is_enabled):
@@ -176,12 +182,11 @@ class Rfm69Radio(object):
             self._log.warning("already enabled.")
             return
         self._enabled = True
+        time.sleep(1.0)
         _radio = None
-
 
         try:
 
-            time.sleep(1.0)
             self._log.info("📡 establishing link to radio...")
             with Radio(self._frequency,              \
                        spiBus = self._spi_bus,       \
@@ -196,8 +201,8 @@ class Rfm69Radio(object):
                        promiscuousMode = self._prom_mode ) as _radio:
                 self._log.info("📡 established link to radio.")
 
-                self._log.info('creating receiver task...')
-                self._loop.create_task(self.receiver(_radio, lambda: self._enabled))
+                self._log.info('creating receive task...')
+                self._loop.create_task(self.receive(_radio, lambda: self._enabled))
                 self._log.info('creating transmit task...')
                 self._loop.create_task(self.transmit(_radio, lambda: self._enabled))
 
@@ -228,16 +233,26 @@ class FakeMessageBus():
     def __init__(self, level=Level.INFO):
         self._log = Logger('fake-bus', level)
         self._loop = asyncio.get_event_loop()
+        self._publish_delay_sec = 0.1
+        self._subscribers = []
         self._log.info('ready.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def loop(self):
-        '''
-        Low level API, do not use.
-        '''
         return self._loop
 
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    @property
+    def subscribers(self):
+        return self._subscribers
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    async def publish_message(self, message):
+        self._log.info('🍉 published message: {}'.format(message))
+        await asyncio.sleep(self._publish_delay_sec)
+
+    # end FakeMessageBus ..............................
 
 
 # main ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -247,12 +262,14 @@ def main(argv):
     signal.signal(signal.SIGINT, signal_handler)
 
     # read YAML configuration
-    _loader = ConfigLoader(Level.INFO)
+    _level = Level.INFO
+    _loader = ConfigLoader(_level)
     filename = 'config.yaml'
     _config = _loader.configure(filename)
 
     _message_bus = FakeMessageBus()
-    _radio = Rfm69Radio(_config, _message_bus)
+    _message_factory = MessageFactory(_message_bus, _level)
+    _radio = Rfm69Radio(_config, _message_bus, _level)
     _radio.enable()
 
 # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
