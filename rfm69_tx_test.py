@@ -11,45 +11,8 @@
 #
 # An asynchronous RFM69 transceiver.
 #
-# Uses RFM69 library:  https://rpi-rfm69.readthedocs.io/en/latest/
-# Installed via:
-#
-#    sudo pip3 install rpi-rfm69
-#
-# Installed at:  /usr/local/lib/python3.8/site-packages/RFM69/radio.py
-#
+# See notes at bottom of file.
 # pylint: disable=missing-function-docstring,unused-import,redefined-outer-name
-# ......................................
-# Notes on the Raspberry Pi Wiring:
-#
-#  RFM69 ___ BOARD pin ___
-#  EN:       (default high, not connected)
-#  G0:       28 (ID_SC)
-#  SCK:      23 (SCLK, GPIO 11)
-#  MISO:     21 (MISO, GPIO 9)
-#  MOSI:     19 (MOSI, GPIO 10)
-#  CS:       24 (CE0, GPIO 8)
-#  RST:      29 (GPIO 5)
-#
-# ......................................
-# Notes on the Pimoroni Breakout Garden:
-#
-# On the single SPI slot version:
-#
-# The SPI slot on Breakout Garden Mini uses:
-# * chip select 1 (BCM 7) and
-# * the GPIO pin (BCM 19) for things like LCD backlights
-#
-# On the double SPI slot version:
-#
-# The top/back slot (closest to the Breakout Garden logo) uses:
-# * chip select 0 (BCM 8) and
-# * the GPIO pin (BCM 18) for things like LCD backlights
-#
-# The bottom/front slot uses
-# * chip select 1 (BCM 7) and
-# * the GPIO pin (BCM 19) for things like LCD backlights
-#
 
 import sys, signal, time, traceback, itertools
 import asyncio
@@ -269,9 +232,50 @@ class FakeMessageBus():
 
     # end FakeMessageBus ..............................
 
+''' ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ NOTES ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Uses RFM69 library:  https://rpi-rfm69.readthedocs.io/en/latest/
+
+Installed via:
+
+   sudo pip3 install rpi-rfm69
+
+Installed at:  /usr/local/lib/python3.8/site-packages/RFM69/radio.py
+
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+Notes on the Raspberry Pi Wiring:
+
+  __RFM69_____BOARD pin____
+    EN        (not connected, default high)
+    G0        28 (ID_SC)
+    SCK       23 (SCLK, GPIO 11)
+    MISO      21 (MISO, GPIO 9)
+    MOSI      19 (MOSI, GPIO 10)
+    CS        24 (CE0, GPIO 8)
+    RST       29 (GPIO 5)
+
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+Notes on the Pimoroni Breakout Garden:
+
+On the single SPI slot version:
+
+The SPI slot on Breakout Garden Mini uses:
+  * chip select 1 (BCM 7) and
+  * the GPIO pin (BCM 19) for things like LCD backlights
+
+On the double SPI slot version:
+
+The top/back slot (closest to the Breakout Garden logo) uses:
+  * chip select 0 (BCM 8) and
+  * the GPIO pin (BCM 18) for things like LCD backlights
+
+The bottom/front slot uses
+  * chip select 1 (BCM 7) and
+  * the GPIO pin (BCM 19) for things like LCD backlights
+
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈ '''
 
 # main ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
 def main(argv):
 
     signal.signal(signal.SIGINT, signal_handler)
@@ -290,8 +294,5 @@ def main(argv):
 # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 if __name__== "__main__":
     main(sys.argv[1:])
-
-# prevent Python script from exiting abruptly
-#signal.pause()
 
 #EOF
