@@ -182,6 +182,8 @@ class Rfm69Radio(object):
             self._log.warning("already enabled.")
             return
         self._enabled = True
+        self._log.info("📡 enabling radio...")
+        GPIO.output(self._reset_pin, GPIO.LOW)
         time.sleep(1.0)
         _radio = None
 
