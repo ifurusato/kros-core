@@ -19,6 +19,17 @@
 # Installed at:  /usr/local/lib/python3.8/site-packages/RFM69/radio.py
 #
 # pylint: disable=missing-function-docstring,unused-import,redefined-outer-name
+# ......................................
+# Notes on the Raspberry Pi Wiring:
+#
+#  RFM69 ___ BOARD pin ___
+#  EN:       (default high, not connected)
+#  G0:       28 (ID_SC)
+#  SCK:      23 (SCLK, GPIO 11)
+#  MISO:     21 (MISO, GPIO 9)
+#  MOSI:     19 (MOSI, GPIO 10)
+#  CS:       24 (CE0, GPIO 8)
+#  RST:      29 (GPIO 5)
 #
 # ......................................
 # Notes on the Pimoroni Breakout Garden:
@@ -93,12 +104,14 @@ class Rfm69Radio(object):
         self._log.info('reset pin:      \t{:d}'.format(self._reset_pin))
         self._attempts   = _cfg.get('attempts') # 3 attempts default
         self._log.info('attempts:       \t{:d}'.format(self._attempts))
-        self._wait_time_ms = _cfg.get('wait_time_ms') # 100ms default
-        self._log.info('wait time:      \t{:d}ms'.format(self._wait_time_ms))
+        self._timeout_ms = _cfg.get('timeout_ms') # 100ms default
+        self._log.info('wait time:      \t{:d}ms'.format(self._timeout_ms))
         self._prom_mode  = _cfg.get('promiscuous_mode') # bool
         self._log.info('listen mode:    \t{}'.format('promiscuous' if self._prom_mode else 'normal'))
         self._tx_enabled = _cfg.get('transmit_enabled')
         self._log.info('operation mode: \t{}'.format('transmit/receive' if self._tx_enabled else 'receive only'))
+        self._auto_acknowledge = False
+        self._high_power = False
         self._counter    = itertools.count()
         self._enabled    = False
         # configure reset pin for radio (LOW is enabled)
@@ -166,7 +179,7 @@ class Rfm69Radio(object):
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def send(self, radio, message):
         self._log.info(Fore.MAGENTA + 'sending message: \'{}\' to address {}'.format(message, self._rx_id))
-        if radio.send(self._rx_id, message, attempts=self._attempts, waitTime=self._wait_time_ms):
+        if radio.send(self._rx_id, message, attempts=self._attempts, waitTime=self._timeout_ms):
             self._log.info(Fore.MAGENTA + Style.BRIGHT + 'acknowledgement received.')
         else:
             self._log.info(Fore.MAGENTA + 'no acknowledgement.')
@@ -190,16 +203,16 @@ class Rfm69Radio(object):
         try:
 
             self._log.info("📡 establishing link to radio...")
-            with Radio(self._frequency,              \
-                       spiBus = self._spi_bus,       \
-                       spiDevice = self._spi_device, \
-                       interruptPin = self._int_pin, \
-                       resetPin = self._reset_pin,   \
-                       nodeID = self._node_id,       \
-                       networkID = self._network_id, \
-                       auto_acknowledge = True,      \
-                       isHighPower = True,           \
-                       verbose = True,               \
+            with Radio(self._frequency,
+                       spiBus = self._spi_bus,
+                       spiDevice = self._spi_device,
+                       interruptPin = self._int_pin,
+                       resetPin = self._reset_pin,
+                       nodeID = self._node_id,
+                       networkID = self._network_id,
+                       auto_acknowledge = self._auto_acknowledge,
+                       isHighPower = self._high_power,
+                       verbose = True,
                        promiscuousMode = self._prom_mode ) as _radio:
                 self._log.info("📡 established link to radio.")
 

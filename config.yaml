@@ -111,7 +111,7 @@ kros:
              interrupt_pin:          18          # BOARD pin number for interrupt (GPIO 24)
              reset_pin:              29          # BOARD pin number for reset (GPIO 5)
              attempts:                5          # number of connection attempts before giving up
-             wait_time_ms:          100          # wait time until giving up
+             timeout_ms:            250          # wait time until giving up
              promiscuous_mode:     True          # listen for any traffic?
              transmit_enabled:     True          # transmit or only receive?
     geometry:                                    # robot geometry (e.g., KR01)
