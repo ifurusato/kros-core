@@ -45,11 +45,6 @@ kros:
             cruising_speed:        'SLOW'        # cruising speed (recovery speed)
             cruise_wait_ticks:        3          # how many ticks to wait before cruising again
         swerve:
-            min_distance:            25.0        # minimum distance in cm
-            max_distance:            60.0        # maximum distance in cm
-            min_velocity:             0.0        # minimum motor target velocity
-            max_velocity:           100.0        # maximum motor target velocity
-            cruising_speed:        'SLOW'        # cruising speed (recovery speed)
             cruise_wait_ticks:        3          # how many ticks to wait before cruising again
         moth:
             anti_moth:              False        # moth or anti-moth
