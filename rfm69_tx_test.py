@@ -24,6 +24,7 @@ init(autoreset=True)
 from core.config_loader import ConfigLoader
 from core.message_factory import MessageFactory
 from core.logger import Logger, Level
+from mock.message_bus import MockMessageBus
 
 # execution handler ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 def signal_handler(signal, frame):
@@ -206,35 +207,6 @@ class Rfm69Radio(object):
 
     # end class ........................
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-class FakeMessageBus():
-    '''
-    Mocks the Message Bus.
-    '''
-    def __init__(self, level=Level.INFO):
-        self._log = Logger('fake-bus', level)
-        self._loop = asyncio.get_event_loop()
-        self._publish_delay_sec = 0.1
-        self._subscribers = []
-        self._log.info('ready.')
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    @property
-    def loop(self):
-        return self._loop
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    @property
-    def subscribers(self):
-        return self._subscribers
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    async def publish_message(self, message):
-        self._log.info('🍉 published message: {}'.format(message))
-        await asyncio.sleep(self._publish_delay_sec)
-
-    # end FakeMessageBus ..............................
-
 ''' ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ NOTES ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Uses RFM69 library:  https://rpi-rfm69.readthedocs.io/en/latest/
@@ -289,7 +261,7 @@ def main(argv):
     filename = 'config.yaml'
     _config = _loader.configure(filename)
 
-    _message_bus = FakeMessageBus()
+    _message_bus = MockMessageBus()
     _message_factory = MessageFactory(_message_bus, _level)
     _radio = Rfm69Radio(_config, _message_bus, _level)
     _radio.enable()

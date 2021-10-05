@@ -49,8 +49,8 @@ class Subscriber(Component, FiniteStateMachine):
         if not isinstance(config, dict):
             raise ValueError('wrong type for config argument: {}'.format(type(name)))
         self._config = config
-        if not isinstance(message_bus, MessageBus):
-            raise ValueError('wrong type for message bus argument: {}'.format(type(message_bus)))
+#       if not isinstance(message_bus, MessageBus):
+#           raise ValueError('wrong type for message bus argument: {}'.format(type(message_bus)))
         self._message_bus = message_bus
         if not isinstance(suppressed, bool):
             raise ValueError('wrong type for suppressed argument: {}'.format(type(suppressed)))
