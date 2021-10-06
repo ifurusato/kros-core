@@ -20,11 +20,11 @@ init(autoreset=True)
 
 import core.globals as globals # needed for lambda support
 from core.logger import Logger, Level
-from core.scripts import ScriptLibrary, Scripts, Script, Statement
 from core.system import System
 from core.util import Util
 from core.event import Event
 from core.publisher import Publisher
+from core.macros import MacroLibrary, Macros, Macro, Statement
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class MacroPublisher(Publisher):
@@ -47,7 +47,6 @@ class MacroPublisher(Publisher):
         if not isinstance(level, Level):
             raise ValueError('wrong type for log level argument: {}'.format(type(level)))
         self.__callbacks        = []
-        self.__scripts          = {}
         if callback:
             self.add_callback(callback)
         self._level             = level
@@ -61,15 +60,15 @@ class MacroPublisher(Publisher):
         self._log.info('quiescent loop frequency: {} Hz.'.format(_quiescent_loop_freq_hz))
         self._wait_limit_ms     = _cfg.get('wait_limit_ms') # the longest we will ever wait for anything
         self._log.info('wait limit: {:d}ms.'.format(self._wait_limit_ms))
-        self._load_scripts      = _cfg.get('load_scripts')
-        self._log.info('load scripts? {}'.format(self._load_scripts))
-        self._scripts_path      = _cfg.get('scripts_path')
-        self._log.info('scripts path: {}'.format(self._scripts_path))
-        self._library           = ScriptLibrary()
-        self._scripts           = Scripts()
+        self._load_macros       = _cfg.get('load_macros')
+        self._log.info('load macros? {}'.format(self._load_macros))
+        self._macro_path        = _cfg.get('macro_path')
+        self._log.info('macro path: {}'.format(self._macro_path))
+        self._library           = MacroLibrary()
+        self._macros            = Macros()
         self._counter           = itertools.count()
         # loop variables
-        self._script            = None
+        self._macro             = None
         self._statement         = None # placeholder
         self._start_time        = dt.now()
         self._log.info('ready.')
@@ -84,50 +83,50 @@ class MacroPublisher(Publisher):
         self._library.print_info()
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def create_script(self, name, description=None):
+    def create_macro(self, name, description=None):
         '''
-        Creates a new, empty script with the provided name, returning it to be
-        populated. This automatically adds it to the script library.
+        Creates a new, empty macro with the provided name, returning it to be
+        populated. This automatically adds it to the macro library.
         '''
-        _script = Script(name, description)
-        self._log.info('created script with name \'{}\'.'.format(name))
-        self.add_script_to_library(_script)
-        return _script
+        _macro = Macro(name, description)
+        self._log.info('created macro with name \'{}\'.'.format(name))
+        self.add_macro_to_library(_macro)
+        return _macro
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def add_script_to_library(self, script):
+    def add_macro_to_library(self, macro):
         '''
-        Adds the script to the script library.
+        Adds the macro to the macro library.
         '''
-        if isinstance(script, Script):
-            self._library.put(script)
-            self._log.info('added script \'{}\' to library.'.format(script.name))
+        if isinstance(macro, Macro):
+            self._library.put(macro)
+            self._log.info('added macro \'{}\' to library.'.format(macro.name))
         else:
-            raise TypeError('expected script.')
+            raise TypeError('expected macro.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def queue_script_by_name(self, name):
+    def queue_macro_by_name(self, name):
         '''
-        Adds the script (referenced by name) to the executable queue/stack.
+        Adds the macro (referenced by name) to the executable queue/stack.
         '''
-        self._log.info('🐰 locating script: {}; {:d} items in library.'.format(name, self._library.size))
-        _script = self._library.get(name)
-        _copy = deepcopy(_script)
-        self._log.info('🐰 deep-copied script: {} to {}.'.format(id(_script), id(_copy)))
-        if _script:
-            self._log.info('🐰 queueing script: {}; {:d} items in library.'.format(_copy.name, self._library.size))
-            self.queue_script(_copy)
-            self._log.info('🐰 queueed script: {}; {:d} items in library.'.format(_copy.name, self._library.size))
+        self._log.info('🐰 locating macro: {}; {:d} items in library.'.format(name, self._library.size))
+        _macro = self._library.get(name)
+        _copy = deepcopy(_macro)
+        self._log.info('🐰 deep-copied macro: {} to {}.'.format(id(_macro), id(_copy)))
+        if _macro:
+            self._log.info('🐰 queueing macro: {}; {:d} items in library.'.format(_copy.name, self._library.size))
+            self.queue_macro(_copy)
+            self._log.info('🐰 queueed macro: {}; {:d} items in library.'.format(_copy.name, self._library.size))
         else:
-            self._log.warning('count not find script: {}'.format(name))
+            self._log.warning('count not find macro: {}'.format(name))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def queue_script(self, script):
+    def queue_macro(self, macro):
         '''
-        Adds the script to the executable queue/stack.
+        Adds the macro to the executable queue/stack.
         '''
-        self._scripts.put(script)
-        self._log.info('queued script: {}'.format(script.name))
+        self._macros.put(macro)
+        self._log.info('queued macro: {}'.format(macro.name))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def add_callback(self, callback):
@@ -144,30 +143,29 @@ class MacroPublisher(Publisher):
         self.__callbacks.remove(callback)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def load_script_files(self):
+    def load_macro_files(self):
         '''
-        Loads the *.py script files from the ./script/ directory by executing
-        the files. If the scripts use the create_script() method the script
-        will automatically be added to the script library, otherwise the
-        add_script_to_library() method must be called.
+        Loads the *.py macro files from the ./macro/ directory by executing
+        the files. If the macros use the create_macro() method the new macro
+        will automatically be added to the macro library, otherwise the
+        add_macro_to_library() method must be called.
 
-        If called subsequently this will overwrite scripts in the library
+        If called subsequently this will overwrite macros in the library
         using the same name since the library is backed by a dictionary.
         '''
-        _path = self._scripts_path
-        self._log.info('loading scripts from path: {}'.format(_path))
-        for _file in Path(_path).glob('*.py'):
-#           self._log.heading('Load Macro Script', 'Loading file: {}'.format(_file))
+        self._log.info('loading macros from path: {}'.format(self._macro_path))
+        for _file in Path(self._macro_path).glob('*.py'):
+#           self._log.heading('Load Macro', 'Loading file: {}'.format(_file))
             self._log.info(Fore.WHITE + Style.BRIGHT + '{}'.format(Util.repeat('━', 72)))
-            self._log.info('loading script file: ' + Fore.YELLOW + '{} '.format(_file) + Fore.WHITE + Style.BRIGHT + '{}'.format(Util.repeat('┈', 50 - len(str(_file)))))
+            self._log.info('loading macro file: ' + Fore.YELLOW + '{} '.format(_file) + Fore.WHITE + Style.BRIGHT + '{}'.format(Util.repeat('┈', 50 - len(str(_file)))))
             try:
                 _split = os.path.split(_file)
                 _name = os.path.splitext(_split[1])[0]
                 exec(open(_file).read())
-                self._log.info('loaded script: ' + Fore.YELLOW + '{} '.format(_name) + Fore.WHITE + Style.BRIGHT + '{}\n'.format(Util.repeat('┈', 56 - len(_name))))
+                self._log.info('loaded macro: ' + Fore.YELLOW + '{} '.format(_name) + Fore.WHITE + Style.BRIGHT + '{}\n'.format(Util.repeat('┈', 56 - len(_name))))
             except Exception as e:
-                self._log.error('{} importing script: {}'.format(type(e), _file))
-        self._log.info('loading complete: {} scripts in library'.format(self._library.size))
+                self._log.error('{} importing macro: {}'.format(type(e), _file))
+        self._log.info('loading complete: {} macros in library'.format(self._library.size))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def enable(self):
@@ -177,8 +175,8 @@ class MacroPublisher(Publisher):
             else:
                 self._log.info('enabling...')
                 Publisher.enable(self)
-                if self._load_scripts:
-                    self.load_script_files()
+                if self._load_macros:
+                    self.load_macro_files()
                 self._log.info('creating task for macro processor loop... (enabled? {})'.format(self.enabled))
                 self._message_bus.loop.create_task(self._macro_listener_loop(lambda: self.enabled), name=MacroPublisher._LISTENER_LOOP_NAME)
                 self._log.info('enabled: macro loop task created.')
@@ -195,14 +193,14 @@ class MacroPublisher(Publisher):
         self._log.info('starting macro listener loop.')
         while f_is_enabled():
 
-            # check if there's either a running script or one available
-            if self._script or not self._scripts.empty(): # either we have a script or there is one available
+            # check if there's either a running macro or one available
+            if self._macro or not self._macros.empty(): # either we have a macro or there is one available
                 _count = next(self._counter)
-                if not self._script: # if we don't have a current script, pop one from the stack
-                    self._script = self._scripts.get()
-                # otherwise continue to execute the existing script...
-                if not self._statement: # if no existing statement, poll one from the script.
-                    self._statement = self._script.poll()
+                if not self._macro: # if we don't have a current macro, pop one from the stack
+                    self._macro = self._macros.get()
+                # otherwise continue to execute the existing macro...
+                if not self._statement: # if no existing statement, poll one from the macro.
+                    self._statement = self._macro.poll()
                     self._log.info(Fore.CYAN + 'event: ' + Fore.YELLOW + '{}:\t'.format(self._statement.label) + Fore.MAGENTA + 'duration: {:5.2f}ms'.format(self._statement.duration_ms))
                     self._start_time = dt.now()
                 # if there is an active statement waiting...
@@ -236,18 +234,18 @@ class MacroPublisher(Publisher):
                     self._log.info(Style.DIM + 'no active statement.')
                     pass
 
-                if not self._statement and self._script.empty():
-                    # we're finished with that script, so execute any callbacks...
+                if not self._statement and self._macro.empty():
+                    # we're finished with that macro, so execute any callbacks...
                     for _callback in self.__callbacks:
                         self._log.info('executing callback...')
                         _callback()
                     self.__callbacks.clear()
-                    self._script = None
+                    self._macro = None
 
                 # loop sleep ............................
                 await asyncio.sleep(self._loop_delay_sec)
             else:
-                # we just wait quietly for a script to show up.
+                # we just wait quietly for a macro to show up.
                 await asyncio.sleep(self._quiescent_delay_sec)
 
         # end of while loop ........................

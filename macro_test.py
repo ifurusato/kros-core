@@ -73,7 +73,7 @@ def test_macro_publisher():
         _message_factory = MessageFactory(_message_bus, _level)
 
         _macro_publisher = MacroPublisher(_config, _message_bus, _message_factory, callback=close_message_bus, level=Level.INFO)
-        _script = _macro_publisher.create_script('test')
+        _macro = _macro_publisher.create_macro('test')
         
         _event_queue = DeQueue(mode=DeQueue.QUEUE)
     
@@ -96,14 +96,14 @@ def test_macro_publisher():
             _duration_ms = 1000 + ( i * 1000 )
             if i % 2:
                 _event = _event_queue.poll()
-                _script.add_event(_event, _duration_ms)
+                _macro.add_event(_event, _duration_ms)
                 _log.info('🍅 added event...')
             else:
                 _func = lambda: _log.info('n={}'.format(i))
-                _script.add_function(_func, _duration_ms)
+                _macro.add_function(_func, _duration_ms)
                 _log.info('🍅 added function...')
 
-        _macro_publisher.queue_script(_script)
+        _macro_publisher.queue_macro(_macro)
 
         _log.info('🍅 enabling message bus...')
         _message_bus.enable()

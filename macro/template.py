@@ -9,7 +9,7 @@
 # created:  2021-09-29
 # modified: 2021-10-06
 #
-# A example template for a Script. Copy and modify this file.
+# A example template for a Macro. Copy and modify this file.
 #
 # Be careful defining global variables!
 #
@@ -24,21 +24,21 @@ _template_log = Logger('template-macro', Level.ERROR)
 _kros = globals.get('kros')
 if _kros:
     try:
-        _template_log.info('found KROS! begin loading script...')
+        _template_log.info('found KROS! begin loading macro...')
         _macro_publisher = _kros.get_macro_publisher()
         if _macro_publisher:
 
-            _script_name = 'template'
-            _script_description = 'a macro script template.' # optional
-            _script = _macro_publisher.create_script(_script_name, _script_description)
+            _macro_name = 'template'
+            _macro_description = 'a macro template.' # optional
+            _macro = _macro_publisher.create_macro(_macro_name, _macro_description)
 
             # move slow ahead for 3 seconds (duration argument is in milliseconds)
-            _script.add_event(Event.SLOW_AHEAD, 3000)
+            _macro.add_event(Event.SLOW_AHEAD, 3000)
             # come to a halt for 2.5 seconds
-            _script.add_event(Event.HALT, 2500)
+            _macro.add_event(Event.HALT, 2500)
             # print an emoji via a lambda function
             _func = lambda: globals.get('kros').get_logger().info('😛 Done!')
-            _script.add_function(_func, 1000)
+            _macro.add_function(_func, 1000)
             _template_log.info('loaded.')
 
         else:

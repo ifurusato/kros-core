@@ -7,7 +7,7 @@
 #
 # author:   altheim
 # created:  2021-09-23
-# modified: 2021-09-23
+# modified: 2021-10-07
 #
 # A collection of classes related to macro scripting.
 #
@@ -20,94 +20,94 @@ from core.event import Event
 from core.dequeue import DeQueue
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-class ScriptLibrary():
+class MacroLibrary():
     '''
-    A reference library for named Scripts.
+    A reference library for named Macros.
 
     '''
     def __init__(self, level=Level.INFO):
-        self._log = Logger('script-lib', level)
-        self._scripts = {}
+        self._log = Logger('macro-lib', level)
+        self._macros = {}
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def size(self):
-        return len(self._scripts)
+        return len(self._macros)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def empty(self):
         return self.size == 0
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def put(self, script):
+    def put(self, macro):
         '''
-        Add a Script to the dictionary.
+        Add a Macro to the dictionary.
         '''
-        if isinstance(script, Script):
-            self._scripts[script.name] = script
+        if isinstance(macro, Macro):
+            self._macros[macro.name] = macro
         else:
-            raise TypeError('expected script.')
+            raise TypeError('expected macro.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def get(self, name):
-        for _name, _script in self._scripts.items():
+        for _name, _macro in self._macros.items():
             if _name == name:
-                return _script
+                return _macro
         return None
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def print_info(self):
         if self.empty():
-            self._log.info('macro script library:\t' + Fore.YELLOW + 'empty.')
+            self._log.info('macro library:\t' + Fore.YELLOW + 'empty.')
         else:
-            self._log.info('macro script library:')
-            for _name, _script in self._scripts.items():
-                self._log.info(Fore.YELLOW + '\t{} '.format(_name) + Style.DIM + '({:d} statements)'.format(_script.size) 
-                        + Style.NORMAL + '{}'.format('\t: ' + _script.description if _script.description else ''))
+            self._log.info('macro library:')
+            for _name, _macro in self._macros.items():
+                self._log.info(Fore.YELLOW + '\t{} '.format(_name) + Style.DIM + '({:d} statements)'.format(_macro.size) 
+                        + Style.NORMAL + '{}'.format('\t: ' + _macro.description if _macro.description else ''))
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-class Scripts(DeQueue):
+class Macros(DeQueue):
     '''
-    A container for Scripts.
+    A container for Macros.
 
     '''
     def __init__(self):
-        self._scripts = DeQueue(mode=DeQueue.QUEUE)
+        self._macros = DeQueue(mode=DeQueue.QUEUE)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def size(self):
-        return self._scripts.size
+        return self._macros.size
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def empty(self):
         return self.size == 0
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def put(self, script):
+    def put(self, macro):
         '''
-        Add a Script to the dictionary.
+        Add a Macro to the dictionary.
         '''
-        self._scripts.put(script)
+        self._macros.put(macro)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def get(self):
-        return self._scripts.get()
+        return self._macros.get()
 
 #   # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-#   def get_script(self, name):
-#       for _script in self._scripts.iterator:
-#           if _script.name == name:
-#               return _script
+#   def get_macro(self, name):
+#       for _macro in self._macros.iterator:
+#           if _macro.name == name:
+#               return _macro
 #       return None
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-class Script(object):
+class Macro(object):
     '''
     A named, queued container for Statements.
 
-    :param name:              the name of the script
-    :param description:       an optional description of the script
+    :param name:              the name of the macro
+    :param description:       an optional description of the macro
     :param queue:             an optional initial queue
     :param statement_limit:   optionally limits the size of the queue (unlimited/-1 default)
     '''
@@ -162,13 +162,13 @@ class Script(object):
         self._queue.put(_statement)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def __deepcopy__(self, script):
-        print('❌ script: {}'.format(script))
-        _script = Script(self.name, self.description, self._queue)
-        for _key, _value in script.items():
+    def __deepcopy__(self, macro):
+        print('❌ macro: {}'.format(macro))
+        _macro = Macro(self.name, self.description, self._queue)
+        for _key, _value in macro.items():
             print('❌ key: {}; value: {}'.format(_key, _value))
-#       raise Exception('❌ unimplemented: {}'.format(script))
-        return _script
+#       raise Exception('❌ unimplemented: {}'.format(macro))
+        return _macro
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Statement(object):

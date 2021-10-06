@@ -9,7 +9,7 @@
 # created:  2021-09-29
 # modified: 2021-09-29
 #
-# Creates a test Script from a haphazard list of Events interjected with
+# Creates a test Macro from a haphazard list of Events interjected with
 # lambdas.
 #
 
@@ -28,12 +28,12 @@ _kros = globals.get('kros')
 if _kros:
     _start_time = dt.now()
     try:
-        _test_log.info('found KROS! begin loading script...')
+        _test_log.info('found KROS! begin loading macro...')
 
         _macro_publisher = _kros.get_macro_publisher()
         if _macro_publisher:
 
-            _script = _macro_publisher.create_script('test', 'a test of the emergency broadcast system. Remember, this is only a test.')
+            _macro = _macro_publisher.create_macro('test', 'a test of the emergency broadcast system. Remember, this is only a test.')
 
             # load event queue
             _event_queue = DeQueue(mode=DeQueue.QUEUE)
@@ -56,11 +56,11 @@ if _kros:
                 _duration_ms = 1000 + ( i * 1000 )
                 if i % 2:
                     _event = _event_queue.poll()
-                    _script.add_event(_event, _duration_ms)
+                    _macro.add_event(_event, _duration_ms)
                     _test_log.info('added event...')
                 else:
                     _func = lambda: _test_log.info('n={}'.format(i))
-                    _script.add_function(_func, _duration_ms)
+                    _macro.add_function(_func, _duration_ms)
                     _test_log.info('added function...')
 
         else:

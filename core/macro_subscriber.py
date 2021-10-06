@@ -29,7 +29,7 @@ class MacroSubscriber(Subscriber):
 
     '''
     A subscriber to macro events. This receives MACRO events and queues
-    the script from the MacroPublisher's script library for execution.
+    the macro from the MacroPublisher's macro library for execution.
 
     :param config:            the application configuration
     :param message_bus:       the message bus

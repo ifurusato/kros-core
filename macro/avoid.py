@@ -9,7 +9,7 @@
 # created:  2021-09-29
 # modified: 2021-09-29
 #
-# A example template for a Script. Copy and modify this file.
+# A example template for a Macro. Copy and modify this file.
 #
 
 import sys, traceback
@@ -23,29 +23,29 @@ _log = Logger('avoid-macro', Level.ERROR)
 _kros = globals.get('kros')
 if _kros:
     try:
-        _log.info('found KROS! begin loading script...')
+        _log.info('found KROS! begin loading macro...')
         _log.heading('Avoid Macro', 'An avoidance behaviour that backs away from an obstacle and turns.')
         _macro_publisher = _kros.get_macro_publisher()
         if _macro_publisher:
 
-            _script_name = 'avoid'
-            _script_description = 'a simple avoidance behaviour.' # optional
-            _script = _macro_publisher.create_script(_script_name, _script_description)
+            _macro_name = 'avoid'
+            _macro_description = 'a simple avoidance behaviour.' # optional
+            _macro = _macro_publisher.create_macro(_macro_name, _macro_description)
 
             # come to a stop for 1 second
-            _script.add_event(Event.STOP, 1000)
+            _macro.add_event(Event.STOP, 1000)
             # move half astern for 2.5 seconds (duration argument is in milliseconds)
-            _script.add_event(Event.HALF_ASTERN, 300)
+            _macro.add_event(Event.HALF_ASTERN, 300)
             # slow the reversing of the port motor to turn to starboard for a half second
-            _script.add_event(Event.INCREASE_PORT_VELOCITY, 100)
-            _script.add_event(Event.INCREASE_PORT_VELOCITY, 100)
-            _script.add_event(Event.INCREASE_PORT_VELOCITY, 100)
+            _macro.add_event(Event.INCREASE_PORT_VELOCITY, 100)
+            _macro.add_event(Event.INCREASE_PORT_VELOCITY, 100)
+            _macro.add_event(Event.INCREASE_PORT_VELOCITY, 100)
             # come to a halt for 2 seconds
-            _script.add_event(Event.HALT, 1000)
-            _script.add_event(Event.STOP, 50)
+            _macro.add_event(Event.HALT, 1000)
+            _macro.add_event(Event.STOP, 50)
             # print an emoji to the KROS log console via a lambda function
             _func = lambda: globals.get('kros').get_logger().info('😥 Done!')
-            _script.add_function(_func, 1)
+            _macro.add_function(_func, 1)
             _log.info('loaded.')
 
         else:
