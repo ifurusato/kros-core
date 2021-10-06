@@ -23,12 +23,12 @@ from core.logger import Logger, Level
 from core.dequeue import DeQueue
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-_log = Logger('test-macro', Level.INFO)
+_test_log = Logger('test-macro', Level.ERROR)
 _kros = globals.get('kros')
 if _kros:
     _start_time = dt.now()
     try:
-        _log.info('found KROS! begin loading script...')
+        _test_log.info('found KROS! begin loading script...')
 
         _macro_publisher = _kros.get_macro_publisher()
         if _macro_publisher:
@@ -50,32 +50,32 @@ if _kros:
             _event_queue.put(Event.EXPERIMENT_5)
 
             # alternately loads events and lambdas...
-            _log.info('loading...')
+            _test_log.info('loading...')
             _steps = 5
             for i in range(_steps):
                 _duration_ms = 1000 + ( i * 1000 )
                 if i % 2:
                     _event = _event_queue.poll()
                     _script.add_event(_event, _duration_ms)
-                    _log.info('added event...')
+                    _test_log.info('added event...')
                 else:
-                    _func = lambda: _log.info('n={}'.format(i))
+                    _func = lambda: _test_log.info('n={}'.format(i))
                     _script.add_function(_func, _duration_ms)
-                    _log.info('added function...')
+                    _test_log.info('added function...')
 
         else:
-            _log.warning('macro processor not available..')
+            _test_log.warning('macro processor not available..')
 
     except KeyboardInterrupt:
-        _log.info('Ctrl-C caught; exiting...')
+        _test_log.info('Ctrl-C caught; exiting...')
     except Exception as e:
-        _log.error('{} encountered, exiting: {}'.format(type(e), e))
+        _test_log.error('{} encountered, exiting: {}'.format(type(e), e))
         traceback.print_exc(file=sys.stdout)
     finally:
         _elapsed_ms = round(( dt.now() - _start_time ).total_seconds() * 1000.0)
-        _log.info('complete: elapsed: {:d}ms'.format(_elapsed_ms))
+        _test_log.info('complete: elapsed: {:d}ms'.format(_elapsed_ms))
 
 else:
-    _log.error('KROS not available.')
+    _test_log.error('KROS not available.')
 
 #EOF

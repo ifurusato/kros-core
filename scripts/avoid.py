@@ -19,7 +19,7 @@ from core.logger import Logger, Level
 from core.system import System
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-_log = Logger('avoid-macro', Level.INFO)
+_log = Logger('avoid-macro', Level.ERROR)
 _kros = globals.get('kros')
 if _kros:
     try:
@@ -49,7 +49,7 @@ if _kros:
             _log.info('loaded.')
 
         else:
-            _log.warning('macro processor not available..')
+            _log.error('macro processor not available..')
 
     except Exception as e:
         _log.error('{} encountered, exiting: {}'.format(type(e), e))

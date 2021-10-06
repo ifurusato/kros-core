@@ -59,6 +59,7 @@ _external_clock = None
 
 print('creating Swerve...')
 _swerve = Swerve(_config, _message_bus, _message_factory, _motor_ctrl, _external_clock, suppressed=True, enabled=True, level=Level.INFO)
+_swerve._reverse = False # ignore config
 print('created Swerve.')
 
 _limit = 256

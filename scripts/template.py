@@ -7,9 +7,11 @@
 #
 # author:   altheim
 # created:  2021-09-29
-# modified: 2021-09-29
+# modified: 2021-10-06
 #
 # A example template for a Script. Copy and modify this file.
+#
+# Be careful defining global variables!
 #
 
 import sys, traceback
@@ -18,11 +20,11 @@ import core.globals as globals
 from core.logger import Logger, Level
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-_log = Logger('template-macro', Level.INFO)
+_template_log = Logger('template-macro', Level.ERROR)
 _kros = globals.get('kros')
 if _kros:
     try:
-        _log.info('found KROS! begin loading script...')
+        _template_log.info('found KROS! begin loading script...')
         _macro_publisher = _kros.get_macro_publisher()
         if _macro_publisher:
 
@@ -37,17 +39,17 @@ if _kros:
             # print an emoji via a lambda function
             _func = lambda: globals.get('kros').get_logger().info('😛 Done!')
             _script.add_function(_func, 1000)
-            _log.info('loaded.')
+            _template_log.info('loaded.')
 
         else:
-            _log.warning('macro processor not available..')
+            _template_log.warning('macro processor not available..')
 
     except Exception as e:
-        _log.error('{} encountered, exiting: {}'.format(type(e), e))
+        _template_log.error('{} encountered, exiting: {}'.format(type(e), e))
         traceback.print_exc(file=sys.stdout)
     finally:
         pass
 else:
-    _log.error('KROS not available.')
+    _template_log.error('KROS not available.')
 
 #EOF

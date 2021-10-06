@@ -162,7 +162,7 @@ class Motor(Component):
 
         This is a function that alters the target velocity as a multiplier.
         '''
-        self._log.info(Fore.MAGENTA + 'adding \'{}\' lambda to motor...'.format(name))
+        self._log.info(Fore.MAGENTA + 'adding \'{}\' lambda to motor;\t'.format(name) + ' type: {}'.format(type(lambda_function)))
         if name in self.__velocity_lambdas:
             self._log.warning('motor already contains a \'{}\' lambda.'.format(name))
         self.__velocity_lambdas[name] = lambda_function
@@ -325,11 +325,11 @@ class Motor(Component):
             if self._slew_limiter and self._slew_limiter.is_active:
                 _current_target_velocity = self._slew_limiter.limit(self.velocity, _current_target_velocity)
 
-            if len(self.__velocity_lambdas) > 0:
+#           if len(self.__velocity_lambdas) > 0:
 #               self._log.info(Fore.MAGENTA + 'processing {:d} lambdas...'.format(len(self.__velocity_lambdas)))
-                for _name, _lambda in self.__velocity_lambdas.items():
-#                   self._log.info(Fore.MAGENTA + 'processing {} lambda for {} motor.'.format(_name, self._orientation.label))
-                    _current_target_velocity = _lambda * _current_target_velocity
+#               for _name, _lambda in self.__velocity_lambdas.items():
+#                   self._log.info(Fore.WHITE + '🌼 targ_vel: {}; {} lambda for {} motor; lambda type: {}; value: {}'.format( _current_target_velocity, _name, self._orientation.label, type(_lambda), _lambda))
+#                   _current_target_velocity = _lambda * _current_target_velocity
 
             # use velocity clipper as a sanity checker
             _current_target_velocity = self._velocity_clip(_current_target_velocity)

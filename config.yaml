@@ -29,8 +29,8 @@ kros:
         enable_bumper_subscriber:    False       # bumper events subscriber
         enable_infrared_subscriber:   True       # infrared events subscriber
     behaviour:
-        enable_avoid_behaviour:       True       # enable avoidance behaviour
-        enable_roam_behaviour:        True       # enable roam behaviour
+        enable_avoid_behaviour:      False       # enable avoidance behaviour
+        enable_roam_behaviour:       False       # enable roam behaviour
         enable_swerve_behaviour:      True       # enable swerve behaviour
         enable_moth_behaviour:       False       # enable moth behaviour
         enable_sniff_behaviour:      False       # enable sniff behaviour
@@ -45,7 +45,10 @@ kros:
             cruising_speed:        'SLOW'        # cruising speed (recovery speed)
             cruise_wait_ticks:        3          # how many ticks to wait before cruising again
         swerve:
-            cruise_wait_ticks:        3          # how many ticks to wait before cruising again
+            reverse:               True          # reverse effect of output function
+            tolerance:             20.0          # deadband tolerance as percentage
+            multiplier:             1.0          # multiplier on output function
+            tick_modulo:              2          # divider for frequency off external clock
         moth:
             anti_moth:              False        # moth or anti-moth
         sniff:
