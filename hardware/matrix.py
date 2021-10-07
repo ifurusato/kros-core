@@ -14,7 +14,7 @@ import sys, time
 import importlib.util
 from threading import Thread
 from colorama import init, Fore, Style
-init()
+init(autoreset=True)
 
 from core.logger import Level, Logger
 from core.orient import Orientation
@@ -27,7 +27,7 @@ try:
     _MATRIX11x7_IMPORTED = True
 #   print('imported Matrix11x7.')
 except ImportError:
-    print("This script requires the matrix11x7 module\nInstall with: pip3 install --user matrix11x7")
+    print(Fore.RED + 'This script requires the matrix11x7 module\nInstall with: pip3 install --user matrix11x7')
     _MATRIX11x7_IMPORTED = False
 
 # ..............................................................................

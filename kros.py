@@ -230,7 +230,8 @@ class KROS(Component, FiniteStateMachine):
 
         _enable_event_publisher = _cfg.get('enable_event_publisher') or 'e' in _pubs
         if _enable_event_publisher:
-            self._event_publisher = EventPublisher(self._config, self._message_bus, self._message_factory, self._motor_ctrl, self._system, level=self._level)
+            self._event_publisher = EventPublisher(self._config, self._message_bus, self._message_factory, self._motor_ctrl,
+                    self._system, level=self._level)
             if _cfg.get('enable_velocity_publisher'):
                 self._log.warning('key event and potentiometer publishers both enabled; using only key events.')
         if not _enable_event_publisher: # we only enable potentiometer publishers if event publisher isn't available
@@ -267,11 +268,8 @@ class KROS(Component, FiniteStateMachine):
 
         _use_experiment_manager = self._config['kros'].get('component').get('enable_experimental') or Util.is_true(arguments.experimental)
         if _use_experiment_manager:
-            self._log.info(Fore.YELLOW + '🍟 1. enabling experiment manager  ......................')
             self._experiment_mgr = ExperimentManager(self._config, level=self._level)
-            self._log.info(Fore.YELLOW + '🍟 2. enabled experiment manager  .......................')
-        else:
-            self._log.info(Fore.YELLOW + '🍟 3. did not enable experimental mode.  ................')
+            self._log.info(Fore.YELLOW + 'enabled experiment manager.')
 
         # create behaviours ................................
 
@@ -283,11 +281,14 @@ class KROS(Component, FiniteStateMachine):
             _bcfg = self._config['kros'].get('behaviour')
             # create and register behaviours (listed in priority order)
             if _bcfg.get('enable_avoid_behaviour'):
-                self._avoid  = Avoid(self._config, self._message_bus, self._message_factory, self._motor_ctrl, external_clock=self._ext_clock, level=self._level)
+                self._avoid  = Avoid(self._config, self._message_bus, self._message_factory, self._motor_ctrl, 
+                        external_clock=self._ext_clock, level=self._level)
             if _bcfg.get('enable_roam_behaviour'):
-                self._roam   = Roam(self._config, self._message_bus, self._message_factory, self._motor_ctrl, external_clock=self._ext_clock, level=self._level)
+                self._roam   = Roam(self._config, self._message_bus, self._message_factory, self._motor_ctrl,
+                        external_clock=self._ext_clock, level=self._level)
             if _bcfg.get('enable_swerve_behaviour'):
-                self._swerve = Swerve(self._config, self._message_bus, self._message_factory, self._motor_ctrl, external_clock=self._ext_clock, level=self._level)
+                self._swerve = Swerve(self._config, self._message_bus, self._message_factory, self._motor_ctrl,
+                        external_clock=self._ext_clock, level=self._level)
             if _bcfg.get('enable_moth_behaviour'):
                 self._moth   = Moth(self._config, self._message_bus, self._message_factory, self._motor_ctrl, self._level)
             if _bcfg.get('enable_sniff_behaviour'):

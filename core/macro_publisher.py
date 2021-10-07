@@ -121,6 +121,14 @@ class MacroPublisher(Publisher):
             self._log.warning('count not find macro: {}'.format(name))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def has_macro(self, name):
+        '''
+        Returns True if a macro with the provided name is available.
+        '''
+        _macro = self._library.get(name)
+        return _macro != None
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def queue_macro(self, macro):
         '''
         Adds the macro to the executable queue/stack.

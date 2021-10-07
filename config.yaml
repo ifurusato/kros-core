@@ -22,14 +22,14 @@ kros:
         enable_event_publisher:       True       # keyboard robot simulator (required for running CLI)
         enable_battery_publisher:    False       # battery check publisher
         enable_velocity_publisher:   False       # velocity control potentiometer publisher
-        enable_macro_publisher:       True       # macro processor/publisher
+        enable_macro_publisher:      False       # macro processor/publisher (loads external macro scripts)
         # subscribers ............................
         enable_system_subscriber:     True       # system events subscriber
         enable_motor_subscriber:      True       # motor events subscriber
         enable_bumper_subscriber:    False       # bumper events subscriber
         enable_infrared_subscriber:   True       # infrared events subscriber
     behaviour:
-        enable_avoid_behaviour:      False       # enable avoidance behaviour
+        enable_avoid_behaviour:       True       # enable avoidance behaviour
         enable_roam_behaviour:       False       # enable roam behaviour
         enable_swerve_behaviour:      True       # enable swerve behaviour
         enable_moth_behaviour:       False       # enable moth behaviour

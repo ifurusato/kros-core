@@ -26,7 +26,7 @@ from behave.behaviour import Behaviour
 from behave.trigger_behaviour import TriggerBehaviour
 from hardware.motor_controller import MotorController
 from hardware.i2c_scanner import I2CScanner
-# also see imports in _connect()
+# see additional imports in _connect()
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Swerve(Behaviour):
@@ -43,14 +43,13 @@ class Swerve(Behaviour):
     by the port and starboard (oblique) infrared sensors, i.e., the distance
     to an obstacle in cm. If no obstacle is perceived within the range of
     either sensor, using a configured hysteresis threshold that sets the
-    offset to zero to minimise meandering along a target path.
+    offset to zero when the difference is small, to minimise meandering along
+    a target path.
 
     The Swerve behaviour is by default suppressed.
 
     NOTES ....................
 
-    This is a Subscriber to INFRARED_PORT and INFRARED_STARBOARD events,
-    using the two to create an offset between them used as a steering offset.
     This is implemented by adding a lambda function multiplier into each of
     the Motor's update_target_velocity methods, with the offset altering the
     balance of forward motion to port or starboard proportionate to the offset.
@@ -89,14 +88,17 @@ class Swerve(Behaviour):
         self._config = config
         _cfg = self._config['kros'].get('behaviour').get('swerve')
         self._modulo     = _cfg.get('tick_modulo') # 10 # modulo on ticks
+
         # comparison configuration .............
         self._reverse    = _cfg.get('reverse') # reverses the effect of the differential
         self._multiplier = _cfg.get('multiplier') # 1.0
+
         # clipping lambda
         _minimum_output  = 0.0
         _maximum_output  = 255
         self._clip = lambda n: _minimum_output if n <= _minimum_output else _maximum_output if n >= _maximum_output else n
         self._ranger     = Ranger(_minimum_output, _maximum_output, 0.0, 1.0)
+
         # we have ten columns and 25.5 is 10% of 255, but we want a wide deadband
         _percent_tolerance = _cfg.get('tolerance')
         self._abs_tol   = ( _percent_tolerance / 100.0 ) * 255.0
@@ -106,15 +108,21 @@ class Swerve(Behaviour):
         self._offset_stbd = 0.2
         self._port_velocity_function = lambda : self.offset_port
         self._stbd_velocity_function = lambda : self.offset_stbd
-
-        self._percent_ranger = Ranger(-1.0, 1.0, 0, 100)
         self._ioe       = None
         self._ifs       = None
         self._matrices  = None
         self._connected = False
-        self._counter   = itertools.count()
         self.add_events([ Event.INFRARED_PORT, Event.INFRARED_STBD ])
+        # used for matrix percentage calculation only .....
+        self._ratio_multiplier = 1.0
+        self._percent_ranger = Ranger(-1.0, 1.0, 0, 100)
+        self._counter   = itertools.count()
         self._log.info('ready.')
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    @property
+    def connected(self):
+        return self._connected
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
@@ -170,68 +178,51 @@ class Swerve(Behaviour):
         the lambda functions on the motors.
         '''
         if not self.suppressed:
-            self._log.debug('tick; suppressed: {};\t'.format(self.suppressed))
-            self._log.debug('swerving;\t'
+            _count = next(self._counter)
+            self._log.debug('[{:04d}] swerve;\t'.format(_count)
                     + Fore.RED   + 'port: {:5.2f}cm/s;\t'.format(self._port_motor.velocity)
                     + Fore.GREEN + 'stbd: {:5.2f}cm/s'.format(self._stbd_motor.velocity))
-
-            _count = next(self._counter)
             if _count % self._modulo == 0:
-
                 try:
 
                     _port_raw = self._ioe.get_port_ir_value()
                     _stbd_raw = self._ioe.get_stbd_ir_value()
-
-                    self._offset_port, self._offset_stbd = self._compare(_port_raw, _stbd_raw)
-#                   self._compare(_port_raw, _stbd_raw)
-
                     _port_cm  = self._ifs.convert_to_distance(_port_raw)
                     _stbd_cm  = self._ifs.convert_to_distance(_stbd_raw)
 
-                    # used for matrices only .....
-                    _port_pc  = _port_raw / 255.0
-                    _stbd_pc  = _stbd_raw / 255.0
-                    _raw_diff = _port_raw - _stbd_raw
-                    self._ratio_multiplier = 1.0
-                    _ratio    = ( _port_pc - _stbd_pc ) * self._ratio_multiplier
- 
-                    _percent  = self._percent_ranger.convert(_ratio)
-#                   self._log.info(Fore.YELLOW + 'RATIO: {:5.2f}; PERCENT: {:5.2f} '.format(_ratio, _percent))
+                    # calculate offsets based on differential of port to starboard values
+                    self._offset_port, self._offset_stbd = self._compare(_port_raw, _stbd_raw)
 
-                    if self._offset_port == 0.0 and self._offset_stbd == 0: # all things being equal
+                    if self._offset_port == 0.0 and self._offset_stbd == 0:
+                        # then they're close enough to each other (within tolerance) to consider balanced
                         if self._matrices:
                             self._matrices.clear_all()
                         self._log.info('[{:04d}] (=) '.format(_count)
-                                + Fore.RED    + Style.DIM + 'PORT: {:6.3f} / {:6.3f}cm / '.format(_port_raw, _port_cm) + Fore.YELLOW + ' {:5.2f}\t'.format(self._offset_port)
-                                + Fore.GREEN  + Style.DIM + 'STBD: {:6.3f} / {:6.3f}cm / '.format(_stbd_raw, _stbd_cm) + Fore.YELLOW + ' {:5.2f}'.format(self._offset_stbd))
+                                + Fore.RED    + Style.DIM + 'PORT: {:6.3f} / {:6.3f}cm / '.format(_port_raw, _port_cm)
+                                + Fore.YELLOW + ' {:5.2f}\t'.format(self._offset_port)
+                                + Fore.GREEN  + Style.DIM + 'STBD: {:6.3f} / {:6.3f}cm / '.format(_stbd_raw, _stbd_cm)
+                                + Fore.YELLOW + ' {:5.2f}'.format(self._offset_stbd))
                     else:
                         if self._matrices:
+                            # used for matrix percentage calculation only .....
+                            _port_pc  = _port_raw / 255.0
+                            _stbd_pc  = _stbd_raw / 255.0
+                            _raw_diff = _port_raw - _stbd_raw
+                            _ratio    = ( _port_pc - _stbd_pc ) * self._ratio_multiplier
+                            _percent  = self._percent_ranger.convert(_ratio)
                             self._matrices.percent(_percent)
                         if self._offset_port == 0.0: # offset to STBD
                             self._log.info('[{:04d}] (S) '.format(_count)
-                                    + Fore.RED    + Style.NORMAL + 'PORT: {:6.3f} / {:6.3f}cm / '.format(_port_raw, _port_cm) + Fore.YELLOW + ' {:5.2f}\t'.format(self._offset_port)
-                                    + Fore.GREEN  + Style.BRIGHT + 'STBD: {:6.3f} / {:6.3f}cm / '.format(_stbd_raw, _stbd_cm) + Fore.YELLOW + ' {:5.2f}'.format(self._offset_stbd))
+                                    + Fore.RED    + Style.NORMAL + 'PORT: {:6.3f} / {:6.3f}cm / '.format(_port_raw, _port_cm)
+                                    + Fore.YELLOW + ' {:5.2f}\t'.format(self._offset_port)
+                                    + Fore.GREEN  + Style.BRIGHT + 'STBD: {:6.3f} / {:6.3f}cm / '.format(_stbd_raw, _stbd_cm)
+                                    + Fore.YELLOW + ' {:5.2f}'.format(self._offset_stbd))
                         else: # offset to PORT
                             self._log.info('[{:04d}] (P) '.format(_count)
-                                    + Fore.RED    + Style.BRIGHT + 'PORT: {:6.3f} / {:6.3f}cm / '.format(_port_raw, _port_cm) + Fore.YELLOW + ' {:5.2f}\t'.format(self._offset_port)
-                                    + Fore.GREEN  + Style.NORMAL + 'STBD: {:6.3f} / {:6.3f}cm / '.format(_stbd_raw, _stbd_cm) + Fore.YELLOW + ' {:5.2f}'.format(self._offset_stbd))
-
-                    '''
-                    if self._compare(_port_raw, _stbd_raw): # then they're close enough to each other (within tolerance) to consider balanced
-                        self._log.info('[{:04d}] '.format(_count) + Fore.RED + 'IR {:6.3f} / {:6.3f}cm\t'.format(_port_raw, _port_cm)
-                                + Fore.GREEN + '{:6.3f} / {:6.3f}cm\t'.format(_stbd_raw, _stbd_cm)
-                                + Fore.WHITE + Style.NORMAL + 'ratio: SAME')
-                    else:
-                        _out_port = self._ port_ranger.convert(_port_raw)
-                        _out_stbd = self._ stbd_ranger.convert(_stbd_raw)
-                        self._log.info('[{:04d}] '.format(_count) + Fore.RED + 'IR {:6.3f} / {:6.3f}cm\t'.format(_port_raw, _port_cm)
-                                + Fore.GREEN + '{:6.3f} / {:6.3f}cm\t'.format(_stbd_raw, _stbd_cm)
-                                + Fore.WHITE + Style.NORMAL + 'ratio: {:4.1f}\t'.format(_ratio)
-                                + Fore.RED + 'port: {:4.1f}\t'.format(_out_port)
-                                + Fore.GREEN + 'stbd: {:4.1f}\t'.format(_out_stbd)
-                                + Fore.YELLOW  + 'offset: {:4.1f}%'.format(_percent))
-                    '''
+                                    + Fore.RED    + Style.BRIGHT + 'PORT: {:6.3f} / {:6.3f}cm / '.format(_port_raw, _port_cm)
+                                    + Fore.YELLOW + ' {:5.2f}\t'.format(self._offset_port)
+                                    + Fore.GREEN  + Style.NORMAL + 'STBD: {:6.3f} / {:6.3f}cm / '.format(_stbd_raw, _stbd_cm)
+                                    + Fore.YELLOW + ' {:5.2f}'.format(self._offset_stbd))
 
                 except KeyboardInterrupt:
                     print(Fore.RED + 'Ctrl-C caught; exiting...' + Style.RESET_ALL)
@@ -241,7 +232,6 @@ class Swerve(Behaviour):
                     if self._matrices:
                         self._matrices.clear_all()
             else:
-#               self._log.info(Style.DIM + '[{:04d}] tick modulo.'.format(_count))
                 pass
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -250,10 +240,10 @@ class Swerve(Behaviour):
         Connect to the IO Expander, Integrated Front Sensor, and any Matrix
         displays.
         '''
-        if self._connected:
+        if self.connected:
             self._log.warning('already connected.')
         else:
-            self._log.warning('🎯 🎯 🎯 connecting...')
+            self._log.warning('connecting to required hardware...')
             try:
                 from hardware.io_expander import IoExpander
                 from hardware.ifs import IntegratedFrontSensor
@@ -280,18 +270,22 @@ class Swerve(Behaviour):
                     self._matrices = RgbMatrix(_enable_port_5x5, _enable_stbd_5x5, Level.INFO)
                 else:
                     self._log.warning('could not find suitable pair of displays.')
-
                 self._connected = True
-                self._log.info('🍏 connected.')
-
+                self._log.info('connected.')
             except ImportError as e:
-                self._log.warning('error importing support libraries: {}'.format(e))
-                self._log.info('🍎 unable to connect.')
+                self._log.warning('unable to connect to hardware: error importing support libraries: {}'.format(e))
+            except Exception as e:
+                self._log.error('unable to connect to hardware: {}'.format(e))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def execute(self, message):
         '''
         The method called by process_message(), upon receipt of a message.
+        This isn't actually used at this point (we currently have a direct
+        connection to the hardware) and is only here to fulfill the API.
+        This might change in the future but performance considerations
+        would suggest the current approach is best.
+
         :param message:  an Message passed along by the message bus
         '''
         if self.suppressed:
@@ -299,18 +293,18 @@ class Swerve(Behaviour):
         elif self.enabled:
             if message.payload.event is Event.INFRARED_PORT:
                 _distance_cm = message.payload.value
-                self._log.info('🍥 processing PORT message {}; '.format(message.name)
+                self._log.info('processing PORT message {}; '.format(message.name)
                         + Fore.PORT  + ' distance: {:5.2f}cm\n'.format(_distance_cm))
             elif message.payload.event is Event.INFRARED_STBD:
                 _distance_cm = message.payload.value
-                self._log.info('🍥 processing STBD message {}; '.format(message.name)
+                self._log.info('processing STBD message {}; '.format(message.name)
                         + Fore.GREEN + ' distance: {:5.2f}cm\n'.format(_distance_cm))
             else:
                 raise ValueError('expected INFRARED_PORT or INFRARED_STBD event not: {}'.format(message.event.label))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _set_velocity_multipliers(self, reason):
-        self._log.info('😨 set velocity multipliers: ' + Fore.YELLOW + '{}'.format(reason))
+        self._log.info('set velocity multipliers: ' + Fore.YELLOW + '{}'.format(reason))
         self._set_velocity_multiplier(reason, Orientation.PORT, self._port_velocity_function())
         self._set_velocity_multiplier(reason, Orientation.STBD, self._stbd_velocity_function())
 
@@ -329,7 +323,7 @@ class Swerve(Behaviour):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _reset_velocity_multiplier(self, reason):
-        self._log.info(Fore.MAGENTA + '😨 reset velocity multipliers: ' + Fore.YELLOW + '{}'.format(reason))
+        self._log.info(Fore.MAGENTA + 'reset velocity multipliers: ' + Fore.YELLOW + '{}'.format(reason))
         self._port_motor.remove_velocity_multiplier(Swerve._LAMBDA_PORT_NAME)
         self._stbd_motor.remove_velocity_multiplier(Swerve._LAMBDA_STBD_NAME)
 
@@ -351,13 +345,17 @@ class Swerve(Behaviour):
         if self.enabled:
             self._log.warning('💚 swerve already enabled.')
         else:
-            Component.enable(self)
-            self._connect()
-            if self._ioe and not self._ioe.enabled:
-                self._ioe.enable()
-            if self._ifs and not self._ifs.enabled:
-                self._ifs.enable()
-            self._log.info(Fore.BLUE + '💚 swerve enabled.')
+            if not self.connected:
+                self._connect()
+            if self.connected:
+                Component.enable(self)
+                if self._ioe and not self._ioe.enabled:
+                    self._ioe.enable()
+                if self._ifs and not self._ifs.enabled:
+                    self._ifs.enable()
+                self._log.info(Fore.BLUE + '💚 swerve enabled.')
+            else:
+                self._log.warning('unable to enable swerve behaviour.')
 
     def release(self):
         '''
@@ -392,7 +390,5 @@ class Swerve(Behaviour):
                 self._ifs.disable()
             self._reset_velocity_multiplier('disabling swerve.')
             self._log.info(Fore.BLUE + '💙 swerve disabled.')
-
-
 
 #EOF

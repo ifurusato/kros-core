@@ -10,10 +10,8 @@
 # modified: 2021-09-06
 #
 # TODO:
-#  * Copy guts of Avoid to copy of Roam
-#  * move Travel from MotorController to Avoid to replace as much ballistic behaviour as possible. Perhaps only backup.
-#  * There needs to be a decision-making event where the robot chooses where to go to avoid obstacles, perhaps a LIDAR or ultrasonic scan.
-#  * Integrate Travel into Avoid, and also re-use specific event types, with either timer or prescribed distance.
+# There needs to be a decision-making event where the robot chooses which
+# direction to go to avoid obstacles, perhaps a LIDAR or ultrasonic scan.
 #
 
 from colorama import init, Fore, Style
@@ -57,17 +55,36 @@ class Avoid(Behaviour):
         self._port_motor   = motor_ctrl.get_motor(Orientation.PORT)
         self._stbd_motor   = motor_ctrl.get_motor(Orientation.STBD)
         self._ext_clock    = external_clock
+
+        self._require_met  = True
+        # attempt to get external clock
         _use_clock_at_all  = False
         if _use_clock_at_all and self._ext_clock:
             self._ext_clock.add_slow_callback(self._tick)
-            pass
         else:
             self._log.warning('unable to enable avoid behaviour: no external clock available.')
+            self._require_met = False
+
+        # attempt to get macro publisher (may not be enabled)
+        _kros = globals.get('kros')
+        self._macro_publisher = _kros.get_macro_publisher()
+        if not self._macro_publisher or not self._macro_publisher.has_macro('avoid'):
+            self._require_met = False
         _cfg = config['kros'].get('behaviour').get('avoid')
         self._min_distance  = _cfg.get('min_distance')
         self._log.info(Style.BRIGHT + 'minimum distance:\t{:4.2f}cm'.format(self._min_distance))
         self.add_events([ Group.BUMPER, Event.INFRARED_PORT, Event.INFRARED_STBD ])
         self._log.info('ready.')
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def enable(self):
+        if not self.enabled:
+            if self._require_met:
+                Publisher.enable(self)
+            else:
+                self._log.info('cannot enable: requirements not met.')
+        else:
+            pass
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def execute(self, message):
@@ -79,16 +96,14 @@ class Avoid(Behaviour):
             self._log.info(Style.DIM + 'avoid suppressed; message: {}'.format(message.event.label))
         elif self.enabled:
             self._log.info('🌓 avoid; message: {}'.format(message.event.label))
-            _kros = globals.get('kros')
             self._log.info('🍏 found KROS! begin loading script...')
-            _macro_publisher = _kros.get_macro_publisher()
-            if _macro_publisher:
+            self._macro_publisher = _kros.get_macro_publisher()
+            if self._macro_publisher:
                 self._log.info('🍏 found MacroPublisher! queue avoid script...')
-                _macro_publisher.queue_script_by_name('avoid')
-                pass # TODO
+                self._macro_publisher.queue_macro_by_name('avoid')
             else:
                 self._log.warning('macro processor not available..')
-            
+
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _tick(self):
         '''
