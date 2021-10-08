@@ -14,6 +14,7 @@
 # direction to go to avoid obstacles, perhaps a LIDAR or ultrasonic scan.
 #
 
+import itertools
 from colorama import init, Fore, Style
 init()
 
@@ -60,7 +61,7 @@ class Avoid(Behaviour):
         # attempt to get external clock
         _use_clock_at_all  = False
         if _use_clock_at_all and self._ext_clock:
-            self._ext_clock.add_slow_callback(self._tick)
+            self._ext_clock.add_callback(self._tick)
         else:
             self._log.warning('unable to enable avoid behaviour: no external clock available.')
             self._require_met = False
@@ -74,6 +75,8 @@ class Avoid(Behaviour):
         self._min_distance  = _cfg.get('min_distance')
         self._log.info(Style.BRIGHT + 'minimum distance:\t{:4.2f}cm'.format(self._min_distance))
         self.add_events([ Group.BUMPER, Event.INFRARED_PORT, Event.INFRARED_STBD ])
+        self._counter   = itertools.count()
+        self._modulo    = 20 # 100: every 10 ticks 2Hz; 200: 1Hz; 
         self._log.info('ready.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -113,8 +116,13 @@ class Avoid(Behaviour):
         continually auto-trigger.
         '''
         if not self.suppressed:
+            _count = next(self._counter)
+            if _count % self._modulo == 0:
+                self._log.info(Style.BRIGHT + '🌓 tick; suppressed: {};\t'.format(self.suppressed))
+            else:
+                self._log.info(Style.BRIGHT + '🌓 tick; suppressed: {};\t'.format(self.suppressed))
+        else:
             self._log.info(Style.BRIGHT + '🌓 tick; suppressed: {};\t'.format(self.suppressed))
-            pass
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def get_trigger_behaviour(self, event):

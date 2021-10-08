@@ -20,10 +20,10 @@ from hardware.external_clock import ExternalClock
 _log = Logger('ext-clock-test', Level.INFO)
 _ext_clock    = None
 _modulo       = 1
-_slow_modulo  = 1
+#_slow_modulo  = 1
 _x_counter    = itertools.count()
 _timestamp    = dt.now()
-_slow_timestamp    = dt.now()
+#_slow_timestamp    = dt.now()
 
 # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 def ext_callback_method():
@@ -34,14 +34,14 @@ def ext_callback_method():
         print(Fore.BLUE + 'external callback;\t' + Fore.YELLOW + ' {:7.4f}ms elapsed.'.format(_elapsed_ms))
         _timestamp = dt.now()
 
-# ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-def ext_slow_callback_method():
-    global _slow_timestamp
-    _count = next(_x_counter)
-    if _count % _slow_modulo == 0.0:
-        _elapsed_ms = (dt.now() - _slow_timestamp).total_seconds() * 1000.0
-        print(Fore.GREEN + 'external slow callback;\t' + Fore.YELLOW + ' {:7.4f}ms elapsed.'.format(_elapsed_ms))
-        _slow_timestamp = dt.now()
+## ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+#def ext_slow_callback_method():
+#    global _slow_timestamp
+#    _count = next(_x_counter)
+#    if _count % _slow_modulo == 0.0:
+#        _elapsed_ms = (dt.now() - _slow_timestamp).total_seconds() * 1000.0
+#        print(Fore.GREEN + 'external slow callback;\t' + Fore.YELLOW + ' {:7.4f}ms elapsed.'.format(_elapsed_ms))
+#        _slow_timestamp = dt.now()
 
 # main ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
@@ -59,7 +59,7 @@ def main():
 #       _ext_clock = ExternalClock(_config)
         _ext_clock = ExternalClock(_config)
         _ext_clock.add_callback(ext_callback_method)
-        _ext_clock.add_slow_callback(ext_slow_callback_method)
+#       _ext_clock.add_slow_callback(ext_slow_callback_method)
         _ext_clock.enable()
 
         while True:

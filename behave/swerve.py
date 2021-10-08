@@ -69,16 +69,17 @@ class Swerve(Behaviour):
     '''
     def __init__(self, config, message_bus, message_factory, motor_ctrl, external_clock, suppressed=True, enabled=False, level=Level.INFO):
         self._level = level
-        Behaviour.__init__(self, 'swerve', config, message_bus, message_factory, suppressed=suppressed, enabled=enabled, level=level)
+        self._log = Logger('beh:{}'.format('swerve'), level)
+        Behaviour.__init__(self, self._log, config, message_bus, message_factory, suppressed=suppressed, enabled=enabled, level=level)
         if motor_ctrl:
             if not isinstance(motor_ctrl, MotorController):
                 raise ValueError('wrong type for motor_ctrl argument: {}'.format(type(motor_ctrl)))
-            self._port_motor   = motor_ctrl.get_motor(Orientation.PORT)
-            self._stbd_motor   = motor_ctrl.get_motor(Orientation.STBD)
+            self._port_motor = motor_ctrl.get_motor(Orientation.PORT)
+            self._stbd_motor = motor_ctrl.get_motor(Orientation.STBD)
         else:
-            self._port_motor   = None
-            self._stbd_motor   = None
-        self._ext_clock    = external_clock
+            self._port_motor = None
+            self._stbd_motor = None
+        self._ext_clock  = external_clock
         if self._ext_clock:
             self._ext_clock.add_callback(self._tick)
             pass
@@ -179,9 +180,9 @@ class Swerve(Behaviour):
         '''
         if not self.suppressed:
             _count = next(self._counter)
-            self._log.debug('[{:04d}] swerve;\t'.format(_count)
-                    + Fore.RED   + 'port: {:5.2f}cm/s;\t'.format(self._port_motor.velocity)
-                    + Fore.GREEN + 'stbd: {:5.2f}cm/s'.format(self._stbd_motor.velocity))
+#           self._log.debug('[{:04d}] swerve;\t'.format(_count)
+#                   + Fore.RED   + 'port: {:5.2f}cm/s;\t'.format(self._port_motor.velocity)
+#                   + Fore.GREEN + 'stbd: {:5.2f}cm/s'.format(self._stbd_motor.velocity))
             if _count % self._modulo == 0:
                 try:
 

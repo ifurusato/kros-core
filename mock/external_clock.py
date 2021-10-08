@@ -52,13 +52,13 @@ class MockExternalClock(Component):
         self._rate            = Rate(self._loop_delay_hz, Level.ERROR)
 
         self.__callbacks      = []
-        self.__slow_callbacks = []
+#       self.__slow_callbacks = []
         self._modulo          = 1
-        self._slow_modulo     = 20 # 100: every 10 ticks 2Hz; 200: 1Hz; 
+#       self._slow_modulo     = 20 # 100: every 10 ticks 2Hz; 200: 1Hz; 
         self._counter         = itertools.count()
         self._millis          = lambda: int(round(time.time() * 1000))
         self._last_time       = self._millis()
-        self._last_slow_time  = self._millis()
+#       self._last_slow_time  = self._millis()
         self._pin = _cfg.get('pin')
         self._log.info('ready.')
 
@@ -123,12 +123,12 @@ class MockExternalClock(Component):
         self.__callbacks.append(callback)
 
      # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def add_slow_callback(self, callback):
-        '''     
-        Adds a 'slow' callback to those triggered by clock ticks. This is
-        triggered at a slower (modulo) rate than the normal callback.
-        ''' 
-        self.__slow_callbacks.append(callback)
+#   def add_slow_callback(self, callback):
+#       '''     
+#       Adds a 'slow' callback to those triggered by clock ticks. This is
+#       triggered at a slower (modulo) rate than the normal callback.
+#       ''' 
+#       self.__slow_callbacks.append(callback)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _loop(self, f_is_enabled):
@@ -145,9 +145,9 @@ class MockExternalClock(Component):
                         _now = self._millis()
                         for callback in self.__callbacks:
                             callback()
-                        if _count % self._slow_modulo == 0.0:
-                            for callback in self.__slow_callbacks:
-                                callback()
+#                       if _count % self._slow_modulo == 0.0:
+#                           for callback in self.__slow_callbacks:
+#                               callback()
                         _elapsed = _now - self._last_time
                         self._last_time = _now
                     self._rate.wait()

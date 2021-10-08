@@ -33,21 +33,25 @@ class Subscriber(Component, FiniteStateMachine):
     Extends Component and FiniteStateMachine as a subscriber to messages
     from the message bus.
 
-    :param name:         the subscriber name (for logging)
+    :param log_or_name:  the Logger or subscriber name (for logging)
     :param config:       the application configuration
     :param message_bus:  the message bus
     :param suppressed:   the initial state of the suppressed flag
     :param enabled:      the initial state of the enabled flag
     :param level:        the logging level
     '''
-    def __init__(self, name, config, message_bus, suppressed=False, enabled=False, level=Level.INFO):
-        self._log = Logger('sub:{}'.format(name), level)
-        if not isinstance(name, str):
-            raise ValueError('wrong type for name argument: {}'.format(type(name)))
-        self._name = name
+    def __init__(self, log_or_name, config, message_bus, suppressed=False, enabled=False, level=Level.INFO):
+        if isinstance(log_or_name, Logger):
+            self._log = log_or_name
+            self._name = self._log.name
+        elif isinstance(log_or_name, str):
+            self._log = Logger('sub:{}'.format(log_or_name), level)
+            self._name = log_or_name
+        else:
+            raise ValueError('wrong type for log_or_name argument: {}'.format(type(log_or_name)))
         self._id   = random.randint(10000,99999)
         if not isinstance(config, dict):
-            raise ValueError('wrong type for config argument: {}'.format(type(name)))
+            raise ValueError('wrong type for config argument: {}'.format(type(self._name)))
         self._config = config
 #       if not isinstance(message_bus, MessageBus):
 #           raise ValueError('wrong type for message bus argument: {}'.format(type(message_bus)))
@@ -57,7 +61,7 @@ class Subscriber(Component, FiniteStateMachine):
         if not isinstance(enabled, bool):
             raise ValueError('wrong type for enabled argument: {}'.format(type(enabled)))
         Component.__init__(self, self._log, suppressed, enabled)
-        FiniteStateMachine.__init__(self, self._log, name)
+        FiniteStateMachine.__init__(self, self._log, self._name)
         self._events = [] # list of acceptable event types
         self._brief  = True # brief messages by default
         self._message_bus.register_subscriber(self)

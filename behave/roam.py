@@ -10,6 +10,7 @@
 # modified: 2021-07-08
 #
 
+import itertools
 from colorama import init, Fore, Style
 init()
 
@@ -85,7 +86,7 @@ class Roam(Behaviour):
         self._stbd_motor   = motor_ctrl.get_motor(Orientation.STBD)
         self._ext_clock    = external_clock
         if self._ext_clock:
-            self._ext_clock.add_slow_callback(self._tick)
+            self._ext_clock.add_callback(self._tick)
             pass
         else:
             raise Exception('unable to enable roam behaviour: no external clock available.')
@@ -113,6 +114,8 @@ class Roam(Behaviour):
         self._wait_ticks    = _cfg.get('cruise_wait_ticks') # assumes slow tick at 1Hz
         self._wait_count    = self._wait_ticks
         self._log.info(Style.BRIGHT + 'cruise wait time:    \t{:4.2f} ticks'.format(self._wait_ticks))
+        self._counter   = itertools.count()
+        self._modulo    = 20 # 100: every 10 ticks 2Hz; 200: 1Hz; 
         # .................................
         self.add_event(Event.INFRARED_CNTR)
         self._log.info('ready.')
@@ -167,24 +170,26 @@ class Roam(Behaviour):
         continually auto-trigger.
         '''
         if not self.suppressed:
-            self._log.info('tick; wait: {} ({:d}); suppressed: {};\t'.format(self._get_bar(), self._wait_count, self.suppressed))
-            # wait ten counts before trying to move
-            if self._wait_count == 0:
-                self._log.info('roaming;\t'
-                        + Fore.RED   + 'port: {:5.2f}cm/s;\t'.format(self._port_motor.velocity)
-                        + Fore.GREEN + 'stbd: {:5.2f}cm/s'.format(self._stbd_motor.velocity))
-            elif self._wait_count == 1:
-                self._log.info('cruise triggered.')
-                self._log.info('cruise triggered at: {} ({:5.2f}cm/sec)'.format(self._cruising_speed.name, self._cruising_velocity))
-                self._wait_count = 0
-                # we change state in the transition from wait count 1 to 0 (0 being a steady state)
-                self._reset_velocity_multiplier('recovered from encounter.')
-                self._port_motor.target_velocity = self._cruising_velocity
-                self._stbd_motor.target_velocity = self._cruising_velocity
-            else:
-                self._log.info('counting down from {:d}...'.format(self._wait_count))
-                self._wait_count -= 1
-                pass
+            _count = next(self._counter)
+            if _count % self._modulo == 0:
+                self._log.info('tick; wait: {} ({:d}); suppressed: {};\t'.format(self._get_bar(), self._wait_count, self.suppressed))
+                # wait ten counts before trying to move
+                if self._wait_count == 0:
+                    self._log.info('roaming;\t'
+                            + Fore.RED   + 'port: {:5.2f}cm/s;\t'.format(self._port_motor.velocity)
+                            + Fore.GREEN + 'stbd: {:5.2f}cm/s'.format(self._stbd_motor.velocity))
+                elif self._wait_count == 1:
+                    self._log.info('cruise triggered.')
+                    self._log.info('cruise triggered at: {} ({:5.2f}cm/sec)'.format(self._cruising_speed.name, self._cruising_velocity))
+                    self._wait_count = 0
+                    # we change state in the transition from wait count 1 to 0 (0 being a steady state)
+                    self._reset_velocity_multiplier('recovered from encounter.')
+                    self._port_motor.target_velocity = self._cruising_velocity
+                    self._stbd_motor.target_velocity = self._cruising_velocity
+                else:
+                    self._log.info('counting down from {:d}...'.format(self._wait_count))
+                    self._wait_count -= 1
+                    pass
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _set_velocity_multiplier(self, reason, lambda_function):

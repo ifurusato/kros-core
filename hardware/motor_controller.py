@@ -30,7 +30,7 @@ from hardware.motor_configurer import MotorConfigurer
 from hardware.slew import SlewRate
 from hardware.motor import Motor
 
-from behave.travel import Travel # perhaps doesn't belong here
+#from behave.travel import Travel # perhaps doesn't belong here
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class MotorController(Component):
@@ -110,18 +110,18 @@ class MotorController(Component):
 
 #   # traveling behaviours ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
-    def travel(self, direction, port_distance_cm, stbd_distance_cm, wait_til_stop=False):
-        '''
-        Travel a fixed distance in the indicated direction, as a ballistic
-        behaviour, then stop. Returns the number of ticks traveled for the
-        port and starboard motor, respectively.
-        '''
-        self._log.info('travel {} for port: {:d}cm; stbd: {:d}cm, wait til stop? {}'.format(direction.label, port_distance_cm, stbd_distance_cm, wait_til_stop))
-        _result = self._travel.travel(direction, port_distance_cm, stbd_distance_cm)
-        if wait_til_stop:
-            _is_stopped = self.wait_til_stopped()
-        self._log.info('travel complete.')
-        return _result
+#   def travel(self, direction, port_distance_cm, stbd_distance_cm, wait_til_stop=False):
+#       '''
+#       Travel a fixed distance in the indicated direction, as a ballistic
+#       behaviour, then stop. Returns the number of ticks traveled for the
+#       port and starboard motor, respectively.
+#       '''
+#       self._log.info('travel {} for port: {:d}cm; stbd: {:d}cm, wait til stop? {}'.format(direction.label, port_distance_cm, stbd_distance_cm, wait_til_stop))
+#       _result = self._travel.travel(direction, port_distance_cm, stbd_distance_cm)
+#       if wait_til_stop:
+#           _is_stopped = self.wait_til_stopped()
+#       self._log.info('travel complete.')
+#       return _result
 
 #   # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 #   def set_max_fwd_velocity(self, maximum_velocity):
@@ -507,9 +507,9 @@ class MotorController(Component):
             raise ValueError('unrecognised bumper event {}'.format(_event.label))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def astern_cm(self, port_distance_cm, stbd_distance_cm, wait_til_stopped=True):
-        _result = self.travel(Direction.ASTERN, port_distance_cm, stbd_distance_cm, True)
-        self._log.info(Fore.MAGENTA + 'travel complete, returned: {} '.format(_result))
+#   def astern_cm(self, port_distance_cm, stbd_distance_cm, wait_til_stopped=True):
+#       _result = self.travel(Direction.ASTERN, port_distance_cm, stbd_distance_cm, True)
+#       self._log.info(Fore.MAGENTA + 'travel complete, returned: {} '.format(_result))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def get_motor(self, orientation):
@@ -543,8 +543,10 @@ class MotorController(Component):
         if not isinstance(target_velocity, float):
             raise ValueError('expected float, not {}'.format(type(target_velocity)))
         if orientation is Orientation.PORT:
+            self._log.info('♒ set_motor_velocity ' + Fore.RED   + 'PORT: {:5.2f}'.format(target_velocity))
             self._port_motor.target_velocity = target_velocity
         elif orientation is Orientation.STBD:
+            self._log.info('♒ set_motor_velocity ' + Fore.GREEN + 'STBD: {:5.2f}'.format(target_velocity))
             self._stbd_motor.target_velocity = target_velocity
         else:
             raise Exception('expected PORT or STBD orientation.')

@@ -17,7 +17,7 @@ kros:
         enable_behaviours:            True       # enable BehaviourManager (Behaviours enabled individually)
         enable_experimental:         False       # enable ExperimentManager and load any Experiments
         # publishers .............................
-        enable_ifs_publisher:         True       # enable Integrated Front Sensor publisher
+        enable_ifs_publisher:        False       # enable Integrated Front Sensor publisher
         enable_bumper_publisher:     False       # enable bumper publisher
         enable_event_publisher:       True       # keyboard robot simulator (required for running CLI)
         enable_battery_publisher:    False       # battery check publisher
@@ -27,9 +27,9 @@ kros:
         enable_system_subscriber:     True       # system events subscriber
         enable_motor_subscriber:      True       # motor events subscriber
         enable_bumper_subscriber:    False       # bumper events subscriber
-        enable_infrared_subscriber:   True       # infrared events subscriber
+        enable_infrared_subscriber:  False       # infrared events subscriber
     behaviour:
-        enable_avoid_behaviour:       True       # enable avoidance behaviour
+        enable_avoid_behaviour:      False       # enable avoidance behaviour
         enable_roam_behaviour:       False       # enable roam behaviour
         enable_swerve_behaviour:      True       # enable swerve behaviour
         enable_moth_behaviour:       False       # enable moth behaviour
