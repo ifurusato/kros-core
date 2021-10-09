@@ -65,7 +65,7 @@ class Motor(Component):
         _cfg = config['kros'].get('motor')
         self._max_velocity       = _cfg.get('maximum_velocity') # a constant, the limit to motor velocity
         self._max_fwd_velocity   = self._max_velocity           # a variable, the limit to forward velocity
-        self._log.info(Fore.WHITE + 'max velocity:\t{:<5.2f}'.format(self._max_velocity))
+        self._log.info('max velocity:\t{:<5.2f}'.format(self._max_velocity))
         self._velocity_clip = lambda n: ( -1.0 * self._max_velocity ) if n <= ( -1.0 * self._max_velocity ) \
                 else min(self._max_velocity, self._max_fwd_velocity) if n >= self._max_fwd_velocity \
                 else n
@@ -326,9 +326,9 @@ class Motor(Component):
                 _current_target_velocity = self._slew_limiter.limit(self.velocity, _current_target_velocity)
 
             if len(self.__velocity_lambdas) > 0:
-                self._log.info(Fore.MAGENTA + 'processing {:d} lambdas...'.format(len(self.__velocity_lambdas)))
+#               self._log.info(Fore.MAGENTA + 'processing {:d} lambdas...'.format(len(self.__velocity_lambdas)))
                 for _name, _lambda in self.__velocity_lambdas.items():
-                    self._log.info(Fore.WHITE + '🌼 targ_vel: {}; {} lambda for {} motor; lambda type: {}; value: {}'.format( _current_target_velocity, _name, self._orientation.label, type(_lambda), _lambda))
+#                   self._log.info(Fore.WHITE + '🌼 targ_vel: {}; {} lambda for {} motor; lambda type: {}; value: {}'.format( _current_target_velocity, _name, self._orientation.label, type(_lambda), _lambda))
                     _current_target_velocity = _lambda * _current_target_velocity
 
             # use velocity clipper as a sanity checker

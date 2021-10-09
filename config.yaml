@@ -11,11 +11,12 @@ kros:
     use_external_clock:               True       # if True use external clock, ignoring loop delay value
     use_external_bumper_publisher:    True       # use ExternalBumperPublisher instead of BumperPublisher
     experimental:                                # the list of experimental class names
-        uart_experiment:   'UartExperiment'      # experiment 1
+        rgb_experiment:     'RgbExperiment'      # experiment 1
+#       uart_experiment:   'UartExperiment'      # experiment 2
     component:                                   # enable specific publish/subscribe components
         enable_killswitch:            True       # kill switch
         enable_behaviours:            True       # enable BehaviourManager (Behaviours enabled individually)
-        enable_experimental:         False       # enable ExperimentManager and load any Experiments
+        enable_experimental:          True       # enable ExperimentManager and load any Experiments
         # publishers .............................
         enable_ifs_publisher:        False       # enable Integrated Front Sensor publisher
         enable_bumper_publisher:     False       # enable bumper publisher
@@ -28,6 +29,7 @@ kros:
         enable_motor_subscriber:      True       # motor events subscriber
         enable_bumper_subscriber:    False       # bumper events subscriber
         enable_infrared_subscriber:  False       # infrared events subscriber
+        enable_rgb_subscriber:        True       # display on RGB matrix
     behaviour:
         enable_avoid_behaviour:      False       # enable avoidance behaviour
         enable_roam_behaviour:       False       # enable roam behaviour
@@ -94,9 +96,8 @@ kros:
 #           raw_battery_threshold:   11.00       # raw and 5v regulator thresholds set from known measurements:
             low_5v_threshold:         4.75       # really 4.82v
             loop_delay_sec:          60          # sample loop delay (sec)
-        external_clock:
-#           pin:                     21          # pin connected to external clock source from TinyPICO
-            pin:                      5          # pin connected to external clock source from Itsy Bitsy RP2040
+        irq_clock:
+            pin:                     12          # pin connected to external clock source from Itsy Bitsy RP2040
         killswitch:
              pin:                     7          # pin connected to hardware kill switch
         rfm69_radio:
@@ -124,7 +125,7 @@ kros:
         enable_jerk_limiter:        False        # initial enabled state for jerk limiter
         thunderborg_address:         0x15        # I²C address for thunderborg motor controller
         motor_controller:
-            loop_delay_hz:           20          # main loop delay in hz
+            loop_freq_hz:            20          # main loop delay in hz
             accel_increment:          5.0        # normal incremental acceleration
             decel_increment:          5.0        # normal incremental deceleration
             halt_rate:         'VERY_FAST'       # slew rate for quick halt behaviour
@@ -237,6 +238,9 @@ kros:
             bmp_paft_pin:            26          # GPIO pin connected to port aft digital infrared sensor
             bmp_mast_pin:             8          # GPIO pin connected to mast digital infrared sensor
             bmp_saft_pin:            19          # GPIO pin connected to starboard aft digital infrared sensor
+        external_clock:
+            pin:                      5          # pin connected to external clock source from Itsy Bitsy RP2040
+            loop_freq_hz:            50          # main loop delay in hz
         external_bumper:
             loop_freq_hz:            20          # polling loop frequency (Hz)
             ack_pin:                 21          # GPIO pin connected to acknowledge pin (white)
@@ -258,6 +262,8 @@ kros:
         d2_pin:                      19          # GPIO pin connected to data 2 pin (blue)
         d3_pin:                      13          # GPIO pin connected to data 3 pin (orange)
     subscriber:
+        clock:
+            nada:                  False         # nada
         bumper:
             shutdown_on_mast:      False         # if True then mast triggers shutdown
     mock:

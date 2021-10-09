@@ -55,7 +55,7 @@ class MotorController(Component):
     :param external_clock:  optional external system clock
     :param level:           the logging level
     '''
-    def __init__(self, config, message_bus, motor_configurer, external_clock=None, level=Level.INFO):
+    def __init__(self, config, message_bus, motor_configurer, use_external_clock=False, level=Level.INFO):
         self._log = Logger('motor-ctrl', level)
         Component.__init__(self, self._log, suppressed=False, enabled=False)
         self._log.info('initialising motors...')
@@ -69,7 +69,7 @@ class MotorController(Component):
             raise ValueError('wrong type for motor configurer argument: {}'.format(type(motor_configurer)))
         self._port_motor = motor_configurer.get_motor(Orientation.PORT)
         self._stbd_motor = motor_configurer.get_motor(Orientation.STBD)
-        self._ext_clock            = external_clock
+        self._use_ext_clock        = use_external_clock
         # temporary until we move functionality to motors
         self._loop_thread          = None
         self._loop_enabled         = False
@@ -80,10 +80,10 @@ class MotorController(Component):
         self._slew_limiter_enabled = config['kros'].get('motor').get('enable_slew_limiter')
         _cfg = config['kros'].get('motor').get('motor_controller')
         self._verbose              = _cfg.get('verbose')
-        self._loop_delay_hz        = _cfg.get('loop_delay_hz')     # main loop delay
-        self._loop_delay_sec       = 1 / self._loop_delay_hz 
-        self._log.info('loop delay:\t{}Hz ({:4.2f}s)'.format(self._loop_delay_hz, self._loop_delay_sec))
-        self._rate                 = Rate(self._loop_delay_hz, Level.ERROR)
+        self._loop_freq_hz        = _cfg.get('loop_freq_hz')      # main loop frequency
+        self._loop_delay_sec       = 1 / self._loop_freq_hz 
+        self._log.info('loop frequency:\t{}Hz ({:4.2f}s)'.format(self._loop_freq_hz, self._loop_delay_sec))
+        self._rate                 = Rate(self._loop_freq_hz, Level.ERROR)
         self._accel_increment      = _cfg.get('accel_increment')   # normal incremental acceleration
         self._decel_increment      = _cfg.get('decel_increment')   # normal incremental deceleration
         self._log.info('accelerate increment: {:5.2f}; decelerate increment: {:5.2f}'.format(self._accel_increment, self._decel_increment))
@@ -154,12 +154,12 @@ class MotorController(Component):
         if not self.enabled:
             raise Exception('not enabled.')
         if self.loop_is_running:
-            if self._ext_clock:
+            if self._use_ext_clock:
                 self._log.warning('cannot start control loop: using external clock.')
             else:
                 self._log.warning('loop already running.')
         elif self._loop_thread is None:
-            if self._ext_clock:
+            if self._use_ext_clock:
                 raise Exception('cannot use thread loop: external clock enabled.') # TEMP shouldn't be necessary
             self._loop_enabled = True
             _is_daemon = False
@@ -221,7 +221,7 @@ class MotorController(Component):
         '''
         Returns true if using an external clock or if the loop thread is alive.
         '''
-        return self._ext_clock is not None \
+        return self._use_ext_clock \
                 or ( self._loop_enabled and self._loop_thread != None and self._loop_thread.is_alive() )
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -675,7 +675,7 @@ class MotorController(Component):
             # but we do it anyway...
         else:
             self._log.info('halting...')
-        if self._ext_clock or self._loop_enabled:
+        if self._use_ext_clock or self._loop_enabled:
             if self._slew_limiter_enabled:
                 self._log.info('halting soft...')
                 try:
@@ -704,7 +704,7 @@ class MotorController(Component):
             # but we do it anyway...
         else:
             self._log.info('braking...')
-        if self._ext_clock or self._loop_enabled:
+        if self._use_ext_clock or self._loop_enabled:
             if self._slew_limiter_enabled:
                 self._log.info('braking soft...')
                 try:
@@ -851,7 +851,7 @@ class MotorController(Component):
             if not self._behaviour_mgr: # attach behaviour manager if available
                 _kros = globals.get('kros')
                 self._behaviour_mgr = _kros.get_behaviour_manager() if _kros != None else None
-            if not self._ext_clock and not self.loop_is_running:
+            if not self._use_ext_clock and not self.loop_is_running:
                 self.start_loop()
             self._port_motor.enable()
             self._stbd_motor.enable()

@@ -105,7 +105,7 @@ class UartExperiment(Experiment, Publisher):
 #       (50, 75, 110, 134, 150, 200, 300, 600, 1200, 1800, 2400, 4800, 9600, 19200, 38400, 57600, 115200, 230400,
 #        460800, 500000, 576000, 921600, 1000000, 1152000, 1500000, 2000000, 2500000, 3000000, 3500000, 4000000)
 
-        _loop = self._message_bus.loop
+#       _loop = self._message_bus.loop
 
         try:
 #           self._serial = serial.Serial(port='/dev/serial0', baudrate=19200) #parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE) # timeout=1)
@@ -118,26 +118,28 @@ class UartExperiment(Experiment, Publisher):
 #                   loop=self._message_bus.loop, cancel_read_timeout=1, cancel_write_timeout=1) # timeout=1)
 
 #                loop = asyncio.get_event_loop()
-#                coro = serial_asyncio.create_serial_connection(loop, Output, _port, baudrate=_baud_rate)
-#                loop.run_until_complete(coro)
+#                _coro = serial_asyncio.create_serial_connection(loop, Output, _port, baudrate=_baud_rate)
+#                loop.run_until_complete(_coro)
 #                loop.run_forever()
 
                 self._log.info('⭐ configuring serial_asyncio...')
 #               loop = asyncio.get_event_loop()
-                coro = serial_asyncio.create_serial_connection(_loop, Output, _port, baudrate=_baud_rate)
-                _loop.run_until_complete(coro)
-#               _loop.run_forever()
+
+#               _coro = serial_asyncio.create_serial_connection(self._message_bus.loop, Output, _port, baudrate=_baud_rate)
 
                 self._loop_task = self._message_bus.loop.create_task(self._publisher_loop(lambda: self.enabled), name=UartExperiment._PUBLISHER_LOOP)
+#               self._message_bus.loop.run_until_complete(_coro)
+#               _loop.run_forever()
+
 
             else:
                 self._log.info('⭐ using mock serial_asyncio...')
 #               self._serial = MockAioSerial()
                 self._serial = MockSerialAsyncio(_loop, Output)
 
-            self.release() # FIXME TEMP
-
+            self.release() 
             self._log.info('⭐ configured.')
+
         except Exception as e:
             self._log.error('{} encountered, exiting: {}'.format(type(e), e))
             traceback.print_exc(file=sys.stdout)

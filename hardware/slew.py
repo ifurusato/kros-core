@@ -48,7 +48,7 @@ class SlewLimiter(Component):
         self._default_slew_rate = SlewRate.from_string(_cfg.get('default_rate')) # default rate_limit, value change permitted per millisecond
         self.slew_rate = self._default_slew_rate
         self._slew_hysteresis   = _cfg.get('hysteresis')
-        self._log.info('hysteresis: {:5.2f}'.format(self._slew_hysteresis))
+        self._log.info('hysteresis:\t{:5.2f}'.format(self._slew_hysteresis))
         self._stats_queue       = None
         self._start_time        = self._millis()
         # lambdas

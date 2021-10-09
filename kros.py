@@ -44,10 +44,12 @@ from core.util import Util
 from hardware.i2c_scanner import I2CScanner
 from hardware.battery import BatteryCheck
 from hardware.external_clock import ExternalClock
+from hardware.irq_clock import IrqClock
 from hardware.killswitch import KillSwitch
 from hardware.motor_configurer import MotorConfigurer
 from hardware.motor_controller import MotorController
 from hardware.motor_subscriber import MotorSubscriber
+from hardware.rgb_subscriber import RgbSubscriber
 from hardware.bumper_subscriber import BumperSubscriber
 from hardware.infrared_subscriber import InfraredSubscriber
 
@@ -111,7 +113,8 @@ class KROS(Component, FiniteStateMachine):
         self._arbitrator     = None
         self._controller     = None
         self._gamepad        = None
-        self._ext_clock      = None
+        self._external_clock = None
+        self._irq_clock      = None
         self._motor_ctrl     = None
         self._ifs            = None
         self._killswitch     = None
@@ -192,21 +195,21 @@ class KROS(Component, FiniteStateMachine):
         self._use_external_clock = self._config['kros'].get('use_external_clock')
         if self._use_external_clock and _pigpio_available:
             self._log.info('configuring external clock callback...')
-#           self._ext_clock = ExternalClock(self._config, self._ext_callback_method)
-            self._ext_clock = ExternalClock(self._config, None, self._level)
-            self._ext_clock.enable()
+            self._external_clock = ExternalClock(self._config, self._message_bus, self._message_factory, self._level)
+            self._irq_clock = IrqClock(self._config, level=self._level)
         else:
-            self._ext_clock = MockExternalClock(self._config, None, self._level)
-            self._ext_clock.enable()
+            self._external_clock = MockExternalClock(self._config, freq_hz=20, callback=None, level=self._level)
+            self._irq_clock      = MockExternalClock(self._config, freq_hz=20, callback=None, level=self._level)
             # TODO only if mocks permitted?
             self._use_external_clock = True
 
         # add motor controller ................................................
         self._log.info('configure motor controller...')
         _motor_configurer = MotorConfigurer(self._config, self._message_bus, _i2c_scanner, level=self._level)
-        self._motor_ctrl = MotorController(self._config, self._message_bus, _motor_configurer, self._ext_clock, self._level)
+        self._motor_ctrl = MotorController(self._config, self._message_bus, _motor_configurer, self._irq_clock != None, self._level)
         if self._use_external_clock:
-            self._ext_clock.add_callback(self._motor_ctrl._ext_callback_method)
+            self._irq_clock.add_callback(self._motor_ctrl._ext_callback_method)
+#           self._external_clock.add_callback(self._motor_ctrl._ext_callback_method, True)
 
         # create components ....................................................
 
@@ -260,6 +263,8 @@ class KROS(Component, FiniteStateMachine):
             self._system_subscriber   = SystemSubscriber(self._config, self, self._message_bus, level=self._level)
         if _cfg.get('enable_motor_subscriber') or 'm' in _subs:
             self._motor_subscriber    = MotorSubscriber(self._config, self._message_bus, self._motor_ctrl, level=self._level)
+        if _cfg.get('enable_rgb_subscriber') or 'r' in _subs:
+            self._rgb_subscriber = RgbSubscriber(self._config, self._message_bus, level=self._level)
         if _cfg.get('enable_bumper_subscriber') or 'b' in _subs:
             self._bumper_subscriber   = BumperSubscriber(self._config, self._message_bus, self._motor_ctrl, level=self._level)
         if _cfg.get('enable_infrared_subscriber') or 'i' in _subs:
@@ -281,14 +286,14 @@ class KROS(Component, FiniteStateMachine):
             _bcfg = self._config['kros'].get('behaviour')
             # create and register behaviours (listed in priority order)
             if _bcfg.get('enable_avoid_behaviour'):
-                self._avoid  = Avoid(self._config, self._message_bus, self._message_factory, self._motor_ctrl, 
-                        external_clock=self._ext_clock, level=self._level)
+                self._avoid  = Avoid(self._config, self._message_bus, self._message_factory, self._motor_ctrl,
+                        external_clock=self._external_clock, level=self._level)
             if _bcfg.get('enable_roam_behaviour'):
                 self._roam   = Roam(self._config, self._message_bus, self._message_factory, self._motor_ctrl,
-                        external_clock=self._ext_clock, level=self._level)
+                        external_clock=self._external_clock, level=self._level)
             if _bcfg.get('enable_swerve_behaviour'):
                 self._swerve = Swerve(self._config, self._message_bus, self._message_factory, self._motor_ctrl,
-                        external_clock=self._ext_clock, level=self._level)
+                        self._external_clock, level=self._level)
             if _bcfg.get('enable_moth_behaviour'):
                 self._moth   = Moth(self._config, self._message_bus, self._message_factory, self._motor_ctrl, self._level)
             if _bcfg.get('enable_sniff_behaviour'):
@@ -334,6 +339,10 @@ class KROS(Component, FiniteStateMachine):
         # we enable ourself if we get this far successfully
         Component.enable(self)
         FiniteStateMachine.enable(self)
+
+#       self._log.info('enabling external clock...')
+#       self._external_clock.enable()
+        self._irq_clock.enable()
 
         # now in main application loop until quit or Ctrl-C...
         self._log.info('enabling message bus...')
@@ -404,7 +413,7 @@ class KROS(Component, FiniteStateMachine):
         '''
         Returns the ExternalClock, None if not used.
         '''
-        return self._ext_clock
+        return self._external_clock
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _set_pi_leds(self, enable):
@@ -455,9 +464,12 @@ class KROS(Component, FiniteStateMachine):
             if self._motor_ctrl:
                 self._motor_ctrl.disable()
                 self._motor_ctrl.close()
-            if self._ext_clock:
-                self._ext_clock.disable()
-                self._ext_clock.close()
+            if self._external_clock:
+                self._external_clock.disable()
+                self._external_clock.close()
+            if self._irq_clock:
+                self._irq_clock.disable()
+                self._irq_clock.close()
             FiniteStateMachine.disable(self)
             self._log.info('disabled.')
         else:

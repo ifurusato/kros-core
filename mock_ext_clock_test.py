@@ -15,7 +15,7 @@ init(autoreset=True)
 from core.logger import Logger, Level
 from core.config_loader import ConfigLoader
 from core.component import Component
-from mock.external_clock import MockExternalClock
+from mock.external_clock import MockExternalClock as ExternalClock
 
 _log = Logger('ext-clock-test', Level.INFO)
 _ext_clock    = None
@@ -47,6 +47,7 @@ def ext_callback_method():
 
 def main():
 
+    _ext_clock = None
     _log.info('starting test...')
     try:
 
@@ -56,7 +57,7 @@ def main():
         _config = _loader.configure(filename)
 
 #       _pin = 6
-        _ext_clock = MockExternalClock(_config)
+        _ext_clock = ExternalClock(_config)
         _ext_clock.add_callback(ext_callback_method)
 #       _ext_clock.add_slow_callback(ext_slow_callback_method)
         _ext_clock.enable()

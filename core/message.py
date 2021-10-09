@@ -24,12 +24,12 @@ from core.event import Event
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Message(object):
-    '''
-    IMPORTANT: Don't create one of these directly: use the MessageFactory class.
-    '''
 
     ID_CHARACTERS = string.ascii_uppercase + string.digits
 
+    '''
+    IMPORTANT: Don't create one of these directly: use the MessageFactory class.
+    '''
     def __init__(self, event, value):
         if event is None:
             raise ValueError('null event argument.')
@@ -128,7 +128,10 @@ class Message(object):
     def sent(self):
         '''
         Returns the number of times this message's payload has been sent to
-        the Arbitrator.
+        the Arbitrator. 
+
+        A special case: if a Message returns -1 it effectively means that it
+        never expires.
         '''
         return self._sent
 

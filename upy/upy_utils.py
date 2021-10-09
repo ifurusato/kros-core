@@ -44,12 +44,12 @@ if TINY_PICO:
     TinyPICO.set_dotstar_power(True)               # turn on the power to the DotStar
 
 if ITSYBITSY_RP2040:
-    global _red_led
+#    global _red_led
 
     from neopixel import Neopixel
 
     # board red LED
-    _red_led = Pin(11, Pin.OUT)
+#    _red_led = Pin(11, Pin.OUT)
 
     # NeoPixel power pin 16
     power_pin = Pin(16, Pin.OUT)
@@ -105,12 +105,13 @@ if ITSYBITSY_RP2040:
 # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
 def red_led(state):
-    global _red_led
-    if TINY_PICO:
-        # no blinkable LED on TinyPICO
-        _dotstar[0] = COLOR_RED if state == 1 else COLOR_BLACK
-    if ITSYBITSY_RP2040:
-        _red_led.value(state)
+    pass
+#    global _red_led
+#    if TINY_PICO:
+#        # no blinkable LED on TinyPICO
+#        _dotstar[0] = COLOR_RED if state == 1 else COLOR_BLACK
+#    if ITSYBITSY_RP2040:
+#        _red_led.value(state)
 
 def rgb_led(color):
     global _dotstar, _neopix
@@ -185,7 +186,7 @@ def error():
     '''
     Signal an error.
     '''
-    global led
+    print('error.')
     for i in range(15): # blinks for 30 seconds
         rgb_led(COLOR_RED)
         time.sleep_ms(500)

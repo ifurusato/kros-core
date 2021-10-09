@@ -25,6 +25,7 @@ from core.orient import Orientation
 from behave.behaviour import Behaviour
 from behave.trigger_behaviour import TriggerBehaviour
 from hardware.motor_controller import MotorController
+from hardware.external_clock import ExternalClock
 from hardware.i2c_scanner import I2CScanner
 # see additional imports in _connect()
 
@@ -62,7 +63,7 @@ class Swerve(Behaviour):
     :param message_bus:      the asynchronous message bus
     :param message_factory:  the factory for messages
     :param motor_ctrl:       the motor controller
-    :param exernal_clock:    the external clock
+    :param external_clock:   the external clock
     :param suppressed:       suppressed state, default True
     :param enabled:          enabled state, default True
     :param level:            the optional log level
@@ -79,10 +80,11 @@ class Swerve(Behaviour):
         else:
             self._port_motor = None
             self._stbd_motor = None
-        self._ext_clock  = external_clock
-        if self._ext_clock:
-            self._ext_clock.add_callback(self._tick)
-            pass
+        if external_clock:
+            if not isinstance(external_clock, ExternalClock):
+                raise TypeError('expected ExternalClock, not {}'.format(type(external_clock)))
+            self._external_clock  = external_clock
+            self._external_clock.add_callback(self._tick)
         else:
             self._log.error('unable to enable swerve behaviour: no external clock available.')
 #           raise Exception()
@@ -105,8 +107,8 @@ class Swerve(Behaviour):
         self._abs_tol   = ( _percent_tolerance / 100.0 ) * 255.0
 
         # lambda accepts distance and returns a ratio to multiply against velocity
-        self._offset_port = 0.2
-        self._offset_stbd = 0.2
+        self._offset_port = 1.0
+        self._offset_stbd = 1.0
         self._port_velocity_function = lambda : self.offset_port
         self._stbd_velocity_function = lambda : self.offset_stbd
         self._ioe       = None
@@ -180,9 +182,9 @@ class Swerve(Behaviour):
         '''
         if not self.suppressed:
             _count = next(self._counter)
-#           self._log.debug('[{:04d}] swerve;\t'.format(_count)
-#                   + Fore.RED   + 'port: {:5.2f}cm/s;\t'.format(self._port_motor.velocity)
-#                   + Fore.GREEN + 'stbd: {:5.2f}cm/s'.format(self._stbd_motor.velocity))
+            self._log.info('🍐 [{:04d}] swerve;\t'.format(_count)
+                    + Fore.RED   + 'port: {:5.2f}cm/s;\t'.format(self._port_motor.velocity)
+                    + Fore.GREEN + 'stbd: {:5.2f}cm/s'.format(self._stbd_motor.velocity))
             if _count % self._modulo == 0:
                 try:
 
@@ -198,6 +200,8 @@ class Swerve(Behaviour):
                         # then they're close enough to each other (within tolerance) to consider balanced
                         if self._matrices:
                             self._matrices.clear_all()
+                        else:
+                            self._log.warning('no matrices available.')
                         self._log.info('[{:04d}] (=) '.format(_count)
                                 + Fore.RED    + Style.DIM + 'PORT: {:6.3f} / {:6.3f}cm / '.format(_port_raw, _port_cm)
                                 + Fore.YELLOW + ' {:5.2f}\t'.format(self._offset_port)
@@ -212,6 +216,8 @@ class Swerve(Behaviour):
                             _ratio    = ( _port_pc - _stbd_pc ) * self._ratio_multiplier
                             _percent  = self._percent_ranger.convert(_ratio)
                             self._matrices.percent(_percent)
+                        else:
+                            self._log.warning('no matrices available.')
                         if self._offset_port == 0.0: # offset to STBD
                             self._log.info('[{:04d}] (S) '.format(_count)
                                     + Fore.RED    + Style.NORMAL + 'PORT: {:6.3f} / {:6.3f}cm / '.format(_port_raw, _port_cm)
@@ -244,7 +250,7 @@ class Swerve(Behaviour):
         if self.connected:
             self._log.warning('already connected.')
         else:
-            self._log.warning('connecting to required hardware...')
+            self._log.info('connecting to required hardware...')
             try:
                 from hardware.io_expander import IoExpander
                 from hardware.ifs import IntegratedFrontSensor

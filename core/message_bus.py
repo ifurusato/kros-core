@@ -122,9 +122,10 @@ class MessageBus(Component):
         Clears the task list of any completed tasks.
         '''
         _tasks = self.get_all_tasks()
-        if len(_tasks) == 0:
-            self._log.info('no outstanding tasks.')
-        else:
+#       if len(_tasks) == 0:
+#           self._log.info('no outstanding tasks.')
+#       else:
+        if len(_tasks) > 0:
             self._log.info('clearing {:d} outstanding tasks.'.format(len(_tasks)))
             for _task in _tasks:
                 if not _task.cancelled():
@@ -430,10 +431,10 @@ class MessageBus(Component):
 #       if ( message.event is not Event.CLOCK_TICK and message.event is not Event.CLOCK_TOCK ):
 #       self._log.debug('rx request to publish message: {}'.format(message.name)
 #               + ' (event: {}; age: {:d}ms);'.format(message.event.label, message.age))
-        _put_task = asyncio.create_task(self._queue.put(message), name='publish-message-{}'.format(message.name))
+        _publish_task = asyncio.create_task(self._queue.put(message), name='publish-message-{}'.format(message.name))
         # the first time the message is published we update the 'last_message_timestamp'
         self.update_last_message_timestamp()
-#       self._log.debug('created task: {}'.format(_put_task.get_name()))
+#       self._log.debug('created task: {}'.format(_publish_task.get_name()))
         await asyncio.sleep(self._publish_delay_sec)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -532,6 +533,13 @@ class MessageBus(Component):
             # this call will block
             self._get_event_loop()
             self._log.info('exited message bus forever loop.')
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def has_event_loop(self):
+        '''
+        Returns True if there is an even tloop and it is running.
+        '''
+        return self._loop and self._loop.is_running()
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _get_event_loop(self):

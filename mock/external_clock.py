@@ -33,23 +33,23 @@ class MockExternalClock(Component):
     with a modulo value meant to trigger roughly at 1Hz.
 
     :param config:     The application configuration.
+    :param freq_hz:    the loop frequency in Hertz
     :param callback:   the optional callback method. 
     :param level:      the logging level.
     '''
-    def __init__(self, config, callback=None, level=Level.INFO):
+    def __init__(self, config, freq_hz=20, callback=None, level=Level.INFO):
         self._log = Logger('mock-ext-clock', level)
         Component.__init__(self, self._log, suppressed=False, enabled=True)
         if config is None:
             raise ValueError('no configuration provided.')
-        _cfg = config['kros'].get('hardware').get('external_clock')
+        _cfg = config['kros'].get('publisher').get('external_clock')
         self._loop_thread     = None
         self._loop_enabled    = False
 
         # set up loop Rate
-        self._loop_delay_hz   = 20 #_cfg.get('loop_delay_hz')     # main loop delay
-        self._loop_delay_sec  = 1 / self._loop_delay_hz 
-        self._log.info('loop delay:\t{}Hz ({:4.2f}s)'.format(self._loop_delay_hz, self._loop_delay_sec))
-        self._rate            = Rate(self._loop_delay_hz, Level.ERROR)
+        self._loop_delay_sec  = 1 / freq_hz 
+        self._log.info('loop frequency:\t{}Hz ({:4.2f}s)'.format(freq_hz, self._loop_delay_sec))
+        self._rate            = Rate(freq_hz, Level.ERROR)
 
         self.__callbacks      = []
 #       self.__slow_callbacks = []

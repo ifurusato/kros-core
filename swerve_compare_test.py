@@ -52,7 +52,6 @@ def x_compare(port, stbd):
 
 _config = ConfigLoader(Level.INFO).configure()
 _message_bus = MockMessageBus()
-_message_factory = None
 _message_factory = MessageFactory(_message_bus, Level.INFO)
 _motor_ctrl = None
 _external_clock = None

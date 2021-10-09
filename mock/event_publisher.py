@@ -374,7 +374,7 @@ class EventPublisher(Publisher):
             _msg = _ifs.get_info()
         else:
             _msg = 'no ifs information available.'
-        self._log.info('ifs:          \t' + Fore.YELLOW + '{}'.format(_msg))
+        self._log.info('integrated front sensor:  \t' + Fore.YELLOW + '{}'.format(_msg))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _print_macro_info(self):
@@ -383,7 +383,7 @@ class EventPublisher(Publisher):
         if _macro_publisher:
             _macro_publisher.print_info()
         else:
-            self._log.info('macro:\t' + Fore.YELLOW + 'disabled.')
+            self._log.info('macro processor:      \t' + Fore.YELLOW + 'disabled.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _print_experiment_info(self):
@@ -506,7 +506,7 @@ class EventPublisher(Publisher):
         if _macro_publisher:
             _macro_publisher.load_script_files()
         else:
-            self._log.info('macro:\t' + Fore.YELLOW + 'disabled.')
+            self._log.info('macro processor: ' + Fore.YELLOW + 'disabled.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _toggle_flood(self):

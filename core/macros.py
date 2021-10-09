@@ -163,11 +163,11 @@ class Macro(object):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def __deepcopy__(self, macro):
-        print('❌ macro: {}'.format(macro))
+        print('macro: {}'.format(macro))
         _macro = Macro(self.name, self.description, self._queue)
         for _key, _value in macro.items():
-            print('❌ key: {}; value: {}'.format(_key, _value))
-#       raise Exception('❌ unimplemented: {}'.format(macro))
+            print('key: {}; value: {}'.format(_key, _value))
+#       raise Exception('unimplemented: {}'.format(macro))
         return _macro
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

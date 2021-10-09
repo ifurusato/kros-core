@@ -45,7 +45,7 @@ def test_rgbmatrix():
             _log.warning('test ignored: no rgbmatrix displays found.')
             return
         _addresses = _i2c_scanner.get_int_addresses()
-        _enable_port = 0x77 in _addresses
+        _enable_port = False # 0x77 in _addresses
         _enable_stbd = 0x74 in _addresses
 
         _rgbmatrix = RgbMatrix(_enable_port, _enable_stbd, Level.INFO)

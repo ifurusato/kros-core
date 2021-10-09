@@ -23,7 +23,7 @@ class MockMessageBus():
     '''
     Mocks the Message Bus.
     '''
-    def __init__(self, level=Level.INFO):
+    def __init__(self, config=None, level=Level.INFO):
         self._log = Logger('fake-bus', level)
         self._loop = asyncio.get_event_loop()
         self._publish_delay_sec = 0.1
@@ -56,5 +56,9 @@ class MockMessageBus():
     async def publish_message(self, message):
         self._log.info('🍉 published message: {}'.format(message))
         await asyncio.sleep(self._publish_delay_sec)
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def close(self):
+        pass
 
 #EOF

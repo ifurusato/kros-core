@@ -109,14 +109,14 @@ class MacroPublisher(Publisher):
         '''
         Adds the macro (referenced by name) to the executable queue/stack.
         '''
-        self._log.info('🐰 locating macro: {}; {:d} items in library.'.format(name, self._library.size))
+        self._log.info('locating macro: {}; {:d} items in library.'.format(name, self._library.size))
         _macro = self._library.get(name)
         _copy = deepcopy(_macro)
-        self._log.info('🐰 deep-copied macro: {} to {}.'.format(id(_macro), id(_copy)))
+        self._log.info('deep-copied macro: {} to {}.'.format(id(_macro), id(_copy)))
         if _macro:
-            self._log.info('🐰 queueing macro: {}; {:d} items in library.'.format(_copy.name, self._library.size))
+            self._log.info('queueing macro: {}; {:d} items in library.'.format(_copy.name, self._library.size))
             self.queue_macro(_copy)
-            self._log.info('🐰 queueed macro: {}; {:d} items in library.'.format(_copy.name, self._library.size))
+            self._log.info('queueed macro: {}; {:d} items in library.'.format(_copy.name, self._library.size))
         else:
             self._log.warning('count not find macro: {}'.format(name))
 

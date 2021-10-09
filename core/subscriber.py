@@ -219,6 +219,9 @@ class Subscriber(Component, FiniteStateMachine):
 #               self._log.debug('sending message: {}; event: {} to arbitrator...'.format(_message.name, _message.event.label))
                 await self._arbitrate_message(_message)
 #               self._log.debug('sent message:' + Fore.WHITE + ' {}; event: {} to arbitrator.'.format(_message.name, _message.event.label))
+            elif _message.sent == -1:
+                # don't arbitrate, just keep republishing this message
+                pass
             else:
                 self._log.warning('message: {} already sent; event: {}'.format(_message.name, _message.event.label))
 
@@ -394,18 +397,7 @@ class GarbageCollector(Subscriber):
         A filter that returns True if the message is either expired and/or
         fully acknowledged.
         '''
-#       _elapsed_ms = (dt.now() - message.timestamp).total_seconds() * 1000.0
         return self._message_bus.is_expired(message) or message.fully_acknowledged
-#       self._log.info('🍟 message {} acceptable? expired? {}; fully acknowledged? {}'.format(
-#               message.name, self._message_bus.is_expired(message), message.fully_acknowledged))
-#       if self._message_bus.is_expired(message) and message.fully_acknowledged:
-#           return True
-#       elif self._message_bus.is_expired(message):
-#           return True
-#       elif message.fully_acknowledged:
-#           return True
-#       else:
-#           return False
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def consume(self):

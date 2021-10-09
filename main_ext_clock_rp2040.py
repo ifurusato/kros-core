@@ -1,5 +1,4 @@
 # MicroPython External Clock for Itsy Bitsy RP2040
-# file: main.py
 #
 # Copyright 2020-2021 by Murray Altheim. All rights reserved. This file is part
 # of the Robot Operating System project, released under the MIT License. Please
@@ -9,115 +8,190 @@
 # created:  2021-08-26
 # modified: 2021-09-08
 #
-# This has options for generating a 50ms (20Hz) external clock or blinking the
-# red LED as well as various display options for the NeoPixel on an Itsy Bitsy
-# RP2040.
-#
 # Uses the Neopixel library downloadable from:
 #
 #    https://github.com/blaz-r/pi_pico_neopixel
 #
-# copy the 'neopixel.py' file to /pyboard/
 
-from machine import Pin, Timer
-from neopixel import Neopixel
-import utime
+from machine import UART
+from machine import Timer
+from machine import Pin
+import time
 
-# if True generate 50ms external clock pulse
-EXT_CLOCK = True
-# elif True blink red LED
-BLINK     = False
+import itertools
+from queue import Queue
+from switch import Switch
 
-# if True display unicorn 
-UNICORN   = False
-# otherwise simple color cycling
-CYCLE     = False
-# otherwise just blink NeoPixel
+# flash the unicorns
+import upy_utils as ut
 
-BLACK        = (  0,   0,   0)
-PURPLE       = ( 40,   0,  72)
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#                                  CONSTANTS
+# ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
-RED          = (255,   0,   0)
-ORANGE       = (255, 165,   0)
-YELLOW       = (255, 150,   0)
-GREEN        = (  0, 255,   0)
-CYAN         = (  0, 255, 255)
-BLUE         = (  0,   0, 255)
-INDIGO       = ( 75,   0, 130)
-VIOLET       = (138,  43, 226)
-MAGENTA      = (255, 255,   0)
-COLORS = [ RED, ORANGE, YELLOW, GREEN, CYAN, BLUE, INDIGO, VIOLET, MAGENTA ]
+# pin definitions ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
-# configure NeoPixel ..................................................
+# GPIO   BAT   G   USB  11   10    9    8    7    6   16    3    2    0    1
+#  PIN   BAT   G   USB  13   12   11!  10    9    7    5!  SCL  SDA  TX   RX
+#         ◆    ◆    ◆    ◆    ◆    ◆    ◆    ◆    ◆    ◆    ◆    ◆    ◆    ◆
+#                                       A    B    C
 
-# NeoPixel power pin 16
-p16 = Pin(16, Pin.OUT)
-p16.value(1)
-# NeoPixel pin 17
-np17 = Neopixel(num_leds=10, state_machine=0, pin=17, mode="RGB")
-np17.brightness(108)
+#                             D    E    F
+#         ◆    ◆    ◆    ◆    ◆    ◆    ◆    ◆    ◆    ◆    ◆    ◆    ◆    ◆
+# GPIO   RST  3V3  3V3  Vhi  26   27   28   29   24   25   18   19   20   12
+#  PIN   RST  3V3  3V3  Vhi  A0   A1   A2   A3   24   25  SCK   MO   MI   2
+#                            38   39   40   41   36   37   52   30   31   15
+# NOTE: specify GPIO (back of board) not Pin number (front of board)
+# NOTE: You can't use GPIO 16 as that's the NeoPixel's power pin!
+#       You also can't use GPIO 11 as that's the red LED.
 
-# toggle red LED using hardware Timer ................................
+LED_PIN  =  11  # red LED pin
+CLK_PIN  =  10  # clock output pin
 
-# red LED
-_led  = Pin(11, Pin.OUT)
-# define pin GPIO 9 on pin 7
-_pin7 = Pin(7, Pin.OUT)
+PAFT_PIN  =  8  # A. port aft infrared
+MAST_PIN  =  7  # B. mast infrared
+SAFT_PIN  =  6  # C. starboard aft infrared
 
-def toggle_led():
-    _led.value(not _led.value())
+PORT_PIN  = 26  # D. port bumper switch
+CNTR_PIN  = 27  # E. center bumper switch
+STBD_PIN  = 28  # F. starboard bumper switch
 
-if EXT_CLOCK:
-    _timer = Timer(period=50, mode=Timer.PERIODIC, callback=lambda n: _pin7.toggle())
-elif BLINK:
-    _timer = Timer(freq=1, mode=Timer.PERIODIC, callback=lambda n: toggle_led())
+UART_ID   =  0  # UART 0 or 1? 1 is Bluetooth.
+TX_PIN    =  0  # TX/GP00 - The main UART0 TX pin, connect to Rx on Pi.
+RX_PIN    =  1  # RX/GP01 - The main UART0 RX pin, connect to Tx on Pi.
+#BAUD_RATE = 9600
+#BAUD_RATE = 19200
+BAUD_RATE = 38400
 
-# cycle NeoPixel through colors ......................................
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#                                   FUNCTIONS
+# ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
-def wheel(pos):
+# ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+def irq_callback(pin):
     '''
-    Input a value 0 to 255 to get a color value.
-    The colours are a transition r - g - b - back to r.
+    The IRQ callback that puts the data corresponding to the
+    pin into the queue.
+
+    If we're transmitting then further data is likely noise.
     '''
-    if pos < 0 or pos > 255:
-        r = g = b = 0
-    elif pos < 85:
-        r = int(pos * 3)
-        g = int(255 - pos * 3)
-        b = 0
-    elif pos < 170:
-        pos -= 85
-        r = int(255 - pos * 3)
-        g = 0
-        b = int(pos * 3)
+    global g_transmitting, g_queue, g_pins
+    if not g_transmitting:
+#       print('IRQ: {}'.format(pin))
+        # only enqueue the record if not already present in queue.
+#       g_queue.put_as_set(g_pins.get(id(pin)))
+        # or just shove it in there anyway...
+        g_queue.put(g_pins.get(id(pin)))
+
+# ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+def define_pin(pin_num, message, color, is_switch):
+    '''
+    If is_switch is true, we use the Switch class, otherwise a Pin and an IRQ.
+    '''
+    global g_pins
+    if is_switch:
+        _pin = Pin(pin_num, Pin.IN, Pin.PULL_UP)
+        _switch = Switch(pin_num, pin=_pin, callback=irq_callback)
     else:
-        pos -= 170
-        r = 0
-        g = int(pos * 3)
-        b = int(255 - pos * 3)
-    return (r, g, b)
+        _pin = Pin(pin_num, Pin.IN, Pin.PULL_UP)
+        # define interrupt
+        #   Pin.IRQ_FALLING     interrupt on falling edge.
+        #   Pin.IRQ_RISING      interrupt on rising edge.
+        #   Pin.IRQ_LOW_LEVEL   interrupt on low level.
+        #   Pin.IRQ_HIGH_LEVEL  interrupt on high level.
+        # These values can be OR’ed together to trigger on multiple events.
+        _pin.irq(handler=irq_callback, trigger=Pin.IRQ_FALLING or Pin.IRQ_LOW_LEVEL)
+    g_pins[id(_pin)] = ( message, color )
 
-# execute ............................................................
+# ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+def poll_sensors():
+    '''
+    Pop all elements of the queue, transmitting them to the
+    UART recipient. This gets called every 50ms.
+    '''
+    global g_uart, g_queue, g_transmitting, g_counter_1
+    if not g_transmitting and not g_queue.empty():
+        g_transmitting = True
+        try:
+            while not g_queue.empty():
+                _data, _color = g_queue.get()
+#               print("writing data: {}; color: {}".format(_data, _color))
+                ut.rgb_led(_color)
+                g_uart.write(_data)
+                time.sleep_ms(50)
+            time.sleep_ms(10)
+        except Exception as e:
+#           print("ERROR: {}".format(e))
+            ut.error()
+            time.sleep(2.0)
+        finally:
+            g_queue.clear()
+            g_transmitting = False
+    else:
+        if next(g_counter_1) % 40 == 0.0:
+            ut.rgb_led(ut.COLOR_TURQUOISE)
+            time.sleep_ms(10)
+    time.sleep_ms(10)
+    ut.rgb_led(ut.COLOR_BLACK)
 
-if UNICORN:
-    while True:
-        for i in range(255):
-            np17.set_pixel(0, wheel(i))
-            np17.show()
-            utime.sleep(0.01)
-elif CYCLE:
-    while True:
-        for i in range(len(COLORS)):
-            np17.set_pixel(0, COLORS[i])
-            np17.show()
-            utime.sleep(1.0)
-else:
-    while True:
-        np17.set_pixel(0, PURPLE)
-        np17.show()
-        utime.sleep(0.01)
-        np17.set_pixel(0, BLACK)
-        np17.show()
-        utime.sleep(1.0)
+# ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+def poll_clk_tick():
+#   _clk_led.value(not _clk_led.value())
+    _clk_led.value(True)
+    if next(g_counter_2) % 20 == 0.0:
+        _red_led.value(not _red_led.value())
+    _clk_led.value(False)
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#                            INITIALISE & EXECUTE
+# ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+
+# configure SPI for controlling the DotStar
+# uses software SPI as the pins used are not hardware SPI pins
+#spi = SPI(sck=Pin(TinyPICO.DOTSTAR_CLK), mosi=Pin(TinyPICO.DOTSTAR_DATA), miso=Pin(TinyPICO.SPI_MISO)) # create a DotStar instance
+#dotstar = DotStar(spi, 1, brightness = 0.5)    # just one DotStar, half brightness
+#TinyPICO.set_dotstar_power(True)               # turn on the power to the DotStar
+
+try:
+
+    g_counter_1 = itertools.count()
+    g_counter_2 = itertools.count()
+    g_queue   = Queue()
+
+    g_transmitting = False
+
+    _tx_pin = Pin(TX_PIN)
+    _rx_pin = Pin(RX_PIN)
+    #g_uart = UART(UART_ID, baudrate=BAUD_RATE, parity=None, tx=_tx_pin, rx=_rx_pin, stop=1)
+    g_uart = UART(UART_ID, baudrate=BAUD_RATE, parity=None, tx=_tx_pin, rx=_rx_pin, stop=1) #tx=_tx_pin, rx=_rx_pin, stop=1)
+
+#   g_red_led = Pin(LED_PIN, Pin.OUT)
+    # board red LED
+    _red_led = Pin(11, Pin.OUT)
+    _clk_led = Pin(CLK_PIN, Pin.OUT)
+
+    # pin configuration
+    g_pins = {}
+    _pin_0 = define_pin(PORT_PIN, 'port\n', ut.COLOR_RED,     True)
+    _pin_1 = define_pin(CNTR_PIN, 'cntr\n', ut.COLOR_BLUE,    True)
+    _pin_2 = define_pin(STBD_PIN, 'stbd\n', ut.COLOR_GREEN,   True)
+    _pin_3 = define_pin(PAFT_PIN, 'paft\n', ut.COLOR_CYAN,    False)
+    _pin_4 = define_pin(MAST_PIN, 'mast\n', ut.COLOR_YELLOW,  False)
+    _pin_5 = define_pin(SAFT_PIN, 'saft\n', ut.COLOR_MAGENTA, False)
+
+    # start first polling loop with frequency of 40Hz (25ms)
+    _timer1 = Timer(period=25, mode=Timer.PERIODIC, callback=lambda n: poll_sensors())
+
+    # start second polling loop with frequency of 20Hz (50ms)
+    _timer2 = Timer(period=50, mode=Timer.PERIODIC, callback=lambda n: poll_clk_tick())
+
+#    ut.ready()
+
+except Exception as e:
+    print(e)
+    ut.error()
+finally:
+#   ut.red_led(0)
+    pass
 
 #EOF

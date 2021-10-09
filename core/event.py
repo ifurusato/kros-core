@@ -27,7 +27,7 @@ class Group(Enum):
     THETA      = 9
     CHADBURN   = 10
     BEHAVIOUR  = 11
-#   CLOCK      = 12
+    CLOCK      = 12
     EXPERIMENT = 13
     OTHER      = 14
 
@@ -140,6 +140,9 @@ class Event(Enum):
     VIDEO                  = ( 509, "video",                  175,   Group.BEHAVIOUR ) # L1 Button
     IDLE                   = ( 510, "idle",                   180,   Group.BEHAVIOUR ) # A Button
 
+    # clock (> 700) .........................................................................
+    TICK                   = ( 701, "tick",                   700,   Group.CLOCK )
+
     # experiments (> 800) ...................................................................
     EXPERIMENT_1           = ( 801, "experiment 1",           800,   Group.EXPERIMENT )
     EXPERIMENT_2           = ( 802, "experiment 2",           800,   Group.EXPERIMENT )
@@ -150,7 +153,8 @@ class Event(Enum):
     EXPERIMENT_7           = ( 807, "experiment 7",           800,   Group.EXPERIMENT )
 
     # other events (> 900) ..................................................................
-    NO_ACTION              = ( 999, "no action",              999,   Group.OTHER )
+    NO_ACTION              = ( 900, "no action",              998,   Group.OTHER )
+    RGB                    = ( 909, "rgb",                    999,   Group.OTHER )
     ANY                    = ( 1000, "any",                  1000,   Group.OTHER )
 
     def __new__(cls, *args, **kwds):

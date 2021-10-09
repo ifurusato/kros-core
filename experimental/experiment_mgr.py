@@ -103,7 +103,13 @@ class ExperimentManager(Component):
         self._log.info('🦊 toggle experiment "{}" (num: {:d})'.format(event, _num))
         _experiment = self._registry.get(event)
         if _experiment:
-            self._log.info('🦊 toggle experiment "{}" (num: {:d})'.format(event, _num))
+            if _experiment.suppressed:
+                self._log.info('🦊 release experiment "{}" (num: {:d})'.format(event, _num))
+                _experiment.release()
+            else:
+                self._log.info('🦊 suppress experiment "{}" (num: {:d})'.format(event, _num))
+                _experiment.suppress()
+             
 #               Event.EXPERIMENT_1: None, 
 #               Event.EXPERIMENT_2: None,
 #               Event.EXPERIMENT_3: None,

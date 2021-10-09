@@ -15,52 +15,68 @@ init(autoreset=True)
 from core.logger import Logger, Level
 from core.config_loader import ConfigLoader
 from core.component import Component
+from core.message_bus import MessageBus
+from core.message_factory import MessageFactory
 from hardware.external_clock import ExternalClock
+from hardware.clock_subscriber import ClockSubscriber
 
-_log = Logger('ext-clock-test', Level.INFO)
-_ext_clock    = None
-_modulo       = 1
-#_slow_modulo  = 1
-_x_counter    = itertools.count()
-_timestamp    = dt.now()
-#_slow_timestamp    = dt.now()
 
-# ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-def ext_callback_method():
-    global _timestamp
-    _count = next(_x_counter)
-    if _count % _modulo == 0.0:
-        _elapsed_ms = (dt.now() - _timestamp).total_seconds() * 1000.0
-        print(Fore.BLUE + 'external callback;\t' + Fore.YELLOW + ' {:7.4f}ms elapsed.'.format(_elapsed_ms))
-        _timestamp = dt.now()
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+class Recipient():
+    def __init__(self, name, ext_clock):
+        self._name = name
+        self._log = Logger(name, Level.INFO)
+        self._counter     = itertools.count()
+        self._timestamp_a = dt.now()
+        self._timestamp_b = dt.now()
 
-## ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-#def ext_slow_callback_method():
-#    global _slow_timestamp
-#    _count = next(_x_counter)
-#    if _count % _slow_modulo == 0.0:
-#        _elapsed_ms = (dt.now() - _slow_timestamp).total_seconds() * 1000.0
-#        print(Fore.GREEN + 'external slow callback;\t' + Fore.YELLOW + ' {:7.4f}ms elapsed.'.format(_elapsed_ms))
-#        _slow_timestamp = dt.now()
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def callback_a(self):
+        _elapsed_ms = (dt.now() - self._timestamp_a).total_seconds() * 1000.0
+        _count = next(self._counter)
+        self._log.info('💙 [{:d}] external callback A;\t'.format(_count) + Fore.YELLOW + ' {:7.4f}ms elapsed.'.format(_elapsed_ms))
+        self._timestamp_a = dt.now()
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def callback_b(self):
+        _elapsed_ms = (dt.now() - self._timestamp_b).total_seconds() * 1000.0
+        self._log.info('💛 [{:d}] external callback A;\t'.format(_count) + Fore.YELLOW + ' {:7.4f}ms elapsed.'.format(_elapsed_ms))
+        self._timestamp_b = dt.now()
 
 # main ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
 def main():
 
+    _ext_clock = None
+    _log = Logger('ext-clock-test', Level.INFO)
     _log.info('starting test...')
+
     try:
 
         # read YAML configuration
-        _loader = ConfigLoader(Level.INFO)
+        _level = Level.INFO
+        _loader = ConfigLoader(_level)
         filename = 'config.yaml'
         _config = _loader.configure(filename)
 
-#       _pin = 6
-#       _ext_clock = ExternalClock(_config)
-        _ext_clock = ExternalClock(_config)
-        _ext_clock.add_callback(ext_callback_method)
-#       _ext_clock.add_slow_callback(ext_slow_callback_method)
+        _log.info('creating message bus...')
+        _message_bus = MessageBus(_config, Level.INFO)
+        _log.info('creating message factory...')
+        _message_factory = MessageFactory(_message_bus, Level.INFO)
+
+        _ext_clock = ExternalClock(_config, _message_bus, _message_factory, Level.INFO)
+
+        _rx = Recipient('rx', _ext_clock)
+
+        _recipient_a = ClockSubscriber(_config, 'rxa', _message_bus, _rx.callback_a, Level.INFO)
+        _recipient_b = ClockSubscriber(_config, 'rxb', _message_bus, _rx.callback_b, Level.INFO)
+        _recipient_a.enable()
+        _recipient_b.enable()
         _ext_clock.enable()
+
+        _log.info('🌞 enabling message bus...')
+        _message_bus.enable()
+        _log.info('🌞 message bus enabled.')
 
         while True:
             _log.info(Fore.BLACK + 'waiting for clock toggle.')
