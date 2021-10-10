@@ -7,7 +7,7 @@
 #
 # author:   Murray Altheim
 # created:  2021-09-16
-# modified: 2021-09-19
+# modified: 2021-10-10
 #
 # This has options for generating a 50ms (20Hz) external clock or blinking the
 # NeoPixel on a QT Py RP2040.
@@ -44,7 +44,10 @@ SKY_BLUE = ( 40,   0,  72)
 # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
 # external clock pin ("MO")
-clock_pin = Pin(3, Pin.OUT)
+clock_pin_m0 = Pin(3, Pin.OUT)
+
+# external clock pin ("M1")
+clock_pin_m1 = Pin(4, Pin.OUT)
 
 # NeoPixel power pin 11
 power_pin = Pin(11, Pin.OUT)
@@ -83,9 +86,9 @@ def wheel(pos):
     return (r, g, b)
 
 # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-def tick():
+def tick0():
     global g_counter
-    clock_pin.value(not clock_pin.value())
+    clock_pin_m0.value(not clock_pin_m0.value())
     # now some fluff
     _count = next(g_counter)
     if _count % 500 == 0.0:
@@ -96,6 +99,12 @@ def tick():
     utime.sleep(0.01)
     neopix.set_pixel(0, BLACK)
     neopix.show()
+
+# ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+def tick1():
+#   clock_pin_m1.value(not clock_pin_m1.value())
+    clock_pin_m1.value(0)
+    clock_pin_m1.value(1)
 
 def rgb_blink():
     for color in [RED, GREEN, BLUE]:
@@ -123,7 +132,9 @@ g_counter = itertools.count()
 
 rgb_blink()
 
-_ext_clock_timer = Timer(period=50, mode=Timer.PERIODIC, callback=lambda x: tick())
+_ext_clock_timer_0 = Timer(period=50, mode=Timer.PERIODIC, callback=lambda x: tick0())
+
+_ext_clock_timer_1 = Timer(period=51, mode=Timer.PERIODIC, callback=lambda x: tick1())
 
 unicorns()
 

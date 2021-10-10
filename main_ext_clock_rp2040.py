@@ -136,10 +136,12 @@ def poll_sensors():
 
 # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 def poll_clk_tick():
-#   _clk_led.value(not _clk_led.value())
     _clk_led.value(True)
-    if next(g_counter_2) % 20 == 0.0:
-        _red_led.value(not _red_led.value())
+    if next(g_counter_2) % 100 == 0.0:
+#       _red_led.value(not _red_led.value())
+        _red_led.value(1)
+        time.sleep_ms(50)
+        _red_led.value(0)
     _clk_led.value(False)
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

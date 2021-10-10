@@ -9,10 +9,12 @@
 import itertools
 from datetime import datetime as dt
 import time
+import statistics
 from colorama import init, Fore, Style
 init(autoreset=True)
 
 from core.logger import Logger, Level
+from core.dequeue import DeQueue
 from core.config_loader import ConfigLoader
 from hardware.irq_clock import IrqClock
 
@@ -20,15 +22,21 @@ _log = Logger('irq-clock-test', Level.INFO)
 
 # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 def callback_method():
-    global _counter, _timestamp
+    global _counter, _timestamp, _queue
     _elapsed_ms = (dt.now() - _timestamp).total_seconds() * 1000.0
-    _log.info('[{:04d}] IRQ callback: '.format(next(_counter)) + Fore.YELLOW + ' {:7.4f}ms elapsed.'.format(_elapsed_ms))
+    if _queue.full():
+        _queue.poll()
+    _queue.push(_elapsed_ms)
+    _mean_ms = statistics.median(_queue.queue)
+    _log.info('[{:04d}] callback: '.format(next(_counter)) 
+            + Fore.YELLOW  + '{:6.3f}ms elapsed; '.format(_elapsed_ms) 
+            + Fore.MAGENTA + '{:6.3f}ms average'.format(_mean_ms))
     _timestamp = dt.now()
 
 # main ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
 def main():
-    global _counter, _timestamp
+    global _counter, _timestamp, _queue
 
     _irq_clock = None
     _log.info('starting test...')
@@ -43,6 +51,8 @@ def main():
         _loader = ConfigLoader(_level)
         filename = 'config.yaml'
         _config = _loader.configure(filename)
+
+        _queue = DeQueue(maxsize=20, mode=DeQueue.FIFO)
 
         _irq_clock = IrqClock(_config, Level.INFO)
         _irq_clock.add_callback(callback_method)
