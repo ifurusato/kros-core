@@ -25,33 +25,49 @@ class Color(Enum):
     LIGHT_RED      = (  7, 255.0, 128.0, 128.0)
     RED            = (  8, 255.0, 0.0, 0.0)
     DARK_RED       = (  9, 128.0, 0.0, 0.0)
-    ORANGE         = ( 10, 255.0, 50.0, 0.0)
-#   ORANGE         = ( 10, 255.0, 128.0, 0.0)
-    YELLOW_GREEN   = ( 11, 180.0, 255.0, 0.0)
-    LIGHT_GREEN    = ( 12, 128.0, 255.0, 128.0)
-    GREEN          = ( 13, 0.0, 255.0, 0.0)
-    DARK_GREEN     = ( 14, 0.0, 128.0, 0.0)
-    LIGHT_BLUE     = ( 15, 128.0, 128.0, 255.0)
-    BLUE           = ( 16, 0.0, 0.0, 255.0)
-    DARK_BLUE      = ( 17, 0.0, 0.0, 128.0)
-    LIGHT_CYAN     = ( 18, 128.0, 255.0, 255.0)
-    CYAN           = ( 19, 0.0, 255.0, 255.0)
-    DARK_CYAN      = ( 20, 0.0, 128.0, 128.0)
-    LIGHT_MAGENTA  = ( 21, 255.0, 128.0, 255.0)
-    MAGENTA        = ( 22, 255.0, 0.0, 255.0)
-    FUCHSIA        = ( 22, 255.0, 0.0, 128.0)
-    DARK_MAGENTA   = ( 23, 128.0, 0.0, 128.0)
-    LIGHT_YELLOW   = ( 24, 255.0, 255.0, 128.0)
-    PURPLE         = ( 25, 77.0, 26.0, 177.0)
-#   YELLOW         = ( 25, 255.0, 208.0, 0.0)
-    YELLOW         = ( 25, 255.0, 140.0, 0.0)
-    DARK_YELLOW    = ( 27, 128.0, 128.0, 0.0)
+    BROWN          = ( 10, 50.0, 42.0, 24.0)
+    DARK_ORANGE    = ( 11, 255.0, 50.0, 0.0)
+    ORANGE         = ( 12, 255.0, 96.0, 0.0)
+    DARK_YELLOW    = ( 13, 128.0, 128.0, 0.0)
+    YELLOW         = ( 14, 255.0, 140.0, 0.0)
+    LIGHT_YELLOW   = ( 15, 255.0, 255.0, 128.0)
+    YELLOW_GREEN   = ( 16, 180.0, 255.0, 0.0)
+    LIGHT_GREEN    = ( 17, 128.0, 255.0, 64.0)
+    GREEN          = ( 18, 0.0, 255.0, 0.0)
+    DARK_GREEN     = ( 19, 0.0, 96.0, 0.0)
+    TURQUOISE      = ( 20, 0.0, 160.0, 96.0)
+    LIGHT_BLUE     = ( 21, 128.0, 128.0, 255.0)
+    BLUE           = ( 22, 0.0, 0.0, 255.0)
+    SKY_BLUE       = ( 23, 40.0, 128.0, 192.0)
+    DARK_BLUE      = ( 24, 0.0, 0.0, 128.0)
+    LIGHT_CYAN     = ( 25, 128.0, 255.0, 255.0)
+    CYAN           = ( 26, 0.0, 255.0, 255.0)
+    DARK_CYAN      = ( 27, 0.0, 128.0, 128.0)
+    LIGHT_MAGENTA  = ( 28, 255.0, 128.0, 255.0)
+    MAGENTA        = ( 29, 255.0, 0.0, 255.0)
+    FUCHSIA        = ( 30, 255.0, 0.0, 128.0)
+    DARK_MAGENTA   = ( 31, 128.0, 0.0, 128.0)
+    PURPLE         = ( 32, 77.0, 26.0, 177.0)
 
     # ignore the first param since it's already set by __new__
     def __init__(self, num, red, green, blue):
         self._red = red
         self._green = green
         self._blue = blue
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    @staticmethod
+    def all_colors():
+        return [ Color.WHITE, Color.LIGHT_GREY, Color.GREY, Color.DARK_GREY,
+                 Color.VERY_DARK_GREY, Color.BLACK, Color.LIGHT_RED,
+                 Color.RED, Color.DARK_RED, Color.BROWN, Color.DARK_ORANGE,
+                 Color.ORANGE, Color.DARK_YELLOW, Color.YELLOW,
+                 Color.LIGHT_YELLOW, Color.YELLOW_GREEN, Color.LIGHT_GREEN,
+                 Color.GREEN, Color.DARK_GREEN, Color.TURQUOISE,
+                 Color.LIGHT_BLUE, Color.BLUE, Color.SKY_BLUE,
+                 Color.DARK_BLUE, Color.LIGHT_CYAN, Color.CYAN,
+                 Color.DARK_CYAN, Color.LIGHT_MAGENTA, Color.MAGENTA,
+                 Color.FUCHSIA, Color.DARK_MAGENTA, Color.PURPLE ]
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property

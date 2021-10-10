@@ -61,6 +61,7 @@ class MockExternalClock(Component):
 #       self._last_slow_time  = self._millis()
         self._pin = _cfg.get('pin')
         self._log.info('ready.')
+        raise Exception('using mock external clock!')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property

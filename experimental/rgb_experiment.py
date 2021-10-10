@@ -15,8 +15,7 @@
 #
 
 import os, sys, time, traceback
-import asyncio
-import itertools
+import asyncio, random, itertools
 from datetime import datetime as dt
 from colorama import init, Fore, Style
 init(autoreset=True)
@@ -26,6 +25,7 @@ from core.event import Event
 from core.orient import Orientation
 from core.publisher import Publisher
 from experimental.experiment import Experiment
+from hardware.color import Color
 
 # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 class RgbExperiment(Experiment, Publisher):
@@ -37,51 +37,47 @@ class RgbExperiment(Experiment, Publisher):
     '''
     def __init__(self):
         Experiment.__init__(self, 'x-rgb')
-        Publisher.__init__(self, self._name, config=self._config, message_bus=self._message_bus, 
+        Publisher.__init__(self, self._name, config=self._config, message_bus=self._message_bus,
                 message_factory=self._message_factory, suppressed=True, level=self._level)
-        self._counter   = itertools.count()
-        self._loop_task   = None
+        self._counter        = itertools.count()
+        self._loop_task      = None
         self._loop_delay_sec = 0.5 # _cfg.get('loop_delay_sec')
         self._sic_transit_gloria_mundi = False
-#       self._ext_clock.add_callback(self._callback)
+        self._fixed_color    = False
+        self._random_selection = True
+        self._all_colors     = Color.all_colors()
+        self._log.info('ready.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def enable(self):
-        self._log.info('⭐ enabling...')
+        self._log.info('enabling...')
         if self.enabled:
             self._log.warning('already enabled.')
         else:
             self._configure()
             Experiment.enable(self)
             Publisher.enable(self)
-            self._log.info('⭐ enabled.')
+            self._log.info('enabled.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def disable(self):
-        self._log.info('⭐ disabling...')
         Experiment.disable(self)
         Publisher.disable(self)
         if self._loop_task:
             try:
-                self._log.info('⭐ cancelling loop task...')
                 self._loop_task.cancel()
-                self._log.info('⭐ cancelled loop task.')
-            except Exception as e:
-                self._log.error('⭐ error closing  serial port: {}'.format(e))
             finally:
                 self._loop_task = None
-        self._log.info('⭐ disabled.')
+        self._log.info('disabled.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _configure(self):
         try:
 
-            self._log.info('⭐ configuring...')
-#           coro = serial_asyncio.create_serial_connection(self._message_bus.loop, Output, _port, baudrate=_baud_rate)
-#           self._message_bus.loop.run_until_complete(coro)
+            self._log.info('configuring...')
             self._loop_task = self._message_bus.loop.create_task(self._publisher_loop(lambda: self.enabled), name=RgbExperiment._PUBLISHER_LOOP)
             self.release() # FIXME TEMP
-            self._log.info('⭐ configured.')
+            self._log.info('configured.')
 
         except Exception as e:
             self._log.error('{} encountered, exiting: {}'.format(type(e), e))
@@ -91,22 +87,21 @@ class RgbExperiment(Experiment, Publisher):
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def _publisher_loop(self, f_is_enabled):
         if not self.enabled:
-            self._log.warning('⭐ not enabled.')
+            self._log.warning('not enabled.')
             return
-        self._log.info(Fore.MAGENTA + '⭐ start publisher loop; enabled: {}'.format(f_is_enabled()))
+        self._log.info(Fore.MAGENTA + 'start publisher loop; enabled: {}'.format(f_is_enabled()))
         while f_is_enabled():
             _start_time = dt.now()
             _count = next(self._counter)
             if not self.suppressed:
-                self._log.info('[{:03d}] ⭐ begin publisher loop; suppressed: {}'.format(_count, self.suppressed))
+                self._log.info('[{:03d}] begin publisher loop.'.format(_count))
                 if _count > 1 and not self._sic_transit_gloria_mundi:
                     self._sic_transit_gloria_mundi = True
-                    self._log.info(Fore.MAGENTA + '⭐ processing...')
+#                   self._log.info(Fore.MAGENTA + 'processing...')
                     try:
 
-                        self._log.info('😛 waiting for gotod... ')
-                        _packet = 'r100,g226,b90'
-                        _message = self.message_factory.create_message(Event.RGB, _packet)
+#                       self._log.info('😛 generating message... ')
+                        _message = self.message_factory.create_message(Event.RGB, self.get_color())
                         await self._message_bus.publish_message(_message)
 
                     except KeyboardInterrupt:
@@ -119,16 +114,37 @@ class RgbExperiment(Experiment, Publisher):
                         self._log.info(Style.DIM + 'complete: elapsed: {:d}ms'.format(_elapsed_ms))
                         self._sic_transit_gloria_mundi = False
                 else:
-                    self._log.info(Fore.MAGENTA + Style.DIM + '⭐ currently processing...')
-                # once around the mulberry bush...
+                    self._log.info(Fore.MAGENTA + Style.DIM + 'currently processing...')
+                # once around the mulberry bush and re-suppress...
                 self.suppress()
 
-#           self._log.info(Fore.MAGENTA + Style.DIM + '⭐ loop delay; enabled: {}'.format(f_is_enabled()))
+#           self._log.info(Fore.MAGENTA + Style.DIM + 'loop delay; enabled: {}'.format(f_is_enabled()))
             await asyncio.sleep(self._loop_delay_sec)
 
-        self._log.info(Fore.MAGENTA + '⭐ publisher loop complete. 🍠 ')
+        self._log.info(Fore.MAGENTA + 'publisher loop complete.')
 
-## ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def get_color(self):
+        '''
+        Return a fixed color, a randomly-selected Color, or a randomly-generated
+        RGB color.
+        '''
+        if self._fixed_color:
+            return Color.SKY_BLUE
+        elif self._random_selection and bool(random.getrandbits(1)):
+            i = random.randint(0, len(self._all_colors)-1)
+            _color = self._all_colors[i]
+            self._log.info(Fore.MAGENTA + '🍎 randomly selecting color: {}'.format(_color))
+            return _color
+        else:
+            # return a random integer N such that a <= N <= b. Alias for randrange(a, b+1).
+            r = random.randint(0, 255)
+            g = random.randint(0, 255)
+            b = random.randint(0, 255)
+            self._log.info(Fore.MAGENTA + '🍏 generating random color: {},{},{}'.format(r, g, b))
+            return ( r, g, b )
+
+# ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 #def main():
 #
 #    _log = Logger('test', Level.INFO)

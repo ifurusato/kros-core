@@ -18,9 +18,17 @@ init()
 
 from core.logger import Logger, Level
 from core.orient import Orientation
+from hardware.i2c_scanner import I2CScanner
+from hardware.color import Color
 from core.event import Event, Group
 from core.subscriber import Subscriber
 from hardware.motor_controller import MotorController
+#from hardware.rgbmatrix import RgbMatrix, DisplayType
+try:
+    from rgbmatrix5x5 import RGBMatrix5x5
+except ImportError:
+    from mock.rgbmatrix5x5 import MockRGBMatrix5x5 as RGBMatrix5x5
+    print(Fore.RED + 'This script requires the rgbmatrix5x5 module. Some features will be disabled.\nInstall with: sudo pip3 install smbus' + Style.RESET_ALL)
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class RgbSubscriber(Subscriber):
@@ -34,6 +42,20 @@ class RgbSubscriber(Subscriber):
     '''
     def __init__(self, config, message_bus, level=Level.INFO):
         Subscriber.__init__(self, RgbSubscriber.CLASS_NAME, config, message_bus=message_bus, suppressed=False, enabled=False, level=level)
+
+        _i2c_scanner = I2CScanner(config, Level.WARN)
+        if _i2c_scanner.has_address([0x74]):
+            self._stbd_rgbmatrix = RGBMatrix5x5(address=0x74)
+            self._stbd_rgbmatrix.set_brightness(0.8)
+            self._stbd_rgbmatrix.set_clear_on_exit()
+            self._height = self._stbd_rgbmatrix.height
+            self._width  = self._stbd_rgbmatrix.width
+        else:
+            self._stbd_rgbmatrix = None
+            self._stbd_rgbmatrix = MockRGBMatrix5x5(address=0x74)
+            self._height = 5
+            self._width  = 5
+            self._log.warning('test ignored: no rgbmatrix displays found.')
         self.add_event(Event.RGB)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -61,10 +83,67 @@ class RgbSubscriber(Subscriber):
         _event = message.event
         self._log.debug('pre-processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.label))
         if _event.num == Event.RGB.num:
-            self._log.info('message value: {}'.format(message.value))
+            _value = message.value
+            if isinstance(_value, tuple):
+                self._set_rgb_color(*_value)
+            elif isinstance(_value, Color):
+                self._set_color(_value)
+            else:
+                raise TypeError('unrecognised message value: {}'.format(type(_value)))
         else:
             self._log.warning('unrecognised RGB event on message {}'.format(message.name) + ''.format(message.event.label))
         await Subscriber.process_message(self, message)
         self._log.debug('post-processing message {}'.format(message.name))
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def _clear(self, show=True):
+        '''
+        Clears the RGB Matrix by setting its color to black.
+        '''
+        if self._stbd_rgbmatrix:
+            self._set_color(Color.BLACK, show)
+        else:
+            self._log.info('no rgb matrix available.')
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def _set_color(self, color, show=True):
+        if self._stbd_rgbmatrix:
+            self._stbd_rgbmatrix.set_all(color.red, color.green, color.blue)
+            if show:
+                self._stbd_rgbmatrix.show()
+        else:
+            self._log.info('no rgb matrix available.')
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def _set_rgb_color(self, red, green, blue, show=True):
+        '''
+        Sets the RGB Matrix color to the values provided for red, green and blue.
+        '''
+        if self._stbd_rgbmatrix:
+            self._stbd_rgbmatrix.set_all(red, green, blue)
+            if show:
+                self._stbd_rgbmatrix.show()
+        else:
+            self._log.info('no rgb matrix available.')
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    @property
+    def enabled(self):
+        Subscriber.enable(self)
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def disable(self):
+        if self.enabled:
+            Subscriber.disable(self)
+            self._clear(True)
+        else:
+            self._log.warning('rgb subscriber already disabled.')
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def close(self):
+        Subscriber.close(self)
+
+
+
 
 #EOF

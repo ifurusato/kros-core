@@ -433,7 +433,7 @@ class RgbMatrix(object):
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _solid(self, rgbmatrix5x5, arg):
         '''
-        Display a specified static, solid color on only the starboard display.
+        Display a specified static, solid color on the available display(s).
         '''
         global enabled
 #       self.set_color(self._color)
@@ -643,6 +643,15 @@ class RgbMatrix(object):
             self._set_color(self._port_rgbmatrix, color, show)
         if self._stbd_rgbmatrix:
             self._set_color(self._stbd_rgbmatrix, color, show)
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def set_rgb_color(self, rgbmatrix5x5, red, green, blue, show=True):
+        '''
+        Set the color of the RGB Matrix using discrete RGB values.
+        '''
+        rgbmatrix5x5.set_all(red, green, blue)
+        if show:
+            rgbmatrix5x5.show()
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _set_color(self, rgbmatrix5x5, color, show=True):
