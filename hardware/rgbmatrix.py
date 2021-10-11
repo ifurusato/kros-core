@@ -16,25 +16,25 @@ import sys, time, colorsys
 from threading import Thread
 from enum import Enum
 from colorama import init, Fore, Style
-init()
+init(autoreset=True)
 
 try:
-    import numpy
-except ImportError:
-    sys.exit("This script requires the numpy module.\nInstall with: pip3 install --user numpy")
-try:
-    import smbus
-except ImportError:
-    print(Fore.RED + "This script requires the smbus module. Some features will be disabled.\nInstall with: pip3 install --user smbus" + Style.RESET_ALL)
-try:
-    import psutil
-except ImportError:
-    print(Fore.RED + "This script requires the psutil module. Some features will be disabled.\nInstall with: pip3 install --user psutil" + Style.RESET_ALL)
-try:
+    try:
+        import numpy
+    except ImportError:
+        sys.exit("This script requires the numpy module.\nInstall with: pip3 install --user numpy")
+    try:
+        import smbus
+    except ImportError:
+        print(Fore.RED + "This script requires the smbus module. Some features will be disabled.\nInstall with: pip3 install --user smbus")
+    try:
+        import psutil
+    except ImportError:
+        print(Fore.RED + "This script requires the psutil module. Some features will be disabled.\nInstall with: pip3 install --user psutil")
     from rgbmatrix5x5 import RGBMatrix5x5
 except ImportError:
     from mock.rgbmatrix5x5 import MockRGBMatrix5x5 as RGBMatrix5x5
-    print(Fore.RED + 'This script requires the rgbmatrix5x5 module. Some features will be disabled.\nInstall with: sudo pip3 install smbus' + Style.RESET_ALL)
+    print(Fore.RED + 'This script requires the rgbmatrix5x5 module. Some features will be disabled.\nInstall with: sudo pip3 install smbus')
 
 from core.logger import Level, Logger
 from core.orient import Orientation
@@ -198,7 +198,7 @@ class RgbMatrix(object):
 #               for i in range(0, len(cpu_values)-1):
 #                   self._max_value = max(self._max_value, cpu_values[i])
 #               self._log.info(Fore.BLUE + 'cpu_values: {}, {}, {}, {}, {}; '.format(cpu_values[0], cpu_values[1], cpu_values[2], cpu_values[3], cpu_values[4]) \
-#                       + Style.BRIGHT + '\tmax: {:5.2f}'.format(self._max_value) + Style.RESET_ALL)
+#                       + Style.BRIGHT + '\tmax: {:5.2f}'.format(self._max_value))
 
                 self._set_graph(rgbmatrix5x5, cpu_values, low=0.0, high=50.0) # high was 25
                 rgbmatrix5x5.show()
@@ -235,7 +235,7 @@ class RgbMatrix(object):
                 _value = max(_value, 0.0)
                 if _value > 5.0:
                     _value = 50.0
-#               self._log.info(Fore.MAGENTA + 'p_y={}; _value: {}'.format(p_y, _value) + Style.RESET_ALL)
+#               self._log.info(Fore.MAGENTA + 'p_y={}; _value: {}'.format(p_y, _value))
                 for p_x in range(0, _width):
                     _r = self._colors[p_x].red
                     _g = self._colors[p_x].green
@@ -246,7 +246,8 @@ class RgbMatrix(object):
                         _b = (_value / 10.0) * _b
                     _x = x + (_width - p_x)
                     _y = y + p_y
-                    self._log.info(Fore.YELLOW + 'setting pixel x={}/{}, y={}/{};'.format(_x, _width, _y, _height) + Fore.MAGENTA + '\tvalue: {:>5.2f}'.format(_value) + Style.RESET_ALL)
+                    self._log.info(Fore.YELLOW + 'setting pixel x={}/{}, y={}/{};'.format(_x, _width, _y, _height)
+                            + Fore.MAGENTA + '\tvalue: {:>5.2f}'.format(_value))
                     rgbmatrix5x5.set_pixel(_x, _y , _r, _g, _b)
                     _value -= 10.0
                     if _value < 0.0:

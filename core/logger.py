@@ -90,6 +90,13 @@ class Logger(object):
         else:
             _log_to_file = False
 
+        # get or create log statistics object
+        _log_stats = globals.get('log_stats')
+        if not _log_stats:
+            _log_stats = LogStats()
+            globals.put('log_stats', _log_stats)
+        self._log_stats = _log_stats
+
         # configuration ..........................
         _strip_ansi_codes       = True # used only with file output, to strip ANSI characters from log data
         self._include_timestamp = True
@@ -218,6 +225,14 @@ class Logger(object):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
+    def stats(self):
+        '''
+        Return the global log statistics.
+        '''
+        return self._log_stats
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    @property
     def suppressed(self):
         '''
         Return True if this logger has been suppressed.
@@ -232,6 +247,7 @@ class Logger(object):
         The optional 'end' argument is for special circumstances where a different end-of-line is desired.
         '''
         if not self.suppressed:
+            self._log_stats.debug_count()
             with self.__mutex:
                 self.__log.debug(self._mf.format(Logger.__color_debug, self.__DEBUG_TOKEN, message, Logger.__color_reset))
 
@@ -243,6 +259,7 @@ class Logger(object):
         The optional 'end' argument is for special circumstances where a different end-of-line is desired.
         '''
         if not self.suppressed:
+            self._log_stats.info_count()
             with self.__mutex:
                 self.__log.info(self._mf.format(Logger.__color_info, self.__INFO_TOKEN, message, Logger.__color_reset))
 
@@ -254,6 +271,7 @@ class Logger(object):
         The optional 'end' argument is for special circumstances where a different end-of-line is desired.
         '''
         if not self.suppressed:
+            self._log_stats.info_count()
             with self.__mutex:
                 self.__log.info(self._mf.format(Logger.__color_notice, self.__INFO_TOKEN, message, Logger.__color_reset))
 
@@ -265,6 +283,7 @@ class Logger(object):
         The optional 'end' argument is for special circumstances where a different end-of-line is desired.
         '''
         if not self.suppressed:
+            self._log_stats.warn_count()
             with self.__mutex:
                 self.__log.warning(self._mf.format(Logger.__color_warning, self.__WARN_TOKEN, message, Logger.__color_reset))
 
@@ -276,6 +295,7 @@ class Logger(object):
         The optional 'end' argument is for special circumstances where a different end-of-line is desired.
         '''
         if not self.suppressed:
+            self._log_stats.error_count()
             with self.__mutex:
                 self.__log.error(self._mf.format(Logger.__color_error, self.__ERROR_TOKEN, Style.NORMAL + message, Logger.__color_reset))
 
@@ -285,6 +305,7 @@ class Logger(object):
         Prints a critical or otherwise application-fatal message.
         '''
         with self.__mutex:
+            self._log_stats.critical_count()
             self.__log.critical(self._mf.format(Logger.__color_critical, self.__FATAL_TOKEN, Style.BRIGHT + message, Logger.__color_reset))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -293,6 +314,7 @@ class Logger(object):
         This is just info() but without any formatting.
         '''
         with self.__mutex:
+            self._log_stats.info_count()
             self.__log.info(message)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -304,12 +326,8 @@ class Logger(object):
         :param message:  the optional message to display; if None only the title will be displayed.
         :param info:     an optional second message to display right-justified; ignored if None.
         '''
-
-# ▲ ▴ ▶ ▸ ☺ ☻ ― ‼ ¶ ▲ ▴ ▶ ▸ ▾ ◀ ─ ━ ┃ ┎ ┏ ┐ 
-# └ ┕ ┖ ┗ ┘ ┙ ┚ ┛ ┠ ┡ ┢ ┣ ┤  ┩ ┼ ╆ ╇ ╈ ╉ ╊ ╋ 
-# ╪ ╬ ╴ ╵ ╶ ╷ ╸ ╹ ╺ ╻ ╼ ╽ ╾ ╿
-
         if not self.suppressed:
+            self._log_stats.info_count()
             _H = '┈'
             MAX_WIDTH = 100
             MARGIN = 27
@@ -351,5 +369,39 @@ class Logger(object):
         else:
             return Fore.WHITE + Style.BRIGHT + Util.repeat(_H, _hyphen_width) + _L + Fore.CYAN + Style.NORMAL\
                     + message + Fore.WHITE + Style.BRIGHT + _R + Util.repeat(_H, _hyphen_width-1)
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+class LogStats(object):
+    '''
+    Provides a simple count for each call to the Logger.
+    '''
+    def __init__(self):
+        self._debug_count    = 0
+        self._info_count     = 0
+        self._warn_count     = 0
+        self._error_count    = 0
+        self._critical_count = 0
+        pass
+
+    def debug_count(self):
+        self._debug_count += 1
+
+    def info_count(self):
+        self._info_count += 1
+
+    def warn_count(self):
+        self._warn_count += 1
+
+    def error_count(self):
+        self._error_count += 1
+
+    def critical_count(self):
+        self._critical_count += 1
+
+    @property
+    def counts(self):
+        return ( self._debug_count, self._info_count, self._warn_count,
+                self._error_count, self._critical_count )
 
 #EOF

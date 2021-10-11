@@ -14,7 +14,7 @@ import asyncio
 import random
 from datetime import datetime as dt
 from colorama import init, Fore, Style
-init()
+init(autoreset=True)
 
 from core.logger import Logger, Level
 from core.orient import Orientation
@@ -28,7 +28,8 @@ try:
     from rgbmatrix5x5 import RGBMatrix5x5
 except ImportError:
     from mock.rgbmatrix5x5 import MockRGBMatrix5x5 as RGBMatrix5x5
-    print(Fore.RED + 'This script requires the rgbmatrix5x5 module. Some features will be disabled.\nInstall with: sudo pip3 install smbus' + Style.RESET_ALL)
+#   print(Fore.RED + 'This script requires the rgbmatrix5x5 module. Some features will be disabled.\n'
+#           + 'Install with: sudo pip3 install rgbmatrix5x5')
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class RgbSubscriber(Subscriber):
@@ -52,7 +53,7 @@ class RgbSubscriber(Subscriber):
             self._width  = self._stbd_rgbmatrix.width
         else:
             self._stbd_rgbmatrix = None
-            self._stbd_rgbmatrix = MockRGBMatrix5x5(address=0x74)
+            self._stbd_rgbmatrix = RGBMatrix5x5(address=0x74)
             self._height = 5
             self._width  = 5
             self._log.warning('test ignored: no rgbmatrix displays found.')

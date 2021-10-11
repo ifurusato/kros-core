@@ -354,6 +354,7 @@ class EventPublisher(Publisher):
             self._print_ifs_info()
             self._print_macro_info()
             self._print_experiment_info()
+            self._print_log_info()
         except Exception as e:
             self._log.error('error printing system info: {}'.format(e))
 
@@ -393,6 +394,14 @@ class EventPublisher(Publisher):
             _experiment_mgr.print_info()
         else:
             self._log.info('experimental features:\t' + Fore.YELLOW + 'disabled.')
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def _print_log_info(self):
+        '''
+        Print global statistics about the log.
+        '''
+        self._log.info('log statistics:\t' + Fore.YELLOW
+                + '{:d} debug; {:d} info; {:d} warnings; {:d} errors; {:d} critical.'.format(*self._log.stats.counts))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _get_infrared_value(self):

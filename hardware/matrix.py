@@ -27,8 +27,9 @@ try:
     _MATRIX11x7_IMPORTED = True
 #   print('imported Matrix11x7.')
 except ImportError:
-    print(Fore.RED + 'This script requires the matrix11x7 module\nInstall with: pip3 install --user matrix11x7')
-    _MATRIX11x7_IMPORTED = False
+    from mock.matrix11x7 import MockMatrix11x7 as Matrix11x7
+    _MATRIX11x7_IMPORTED = True
+#   print(Fore.RED + 'This script requires the matrix11x7 module\nInstall with: pip3 install --user matrix11x7')
 
 # ..............................................................................
 class Matrices(object):

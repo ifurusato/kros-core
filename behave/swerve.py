@@ -26,6 +26,7 @@ from behave.behaviour import Behaviour
 from behave.trigger_behaviour import TriggerBehaviour
 from hardware.motor_controller import MotorController
 from hardware.external_clock import ExternalClock
+from mock.external_clock import MockExternalClock
 from hardware.i2c_scanner import I2CScanner
 # see additional imports in _connect()
 
@@ -81,7 +82,7 @@ class Swerve(Behaviour):
             self._port_motor = None
             self._stbd_motor = None
         if external_clock:
-            if not isinstance(external_clock, ExternalClock):
+            if not isinstance(external_clock, ExternalClock) and not isinstance(external_clock, MockExternalClock):
                 raise TypeError('expected ExternalClock, not {}'.format(type(external_clock)))
             self._external_clock  = external_clock
             self._external_clock.add_callback(self._tick)
