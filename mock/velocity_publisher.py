@@ -12,7 +12,6 @@
 # MockPotentiometer at bottom.
 #
 
-from abc import ABC, abstractmethod
 import itertools
 import asyncio
 from math import isclose
@@ -22,11 +21,8 @@ init()
 
 from core.logger import Logger, Level
 from core.fsm import State
-from core.event import Event, Group
-from core.util import Util
-from core.subscriber import Subscriber
+from core.event import Event
 from core.publisher import Publisher
-from behave.trigger_behaviour import TriggerBehaviour
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class VelocityPublisher(Publisher):
@@ -37,7 +33,6 @@ class VelocityPublisher(Publisher):
     A Publisher that publishes motor target velocity controls from a digital
     potentiometer.
 
-    :param name:            the name of this behaviour
     :param config:          the application configuration
     :param message_bus:     the asynchronous message bus
     :param message_factory: the factory for messages

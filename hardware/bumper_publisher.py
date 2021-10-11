@@ -12,9 +12,8 @@
 # _Getch at bottom.
 #
 
-import sys, time, itertools, random, traceback
+import itertools
 import asyncio
-import concurrent.futures
 from datetime import datetime as dt
 from colorama import init, Fore, Style
 init()

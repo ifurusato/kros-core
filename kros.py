@@ -38,6 +38,7 @@ from core.controller import Controller
 from core.publisher import Publisher
 from core.subscriber import Subscriber, GarbageCollector
 from core.system_subscriber import SystemSubscriber
+from core.queue_publisher import QueuePublisher
 from core.macro_publisher import MacroPublisher
 from core.util import Util
 
@@ -108,6 +109,7 @@ class KROS(Component, FiniteStateMachine):
         self._config         = None
         self._message_bus    = None
         self._behaviour_mgr  = None
+        self._queue_pub      = None
         self._macro_pub      = None
         self._experiment_mgr = None
         self._arbitrator     = None
@@ -248,6 +250,8 @@ class KROS(Component, FiniteStateMachine):
             self._battery = BatteryCheck(self._config, self._message_bus, self._message_factory, self._level)
     #   _message_bus.print_publishers()
 
+        if _cfg.get('enable_queue_publisher') or 'q' in _pubs:
+            self._queue_pub = QueuePublisher(self._config, self._message_bus, self._message_factory, self._level)
         if _cfg.get('enable_macro_publisher') or 'm' in _pubs:
             _callback = None
             self._macro_pub = MacroPublisher(self._config, self._message_bus, self._message_factory, _callback, self._level)
@@ -400,6 +404,13 @@ class KROS(Component, FiniteStateMachine):
         Returns the MacroPublisher, None if not used.
         '''
         return self._macro_pub
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def get_queue_publisher(self):
+        '''
+        Returns the QueuePublisher, None if not used.
+        '''
+        return self._queue_pub
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def get_experiment_manager(self):

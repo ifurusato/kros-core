@@ -32,11 +32,13 @@ from datetime import datetime as dt
 from colorama import init, Fore, Style
 init(autoreset=True)
 
+import core.globals as globals
+globals.init()
+
 from core.logger import Logger, Level
 from core.event import Event
 from core.orient import Orientation
 from core.publisher import Publisher
-
 from experimental.experiment import Experiment
 
 # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -53,6 +55,7 @@ class UartExperiment(Experiment, Publisher):
                 message_factory=self._message_factory, suppressed=True, level=self._level)
         self._serial  = None
         self._counter   = itertools.count()
+        self._queue_publisher = globals.get('queue-publisher')
         self._loop_task   = None
         self._loop_delay_sec = 0.05 # _cfg.get('loop_delay_sec')
         self._sic_transit_gloria_mundi = False
@@ -187,6 +190,8 @@ class UartExperiment(Experiment, Publisher):
                                     self._log.warning('unmatched: \'{}\'; ({:d} chars)'.format(_data, len(_data)))
 
                                 # FIXME publish message here...
+#                               self._queue_publisher.put(_message)
+                                self._log.info('🤡 😛 PUBLISHING MESSAGE HERE... ')
 
                             else:
                                 self._log.warning('🤡 errant data \'{}\'; type: \'{}\'; length: {:d} chars.'.format(_data, type(_data), len(_data)))

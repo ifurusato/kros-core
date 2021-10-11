@@ -119,7 +119,7 @@ class DeQueue(object):
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def push(self, item):
         '''
-        An alias for push(item).
+        An alias for put(item).
         '''
         self.put(item)
 

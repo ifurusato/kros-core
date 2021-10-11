@@ -13,7 +13,7 @@
 # Transmits interrupt-drive BCD data over 5 wires.
 #
 
-import sys, time, itertools
+import time, itertools
 import asyncio
 from datetime import datetime as dt
 from colorama import init, Fore, Style
@@ -38,7 +38,8 @@ class ExternalBumperPublisher(Publisher):
     ORIENTATION_MAST = [ 5, Fore.YELLOW  + 'mast' ]
     ORIENTATION_SAFT = [ 6, Fore.MAGENTA + 'saft' ]
     ORIENTATION_ALL  = [ 7, Fore.WHITE   + 'all'  ]
-    ORIENTATIONS = [ ORIENTATION_NONE, ORIENTATION_PORT, ORIENTATION_CNTR, ORIENTATION_STBD, ORIENTATION_PAFT, ORIENTATION_MAST, ORIENTATION_SAFT, ORIENTATION_ALL ]
+    ORIENTATIONS = [ ORIENTATION_NONE, ORIENTATION_PORT, ORIENTATION_CNTR, ORIENTATION_STBD,
+                     ORIENTATION_PAFT, ORIENTATION_MAST, ORIENTATION_SAFT, ORIENTATION_ALL ]
 
     _LISTENER_LOOP_NAME = '__bmp_listener_loop'
 
@@ -164,15 +165,15 @@ class ExternalBumperPublisher(Publisher):
         '''
         _d0 = self._pi.read(self._d0_pin)
         _d1 = self._pi.read(self._d1_pin)
-        _d2 = self._pi.read(self._d2_pin) 
+        _d2 = self._pi.read(self._d2_pin)
         _dec = int('{}{}{}'.format(_d2, _d1, _d0)[:4], 2)
         _dec2 = Util.to_decimal('{}{}{}'.format(_d2, _d1, _d0))
         _orientation = ExternalBumperPublisher.ORIENTATIONS[_dec]
         _orientation_name = _orientation[1]
 
-        self._log.info(Fore.BLUE + 'interrupt callback:\t' + Style.BRIGHT + '{}-{}-{}; dec: {:d}; name: {}'.format(_d2, _d1, _d0, _dec, _orientation_name))
+        self._log.info(Fore.BLUE + '🥚 interrupt callback:\t' + Style.BRIGHT + '{}-{}-{}; dec: {:d}; name: {}'.format(_d2, _d1, _d0, _dec, _orientation_name))
         self.send_ack()
-        self._log.info(Fore.WHITE + 'interrupt callback:\t' + Style.BRIGHT + 'sent ACK.')
+        self._log.info(Fore.WHITE + '🥚 interrupt callback:\t' + Style.BRIGHT + 'sent ACK.')
 
 #       if not self._port_triggered:
 #           self._port_triggered = dt.now()
@@ -199,7 +200,9 @@ class ExternalBumperPublisher(Publisher):
             if _message is not None:
                 self._log.info(Style.BRIGHT + 'bmp-publishing message:' + Fore.WHITE + Style.NORMAL + ' {}'.format(_message.name)
                         + Fore.CYAN + ' event: {}; '.format(_message.event.label) + Fore.YELLOW + 'timestamp: {}'.format(_message.value))
+                # FIXME
                 await Publisher.publish(self, _message)
+
                 self._reset_trigger(_message.event)
 
             await asyncio.sleep(self._publish_delay_sec)

@@ -6,8 +6,8 @@
 # see the LICENSE file included as part of this package.
 #
 # author:   altheim
-# created:  2020-01-18
-# modified: 2020-10-28
+# created:  2020-09-18
+# modified: 2021-10-11
 #
 
 import importlib, inspect, traceback
@@ -51,23 +51,20 @@ class ExperimentManager(Component):
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _instantiate_classes(self):
         if not self.enabled:
-            self._log.info(Fore.MAGENTA + '🍉 instantiating classes...')
+            self._log.info('instantiating classes...')
             try:
                 for _module_name in self._config:
                     _experiment = self._get_experiment(_module_name)
-                    self._log.info('🍉 A. returned object.')
                     if _experiment:
-                        self._log.info('🍉 A. returned OBJECT: {}.'.format(type(_experiment)))
+                        self._log.info('returned object: {}.'.format(type(_experiment)))
                         _num = len(self._registry) + Event.EXPERIMENT_1.num
                         _event = Event.from_number(_num)
-                        self._log.info('🍉 B. created instance of module: {} for slot {:d} and event: {}'.format(_module_name, _num, _event))
-                        self._log.info('🍉 C. experiment: {}'.format(_experiment.name))
-                        self._log.info('🍉 D. registering experiment {} to event {}.'.format(_experiment.name, _event.label))
-#                       self.register_experiment(_event, _experiment)
+                        self._log.info('created instance of module: {} as experiment {} in slot {:d} tied to event: {}'.format(
+                                _module_name, _experiment.name, _num, _event.label))
                         self._registry[_event] = _experiment
-                        self._log.info('🍉 E. enabling registered experiment {}.'.format(_experiment.name))
+                        self._log.info('enabling registered experiment {}.'.format(_experiment.name))
                     else:
-                        self._log.info('🍉 E. unable to create instance of module: {}'.format(_module_name))
+                        self._log.info('unable to create instance of module: {}'.format(_module_name))
 
             except ModuleNotFoundError as mnfe:
                 self._log.error('unable to instantiate class: {}\n{}'.format(mnfe, traceback.format_exc()))
@@ -78,48 +75,34 @@ class ExperimentManager(Component):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _get_experiment(self, module_name):
-        self._log.info('🌓 get experiment: "{}"'.format(module_name))
+        self._log.info('get experiment: "{}"'.format(module_name))
         _class_name = self._config[module_name]
         _module = importlib.import_module('{}.{}'.format(self._directory_name, module_name))
         # now scan imports of module for Experiment subclass
         for _name, _obj in inspect.getmembers(_module):
             if inspect.isclass(_obj) and _obj != Experiment and issubclass(_obj, Experiment):
                 _type = getattr(_module, _class_name)
-                self._log.info('🌓 a. type: "{}"'.format(type(_type)))
-                _instance = _type()
-                self._log.info('🌓 b. type: "{}"'.format(type(_instance)))
-                return _instance
+                return _type()
         return None
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def register_experiment(self, event, experiment):
-        self._log.info('🦊 registered experiment to event...')
         self._registry[event] = experiment
-        self._log.info('🦊 registered experiment {} to event {}.'.format(experiment.name, event.label))
+        self._log.info('registered experiment {} to event {}.'.format(experiment.name, event.label))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def toggle_experiment(self, event):
         _num = event.num - 800
-        self._log.info('🦊 toggle experiment "{}" (num: {:d})'.format(event, _num))
         _experiment = self._registry.get(event)
         if _experiment:
             if _experiment.suppressed:
-                self._log.info('🦊 release experiment "{}" (num: {:d})'.format(event, _num))
+                self._log.info('release experiment "{}" in slot {:d}'.format(event, _num))
                 _experiment.release()
             else:
-                self._log.info('🦊 suppress experiment "{}" (num: {:d})'.format(event, _num))
+                self._log.info('suppress experiment "{}" in slot {:d}'.format(event, _num))
                 _experiment.suppress()
-             
-#               Event.EXPERIMENT_1: None, 
-#               Event.EXPERIMENT_2: None,
-#               Event.EXPERIMENT_3: None,
-#               Event.EXPERIMENT_4: None,
-#               Event.EXPERIMENT_5: None,
-#               Event.EXPERIMENT_6: None,
-#               Event.EXPERIMENT_7: None 
-
         else:
-            self._log.warning('🦊 no registered experiment for event: "{}" (num: {:d})'.format(event, _num))
+            self._log.warning('no registered experiment for event: "{}" (num: {:d})'.format(event, _num))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def print_info(self):
@@ -136,40 +119,6 @@ class ExperimentManager(Component):
         '''
         self._instantiate_classes()
         Component.enable(self)
-        self._log.info('🤖 enabled.')
+        self._log.info('enabled.')
 
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def suppress(self):
-        '''
-        Suppresses this Component.
-        '''
-        Component.suppress(self)
-        self._log.info('🤖 suppressed.')
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def release(self):
-        '''
-        Releases (un-suppresses) this Component.
-        '''
-        Component.release(self)
-        self._log.info('🤖 released.')
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def disable(self):
-        '''
-        Disable this Component.
-        '''
-        Component.disable(self)
-        self._log.info('🤖 disabled.')
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def close(self):
-        '''
-        Close the ExperimentManager and any registered Experiments, and
-        release any resources.
-        '''
-        if not self.closed:
-            Component.close(self)
-            self._log.info('🤖 closed.')
-
-# EOF
+#EOF

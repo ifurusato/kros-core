@@ -298,7 +298,7 @@ class EventPublisher(Publisher):
                         if not _event:
                             _event = EventPublisher._KEY_EVENT_MAP[och]
                         if _event is not None:
-                            self._log.info('🍑 key \'{}\' ({}) pressed; key-publishing message for event: {}'.format(ch, och, _event))
+                            self._log.info('key \'{}\' ({}) pressed; key-publishing message for event: {}'.format(ch, och, _event))
                             _message = self._message_factory.create_message(_event, True)
                             if Event.is_infrared_event(_event):
                                 _message.value = self._get_infrared_value() # we use a rising and falling value
@@ -306,9 +306,9 @@ class EventPublisher(Publisher):
                                 _message.value = 0 # bumpers by definition have a distance of zero
                             else:
                                 _message.value = dt.now() # we use a timestamp to guarantee each message is different
-                            self._log.info('🍑 key-publishing message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
+                            self._log.info('key-publishing message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
                             await Publisher.publish(self, _message)
-                            self._log.info('🍑 key-published message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
+                            self._log.info('key-published message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
 #                           # TEMP special case: check if all IFS sensors have been triggered 3 times; if so exit
 #                           if Event.is_ifs_event(_event):
 #                               self._accumulate_message(_message)
@@ -336,7 +336,7 @@ class EventPublisher(Publisher):
                 self._log.debug('[{:03d}] END loop.'.format(_count))
             self._log.info('publish loop complete.')
         except Exception as e:
-            self._log.error('error in publish loop: {}'.format(e))
+            self._log.error('{} in publish loop: {}\n{}'.format(type(e), e, traceback.format_exc()))
         finally:
             if self._getch:
                 self._getch.close()

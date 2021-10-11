@@ -20,6 +20,9 @@ from datetime import datetime as dt
 from colorama import init, Fore, Style
 init(autoreset=True)
 
+import core.globals as globals
+globals.init()
+
 from core.logger import Logger, Level
 from core.event import Event
 from core.orient import Orientation
@@ -34,9 +37,12 @@ class RgbExperiment(Experiment, Publisher):
 
     '''
     An experiment being able to send RGB messages.
+
+    This uses the QueuePublisher if available, otherwise publishes directly
+    to the MessageBus.
     '''
     def __init__(self):
-        Experiment.__init__(self, 'x-rgb')
+        Experiment.__init__(self, 'rgb')
         Publisher.__init__(self, self._name, config=self._config, message_bus=self._message_bus,
                 message_factory=self._message_factory, suppressed=True, level=self._level)
         self._counter        = itertools.count()
@@ -44,8 +50,14 @@ class RgbExperiment(Experiment, Publisher):
         self._loop_delay_sec = 0.5 # _cfg.get('loop_delay_sec')
         self._sic_transit_gloria_mundi = False
         self._fixed_color    = False
-        self._random_selection = True
+        self._random_color   = True # enable randomly-selected Color
         self._all_colors     = Color.all_colors()
+        self._log.info('using {:d} predefined colors.'.format(len(self._all_colors)))
+        self._queue_publisher = globals.get('queue-publisher')
+        if self._queue_publisher:
+            self._log.info('💕 using queue publisher.')
+        else:
+            self._log.info('💕 publishing directly to message bus.')
         self._log.info('ready.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -72,40 +84,38 @@ class RgbExperiment(Experiment, Publisher):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _configure(self):
-        try:
-
-            self._log.info('configuring...')
-            self._loop_task = self._message_bus.loop.create_task(self._publisher_loop(lambda: self.enabled), name=RgbExperiment._PUBLISHER_LOOP)
-            self.release() # FIXME TEMP
-            self._log.info('configured.')
-
-        except Exception as e:
-            self._log.error('{} encountered, exiting: {}'.format(type(e), e))
-            traceback.print_exc(file=sys.stdout)
-            self.disable()
+        if self._loop_task:
+            self._log.warning('already configured.')
+        else:
+            try:
+                self._log.info('configuring...')
+                self._loop_task = self._message_bus.loop.create_task(self._publisher_loop(lambda: self.enabled), name=RgbExperiment._PUBLISHER_LOOP)
+#               self.release() # FIXME TEMP
+                self._log.info('configured.')
+            except Exception as e:
+                self._log.error('{} encountered, exiting: {}'.format(type(e), e))
+                traceback.print_exc(file=sys.stdout)
+                self.disable()
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def _publisher_loop(self, f_is_enabled):
         if not self.enabled:
             self._log.warning('not enabled.')
             return
-        self._log.info(Fore.MAGENTA + 'start publisher loop; enabled: {}'.format(f_is_enabled()))
+        self._log.info('start publisher loop')
         while f_is_enabled():
             _start_time = dt.now()
             _count = next(self._counter)
             if not self.suppressed:
-                self._log.info('[{:03d}] begin publisher loop.'.format(_count))
+#               self._log.info('[{:03d}] begin publisher loop.'.format(_count))
                 if _count > 1 and not self._sic_transit_gloria_mundi:
                     self._sic_transit_gloria_mundi = True
-#                   self._log.info(Fore.MAGENTA + 'processing...')
                     try:
-
-#                       self._log.info('😛 generating message... ')
                         _message = self.message_factory.create_message(Event.RGB, self.get_color())
-                        await self._message_bus.publish_message(_message)
-
-                    except KeyboardInterrupt:
-                        self._log.info('Ctrl-C caught; exiting...')
+                        if self._queue_publisher:
+                            self._queue_publisher.put(_message)
+                        else:
+                            await self._message_bus.publish_message(_message)
                     except Exception as e:
                         self._log.error('{} encountered, exiting: {}'.format(type(e), e))
                         traceback.print_exc(file=sys.stdout)
@@ -113,15 +123,12 @@ class RgbExperiment(Experiment, Publisher):
                         _elapsed_ms = round(( dt.now() - _start_time ).total_seconds() * 1000.0)
                         self._log.info(Style.DIM + 'complete: elapsed: {:d}ms'.format(_elapsed_ms))
                         self._sic_transit_gloria_mundi = False
-                else:
-                    self._log.info(Fore.MAGENTA + Style.DIM + 'currently processing...')
-                # once around the mulberry bush and re-suppress...
+                # once complete re-suppress...
                 self.suppress()
 
-#           self._log.info(Fore.MAGENTA + Style.DIM + 'loop delay; enabled: {}'.format(f_is_enabled()))
             await asyncio.sleep(self._loop_delay_sec)
 
-        self._log.info(Fore.MAGENTA + 'publisher loop complete.')
+        self._log.info('publisher loop complete.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def get_color(self):
@@ -131,30 +138,14 @@ class RgbExperiment(Experiment, Publisher):
         '''
         if self._fixed_color:
             return Color.SKY_BLUE
-        elif self._random_selection and bool(random.getrandbits(1)):
-            i = random.randint(0, len(self._all_colors)-1)
-            _color = self._all_colors[i]
-            self._log.info(Fore.MAGENTA + '🍎 randomly selecting color: {}'.format(_color))
+        elif self._random_color and bool(random.getrandbits(1)):
+            _color = self._all_colors[random.randint(0, len(self._all_colors)-1)]
+            self._log.info('randomly selecting color: {}'.format(_color))
             return _color
         else:
-            # return a random integer N such that a <= N <= b. Alias for randrange(a, b+1).
-            r = random.randint(0, 255)
-            g = random.randint(0, 255)
-            b = random.randint(0, 255)
-            self._log.info(Fore.MAGENTA + '🍏 generating random color: {},{},{}'.format(r, g, b))
-            return ( r, g, b )
-
-# ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-#def main():
-#
-#    _log = Logger('test', Level.INFO)
-#
-#    _log.info('creating RgbExperiment...')
-#    _experiment = RgbExperiment()
-#    _log.info('created RgbExperiment.')
-#    _experiment.enable()
-#
-#if __name__== "__main__":
-#    main()
+            _max = 64 # 255
+            rgb = ( random.randint(0, _max), random.randint(0, _max), random.randint(0, _max) )
+            self._log.info('generating random color: {},{},{}'.format(*rgb))
+            return rgb
 
 #EOF

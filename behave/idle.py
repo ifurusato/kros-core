@@ -50,8 +50,9 @@ class Idle(Behaviour, Publisher):
         _cfg = self._config['kros'].get('behaviour').get('idle')
         self._idle_threshold_sec = _cfg.get('idle_threshold_sec') # int value
         self._log.info('idle threshold: {:d} sec.'.format(self._idle_threshold_sec))
-        self._idle_loop_delay_sec = _cfg.get('idle_loop_delay_sec')
-        self._log.info('idle loop delay: {:4.2f} sec.'.format(self._idle_threshold_sec)) # float value
+        _loop_freq_hz            = _cfg.get('loop_freq_hz')
+        self._log.info('idle loop frequency: {:d}Hz.'.format(_loop_freq_hz))
+        self._idle_loop_delay_sec = 1.0 / _loop_freq_hz
         self._idle_loop_running = False
         self._counter = itertools.count()
         self._log.info('ready.')

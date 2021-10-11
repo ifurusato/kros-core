@@ -23,12 +23,13 @@ kros:
         enable_event_publisher:       True       # keyboard robot simulator (required for running CLI)
         enable_battery_publisher:    False       # battery check publisher
         enable_velocity_publisher:   False       # velocity control potentiometer publisher
+        enable_queue_publisher:       True       # publishes from globally-available queue
         enable_macro_publisher:      False       # macro processor/publisher (loads external macro scripts)
         # subscribers ............................
         enable_system_subscriber:     True       # system events subscriber
         enable_motor_subscriber:      True       # motor events subscriber
-        enable_bumper_subscriber:    False       # bumper events subscriber
-        enable_infrared_subscriber:  False       # infrared events subscriber
+        enable_bumper_subscriber:     True       # bumper events subscriber
+        enable_infrared_subscriber:   True       # infrared events subscriber
         enable_rgb_subscriber:        True       # display on RGB matrix
     behaviour:
         enable_avoid_behaviour:      False       # enable avoidance behaviour
@@ -57,7 +58,7 @@ kros:
             nada:                   False        # nada
         idle:
             idle_threshold_sec:      10          # how many seconds before we trigger an idle behaviour
-            idle_loop_delay_sec:      1.0        # main loop delay in seconds
+            loop_freq_hz:             1          # main loop delay in hz
         travel:
             accel_range_cm:          25.0        # the distance used for acceleration and deceleration (cm)
             cruising_speed:        'SLOW'        # cruising speed (recovery speed)
@@ -248,6 +249,8 @@ kros:
             d0_pin:                  20          # GPIO pin connected to data 0 pin (red) was 20 or 6
             d1_pin:                  16          # GPIO pin connected to data 1 pin (green)
             d2_pin:                  19          # GPIO pin connected to data 2 pin (blue)
+        queue:
+            loop_freq_hz:            10          # polling loop frequency (Hz)
         macro:
             loop_freq_hz:            10          # polling loop frequency (Hz)
             quiescent_loop_freq_hz:   5          # quiescent loop frequency (Hz)

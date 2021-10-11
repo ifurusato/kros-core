@@ -47,7 +47,7 @@ class Experiment(Component):
         self._kros = globals.get('kros')
         if self._kros is None:
             raise GlobalsError('unable to register experiment: no KROS application available as a global variable.')
-        self._name        = name if name else 'x-unknown'
+        self._name        = 'x:{}'.format(name if name else 'unknown')
         self._level       = self._kros.get_level()
         self._log         = Logger(self._name, self._level)
         self._config      = self._kros.get_config()

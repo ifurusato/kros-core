@@ -165,12 +165,14 @@ class MacroPublisher(Publisher):
         for _file in Path(self._macro_path).glob('*.py'):
 #           self._log.heading('Load Macro', 'Loading file: {}'.format(_file))
             self._log.info(Fore.WHITE + Style.BRIGHT + '{}'.format(Util.repeat('━', 72)))
-            self._log.info('loading macro file: ' + Fore.YELLOW + '{} '.format(_file) + Fore.WHITE + Style.BRIGHT + '{}'.format(Util.repeat('┈', 50 - len(str(_file)))))
+            self._log.info('loading macro file: ' + Fore.YELLOW + '{} '.format(_file)
+                    + Fore.WHITE + Style.BRIGHT + '{}'.format(Util.repeat('┈', 50 - len(str(_file)))))
             try:
                 _split = os.path.split(_file)
                 _name = os.path.splitext(_split[1])[0]
                 exec(open(_file).read())
-                self._log.info('loaded macro: ' + Fore.YELLOW + '{} '.format(_name) + Fore.WHITE + Style.BRIGHT + '{}\n'.format(Util.repeat('┈', 56 - len(_name))))
+                self._log.info('loaded macro: ' + Fore.YELLOW + '{} '.format(_name)
+                        + Fore.WHITE + Style.BRIGHT + '{}\n'.format(Util.repeat('┈', 56 - len(_name))))
             except Exception as e:
                 self._log.error('{} importing macro: {}'.format(type(e), _file))
         self._log.info('loading complete: {} macros in library'.format(self._library.size))
@@ -209,7 +211,8 @@ class MacroPublisher(Publisher):
                 # otherwise continue to execute the existing macro...
                 if not self._statement: # if no existing statement, poll one from the macro.
                     self._statement = self._macro.poll()
-                    self._log.info(Fore.CYAN + 'event: ' + Fore.YELLOW + '{}:\t'.format(self._statement.label) + Fore.MAGENTA + 'duration: {:5.2f}ms'.format(self._statement.duration_ms))
+                    self._log.info(Fore.CYAN + 'event: ' + Fore.YELLOW + '{}:\t'.format(self._statement.label)
+                            + Fore.MAGENTA + 'duration: {:5.2f}ms'.format(self._statement.duration_ms))
                     self._start_time = dt.now()
                 # if there is an active statement waiting...
                 if self._statement:
@@ -224,11 +227,13 @@ class MacroPublisher(Publisher):
                         # then execute the statement...
                         if self._statement.is_lambda:
                             _func = self._statement.function
-                            self._log.info(Fore.GREEN + 'executing lambda: ' + Fore.YELLOW + '{}: (type: {})\t'.format(self._statement.label, type(_func)) + Fore.MAGENTA + '{:5.2f}ms elapsed.'.format(_elapsed_ms))
+                            self._log.info(Fore.GREEN + 'executing lambda: ' + Fore.YELLOW + '{}: (type: {})\t'.format(self._statement.label, type(_func))
+                                    + Fore.MAGENTA + '{:5.2f}ms elapsed.'.format(_elapsed_ms))
                             _func()
                         else:
                             _event = self._statement.event
-                            self._log.info(Fore.GREEN + 'publishing event:  ' + Fore.YELLOW + '{}:\t'.format(self._statement.label) + Fore.MAGENTA + '{:5.2f}ms elapsed.'.format(_elapsed_ms))
+                            self._log.info(Fore.GREEN + 'publishing event:  ' + Fore.YELLOW + '{}:\t'.format(self._statement.label)
+                                    + Fore.MAGENTA + '{:5.2f}ms elapsed.'.format(_elapsed_ms))
                             _message = self.message_factory.create_message(_event, self._statement.duration_ms)
                             if _message is not None:
                                 self._log.info(Style.BRIGHT + 'macro-publishing message:' + Fore.WHITE + Style.NORMAL + ' {}'.format(_message.name)
