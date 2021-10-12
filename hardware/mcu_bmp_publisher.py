@@ -15,27 +15,18 @@ import asyncio
 from colorama import init, Fore, Style
 init()
 
-import core.globals as globals
-globals.init()
-
 from core.dequeue import DeQueue
 from core.logger import Logger, Level
 from core.publisher import Publisher
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-class QueuePublisher(Publisher):
+class McuBumperPublisher(Publisher):
 
-    _PUBLISHER_LOOP = '__queue_publisher_loop'
+    _PUBLISHER_LOOP = '__mcu_bmp_publisher_loop'
 
     '''
-    A Publisher that publishes messages from a queue, available as a global
-    publishing service, e.g.:
-
-        _qpub = globals.get('queue-publisher')
-        _qpub.put(message)
-
-    This is to permit even non-asynchronous processes to publish messages to
-    the message bus, with no particular guarantee of immediate delivery.
+    A Publisher that publishes messages from a microcontroller connected via
+    UART connected to hardware bumpers.
 
     :param config:          the application configuration
     :param message_bus:     the asynchronous message bus
@@ -43,20 +34,19 @@ class QueuePublisher(Publisher):
     :param level:           the optional log level
     '''
     def __init__(self, config, message_bus, message_factory, level=Level.INFO):
-        Publisher.__init__(self, 'queue', config, message_bus, message_factory, suppressed=False, level=level)
-        _cfg = self._config['kros'].get('publisher').get('queue')
+        Publisher.__init__(self, 'mcu-bmp', config, message_bus, message_factory, suppressed=False, level=level)
+        _cfg = self._config['kros'].get('publisher').get('mcu_bumper')
         _loop_freq_hz  = _cfg.get('loop_freq_hz')
         self._log.info('queue publisher loop frequency: {:d}Hz'.format(_loop_freq_hz))
         self._publish_delay_sec = 1.0 / _loop_freq_hz
         self._queue    = DeQueue()
         self._counter  = itertools.count()
-        globals.put('queue-publisher', self)
         self._log.info('ready.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def name(self):
-        return 'queue'
+        return 'mcu-bmp'
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def put(self, message):
@@ -71,11 +61,11 @@ class QueuePublisher(Publisher):
     def enable(self):
         if not self.enabled:
             Publisher.enable(self)
-            if self._message_bus.get_task_by_name(QueuePublisher._PUBLISHER_LOOP):
+            if self._message_bus.get_task_by_name(McuBumperPublisher._PUBLISHER_LOOP):
                 raise Exception('already enabled.')
             else:
                 self._log.info('creating task for publisher loop...')
-                self._message_bus.loop.create_task(self._publisher_loop(lambda: self.enabled), name=QueuePublisher._PUBLISHER_LOOP)
+                self._message_bus.loop.create_task(self._publisher_loop(lambda: self.enabled), name=McuBumperPublisher._PUBLISHER_LOOP)
                 self._log.info('enabled.')
         else:
             self._log.warning('failed to enable publisher loop.')
@@ -85,7 +75,7 @@ class QueuePublisher(Publisher):
         self._log.info('starting pot publisher loop:\t' + Fore.YELLOW + ( '; (suppressed, type \'m\' to release)' if self.suppressed else '(released)') )
         while f_is_enabled():
             _count = next(self._counter)
-            self._log.debug('[{:03d}] begin publisher loop...'.format(_count))
+            self._log.info('❄️  [{:03d}] begin publisher loop...'.format(_count))
             if not self.suppressed:
                 while not self._queue.empty():
                     _message = self._queue.poll()

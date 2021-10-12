@@ -56,16 +56,15 @@ class ExperimentManager(Component):
                 for _module_name in self._config:
                     _experiment = self._get_experiment(_module_name)
                     if _experiment:
-                        self._log.info('returned object: {}.'.format(type(_experiment)))
+                        self._log.debug('returned object: {}.'.format(type(_experiment)))
                         _num = len(self._registry) + Event.EXPERIMENT_1.num
                         _event = Event.from_number(_num)
-                        self._log.info('created instance of module: {} as experiment {} in slot {:d} tied to event: {}'.format(
-                                _module_name, _experiment.name, _num, _event.label))
+                        self._log.info('created experiment: {} from module {} in slot {:d} for event: {}'.format(
+                                _experiment.name, _module_name, _num, _event.label))
                         self._registry[_event] = _experiment
-                        self._log.info('enabling registered experiment {}.'.format(_experiment.name))
+                        self._log.debug('enabling registered experiment {}.'.format(_experiment.name))
                     else:
-                        self._log.info('unable to create instance of module: {}'.format(_module_name))
-
+                        self._log.warning('unable to create instance of module: {}'.format(_module_name))
             except ModuleNotFoundError as mnfe:
                 self._log.error('unable to instantiate class: {}\n{}'.format(mnfe, traceback.format_exc()))
             except Exception as e:

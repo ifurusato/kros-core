@@ -9,7 +9,6 @@
 kros:
     exit_on_dire_event:              False       # if True exit if encountering a dire event
     use_external_clock:               True       # if True use external clock, ignoring loop delay value
-    use_external_bumper_publisher:    True       # use ExternalBumperPublisher instead of BumperPublisher
     experimental:                                # the list of experimental class names
         rgb_experiment:     'RgbExperiment'      # experiment 1
 #       uart_experiment:   'UartExperiment'      # experiment 2
@@ -19,12 +18,15 @@ kros:
         enable_experimental:          True       # enable ExperimentManager and load any Experiments
         # publishers .............................
         enable_ifs_publisher:        False       # enable Integrated Front Sensor publisher
-        enable_bumper_publisher:     False       # enable bumper publisher
+        enable_ext_bumper_publisher: False       # use External Bumper Publisher, or:
+        enable_mcu_bumper_publisher:  True       # use MCU+UART Bumper Publisher, or:
+        enable_bumper_publisher:     False       # enable standard GPIO Bumper publisher
         enable_event_publisher:       True       # keyboard robot simulator (required for running CLI)
         enable_battery_publisher:    False       # battery check publisher
         enable_velocity_publisher:   False       # velocity control potentiometer publisher
         enable_queue_publisher:       True       # publishes from globally-available queue
         enable_macro_publisher:      False       # macro processor/publisher (loads external macro scripts)
+        enable_mcu_bmp_publisher:     True       # MCU+UART bumper publisher
         # subscribers ............................
         enable_system_subscriber:     True       # system events subscriber
         enable_motor_subscriber:      True       # motor events subscriber
@@ -249,6 +251,8 @@ kros:
             d0_pin:                  20          # GPIO pin connected to data 0 pin (red) was 20 or 6
             d1_pin:                  16          # GPIO pin connected to data 1 pin (green)
             d2_pin:                  19          # GPIO pin connected to data 2 pin (blue)
+        mcu_bumper:
+            loop_freq_hz:            20          # polling loop frequency (Hz)
         queue:
             loop_freq_hz:            10          # polling loop frequency (Hz)
         macro:

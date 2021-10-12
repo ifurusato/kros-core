@@ -56,6 +56,7 @@ from hardware.infrared_subscriber import InfraredSubscriber
 
 from hardware.ifs_publisher import IfsPublisher
 from hardware.bumper_publisher import BumperPublisher
+from hardware.mcu_bmp_publisher import McuBumperPublisher
 from hardware.ext_bmp_publisher import ExternalBumperPublisher
 
 from mock.event_publisher import EventPublisher
@@ -225,13 +226,16 @@ class KROS(Component, FiniteStateMachine):
         if _enable_ifs_publisher:
             self._ifs_publisher = IfsPublisher(self._config, self._message_bus, self._message_factory, level=self._level)
 
-        _enable_bumper_publisher = _cfg.get('enable_bumper_publisher') or 'b' in _pubs
-        if _enable_bumper_publisher:
-            _use_external_bumper_publisher = self._config['kros'].get('use_external_bumper_publisher')
-            if _use_external_bumper_publisher:
-                self._bumper_publisher = ExternalBumperPublisher(self._config, self._message_bus, self._message_factory, level=self._level)
-            else:
-                self._bumper_publisher = BumperPublisher(self._config, self._message_bus, self._message_factory, level=self._level)
+        # first one wins!
+        if _cfg.get('enable_mcu_bumper_publisher') or 'b' in _pubs:
+            # bumpers connected via UART to an MCU
+            self._bumper_publisher = McuBumperPublisher(self._config, self._message_bus, self._message_factory, level=self._level)
+        elif _cfg.get('enable_ext_bumper_publisher') or 'b' in _pubs:
+            # bumpers connected via GPIO pins using bespoke comms
+            self._bumper_publisher = ExternalBumperPublisher(self._config, self._message_bus, self._message_factory, level=self._level)
+        elif _cfg.get('enable_bumper_publisher') or 'b' in _pubs:
+            # bumpers connected directly to GPIO pins
+            self._bumper_publisher = BumperPublisher(self._config, self._message_bus, self._message_factory, level=self._level)
 
         _enable_event_publisher = _cfg.get('enable_event_publisher') or 'e' in _pubs
         if _enable_event_publisher:

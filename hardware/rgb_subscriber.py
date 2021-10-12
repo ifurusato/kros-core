@@ -67,10 +67,11 @@ class RgbSubscriber(Subscriber):
         '''
         await self._message_bus.arbitrate(message.payload)
         # increment sent acknowledgement count
-#       self._log.info('acknowledging message {}; with payload value: {:5.2f}cm'.format(message.name, message.payload.value))
+#       self._log.debug('acknowledging message {}; with payload value: {}'.format(message.name, message.payload.value))
         message.acknowledge_sent()
-        self._log.info('arbitrated message:    ' + Fore.WHITE + '{}'.format(message.name) 
-                + Fore.CYAN + ' with payload for event: {}; value: {}'.format(message.payload.event.label, message.payload.value))
+        self._log.info('arbitrated message ' + Fore.WHITE + '{} '.format(message.name)
+                + Fore.CYAN + 'for event \'{}\' with value: '.format(message.event.label)
+                + Fore.YELLOW + '{}'.format(message.payload.value))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def process_message(self, message):

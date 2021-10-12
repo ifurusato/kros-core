@@ -55,9 +55,9 @@ class RgbExperiment(Experiment, Publisher):
         self._log.info('using {:d} predefined colors.'.format(len(self._all_colors)))
         self._queue_publisher = globals.get('queue-publisher')
         if self._queue_publisher:
-            self._log.info('💕 using queue publisher.')
+            self._log.info('using queue publisher.')
         else:
-            self._log.info('💕 publishing directly to message bus.')
+            self._log.info('publishing directly to message bus.')
         self._log.info('ready.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
