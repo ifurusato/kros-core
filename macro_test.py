@@ -69,7 +69,7 @@ def test_macro_publisher():
 
         _log.info('creating message bus...')
         _message_bus = MessageBus(_config, _level)
-        _log.info('🍅 creating message factory...')
+        _log.info('creating message factory...')
         _message_factory = MessageFactory(_message_bus, _level)
 
         _macro_publisher = MacroPublisher(_config, _message_bus, _message_factory, callback=close_message_bus, level=Level.INFO)
@@ -90,25 +90,25 @@ def test_macro_publisher():
         _event_queue.put(Event.EXPERIMENT_5)
         
         # alternately loads events and lambdas...
-        _log.info('🍅 loading...')
+        _log.info('loading...')
         _steps = 5
         for i in range(_steps):
             _duration_ms = 1000 + ( i * 1000 )
             if i % 2:
                 _event = _event_queue.poll()
                 _macro.add_event(_event, _duration_ms)
-                _log.info('🍅 added event...')
+                _log.info('added event...')
             else:
                 _func = lambda: _log.info('n={}'.format(i))
                 _macro.add_function(_func, _duration_ms)
-                _log.info('🍅 added function...')
+                _log.info('added function...')
 
         _macro_publisher.queue_macro(_macro)
 
-        _log.info('🍅 enabling message bus...')
+        _log.info('enabling message bus...')
         _message_bus.enable()
 
-#       _log.info('🍅 queue loaded; enabling macro processor...')
+#       _log.info('queue loaded; enabling macro processor...')
 #       _macro_publisher.enable()
 
         if _message_bus:
@@ -118,18 +118,18 @@ def test_macro_publisher():
 #       _macro_publisher.start()
 
     except KeyboardInterrupt:
-        _log.info('🍅 Ctrl-C caught; exiting...')
+        _log.info('Ctrl-C caught; exiting...')
     except Exception as e:
-        _log.error('🍅 {} encountered, exiting: {}'.format(type(e), e))
+        _log.error('{} encountered, exiting: {}'.format(type(e), e))
         traceback.print_exc(file=sys.stdout)
     finally:
-        _log.info('🍅 finally.')
+        _log.info('finally.')
         close_message_bus()
 
     _elapsed_ms = round(( dt.now() - _start_time ).total_seconds() * 1000.0)
     _log.info(Fore.YELLOW + 'complete: elapsed: {:d}ms'.format(_elapsed_ms))
     
-    _log.info('🍅 complete.')
+    _log.info('complete.')
 
 # call main ......................................
 

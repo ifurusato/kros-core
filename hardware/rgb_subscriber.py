@@ -88,6 +88,8 @@ class RgbSubscriber(Subscriber):
             _value = message.value
             if isinstance(_value, tuple):
                 self._set_rgb_color(*_value)
+            elif isinstance(_value, list):
+                self._set_rgb_colors(*_value)
             elif isinstance(_value, Color):
                 self._set_color(_value)
             else:
@@ -115,6 +117,32 @@ class RgbSubscriber(Subscriber):
                 self._stbd_rgbmatrix.show()
         else:
             self._log.info('no rgb matrix available.')
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def _set_rgb_colors(self, port_color, stbd_color, show=True):
+        '''
+        Either sets the port and starboard colors to the provided values
+        (as either a tuple or Color), or if there is only a single starboard
+        display, divide that display in half.
+        '''
+        self._log.info('set hues:  port {}; stbd: {}'.format(port_color, stbd_color))
+        rows = 5
+        for y in range(0, rows):
+            if isinstance(port_color, Color):
+                self._stbd_rgbmatrix.set_pixel(y, 3, port_color.red, port_color.green, port_color.blue)
+                self._stbd_rgbmatrix.set_pixel(y, 4, port_color.red, port_color.green, port_color.blue)
+            else:
+                self._stbd_rgbmatrix.set_pixel(y, 3, port_color[0], port_color[1], port_color[2])
+                self._stbd_rgbmatrix.set_pixel(y, 4, port_color[0], port_color[1], port_color[2])
+        for y in range(0, rows):
+            if isinstance(stbd_color, Color):
+                self._stbd_rgbmatrix.set_pixel(y, 0, stbd_color.red, stbd_color.green, stbd_color.blue)
+                self._stbd_rgbmatrix.set_pixel(y, 1, stbd_color.red, stbd_color.green, stbd_color.blue)
+            else:
+                self._stbd_rgbmatrix.set_pixel(y, 0, stbd_color[0], stbd_color[1], stbd_color[2])
+                self._stbd_rgbmatrix.set_pixel(y, 1, stbd_color[0], stbd_color[1], stbd_color[2])
+        if show:
+            self._stbd_rgbmatrix.show()
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _set_rgb_color(self, red, green, blue, show=True):

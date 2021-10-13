@@ -113,6 +113,7 @@ class Motor(Component):
 #       if not _suppress_jerk_limiter and _enable_jerk_limiter:
         self._jerk_limiter       = JerkLimiter(config, orientation, suppressed=_suppress_jerk_limiter,
                 enabled=_enable_jerk_limiter, level=level)
+        self._indicator_callback = None
         self._log.info('ready.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -121,6 +122,11 @@ class Motor(Component):
         Used by the Velocity class to obtain a callback on the motor loop.
         '''
         self.__callbacks.append(callback)
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def add_indicator_callback(self, callback):
+        self._log.info('added indicator callback.')
+        self._indicator_callback = callback
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
@@ -262,6 +268,8 @@ class Motor(Component):
                         + Fore.CYAN + 'power: ' + Fore.YELLOW + '{:5.2f} ➔ {:5.2f}'.format(self._last_driving_power, self.current_power))
 #       self._log.info('set target velocity: {:5.2f} of {} motor.'.format(target_velocity, self._orientation.name))
         self.__target_velocity = target_velocity
+        if self._indicator_callback:
+            self._indicator_callback(target_velocity)
         if self._using_mocks:
 #           raise Exception('using velocity mock!')
             self._velocity.velocity = target_velocity

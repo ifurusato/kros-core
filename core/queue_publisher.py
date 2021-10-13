@@ -34,8 +34,9 @@ class QueuePublisher(Publisher):
         _qpub = globals.get('queue-publisher')
         _qpub.put(message)
 
-    This is to permit even non-asynchronous processes to publish messages to
-    the message bus, with no particular guarantee of immediate delivery.
+    This is to permit lower-priority, non-asynchronous processes to publish
+    messages to the message bus, with no particular guarantee of immediate
+    delivery.
 
     :param config:          the application configuration
     :param message_bus:     the asynchronous message bus
@@ -82,7 +83,7 @@ class QueuePublisher(Publisher):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def _publisher_loop(self, f_is_enabled):
-        self._log.info('starting pot publisher loop:\t' + Fore.YELLOW + ( '; (suppressed, type \'m\' to release)' if self.suppressed else '(released)') )
+        self._log.info('starting queue publisher loop:\t' + Fore.YELLOW + ( '; (suppressed, type \'m\' to release)' if self.suppressed else '(released)') )
         while f_is_enabled():
             _count = next(self._counter)
             self._log.debug('[{:03d}] begin publisher loop...'.format(_count))

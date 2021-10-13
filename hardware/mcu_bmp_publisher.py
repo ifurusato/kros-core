@@ -108,7 +108,7 @@ class McuBumperPublisher(Publisher):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def _publisher_loop(self, f_is_enabled):
-        self._log.info('starting pot publisher loop:\t' + Fore.YELLOW + ( '; (suppressed, type \'m\' to release)' if self.suppressed else '(released)') )
+        self._log.info('starting mcu bumper publisher loop:\t' + Fore.YELLOW + ( '; (suppressed, type \'m\' to release)' if self.suppressed else '(released)') )
         while f_is_enabled():
             _count = next(self._counter)
 #           self._log.info('❄️  [{:03d}] begin publisher loop...'.format(_count))

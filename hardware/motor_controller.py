@@ -19,6 +19,8 @@ from colorama import init, Fore, Style
 init()
 
 import core.globals as globals
+globals.init()
+
 from core.logger import Logger, Level
 from core.component import Component
 from core.orient import Orientation
@@ -29,6 +31,7 @@ from core.message_bus import MessageBus
 from hardware.motor_configurer import MotorConfigurer
 from hardware.slew import SlewRate
 from hardware.motor import Motor
+from hardware.speed_indicator import SpeedIndicator
 
 #from behave.travel import Travel # perhaps doesn't belong here
 
@@ -97,9 +100,6 @@ class MotorController(Component):
         self._log.info('spin speed:\t{}'.format(self._spin_speed.name))
         self._millis               = lambda: int(round(time.time() * 1000))
         self._start_time           = self._millis()
-        # configure travel behaviour
-        self._travel = None
-#       self._travel = Travel(config, motor_configurer, level)
         self._log.info('motors ready.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -811,10 +811,17 @@ class MotorController(Component):
             Component.enable(self)
             if not self._use_ext_clock and not self.loop_is_running:
                 self.start_loop()
+
+            # optional speed indicator feature
+            self._queue_publisher = globals.get('queue-publisher')
+            if self._queue_publisher:
+                self._log.info('using queue publisher to publish speed indicator events.')
+                self._speed_indicator = SpeedIndicator(self._queue_publisher, self._port_motor, self._stbd_motor)
+            else:
+                self._log.warning('no speed indicator.')
+
             self._port_motor.enable()
             self._stbd_motor.enable()
-            if self._travel:
-                self._travel.enable()
             self._log.info('enabled.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -830,8 +837,6 @@ class MotorController(Component):
             while _count < 10 and self.is_in_motion: # if we're moving then halt
                 _count += 1
                 self._log.warning('[{:d}] event: motors are in motion (halting).'.format(_count))
-                if self._travel:
-                    self._travel.disable()
                 self._port_motor.stop()
                 self._stbd_motor.stop()
                 time.sleep(0.1)
