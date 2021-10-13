@@ -37,7 +37,7 @@ if _kros:
             # come to a halt for 2.5 seconds
             _macro.add_event(Event.HALT, 2500)
             # print an emoji via a lambda function
-            _func = lambda: globals.get('kros').get_logger().info('😛 Done!')
+            _func = lambda: globals.get('kros').get_logger().info('🤣 Done!')
             _macro.add_function(_func, 1000)
             _template_log.info('loaded.')
 

@@ -351,7 +351,7 @@ class Swerve(Behaviour):
         Enables this Component.
         '''
         if self.enabled:
-            self._log.warning('💚 swerve already enabled.')
+            self._log.warning('swerve already enabled.')
         else:
             if not self.connected:
                 self._connect()
@@ -361,7 +361,7 @@ class Swerve(Behaviour):
                     self._ioe.enable()
                 if self._ifs and not self._ifs.enabled:
                     self._ifs.enable()
-                self._log.info(Fore.BLUE + '💚 swerve enabled.')
+                self._log.info('swerve enabled.')
             else:
                 self._log.warning('unable to enable swerve behaviour.')
 
@@ -374,7 +374,7 @@ class Swerve(Behaviour):
         else:
             Component.release(self)
             self._set_velocity_multipliers('releasing swerve.')
-            self._log.info(Fore.GREEN + '💚 swerve released.')
+            self._log.info('swerve released.')
 
     def suppress(self):
         '''
@@ -382,7 +382,7 @@ class Swerve(Behaviour):
         '''
         Component.suppress(self)
         self._reset_velocity_multiplier('suppressing swerve.')
-        self._log.info(Fore.BLUE + '💙 swerve suppressed.')
+        self._log.info('swerve suppressed.')
 
     def disable(self):
         '''
@@ -397,6 +397,6 @@ class Swerve(Behaviour):
             if self._ifs and self._ifs.disabled:
                 self._ifs.disable()
             self._reset_velocity_multiplier('disabling swerve.')
-            self._log.info(Fore.BLUE + '💙 swerve disabled.')
+            self._log.info('swerve disabled.')
 
 #EOF

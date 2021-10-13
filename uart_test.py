@@ -39,7 +39,7 @@ def main():
         _log.info('starting...\t' + Fore.YELLOW + 'type Ctrl-C to exit.')
         if not os.path.exists(_port):
             raise Exception('port {} does not exist.'.format(_port))
-        _serial = serial.Serial(port='/dev/serial0', baudrate=19200) #parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE) # timeout=1)
+#       _serial = serial.Serial(port='/dev/serial0', baudrate=19200) #parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE) # timeout=1)
         _serial = serial.Serial(port=_port, baudrate=_baud_rate, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE) # timeout=1)
         while True:
             try:

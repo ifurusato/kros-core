@@ -35,10 +35,10 @@ if _kros:
             # come to a stop for 1 second
             _macro.add_event(Event.STOP, 1000)
             # move half astern for 2.5 seconds (duration argument is in milliseconds)
-            _macro.add_event(Event.HALF_ASTERN, 300)
+            _macro.add_event(Event.HALF_ASTERN, 100)
             # slow the reversing of the port motor to turn to starboard for a half second
-            _macro.add_event(Event.INCREASE_PORT_VELOCITY, 100)
-            _macro.add_event(Event.INCREASE_PORT_VELOCITY, 100)
+#           _macro.add_event(Event.INCREASE_PORT_VELOCITY, 100)
+#           _macro.add_event(Event.INCREASE_PORT_VELOCITY, 100)
             _macro.add_event(Event.INCREASE_PORT_VELOCITY, 100)
             # come to a halt for 2 seconds
             _macro.add_event(Event.HALT, 1000)

@@ -513,7 +513,7 @@ class EventPublisher(Publisher):
         _kros = globals.get('kros')
         _macro_publisher = _kros.get_macro_publisher()
         if _macro_publisher:
-            _macro_publisher.load_script_files()
+            _macro_publisher.load_macro_files()
         else:
             self._log.info('macro processor: ' + Fore.YELLOW + 'disabled.')
 

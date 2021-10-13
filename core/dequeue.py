@@ -11,8 +11,11 @@
 #
 
 #import queue
+from copy import deepcopy
 from queue import Queue, LifoQueue, Empty, Full
 #import upy.heapq as hq # local copy of MicroPython heapq
+from colorama import init, Fore, Style
+init(autoreset=True)
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class DeQueue(object):
@@ -149,6 +152,13 @@ class DeQueue(object):
         if self.empty():
             raise Empty()
         return self._queue.get()
+
+    def __deepcopy__(self, queue):
+        queue = deepcopy(queue)
+#       queue._maxsize = self._maxsize
+#       queue._mode    = self._mode
+#       queue._backing_queue = deepcopy(self._backing_queue)
+        return queue
 
 #   # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 #   def replace(self, item):

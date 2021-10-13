@@ -75,7 +75,6 @@ class MotorController(Component):
         self._loop_enabled         = False
         self._event_counter        = itertools.count()
         self._last_velocity        = None
-        self._behaviour_mgr        = None
         # configured constants
         self._slew_limiter_enabled = config['kros'].get('motor').get('enable_slew_limiter')
         _cfg = config['kros'].get('motor').get('motor_controller')
@@ -108,32 +107,7 @@ class MotorController(Component):
     def name(self):
         return 'motor-ctrl'
 
-#   # traveling behaviours ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-
-#   def travel(self, direction, port_distance_cm, stbd_distance_cm, wait_til_stop=False):
-#       '''
-#       Travel a fixed distance in the indicated direction, as a ballistic
-#       behaviour, then stop. Returns the number of ticks traveled for the
-#       port and starboard motor, respectively.
-#       '''
-#       self._log.info('travel {} for port: {:d}cm; stbd: {:d}cm, wait til stop? {}'.format(direction.label, port_distance_cm, stbd_distance_cm, wait_til_stop))
-#       _result = self._travel.travel(direction, port_distance_cm, stbd_distance_cm)
-#       if wait_til_stop:
-#           _is_stopped = self.wait_til_stopped()
-#       self._log.info('travel complete.')
-#       return _result
-
-#   # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-#   def set_max_fwd_velocity(self, maximum_velocity):
-#       '''
-#       Sets the maximum forward velocity limit for both motors.
-#       '''
-#       if maximum_velocity < 0.0:
-#           raise ValueError('maximum forward velocity cannot be less than zero.')
-#       self._port_motor.set_max_fwd_velocity(maximum_velocity)
-#       self._stbd_motor.set_max_fwd_velocity(maximum_velocity)
-#       self._log.info('🍕 set motor speed limit to: {:5.2f}'.format(maximum_velocity))
-
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def reset_max_fwd_velocity(self):
         '''
         Resets the maximum forward velocity limit for both motors to the default.
@@ -507,11 +481,6 @@ class MotorController(Component):
             raise ValueError('unrecognised bumper event {}'.format(_event.label))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-#   def astern_cm(self, port_distance_cm, stbd_distance_cm, wait_til_stopped=True):
-#       _result = self.travel(Direction.ASTERN, port_distance_cm, stbd_distance_cm, True)
-#       self._log.info(Fore.MAGENTA + 'travel complete, returned: {} '.format(_result))
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def get_motor(self, orientation):
         '''
         Returns the motor with the matching orientation.
@@ -543,10 +512,10 @@ class MotorController(Component):
         if not isinstance(target_velocity, float):
             raise ValueError('expected float, not {}'.format(type(target_velocity)))
         if orientation is Orientation.PORT:
-            self._log.info('♒ set_motor_velocity ' + Fore.RED   + 'PORT: {:5.2f}'.format(target_velocity))
+            self._log.info('set_motor_velocity ' + Fore.RED   + 'PORT: {:5.2f}'.format(target_velocity))
             self._port_motor.target_velocity = target_velocity
         elif orientation is Orientation.STBD:
-            self._log.info('♒ set_motor_velocity ' + Fore.GREEN + 'STBD: {:5.2f}'.format(target_velocity))
+            self._log.info('set_motor_velocity ' + Fore.GREEN + 'STBD: {:5.2f}'.format(target_velocity))
             self._stbd_motor.target_velocity = target_velocity
         else:
             raise Exception('expected PORT or STBD orientation.')
@@ -607,7 +576,7 @@ class MotorController(Component):
     def emergency_stop(self):
         self._log.info('emergency stop...')
         # suppress any behaviours
-        self._suppress_behaviours()
+#       self._suppress_behaviours()
         # now stop very fast
         self._set_slew_rate(self._emergency_slew_rate)
         self._port_motor.target_velocity = 0.0
@@ -634,7 +603,7 @@ class MotorController(Component):
         else:
             self._log.info('stopping...')
         # suppress any behaviours
-        self._suppress_behaviours()
+#       self._suppress_behaviours()
         if self.loop_is_running:
             if self._slew_limiter_enabled:
                 self._log.info('stopping soft...')
@@ -722,14 +691,6 @@ class MotorController(Component):
             self._log.info('braking very hard...')
             self.emergency_stop()
         self._log.info('braked.')
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def _suppress_behaviours(self):
-        if self._behaviour_mgr:
-            self._behaviour_mgr.suppress_all_behaviours()
-            self._log.info('all behaviours suppressed.')
-        else:
-            self._log.warning('no behaviour manager available: cannot suppress behaviours.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _set_slew_rate(self, slew_rate):
@@ -848,9 +809,6 @@ class MotorController(Component):
             self._log.warning('already enabled.')
         else:
             Component.enable(self)
-            if not self._behaviour_mgr: # attach behaviour manager if available
-                _kros = globals.get('kros')
-                self._behaviour_mgr = _kros.get_behaviour_manager() if _kros != None else None
             if not self._use_ext_clock and not self.loop_is_running:
                 self.start_loop()
             self._port_motor.enable()

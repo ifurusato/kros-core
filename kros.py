@@ -222,6 +222,12 @@ class KROS(Component, FiniteStateMachine):
 
         _pubs = arguments.pubs if arguments.pubs else ''
 
+        if _cfg.get('enable_queue_publisher') or 'q' in _pubs:
+            self._queue_pub = QueuePublisher(self._config, self._message_bus, self._message_factory, self._level)
+        if _cfg.get('enable_macro_publisher') or 'm' in _pubs:
+            _callback = None
+            self._macro_pub = MacroPublisher(self._config, self._message_bus, self._message_factory, _callback, self._level)
+
         _enable_ifs_publisher = _cfg.get('enable_ifs_publisher') or 'i' in _pubs
         if _enable_ifs_publisher:
             self._ifs_publisher = IfsPublisher(self._config, self._message_bus, self._message_factory, level=self._level)
@@ -254,12 +260,6 @@ class KROS(Component, FiniteStateMachine):
             self._battery = BatteryCheck(self._config, self._message_bus, self._message_factory, self._level)
     #   _message_bus.print_publishers()
 
-        if _cfg.get('enable_queue_publisher') or 'q' in _pubs:
-            self._queue_pub = QueuePublisher(self._config, self._message_bus, self._message_factory, self._level)
-        if _cfg.get('enable_macro_publisher') or 'm' in _pubs:
-            _callback = None
-            self._macro_pub = MacroPublisher(self._config, self._message_bus, self._message_factory, _callback, self._level)
-
         _enable_killswitch= _cfg.get('enable_killswitch') or 'k' in _pubs
         if _enable_killswitch and _pigpio_available:
             self._killswitch = KillSwitch(self._config, self, level=self._level)
@@ -274,7 +274,7 @@ class KROS(Component, FiniteStateMachine):
         if _cfg.get('enable_rgb_subscriber') or 'r' in _subs:
             self._rgb_subscriber = RgbSubscriber(self._config, self._message_bus, level=self._level)
         if _cfg.get('enable_bumper_subscriber') or 'b' in _subs:
-            self._bumper_subscriber   = BumperSubscriber(self._config, self._message_bus, self._motor_ctrl, level=self._level)
+            self._bumper_subscriber   = BumperSubscriber(self._config, self._message_bus, self._message_factory, self._motor_ctrl, level=self._level)
         if _cfg.get('enable_infrared_subscriber') or 'i' in _subs:
             self._infrared_subscriber = InfraredSubscriber(self._config, self._message_bus, self._motor_ctrl, level=self._level) # reacts to IR sensors
         self._garbage_collector   = GarbageCollector(self._config, self._message_bus, level=self._level)

@@ -49,7 +49,7 @@ class Avoid(Behaviour):
     :param enabled:          enabled state, default True
     :param level:            the optional log level
     '''
-    def __init__(self, config, message_bus, message_factory, motor_ctrl, external_clock, suppressed=True, enabled=True, level=Level.INFO):
+    def __init__(self, config, message_bus, message_factory, motor_ctrl, external_clock, suppressed=False, enabled=True, level=Level.INFO):
         Behaviour.__init__(self, 'avoid', config, message_bus, message_factory, suppressed=suppressed, enabled=enabled, level=level)
         if not isinstance(motor_ctrl, MotorController):
             raise ValueError('wrong type for motor_ctrl argument: {}'.format(type(motor_ctrl)))
@@ -67,8 +67,8 @@ class Avoid(Behaviour):
             self._require_met = False
 
         # attempt to get macro publisher (may not be enabled)
-        _kros = globals.get('kros')
-        self._macro_publisher = _kros.get_macro_publisher()
+        self._kros = globals.get('kros')
+        self._macro_publisher = self._kros.get_macro_publisher()
         if not self._macro_publisher or not self._macro_publisher.has_macro('avoid'):
             self._require_met = False
         _cfg = config['kros'].get('behaviour').get('avoid')
@@ -96,16 +96,16 @@ class Avoid(Behaviour):
         :param message:  an Message passed along by the message bus
         '''
         if self.suppressed:
-            self._log.info(Style.DIM + 'avoid suppressed; message: {}'.format(message.event.label))
+            self._log.info('🌓 avoid suppressed; message: {}'.format(message.event.label))
         elif self.enabled:
             self._log.info('🌓 avoid; message: {}'.format(message.event.label))
-            self._log.info('🍏 found KROS! begin loading script...')
-            self._macro_publisher = _kros.get_macro_publisher()
+            self._log.info('🌓 found KROS! begin loading script...')
+            self._macro_publisher = self._kros.get_macro_publisher()
             if self._macro_publisher:
-                self._log.info('🍏 found MacroPublisher! queue avoid script...')
+                self._log.info('🌓 found MacroPublisher! queue avoid script...')
                 self._macro_publisher.queue_macro_by_name('avoid')
             else:
-                self._log.warning('macro processor not available..')
+                self._log.warning('🌓 macro processor not available..')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _tick(self):
@@ -126,7 +126,7 @@ class Avoid(Behaviour):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def get_trigger_behaviour(self, event):
-        return TriggerBehaviour.TOGGLE
+        return TriggerBehaviour.RELEASE
 
     @property
     def trigger_event(self):

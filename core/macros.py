@@ -12,8 +12,9 @@
 # A collection of classes related to macro scripting.
 #
 
+from copy import deepcopy
 from colorama import init, Fore, Style
-init()
+init(autoreset=True)
 
 from core.logger import Logger, Level
 from core.event import Event
@@ -69,7 +70,6 @@ class MacroLibrary():
 class Macros(DeQueue):
     '''
     A container for Macros.
-
     '''
     def __init__(self):
         self._macros = DeQueue(mode=DeQueue.QUEUE)
@@ -163,12 +163,15 @@ class Macro(object):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def __deepcopy__(self, macro):
-        print('macro: {}'.format(macro))
-        _macro = Macro(self.name, self.description, self._queue)
-        for _key, _value in macro.items():
-            print('key: {}; value: {}'.format(_key, _value))
+        print(Fore.BLUE + '🍇 Macro.__deepcopy__: self: {}; arg: {}'.format(id(self), id(macro)))
+        macro = Macro(self.name, self.description, deepcopy(self._queue))
+        print(Fore.BLUE + '🍇 Macro.__deepcopy__: {}'.format(macro))
+#       for _key, _value in macro.items():
+#           print('key: {}; value: {}'.format(_key, _value))
 #       raise Exception('unimplemented: {}'.format(macro))
-        return _macro
+        print(Fore.BLUE + '🍇 Macro.__deepcopy__: self._queue.size: {:d}; macro._queue.size: {:d}'.format(self._queue.size, macro._queue.size))
+        print(Fore.BLUE + '🍇 Macro.__deepcopy__: id(self._queue): {:d}; id(macro._queue): {:d}'.format(id(self._queue), id(macro._queue)))
+        return macro
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Statement(object):
@@ -223,6 +226,12 @@ class Statement(object):
         return isinstance(other, Statement) and self.__hash__() is other.__hash__()
 
     def __deepcopy__(self, stmt):
-        raise Exception('🌵 statement unimplemented: {}'.format(stmt))
+        stmt._label       = self.label
+        stmt._duration_ms = self.duration_ms
+        stmt._is_lambda   = self._is_lambda
+        stmt._event       = self._event
+        stmt._function    = self._function
+        return stmt
+#       raise Exception('🌵 statement unimplemented: {}'.format(stmt))
 
 #EOF

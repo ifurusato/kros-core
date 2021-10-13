@@ -111,14 +111,14 @@ class MacroPublisher(Publisher):
         '''
         self._log.info('locating macro: {}; {:d} items in library.'.format(name, self._library.size))
         _macro = self._library.get(name)
-        _copy = deepcopy(_macro)
-        self._log.info('deep-copied macro: {} to {}.'.format(id(_macro), id(_copy)))
         if _macro:
-            self._log.info('queueing macro: {}; {:d} items in library.'.format(_copy.name, self._library.size))
-            self.queue_macro(_copy)
-            self._log.info('queueed macro: {}; {:d} items in library.'.format(_copy.name, self._library.size))
+            self._log.info('queueing macro: {}; {:d} items in library; macro: {:d} items.'.format(_macro.name, self._library.size, _macro.size))
+#           self._log.info('queueing macro: {}; {:d} items in library.'.format(_copy.name, self._library.size))
+            self.queue_macro(_macro)
+#           self._log.info('🍟 queued macro: {}; {:d} items in library.'.format(_macro.name, self._library.size))
         else:
             self._log.warning('count not find macro: {}'.format(name))
+#       self.load_macro_files()
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def has_macro(self, name):
@@ -177,6 +177,8 @@ class MacroPublisher(Publisher):
                 self._log.error('{} importing macro: {}'.format(type(e), _file))
         self._log.info('loading complete: {} macros in library'.format(self._library.size))
 
+
+
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def enable(self):
         if not self.enabled:
@@ -202,7 +204,6 @@ class MacroPublisher(Publisher):
         '''
         self._log.info('starting macro listener loop.')
         while f_is_enabled():
-
             # check if there's either a running macro or one available
             if self._macro or not self._macros.empty(): # either we have a macro or there is one available
                 _count = next(self._counter)
@@ -210,10 +211,11 @@ class MacroPublisher(Publisher):
                     self._macro = self._macros.get()
                 # otherwise continue to execute the existing macro...
                 if not self._statement: # if no existing statement, poll one from the macro.
-                    self._statement = self._macro.poll()
-                    self._log.info(Fore.CYAN + 'event: ' + Fore.YELLOW + '{}:\t'.format(self._statement.label)
-                            + Fore.MAGENTA + 'duration: {:5.2f}ms'.format(self._statement.duration_ms))
-                    self._start_time = dt.now()
+                    if not self._macro.empty():
+                        self._statement = self._macro.poll()
+                        self._log.info('event: ' + Fore.YELLOW + '{}:\t'.format(self._statement.label)
+                                + Fore.MAGENTA + 'duration: {:5.2f}ms'.format(self._statement.duration_ms))
+                        self._start_time = dt.now()
                 # if there is an active statement waiting...
                 if self._statement:
                     # then process this statement...
@@ -243,6 +245,7 @@ class MacroPublisher(Publisher):
                                         + Fore.CYAN + ' event: {}; '.format(_message.event.label) + Fore.YELLOW + 'timestamp: {}'.format(_message.value))
                         # end loop
                         self._statement = None
+
                 else: # no statement so we do nothing...
                     self._log.info(Style.DIM + 'no active statement.')
                     pass
