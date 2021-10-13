@@ -21,6 +21,9 @@ from math import isclose
 from colorama import init, Fore, Style
 init()
 
+import core.globals as globals
+globals.init()
+
 from core.message_bus import MessageBus
 from core.message_factory import MessageFactory
 from core.orient import Orientation
@@ -37,6 +40,17 @@ _log = Logger('test', Level.INFO)
 # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 def key_callback(event):
     _log.info('callback on event: {}'.format(event))
+
+class FakeKros(object):
+    '''
+    Only to fulfill: _macro_publisher = _kros.get_macro_publisher()
+    '''
+    def __init__(self, macro_publisher, level=Level.INFO):
+        self._macro_publisher = macro_publisher
+        globals.put('kros', self)
+
+    def get_macro_publisher(self):
+        return self._macro_publisher 
 
 # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 @pytest.mark.unit
@@ -62,8 +76,18 @@ def test_motors():
 
         _log.info('starting test...')
         _mp = MacroPublisher(_config, _message_bus, _message_factory, callback=key_callback, level=Level.INFO)
+
+        _fake_kros = FakeKros(_mp, _level)
+
 #       _mp.enable()
+        _log.info('💩 loading macro files...')
         _mp.load_macro_files()
+        _log.info('💩 loaded macro files...')
+
+        _name = 'avoid'
+        _log.info('💩 queuing macro "{}"...'.format(_name))
+        _mp.queue_macro_by_name(_name)
+        _log.info('💩 queued macro "{}".'.format(_name))
 
         _mp.close()
 
@@ -78,7 +102,7 @@ def test_motors():
         _errcode = 2
     except Exception as e:
         _log.error('{} encountered, exiting: {}'.format(type(e), e))
-        _errcode = 2
+        _errcode = 3
     finally:
         if _errcode == 0:
             _log.info('executed without error.')

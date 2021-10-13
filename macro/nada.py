@@ -13,23 +13,23 @@ import sys
 from core.logger import Logger, Level
 
 _nada_main_log = Logger('nada-main', Level.ERROR)
-_nada_main_log.info('📃 nada macro begin.')
+_nada_main_log.info('🐦 nada macro begin.')
 
 def main(argv):
 
-    _nada_main_log.info('📃 main() start...')
+    _nada_main_log.info('🐦 main() start...')
     _log = Logger('nada', Level.ERROR)
-    _log.info('📃 main() this doesn\'t get executed.')
+    _log.info('🐦 main() this doesn\'t get executed.')
 
 # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-_nada_main_log.info('📃 main test...')
+_nada_main_log.info('🐦 main test...')
 if __name__== "__main__":
     main(sys.argv[1:])
 elif __name__== "core.macro_publisher":
-    _nada_main_log.info('📃 this macro is being run from core.macro_publisher...')
+    _nada_main_log.info('🐦 this macro is being run from core.macro_publisher...')
 else:
-    _nada_main_log.info('📃 otherwise __name__: \'{}\''.format(__name__))
+    _nada_main_log.info('🐦 otherwise __name__: \'{}\''.format(__name__))
 
-_nada_main_log.info('📃 end.')
+_nada_main_log.info('🐦 end.')
 
 #EOF

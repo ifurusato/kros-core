@@ -60,7 +60,7 @@ def get(key):
 class GlobalsError(Exception):
     '''
     This exception is thrown when any error occurs while referencing or
-    otherwise processing global variables. 
+    otherwise processing global variables.
     '''
     pass
 

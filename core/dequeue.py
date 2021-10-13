@@ -11,7 +11,8 @@
 #
 
 #import queue
-from copy import deepcopy
+import copy
+#from copy import deepcopy
 from queue import Queue, LifoQueue, Empty, Full
 #import upy.heapq as hq # local copy of MicroPython heapq
 from colorama import init, Fore, Style
@@ -20,7 +21,7 @@ init(autoreset=True)
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class DeQueue(object):
 
-    FIFO = QUEUE = 0 # use FIFO queue 
+    FIFO = QUEUE = 0 # use FIFO queue
     LIFO = STACK = 1 # use LIFO queue (like a stack)
 
     '''
@@ -32,11 +33,9 @@ class DeQueue(object):
     def __init__(self, maxsize=-1, mode=FIFO):
         self._maxsize = maxsize
         self._mode = mode
-        if mode == DeQueue.LIFO:
-            # implemented as LIFO stack
+        if mode == DeQueue.LIFO: # implemented as LIFO stack
             self._queue = LifoQueue(maxsize)
-        else:
-            # implemented as FIFO queue
+        else: # implemented as FIFO queue
             self._queue = Queue(maxsize)
         self._backing_queue = self._queue.queue
 
@@ -153,12 +152,24 @@ class DeQueue(object):
             raise Empty()
         return self._queue.get()
 
-    def __deepcopy__(self, queue):
-        queue = deepcopy(queue)
+    def __deepcopy__(self, memo):
+        print(Fore.BLUE + '🍏 DeQueue.__deepcopy__: a. memo type: {}'.format(type(memo)))
+        _copy = DeQueue(maxsize=self._maxsize, mode=self._mode)
+        print(Fore.BLUE + '🍏 DeQueue.__deepcopy__: b. backing queue type: {}'.format(type(self._backing_queue)))
+        _copy._queue = copy.copy(self._queue)
+        _copy._queue.queue = copy.deepcopy(self._backing_queue)
+        print(Fore.BLUE + '🍏 DeQueue.__deepcopy__: c. ')
+
+        # perform a deep copy of the backing queue
+        while not self._queue.empty():
+                 _copy._queue.put(self._queue.get())
+                 self._queue.task_done()
+
+        print(Fore.BLUE + '🍏 DeQueue.__deepcopy__: d. ID of self: {}; _copy: {}'.format(id(self), id(_copy)))
 #       queue._maxsize = self._maxsize
 #       queue._mode    = self._mode
-#       queue._backing_queue = deepcopy(self._backing_queue)
-        return queue
+#       queue._backing_queue = copy.deepcopy(self._backing_queue)
+        return _copy
 
 #   # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 #   def replace(self, item):

@@ -162,16 +162,20 @@ class Macro(object):
         self._queue.put(_statement)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def __deepcopy__(self, macro):
-        print(Fore.BLUE + '🍇 Macro.__deepcopy__: self: {}; arg: {}'.format(id(self), id(macro)))
-        macro = Macro(self.name, self.description, deepcopy(self._queue))
-        print(Fore.BLUE + '🍇 Macro.__deepcopy__: {}'.format(macro))
-#       for _key, _value in macro.items():
+    def __deepcopy__(self, memo):
+        print(Fore.BLUE + '🍎 Macro.__deepcopy__: a. name: {}'.format(self.name))
+        _copy = Macro(self.name, self.description, None)
+        print(Fore.BLUE + '🍎 Macro.__deepcopy__: b. deepcopy queue...')
+        _qeueu_copy = deepcopy(self._queue)
+        print(Fore.BLUE + '🍎 Macro.__deepcopy__: c. deepcopy complete.')
+
+        print(Fore.BLUE + '🍎 Macro.__deepcopy__: d. self ID: {}; copy ID: {}'.format(id(self), id(_copy)))
+#       for _key, _value in _macro.items():
 #           print('key: {}; value: {}'.format(_key, _value))
-#       raise Exception('unimplemented: {}'.format(macro))
-        print(Fore.BLUE + '🍇 Macro.__deepcopy__: self._queue.size: {:d}; macro._queue.size: {:d}'.format(self._queue.size, macro._queue.size))
-        print(Fore.BLUE + '🍇 Macro.__deepcopy__: id(self._queue): {:d}; id(macro._queue): {:d}'.format(id(self._queue), id(macro._queue)))
-        return macro
+#       raise Exception('unimplemented: {}'.format(_copy))
+        print(Fore.BLUE + '🍎 Macro.__deepcopy__: e. self._queue.size: {:d}; _copy._queue.size: {:d}'.format(self._queue.size, _copy._queue.size))
+        print(Fore.BLUE + '🍎 Macro.__deepcopy__: f. id(self._queue): {:d}; id(_copy._queue): {:d}'.format(id(self._queue), id(_copy._queue)))
+        return _copy
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Statement(object):
@@ -225,13 +229,12 @@ class Statement(object):
     def __eq__(self, other):
         return isinstance(other, Statement) and self.__hash__() is other.__hash__()
 
-    def __deepcopy__(self, stmt):
-        stmt._label       = self.label
-        stmt._duration_ms = self.duration_ms
-        stmt._is_lambda   = self._is_lambda
-        stmt._event       = self._event
-        stmt._function    = self._function
-        return stmt
-#       raise Exception('🌵 statement unimplemented: {}'.format(stmt))
+    def __deepcopy__(self, memo):
+        if self._is_lambda:
+            print(Fore.BLUE + '🍊 Statement.__deepcopy__() copy lambda.')
+            return Statement(self.label, self._function, self.duration_ms)
+        else:
+            print(Fore.BLUE + '🍊 Statement.__deepcopy__() copy event.')
+            return Statement(self.label, Event.LAMBDA, self.duration_ms)
 
 #EOF

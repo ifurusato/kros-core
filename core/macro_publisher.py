@@ -89,7 +89,7 @@ class MacroPublisher(Publisher):
         populated. This automatically adds it to the macro library.
         '''
         _macro = Macro(name, description)
-        self._log.info('created macro with name \'{}\'.'.format(name))
+        self._log.info('🍆 created macro with name \'{}\'.'.format(name))
         self.add_macro_to_library(_macro)
         return _macro
 
@@ -99,8 +99,9 @@ class MacroPublisher(Publisher):
         Adds the macro to the macro library.
         '''
         if isinstance(macro, Macro):
+            self._log.info('🍆 1. adding macro to library: {}; {:d} items in library; macro: {:d} items.'.format(macro.name, self._library.size, macro.size))
             self._library.put(macro)
-            self._log.info('added macro \'{}\' to library.'.format(macro.name))
+            self._log.info('🍆 2. added macro to library: {}; {:d} items in library; macro: {:d} items.'.format(macro.name, self._library.size, macro.size))
         else:
             raise TypeError('expected macro.')
 
@@ -109,13 +110,18 @@ class MacroPublisher(Publisher):
         '''
         Adds the macro (referenced by name) to the executable queue/stack.
         '''
-        self._log.info('locating macro: {}; {:d} items in library.'.format(name, self._library.size))
+        self._log.info('🍆 a. queue_macro_by_name() locating macro: {}; {:d} items in library.'.format(name, self._library.size))
         _macro = self._library.get(name)
+#       self._log.info('🍆 b. queue_macro_by_name() located macro: {}; {:d} items in library.'.format(name, self._library.size))
         if _macro:
-            self._log.info('queueing macro: {}; {:d} items in library; macro: {:d} items.'.format(_macro.name, self._library.size, _macro.size))
-#           self._log.info('queueing macro: {}; {:d} items in library.'.format(_copy.name, self._library.size))
-            self.queue_macro(_macro)
-#           self._log.info('🍟 queued macro: {}; {:d} items in library.'.format(_macro.name, self._library.size))
+            self._log.info('🍆 c. queue_macro_by_name() deep copying macro: {}; {:d} items in library.'.format(name, self._library.size))
+            _copy = deepcopy(_macro)
+            self._log.info('🍆 d. queue_macro_by_name() deep copied macro: {}; {:d} items in library.'.format(name, self._library.size))
+            if _copy.size != _macro.size:
+                raise Exception('deep copy of macro failed:  copy: {} != macro: {}'.format(_copy.size, _macro.size))
+            self._log.info('🍆 e. queueing macro: {}; {:d} items in library; macro: {:d} items.'.format(_copy.name, self._library.size, _copy.size))
+            self.queue_macro(_copy)
+            self._log.info('🍆 f. queued copy of macro: {}; {:d} items in library.'.format(_copy.name, self._library.size))
         else:
             self._log.warning('count not find macro: {}'.format(name))
 #       self.load_macro_files()
