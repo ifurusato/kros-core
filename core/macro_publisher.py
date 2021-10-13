@@ -110,18 +110,19 @@ class MacroPublisher(Publisher):
         '''
         Adds the macro (referenced by name) to the executable queue/stack.
         '''
-        self._log.info('🍆 a. queue_macro_by_name() locating macro: {}; {:d} items in library.'.format(name, self._library.size))
+        self._log.info('🍆 a. queue_macro_by_name() locating macro: "{}"; '.format(name) + Fore.YELLOW + '{:d} items in library.'.format(self._library.size))
         _macro = self._library.get(name)
-#       self._log.info('🍆 b. queue_macro_by_name() located macro: {}; {:d} items in library.'.format(name, self._library.size))
+        self._log.info('🍆 b. queue_macro_by_name() located macro: "{}"; '.format(name) + Fore.YELLOW + '{:d} items in library.'.format(self._library.size))
         if _macro:
             self._log.info('🍆 c. queue_macro_by_name() deep copying macro: {}; {:d} items in library.'.format(name, self._library.size))
             _copy = deepcopy(_macro)
-            self._log.info('🍆 d. queue_macro_by_name() deep copied macro: {}; {:d} items in library.'.format(name, self._library.size))
+            self._log.info('🍆 d. queueing macro: {}; {:d} items in macro.'.format(_copy.name, _macro.size))
+            self._log.info('🍆 e. queue_macro_by_name() deep copied macro: {}; {:d} items in library.'.format(name, self._library.size))
             if _copy.size != _macro.size:
                 raise Exception('deep copy of macro failed:  copy: {} != macro: {}'.format(_copy.size, _macro.size))
-            self._log.info('🍆 e. queueing macro: {}; {:d} items in library; macro: {:d} items.'.format(_copy.name, self._library.size, _copy.size))
+            self._log.info('🍆 f. queueing macro: {}; {:d} items in library; copy {:d} items from macro: {:d} items.'.format(_copy.name, self._library.size, _copy.size, _macro.size))
             self.queue_macro(_copy)
-            self._log.info('🍆 f. queued copy of macro: {}; {:d} items in library.'.format(_copy.name, self._library.size))
+            self._log.info('🍆 h. queued copy of macro: "{}"; '.format(_copy.name) + Fore.YELLOW + '{:d} items in library.'.format(self._library.size))
         else:
             self._log.warning('count not find macro: {}'.format(name))
 #       self.load_macro_files()
@@ -140,7 +141,7 @@ class MacroPublisher(Publisher):
         Adds the macro to the executable queue/stack.
         '''
         self._macros.put(macro)
-        self._log.info('queued macro: {}'.format(macro.name))
+        self._log.info('🍆 g. queued macro: {}'.format(macro.name))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def add_callback(self, callback):
