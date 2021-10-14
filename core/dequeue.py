@@ -7,14 +7,12 @@
 #
 # author:   Murray Altheim
 # created:  2021-09-25
-# modified: 2021-09-27
+# modified: 2021-10-15
 #
 
-#import queue
 import copy
 from copy import deepcopy
 from queue import Queue, LifoQueue, Empty, Full
-#import upy.heapq as hq # local copy of MicroPython heapq
 from colorama import init, Fore, Style
 init(autoreset=True)
 
@@ -27,17 +25,22 @@ class DeQueue(object):
     '''
     A "double-ended" FIFO or LIFO queue based on the CPython Queue class.
 
-    :param maxsize:   the optional maximum length of the queue.
-    :param mode:      uses a FIFO (default) queue or LIFO if thus specified
+    :param maxsize:        optional maximum length of the queue.
+    :param backing_queue:  optional backing queue
+    :param mode:           uses a FIFO (default) queue or LIFO if thus specified
     '''
-    def __init__(self, maxsize=-1, mode=FIFO):
+    def __init__(self, maxsize=-1, backing_queue=None, mode=FIFO):
         self._maxsize = maxsize
         self._mode = mode
         if mode == DeQueue.LIFO: # implemented as LIFO stack
             self._queue = LifoQueue(maxsize)
-        else: # implemented as FIFO queue
+        else:                    # implemented as FIFO queue
             self._queue = Queue(maxsize)
-        self._backing_queue = self._queue.queue
+        if backing_queue:
+            self._backing_queue = self._queue.queue
+            self._queue.queue   = backing_queue
+        else:
+            self._backing_queue = self._queue.queue
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
@@ -154,68 +157,27 @@ class DeQueue(object):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def __eq__(self, other):
-        return isinstance(other, DeQueue) and self.__hash__() == other.__hash__()
+        return isinstance(other, DeQueue) \
+                and self.__hash__() == other.__hash__() \
+                and self._queue == other.queue
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def __hash__(self):
-        return hash((self._maxsize, self._mode, self._queue))
+        return hash((self._maxsize, self._mode, self._queue.qsize()))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def __str__(self):
-        return 'DeQueue[\n    id={}\n    hash={}\n    size={}\n    maxsize={}\n    mode=\'{}\'\n    queue: {}\n]'.format(
-                id(self), hash(self), self.size, self._maxsize, self._mode, self._queue)
+        return '    DeQueue[\n        id={}\n        hash={}\n        size={}\n        maxsize={}\n        mode=\'{}\'\n        queue: {}\n    ]'.format(
+                id(self), hash(self), self.size, self._maxsize, self._mode, type(self._queue))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def __deepcopy__(self, memo):
-        print(Fore.BLUE + '🍏 DeQueue.__deepcopy__: a. memo type: {}'.format(type(memo)))
-        _copy = DeQueue(maxsize=self._maxsize, mode=self._mode)
-        print(Fore.BLUE + '🍏 DeQueue.__deepcopy__: b. orig ID: {}; copy ID: {}'.format(id(self), id(_copy)))
-#       _copy._queue = copy.copy(self._queue)
-#       print(Fore.BLUE + '🍏 DeQueue.__deepcopy__: c. type of queue orig: {}; copy: {}'.format(type(self._queue), type(_copy._queue)))
-        _copied_queue = copy.deepcopy(self._backing_queue)
-        print(Fore.BLUE + '🍏 DeQueue.__deepcopy__: c. type of copied queue: {}'.format(type(_copied_queue)))
-        for _item in _copied_queue:
-            print(Fore.BLUE + '🍏 DeQueue.__deepcopy__: d. copy item: {}'.format(type(_item)))
-            _copy.put(_item)
-        print(Fore.BLUE + '🍏 DeQueue.__deepcopy__: e. type of backing queue orig: {}; copy: {}'.format(type(self._queue.queue), type(_copy._queue.queue)))
-
-        print(Fore.BLUE + '🍏 DeQueue.__deepcopy__: f. PRE_COPY; size of self: {}; _copy: {}'.format(self.size, _copy.size))
-#       # perform a deep copy of the backing queue
-#       while not self._queue.empty():
-#                _copy._queue.put(self._queue.get())
-#                self._queue.task_done()
-
-        print(Fore.BLUE + '🍏 DeQueue.__deepcopy__: g. POST_COPY; size of self: {}; _copy: {}'.format(self.size, _copy.size))
-#       queue._maxsize = self._maxsize
-#       queue._mode    = self._mode
-#       queue._backing_queue = copy.deepcopy(self._backing_queue)
-        return _copy
-
-#   # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-#   def replace(self, item):
-#       '''
-#       Pop and return the current smallest value, and add the new item;
-#       the queue size is unchanged.
-#       '''
-#       return hq.heapreplace(self._queue, item)
-#
-#   # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-#   def putget(self, item):
-#       '''
-#       Fast version of a put (push) followed by a get (pop).
-#       '''
-#       return hq.heappushpop(self._queue, item)
-#
-#    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-#   @staticmethod
-#   def queueify(x):
-#       '''
-#       Transform list into a queue (maxheap), in-place, in O(len(x)) time.
-#       '''
-#       hq.heapify(x)
+        return DeQueue(maxsize=self._maxsize, backing_queue=copy.deepcopy(self._backing_queue), mode=self._mode)
 
     # unimplemented...
-
+#   def replace(self, item):
+#   def putget(self, item):
+#   def queueify(x):
 #   def nlargest(n, iterable):
 #   def nsmallest(n, iterable):
 #   def merge(*iterables):

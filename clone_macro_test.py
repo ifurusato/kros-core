@@ -6,12 +6,10 @@
 # see the LICENSE file included as part of this package.
 #
 # author:   Murray Altheim
-# created:  2020-10-05
-# modified: 2021-08-07
+# created:  2021-10-13
+# modified: 2021-10-15
 #
-# Tests the port and starboard motors for directly by setting their power, from
-# a digital potentiometer, without the intermediaries of velocity, slew, or PID
-# controllers.
+# Tests the ability to clone a macro using various deepcopy features.
 #
 
 import pytest
@@ -50,7 +48,7 @@ class FakeKros(object):
         globals.put('kros', self)
 
     def get_macro_publisher(self):
-        return self._macro_publisher 
+        return self._macro_publisher
 
 # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 @pytest.mark.unit
@@ -79,27 +77,23 @@ def test_motors():
 
         _fake_kros = FakeKros(_mp, _level)
 
-#       _mp.enable()
-        _log.info('💩 loading macro files...')
+        _log.info('loading macro files...')
         _mp.load_macro_files()
-        _log.info('💩 loaded macro files...')
 
         _name = 'avoid'
-        _log.info('💩 queuing macro "{}"...'.format(_name))
+        _log.info('queuing macro "{}"...'.format(_name))
         _mp.queue_macro_by_name(_name)
-        _log.info('💩 queued macro "{}".'.format(_name))
+        _log.info('queued macro "{}".'.format(_name))
 
         _orig = _mp.original_macro()
-        _log.info('🍐 _orig: {}'.format(_orig))
+        _log.info('macro orig:\n' + Fore.WHITE + '{}'.format(_orig))
         _copy = _mp.copied_macro()
-        _log.info('🍐 _copy: {}'.format(_copy))
+        _log.info('macro copy:\n' + Fore.WHITE + '{}'.format(_copy))
 
-        _log.info('🍐 _orig is _orig? {}'.format( _orig is _orig ))
-        _log.info('🍐 _orig == _orig? {}'.format( _orig == _orig ))
-        _log.info('🍐 _orig is _copy? {}'.format( _orig is _copy ))
-        _log.info('🍐 _orig == _copy? {}'.format( _orig == _copy ))
-        _log.info('🍐 _copy is _copy? {}'.format( _copy is _copy ))
-        _log.info('🍐 _copy == _copy? {}'.format( _copy == _copy ))
+        assert _orig is not _copy, 'expected original not to be the same as the copy.'
+        assert _orig == _copy, 'expected original to be equal to the copy.'
+        assert _orig == _orig, 'expected original to be equal to the original.'
+        assert _copy == _copy, 'expected the copy to be equal to the copy.'
 
         _mp.close()
 

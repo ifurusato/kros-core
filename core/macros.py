@@ -7,7 +7,7 @@
 #
 # author:   altheim
 # created:  2021-09-23
-# modified: 2021-10-07
+# modified: 2021-10-15
 #
 # A collection of classes related to macro scripting.
 #
@@ -63,7 +63,7 @@ class MacroLibrary():
         else:
             self._log.info('macro library:')
             for _name, _macro in self._macros.items():
-                self._log.info(Fore.YELLOW + '\t{} '.format(_name) + Style.DIM + '({:d} statements)'.format(_macro.size) 
+                self._log.info(Fore.YELLOW + '\t{} '.format(_name) + Style.DIM + '({:d} statements)'.format(_macro.size)
                         + Style.NORMAL + '{}'.format('\t: ' + _macro.description if _macro.description else ''))
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -163,38 +163,22 @@ class Macro(object):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def __eq__(self, other):
-        return isinstance(other, Macro) and self.__hash__() == other.__hash__()
+        return isinstance(other, Macro) \
+                and self.__hash__() == other.__hash__()
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def __hash__(self):
-        return hash((self._name, self._description, self._queue))
+        return hash((self._name, self._description, self._queue.size))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def __str__(self):
-        return 'Macro[\n    id={}\n    hash={}\n    name=\'{}\'\n    description=\'{}\'\n    queue: {}\n]'.format(
+        return 'Macro[\n    id={}\n    hash={}\n    name=\'{}\'\n    description=\'{}\'\n    queue:\n  {}\n]'.format(
                 id(self), hash(self), self._name, self._description, self._queue)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def __deepcopy__(self, memo):
-        print(Fore.BLUE + '🍎 Macro.__deepcopy__: a. name: {}'.format(self.name))
-        _copy = Macro(self.name, self.description, None)
-        print(Fore.BLUE + '🍎 Macro.__deepcopy__: b. deepcopy queue...')
-        _queue_copy = deepcopy(self._queue)
-        print(Fore.BLUE + '🍎 Macro.__deepcopy__: c. deepcopy complete; size: {:d} items.'.format(_queue_copy.size))
+        return Macro(self.name, self.description, deepcopy(self._queue))
 
-        print(Fore.BLUE + '🍎 Macro.__deepcopy__: d. self ID: {}; copy ID: {}'.format(id(self), id(_copy)))
-        _copy._queue = _queue_copy
-#       for _key, _value in _macro.items():
-#           print('key: {}; value: {}'.format(_key, _value))
-#       raise Exception('unimplemented: {}'.format(_copy))
-        print(Fore.BLUE + '🍎 Macro.__deepcopy__: e. self._queue.size: {:d}; _copy._queue.size: {:d}'.format(self._queue.size, _copy._queue.size))
-        print(Fore.BLUE + '🍎 Macro.__deepcopy__: f. id(self._queue): {:d}; id(_copy._queue): {:d}'.format(id(self._queue), id(_copy._queue)))
-        print(Fore.BLUE + '🍎 Macro.__deepcopy__: g. self._queue is _copy._queue? {}'.format(self._queue is _copy._queue))
-        try:
-            print(Fore.BLUE + '🍎 Macro.__deepcopy__: h. self._queue == _copy._queue? {}'.format(self._queue == _copy._queue))
-        except Exception as e:
-            print(Fore.RED + '🍎 Macro.__deepcopy__: ERROR: {}'.format(e))
-        return _copy
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Statement(object):
@@ -211,11 +195,10 @@ class Statement(object):
             self._is_lambda = False
             self._event     = command
             self._function  = None
-        elif callable(command): # is lambda
+        elif callable(command):
             self._is_lambda = True
             self._event     = Event.LAMBDA
             self._function  = command
-            # LAMBDA = ( 20, "lambda function", 5,   Group.LAMBDA ) # with lambda as value
         else:
             raise TypeError('expected an event or a lambda as an argument, not a {}'.format(type(command)))
 
@@ -250,10 +233,13 @@ class Statement(object):
 
     def __deepcopy__(self, memo):
         if self._is_lambda:
-            print(Fore.BLUE + '🍊 Statement.__deepcopy__() copy lambda.')
             return Statement(self.label, self._function, self.duration_ms)
         else:
-            print(Fore.BLUE + '🍊 Statement.__deepcopy__() copy event.')
             return Statement(self.label, Event.LAMBDA, self.duration_ms)
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def __str__(self):
+        return 'Statement[\n    id={}\n    hash={}\n    label=\'{}\'\n    is_lambda={}\n'.format(id(self), hash(self), self._label, self._is_lambda) \
+                + '    event: {}\n    duration: {}ms;\n    function: {}\n]'.format(self._event, self._duration_ms, 'lambda' if self._function else 'none')
 
 #EOF
