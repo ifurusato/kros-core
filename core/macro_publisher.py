@@ -67,11 +67,22 @@ class MacroPublisher(Publisher):
         self._library           = MacroLibrary()
         self._macros            = Macros()
         self._counter           = itertools.count()
+        # TEMP
+        self._copied_macro = None
+        self._original_macro = None
         # loop variables
         self._macro             = None
         self._statement         = None # placeholder
         self._start_time        = dt.now()
         self._log.info('ready.')
+
+    # TEMP
+    def original_macro(self):
+        return self._original_macro
+
+    # TEMP
+    def copied_macro(self):
+        return self._copied_macro
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
@@ -111,18 +122,24 @@ class MacroPublisher(Publisher):
         Adds the macro (referenced by name) to the executable queue/stack.
         '''
         self._log.info('🍆 a. queue_macro_by_name() locating macro: "{}"; '.format(name) + Fore.YELLOW + '{:d} items in library.'.format(self._library.size))
-        _macro = self._library.get(name)
+        self._original_macro = None
+        self._original_macro = self._library.get(name)
         self._log.info('🍆 b. queue_macro_by_name() located macro: "{}"; '.format(name) + Fore.YELLOW + '{:d} items in library.'.format(self._library.size))
-        if _macro:
+        if self._original_macro:
             self._log.info('🍆 c. queue_macro_by_name() deep copying macro: {}; {:d} items in library.'.format(name, self._library.size))
-            _copy = deepcopy(_macro)
-            self._log.info('🍆 d. queueing macro: {}; {:d} items in macro.'.format(_copy.name, _macro.size))
+
+            self._copied_macro = deepcopy(self._original_macro)
+
+            self._log.info('🍆 d. queueing macro: {}; {:d} items in macro.'.format(self._copied_macro.name, self._original_macro.size))
             self._log.info('🍆 e. queue_macro_by_name() deep copied macro: {}; {:d} items in library.'.format(name, self._library.size))
-            if _copy.size != _macro.size:
-                raise Exception('deep copy of macro failed:  copy: {} != macro: {}'.format(_copy.size, _macro.size))
-            self._log.info('🍆 f. queueing macro: {}; {:d} items in library; copy {:d} items from macro: {:d} items.'.format(_copy.name, self._library.size, _copy.size, _macro.size))
-            self.queue_macro(_copy)
-            self._log.info('🍆 h. queued copy of macro: "{}"; '.format(_copy.name) + Fore.YELLOW + '{:d} items in library.'.format(self._library.size))
+#           if self._copied_macro.size != self._original_macro.size:
+#               raise Exception('deep copy of macro failed:  copy: {} != macro: {}'.format(self._copied_macro.size, self._original_macro.size))
+            if self._copied_macro.size != self._original_macro.size:
+                self._log.info(Fore.RED + '🍆 f. deep copy of macro failed:  copy: {} != macro: {}'.format(self._copied_macro.size, self._original_macro.size))
+            self._log.info('🍆 g. queueing macro: {}; {:d} items in library; copy {:d} items from macro: {:d} items.'.format(
+                    self._copied_macro.name, self._library.size, self._copied_macro.size, self._original_macro.size))
+            self.queue_macro(self._copied_macro)
+            self._log.info('🍆 h. queued copy of macro: "{}"; '.format(self._copied_macro.name) + Fore.YELLOW + '{:d} items in library.'.format(self._library.size))
         else:
             self._log.warning('count not find macro: {}'.format(name))
 #       self.load_macro_files()

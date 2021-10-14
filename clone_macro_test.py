@@ -89,6 +89,18 @@ def test_motors():
         _mp.queue_macro_by_name(_name)
         _log.info('💩 queued macro "{}".'.format(_name))
 
+        _orig = _mp.original_macro()
+        _log.info('🍐 _orig: {}'.format(_orig))
+        _copy = _mp.copied_macro()
+        _log.info('🍐 _copy: {}'.format(_copy))
+
+        _log.info('🍐 _orig is _orig? {}'.format( _orig is _orig ))
+        _log.info('🍐 _orig == _orig? {}'.format( _orig == _orig ))
+        _log.info('🍐 _orig is _copy? {}'.format( _orig is _copy ))
+        _log.info('🍐 _orig == _copy? {}'.format( _orig == _copy ))
+        _log.info('🍐 _copy is _copy? {}'.format( _copy is _copy ))
+        _log.info('🍐 _copy == _copy? {}'.format( _copy == _copy ))
+
         _mp.close()
 
         _log.info('complete.')

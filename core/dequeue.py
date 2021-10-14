@@ -12,7 +12,7 @@
 
 #import queue
 import copy
-#from copy import deepcopy
+from copy import deepcopy
 from queue import Queue, LifoQueue, Empty, Full
 #import upy.heapq as hq # local copy of MicroPython heapq
 from colorama import init, Fore, Style
@@ -152,20 +152,40 @@ class DeQueue(object):
             raise Empty()
         return self._queue.get()
 
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def __eq__(self, other):
+        return isinstance(other, DeQueue) and self.__hash__() == other.__hash__()
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def __hash__(self):
+        return hash((self._maxsize, self._mode, self._queue))
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def __str__(self):
+        return 'DeQueue[\n    id={}\n    hash={}\n    size={}\n    maxsize={}\n    mode=\'{}\'\n    queue: {}\n]'.format(
+                id(self), hash(self), self.size, self._maxsize, self._mode, self._queue)
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def __deepcopy__(self, memo):
         print(Fore.BLUE + '🍏 DeQueue.__deepcopy__: a. memo type: {}'.format(type(memo)))
         _copy = DeQueue(maxsize=self._maxsize, mode=self._mode)
-        print(Fore.BLUE + '🍏 DeQueue.__deepcopy__: b. backing queue type: {}'.format(type(self._backing_queue)))
-        _copy._queue = copy.copy(self._queue)
-        _copy._queue.queue = copy.deepcopy(self._backing_queue)
-        print(Fore.BLUE + '🍏 DeQueue.__deepcopy__: c. ')
+        print(Fore.BLUE + '🍏 DeQueue.__deepcopy__: b. orig ID: {}; copy ID: {}'.format(id(self), id(_copy)))
+#       _copy._queue = copy.copy(self._queue)
+#       print(Fore.BLUE + '🍏 DeQueue.__deepcopy__: c. type of queue orig: {}; copy: {}'.format(type(self._queue), type(_copy._queue)))
+        _copied_queue = copy.deepcopy(self._backing_queue)
+        print(Fore.BLUE + '🍏 DeQueue.__deepcopy__: c. type of copied queue: {}'.format(type(_copied_queue)))
+        for _item in _copied_queue:
+            print(Fore.BLUE + '🍏 DeQueue.__deepcopy__: d. copy item: {}'.format(type(_item)))
+            _copy.put(_item)
+        print(Fore.BLUE + '🍏 DeQueue.__deepcopy__: e. type of backing queue orig: {}; copy: {}'.format(type(self._queue.queue), type(_copy._queue.queue)))
 
-        # perform a deep copy of the backing queue
-        while not self._queue.empty():
-                 _copy._queue.put(self._queue.get())
-                 self._queue.task_done()
+        print(Fore.BLUE + '🍏 DeQueue.__deepcopy__: f. PRE_COPY; size of self: {}; _copy: {}'.format(self.size, _copy.size))
+#       # perform a deep copy of the backing queue
+#       while not self._queue.empty():
+#                _copy._queue.put(self._queue.get())
+#                self._queue.task_done()
 
-        print(Fore.BLUE + '🍏 DeQueue.__deepcopy__: d. ID of self: {}; _copy: {}'.format(id(self), id(_copy)))
+        print(Fore.BLUE + '🍏 DeQueue.__deepcopy__: g. POST_COPY; size of self: {}; _copy: {}'.format(self.size, _copy.size))
 #       queue._maxsize = self._maxsize
 #       queue._mode    = self._mode
 #       queue._backing_queue = copy.deepcopy(self._backing_queue)

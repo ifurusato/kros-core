@@ -162,19 +162,38 @@ class Macro(object):
         self._queue.put(_statement)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def __eq__(self, other):
+        return isinstance(other, Macro) and self.__hash__() == other.__hash__()
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def __hash__(self):
+        return hash((self._name, self._description, self._queue))
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def __str__(self):
+        return 'Macro[\n    id={}\n    hash={}\n    name=\'{}\'\n    description=\'{}\'\n    queue: {}\n]'.format(
+                id(self), hash(self), self._name, self._description, self._queue)
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def __deepcopy__(self, memo):
         print(Fore.BLUE + '🍎 Macro.__deepcopy__: a. name: {}'.format(self.name))
         _copy = Macro(self.name, self.description, None)
         print(Fore.BLUE + '🍎 Macro.__deepcopy__: b. deepcopy queue...')
-        _qeueu_copy = deepcopy(self._queue)
-        print(Fore.BLUE + '🍎 Macro.__deepcopy__: c. deepcopy complete.')
+        _queue_copy = deepcopy(self._queue)
+        print(Fore.BLUE + '🍎 Macro.__deepcopy__: c. deepcopy complete; size: {:d} items.'.format(_queue_copy.size))
 
         print(Fore.BLUE + '🍎 Macro.__deepcopy__: d. self ID: {}; copy ID: {}'.format(id(self), id(_copy)))
+        _copy._queue = _queue_copy
 #       for _key, _value in _macro.items():
 #           print('key: {}; value: {}'.format(_key, _value))
 #       raise Exception('unimplemented: {}'.format(_copy))
         print(Fore.BLUE + '🍎 Macro.__deepcopy__: e. self._queue.size: {:d}; _copy._queue.size: {:d}'.format(self._queue.size, _copy._queue.size))
         print(Fore.BLUE + '🍎 Macro.__deepcopy__: f. id(self._queue): {:d}; id(_copy._queue): {:d}'.format(id(self._queue), id(_copy._queue)))
+        print(Fore.BLUE + '🍎 Macro.__deepcopy__: g. self._queue is _copy._queue? {}'.format(self._queue is _copy._queue))
+        try:
+            print(Fore.BLUE + '🍎 Macro.__deepcopy__: h. self._queue == _copy._queue? {}'.format(self._queue == _copy._queue))
+        except Exception as e:
+            print(Fore.RED + '🍎 Macro.__deepcopy__: ERROR: {}'.format(e))
         return _copy
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -223,11 +242,11 @@ class Statement(object):
     def __lt__(self, other):
         return self.__hash__() < other.__hash__()
 
-    def __hash__(self):
-        return hash(self._event)
-
     def __eq__(self, other):
-        return isinstance(other, Statement) and self.__hash__() is other.__hash__()
+        return isinstance(other, Statement) and self.__hash__() == other.__hash__()
+
+    def __hash__(self):
+        return hash((self._label, self._duration_ms, self._is_lambda, self._event, self._function))
 
     def __deepcopy__(self, memo):
         if self._is_lambda:
