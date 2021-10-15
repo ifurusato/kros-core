@@ -477,8 +477,9 @@ class MotorController(Component):
         elif _event is Event.INFRARED_SSID:
             self._log.info('INFRARED STBD SIDE.')
 #           self._brake()
+
         else:
-            raise ValueError('unrecognised bumper event {}'.format(_event.label))
+            raise ValueError('unrecognised infrared event {}'.format(_event.label))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def get_motor(self, orientation):

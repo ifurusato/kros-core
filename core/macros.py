@@ -18,6 +18,7 @@ init(autoreset=True)
 
 from core.logger import Logger, Level
 from core.event import Event
+from core.stringbuilder import StringBuilder
 from core.dequeue import DeQueue
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -94,12 +95,77 @@ class Macros(DeQueue):
     def get(self):
         return self._macros.get()
 
-#   # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-#   def get_macro(self, name):
-#       for _macro in self._macros.iterator:
-#           if _macro.name == name:
-#               return _macro
-#       return None
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+class Statement(object):
+    '''
+    A single Statement in a Macro. This either executes a lambda function or
+    publishes an Event for a specified duration in milliseconds.
+
+    If a lambda function is specified the Event value will automatically be
+    set to Event.LAMBDA, so it can be left as None.
+
+    :param label:         the label or description of the statement
+    :param event:         the Event to publish for the Statement
+    :param function:      the lambda function to execute for the Statement
+    :param duration_ms:   the duration in milliseconds of the Statement
+    '''
+    def __init__(self, label=None, event=None, function=None, duration_ms=None):
+        '''
+        Command can be either a lambda or an Event.
+        '''
+        self._label         = label
+        self._function      = function
+        if self._function:
+            self._event = Event.LAMBDA
+        else:
+            self._event = event
+        self._duration_ms   = duration_ms
+        self._is_lambda     = function != None
+
+    @property
+    def label(self):
+        return self._label
+
+    @property
+    def is_lambda(self):
+        return self._is_lambda
+
+    @property
+    def duration_ms(self):
+        return self._duration_ms
+
+    @property
+    def function(self):
+        return self._function
+
+    @property
+    def event(self):
+        return self._event
+
+    def __lt__(self, other):
+        return self.__hash__() < other.__hash__()
+
+    def __eq__(self, other):
+        return isinstance(other, Statement) and self.__hash__() == other.__hash__()
+
+    def __hash__(self):
+        return hash((self._label, self._duration_ms, self._is_lambda, self._event, self._function))
+
+    def __deepcopy__(self, memo):
+        return Statement(label=self.label, event=self.event, function=self.function, duration_ms=self.duration_ms)
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def __str__(self):
+        _sb = StringBuilder('Statement[', indent=10, delim='\n')
+        _sb.append('id={}'.format(id(self)))
+        _sb.append('hash={}'.format(hash(self)))
+        _sb.append('label={}'.format(self._label))
+        _sb.append('is_lambda={}'.format(self._is_lambda))
+        _sb.append('event={}'.format(self._event))
+        _sb.append('duration={}ms'.format(self._duration_ms))
+        _sb.append('function={}'.format('lambda' if self._function else 'none'))
+        _sb.append(']', indent=8, delim=StringBuilder.NONE)
+        return _sb.to_string()
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Macro(object):
@@ -147,18 +213,15 @@ class Macro(object):
         '''
         Add an Event to the queue.
         '''
-        _statement = Statement('stmt-{:d}'.format(self.size), event, duration_ms)
+        _statement = Statement(label='stmt-{}'.format(chr(97 + self.size)), event=event, function=None, duration_ms=duration_ms)
         self._queue.put(_statement)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def add_function(self, function, duration_ms):
         '''
         Add a lambda function to the queue, encapsulated in an Event:
-
-          LAMBDA = ( 20, "lambda function", 5,  Group.LAMBDA )
-
         '''
-        _statement = Statement('stmt-{:d}'.format(self.size), function, duration_ms)
+        _statement = Statement(label='stmt-{}'.format(chr(97 + self.size)), event=Event.LAMBDA, function=function, duration_ms=duration_ms)
         self._queue.put(_statement)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -172,74 +235,18 @@ class Macro(object):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def __str__(self):
-        return 'Macro[\n    id={}\n    hash={}\n    name=\'{}\'\n    description=\'{}\'\n    queue:\n  {}\n]'.format(
-                id(self), hash(self), self._name, self._description, self._queue)
+        _sb = StringBuilder('Macro[', indent=2, delim='\n')
+        _sb.append('id={}'.format(id(self)))
+        _sb.append('hash={}'.format(hash(self)))
+        _sb.append('name={}'.format(self._name))
+        _sb.append('description={}'.format(self._description))
+        _sb.append('queue:')
+        _sb.append(self._queue)
+        _sb.append(']', indent=4, delim=StringBuilder.NONE)
+        return _sb.to_string()
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def __deepcopy__(self, memo):
         return Macro(self.name, self.description, deepcopy(self._queue))
-
-
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-class Statement(object):
-    '''
-    Documentation.
-    '''
-    def __init__(self, label, command, duration_ms):
-        '''
-        Command can be either a lambda or an Event.
-        '''
-        self._label         = label
-        self._duration_ms   = duration_ms
-        if isinstance(command, Event):
-            self._is_lambda = False
-            self._event     = command
-            self._function  = None
-        elif callable(command):
-            self._is_lambda = True
-            self._event     = Event.LAMBDA
-            self._function  = command
-        else:
-            raise TypeError('expected an event or a lambda as an argument, not a {}'.format(type(command)))
-
-    @property
-    def label(self):
-        return self._label
-
-    @property
-    def is_lambda(self):
-        return self._is_lambda
-
-    @property
-    def duration_ms(self):
-        return self._duration_ms
-
-    @property
-    def function(self):
-        return self._function
-
-    @property
-    def event(self):
-        return self._event
-
-    def __lt__(self, other):
-        return self.__hash__() < other.__hash__()
-
-    def __eq__(self, other):
-        return isinstance(other, Statement) and self.__hash__() == other.__hash__()
-
-    def __hash__(self):
-        return hash((self._label, self._duration_ms, self._is_lambda, self._event, self._function))
-
-    def __deepcopy__(self, memo):
-        if self._is_lambda:
-            return Statement(self.label, self._function, self.duration_ms)
-        else:
-            return Statement(self.label, Event.LAMBDA, self.duration_ms)
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def __str__(self):
-        return 'Statement[\n    id={}\n    hash={}\n    label=\'{}\'\n    is_lambda={}\n'.format(id(self), hash(self), self._label, self._is_lambda) \
-                + '    event: {}\n    duration: {}ms;\n    function: {}\n]'.format(self._event, self._duration_ms, 'lambda' if self._function else 'none')
 
 #EOF

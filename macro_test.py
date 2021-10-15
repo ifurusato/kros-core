@@ -56,7 +56,7 @@ def test_macro_publisher():
 
     _log = Logger('macro-pub-test', Level.INFO)
     _log.info('begin.')
-    
+
     _start_time = dt.now()
 
     try:
@@ -74,9 +74,9 @@ def test_macro_publisher():
 
         _macro_publisher = MacroPublisher(_config, _message_bus, _message_factory, callback=close_message_bus, level=Level.INFO)
         _macro = _macro_publisher.create_macro('test')
-        
+
         _event_queue = DeQueue(mode=DeQueue.QUEUE)
-    
+
         _event_queue.put(Event.SLOW_AHEAD)
         _event_queue.put(Event.STOP)
         _event_queue.put(Event.SPIN_STBD)
@@ -88,12 +88,12 @@ def test_macro_publisher():
         _event_queue.put(Event.EXPERIMENT_3)
         _event_queue.put(Event.EXPERIMENT_4)
         _event_queue.put(Event.EXPERIMENT_5)
-        
+
         # alternately loads events and lambdas...
         _log.info('loading...')
         _steps = 5
         for i in range(_steps):
-            _duration_ms = 1000 + ( i * 1000 )
+            _duration_ms = 100 + ( i * 100 )
             if i % 2:
                 _event = _event_queue.poll()
                 _macro.add_event(_event, _duration_ms)
@@ -103,16 +103,17 @@ def test_macro_publisher():
                 _macro.add_function(_func, _duration_ms)
                 _log.info('added function...')
 
-        _macro_publisher.queue_macro(_macro)
+#       _macro_publisher.queue_macro(_macro)
+        print(Fore.CYAN + '{}'.format(_macro))
 
-        _log.info('enabling message bus...')
-        _message_bus.enable()
+#       _log.info('enabling message bus...')
+#       _message_bus.enable()
 
 #       _log.info('queue loaded; enabling macro processor...')
 #       _macro_publisher.enable()
 
-        if _message_bus:
-            _message_bus.close()
+#       if _message_bus:
+#           _message_bus.close()
 
 #       _log.info('queue loaded; starting process...')
 #       _macro_publisher.start()
@@ -128,7 +129,7 @@ def test_macro_publisher():
 
     _elapsed_ms = round(( dt.now() - _start_time ).total_seconds() * 1000.0)
     _log.info(Fore.YELLOW + 'complete: elapsed: {:d}ms'.format(_elapsed_ms))
-    
+
     _log.info('complete.')
 
 # call main ......................................

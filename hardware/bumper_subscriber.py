@@ -139,7 +139,7 @@ class BumperSubscriber(Subscriber):
                     self._motor_ctrl.dispatch_bumper_event(message.payload)
 
             else:
-                raise Exception('unrecognised bumper event on message {}'.format(message.name) + ''.format(message.event.label))
+                raise Exception('unrecognised bumper event on message {}; '.format(message.name) + '{}'.format(message.event.label))
 
         else:
             self._log.warning('disabled: ignoring bumper dispatch.')

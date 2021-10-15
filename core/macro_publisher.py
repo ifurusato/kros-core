@@ -100,7 +100,10 @@ class MacroPublisher(Publisher):
         populated. This automatically adds it to the macro library.
         '''
         _macro = Macro(name, description)
-        self._log.info('🍆 created macro with name \'{}\'.'.format(name))
+#       if self._log.level == Level.DEBUG:
+        self._log.info('created macro: ' + Fore.YELLOW + '{}:\n'.format(name) + Fore.CYAN + '{}'.format(_macro))
+#       else:
+#           self._log.info('created macro: ' + Fore.YELLOW + '{}'.format(name))
         self.add_macro_to_library(_macro)
         return _macro
 

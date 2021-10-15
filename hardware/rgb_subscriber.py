@@ -69,9 +69,12 @@ class RgbSubscriber(Subscriber):
         # increment sent acknowledgement count
 #       self._log.debug('acknowledging message {}; with payload value: {}'.format(message.name, message.payload.value))
         message.acknowledge_sent()
+
+        _value = message.payload.value
+
         self._log.info('arbitrated message ' + Fore.WHITE + '{} '.format(message.name)
-                + Fore.CYAN + 'for event \'{}\' with value: '.format(message.event.label)
-                + Fore.YELLOW + '{}'.format(message.payload.value))
+                + Fore.CYAN + 'for event \'{}\' with value type: '.format(message.event.label)
+                + Fore.YELLOW + '{}'.format(type(_value)))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def process_message(self, message):

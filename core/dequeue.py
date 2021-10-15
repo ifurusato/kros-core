@@ -16,6 +16,8 @@ from queue import Queue, LifoQueue, Empty, Full
 from colorama import init, Fore, Style
 init(autoreset=True)
 
+from core.stringbuilder import StringBuilder
+
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class DeQueue(object):
 
@@ -167,8 +169,17 @@ class DeQueue(object):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def __str__(self):
-        return '    DeQueue[\n        id={}\n        hash={}\n        size={}\n        maxsize={}\n        mode=\'{}\'\n        queue: {}\n    ]'.format(
-                id(self), hash(self), self.size, self._maxsize, self._mode, type(self._queue))
+        _sb = StringBuilder('  DeQueue[', indent=6, delim='\n')
+        _sb.append('id={}'.format(id(self)))
+        _sb.append('hash={}'.format(hash(self)))
+        _sb.append('size={}'.format(self.size))
+        _sb.append('maxsize={}'.format(self._maxsize))
+        _sb.append('mode={}'.format(self._mode))
+        _sb.append('items:')
+        for _stmt in self._queue.queue:
+            _sb.append(_stmt, indent=8)
+        _sb.append(']', indent=6, delim=StringBuilder.NONE)
+        return _sb.to_string()
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def __deepcopy__(self, memo):
