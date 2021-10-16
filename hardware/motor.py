@@ -154,7 +154,7 @@ class Motor(Component):
 #       This is a variable and can be altered to limit forward velocity.
 #       '''
 #       return self._max_fwd_velocity
-    
+
 #   @max_fwd_velocity.setter
 #   def max_fwd_velocity(self, maximum_velocity):
 #       '''
@@ -307,13 +307,26 @@ class Motor(Component):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
+    def is_stopped(self):
+        '''
+         Returns True if the motor is entirely stopped.
+        '''
+#       return isclose(self.current_power, 0.0, abs_tol=1e-3)
+        return self.current_power == 0.0
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    @property
     def is_in_motion(self):
         '''
         Returns True if the motor is moving, i.e., if the current power
         setting of the motor is not equal to zero. Note that this returns
         False if the value is very close to zero.
         '''
-        return not isclose(self.current_power, 0.0, abs_tol=1e-3)
+#       if self._orientation is Orientation.PORT:
+#           self._log.info(Fore.RED   + 'PORT current power: {:5.3f}; '.format(self.current_power))
+#       else:
+#           self._log.info(Fore.GREEN + 'STBD current power: {:5.3f}'.format(self.current_power))
+        return self.current_power != 0.0
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
@@ -322,7 +335,7 @@ class Motor(Component):
         Returns True if the motor is moving ahead (forward), i.e., if the
         current power setting of the motor is greater than zero.
         '''
-        return self.is_in_motion and self.current_power > 0.0
+        return self.current_power > 0.0
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
@@ -331,7 +344,7 @@ class Motor(Component):
         Returns True if the motor is moving astern (reverse), i.e., if the
         current power setting of the motor is less than zero.
         '''
-        return self.is_in_motion and self.current_power < 0.0
+        return self.current_power < 0.0
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def update_target_velocity(self):
@@ -356,7 +369,8 @@ class Motor(Component):
             if len(self.__velocity_lambdas) > 0:
 #               self._log.info(Fore.MAGENTA + 'processing {:d} lambdas...'.format(len(self.__velocity_lambdas)))
                 for _name, _lambda in self.__velocity_lambdas.items():
-#                   self._log.info(Fore.WHITE + '🌼 targ_vel: {}; {} lambda for {} motor; lambda type: {}; value: {}'.format( _current_target_velocity, _name, self._orientation.label, type(_lambda), _lambda))
+#                   self._log.info(Fore.WHITE + '🌼 targ_vel: {}; {} lambda for {} motor; lambda type: {}; value: {}'.format(
+#                           _current_target_velocity, _name, self._orientation.label, type(_lambda), _lambda))
                     _current_target_velocity = _lambda * _current_target_velocity
 
             # use velocity clipper as a sanity checker
@@ -422,7 +436,10 @@ class Motor(Component):
     @property
     def current_power(self):
         '''
-         Makes a best attempt at getting the current power value from the motors.
+        Makes a best attempt at getting the current power value from the motors.
+        Note that the motor controller does not report absolute zero when the
+        motors are not moving, but a very small positive or negative value. In
+        this case we report 0.0.
         '''
         value = None
         count = 0
@@ -430,25 +447,18 @@ class Motor(Component):
             while value == None and count < 20:
                 count += 1
                 value = self._tb.GetMotor1()
-                time.sleep(0.005)
+                time.sleep(0.001)
         else:
             while value == None and count < 20:
                 count += 1
                 value = self._tb.GetMotor2()
-                time.sleep(0.005)
-        if value == None:
+                time.sleep(0.001)
+        if value == None or isclose(value, 0.0, abs_tol=1e-1):
             return 0.0
         else:
             return value
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    @property
-    def is_stopped(self):
-        '''
-         Returns True if the motor is entirely stopped.
-        '''
-        return ( self.current_power == 0.0 )
-
     def stop(self):
         '''
         Stops the motor immediately.

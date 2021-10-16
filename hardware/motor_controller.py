@@ -763,6 +763,10 @@ class MotorController(Component):
         '''
         Returns true if both motors are moving astern.
         '''
+        self._log.info('is_moving_astern() PORT: '
+                    + Fore.RED   + '{}'.format(self._port_motor.is_moving_astern)
+                    + Fore.CYAN  + '; STBD: '
+                    + Fore.GREEN + '{}'.format(self._stbd_motor.is_moving_astern))
         return self._port_motor.is_moving_astern and self._stbd_motor.is_moving_astern
 
     # TODO: is_spinning_clockwise() and is_spinning_counter_clockwise()
