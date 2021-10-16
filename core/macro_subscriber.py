@@ -11,7 +11,7 @@
 #
 
 import asyncio
-import random
+import traceback
 from datetime import datetime as dt
 from colorama import init, Fore, Style
 init()
@@ -19,6 +19,7 @@ init()
 from core.logger import Logger, Level
 from core.orient import Orientation
 from core.event import Event, Group
+from core.message import Message
 from core.subscriber import Subscriber
 from core.macro_publisher import MacroPublisher
 
@@ -40,8 +41,9 @@ class MacroSubscriber(Subscriber):
         Subscriber.__init__(self, MacroSubscriber.CLASS_NAME, config, message_bus=message_bus, suppressed=False, enabled=False, level=level)
         if not isinstance(macro_publisher, MacroPublisher):
             raise ValueError('wrong type for macro_publisher argument: {}'.format(type(macro_publisher)))
-        self._macro_pub = macro_publisher
-        self.add_events(Event.by_group(Group.MACRO))
+        self._macro_publisher = macro_publisher
+        self.add_events([ Event.by_group(Group.MACRO), Event.AVOID ])
+#       self.add_events([ Event.by_group(Group.MACRO), Event.by_group(Group.BEHAVIOUR) ])
 
 #   async def _arbitrate_message(self, message):
 #       '''
@@ -62,15 +64,29 @@ class MacroSubscriber(Subscriber):
 
         :param message:  the message to process.
         '''
+        if not isinstance(message, Message):
+            raise TypeError('expected Message argument, not {}'.format(type(message)))
         if message.gcd:
-            raise GarbageCollectedError('cannot process message: message has been garbage collected. [3]')
+            raise GarbageCollectedError('cannot process message: message has been garbage collected.')
         _event = message.event
-        self._log.debug('pre-processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.label))
+        self._log.info('🐸 pre-processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.label))
         if _event == Event.MACRO:
-            self._macro_pub.queue_event(message.payload)
+            _name = _event.label
+            self._log.info('🐱 processing MACRO message {} with name: '.format(message.name) + Fore.YELLOW + '{}'.format(_name))
+            self._macro_publisher.queue_by_name(message.payload)
+        elif self.acceptable(message):
+            _name = _event.label
+            self._log.info('🐹 processing acceptable message {} with macro name: '.format(message.name) + Fore.YELLOW + '{}'.format(_name))
+            _value = message.payload.value
+            self._log.info('🐻 name {}; '.format(_value)) # TODO react differently depending on which bumper
+            self._macro_publisher.queue_macro_by_name(_name)
+#           self._macro_publisher.queue_event(message.payload)
         else:
-            self._log.warning('unrecognised infrared event on message {}'.format(message.name) + ''.format(message.event.label))
+            self._log.warning('unrecognised infrared event on message {}'.format(message.name) + ''.format(_event.label))
         await Subscriber.process_message(self, message)
         self._log.debug('post-processing message {}'.format(message.name))
+
+
+
 
 #EOF

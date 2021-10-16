@@ -25,7 +25,7 @@ globals.init()
 from core.message_bus import MessageBus
 from core.message_factory import MessageFactory
 from core.orient import Orientation
-from core.speed import Direction
+from core.direction import Direction
 from core.logger import Logger, Level
 from core.config_loader import ConfigLoader
 from hardware.i2c_scanner import I2CScanner, DeviceNotFound

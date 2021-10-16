@@ -7,9 +7,9 @@
 #
 # author:   Murray Altheim
 # created:  2020-05-19
-# modified: 2021-07-21
+# modified: 2021-10-16
 #
-# _Getch and GamepadConnectException at bottom.
+# _Getch at bottom.
 #
 
 import sys, time, itertools, random, traceback
@@ -27,6 +27,7 @@ from core.logger import Logger, Level
 from core.event import Event
 from core.util import Util
 from core.publisher import Publisher
+from mock.gamepad import GamepadConnectException
 from mock.mock_gamepad import MockGamepad
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -123,8 +124,6 @@ class EventPublisher(Publisher):
         self._system          = system
         self._level           = level
         self._counter         = itertools.count()
-        self._triggered_ir_port_side = self._triggered_ir_port  = self._triggered_ir_cntr  = self._triggered_ir_stbd  = \
-        self._triggered_ir_stbd_side = self._triggered_bmp_port = self._triggered_bmp_cntr = self._triggered_bmp_stbd = 0
         self._getch           = _Getch()
         self._flood_enable    = False
         self._message_limit   = 3 # fixed message limit (testing only)
@@ -291,12 +290,13 @@ class EventPublisher(Publisher):
                             self._log.info('toggle increment direction: {:d}'.format(self._ir_direction))
                             och += 32
                         else:
-#                           _event = Event.NOOP # what else?
                             pass
-
-                        # otherwise handle as event
                         if not _event:
-                            _event = EventPublisher._KEY_EVENT_MAP[och]
+                            try:
+                                # otherwise handle as event
+                                _event = EventPublisher._KEY_EVENT_MAP[och]
+                            except KeyError as e:
+                                self._log.error('unmapped key \'{}\' ({}) pressed.'.format(ch, och))
                         if _event is not None:
                             self._log.info('key \'{}\' ({}) pressed; key-publishing message for event: {}'.format(ch, och, _event))
                             _message = self._message_factory.create_message(_event, True)
@@ -309,13 +309,6 @@ class EventPublisher(Publisher):
                             self._log.info('key-publishing message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
                             await Publisher.publish(self, _message)
                             self._log.info('key-published message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
-#                           # TEMP special case: check if all IFS sensors have been triggered 3 times; if so exit
-#                           if Event.is_ifs_event(_event):
-#                               self._accumulate_message(_message)
-#                               self._print_waiting_for_message()
-#                               if self.all_triggered:
-#                                   self._log.info(Fore.YELLOW + 'exit having triggered all sensors...')
-#                                   self.disable()
                         else:
                             self._log.warning('unmapped key \'{}\' ({}) pressed.'.format(ch, och))
                         await asyncio.sleep(self._publish_delay_sec)
@@ -580,68 +573,7 @@ class EventPublisher(Publisher):
         Publisher.disable(self)
         self._log.info('disabled publisher.')
 
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def _print_waiting_for_message(self):
-        _div = Fore.CYAN + Style.NORMAL + ' | '
-        self._log.info('waiting for: | ' \
-                + self._get_output(Fore.RED, 'PSID', self._triggered_ir_port_side) \
-                + _div \
-                + self._get_output(Fore.RED, 'PORT', self._triggered_ir_port) \
-                + _div \
-                + self._get_output(Fore.BLUE, 'CNTR', self._triggered_ir_cntr) \
-                + _div \
-                + self._get_output(Fore.GREEN, 'STBD', self._triggered_ir_stbd) \
-                + _div \
-                + self._get_output(Fore.GREEN, 'SSID', self._triggered_ir_stbd_side) \
-                + _div \
-                + self._get_output(Fore.RED, 'BPRT', self._triggered_bmp_port) \
-                + _div \
-                + self._get_output(Fore.BLUE, 'BCNT', self._triggered_bmp_cntr) \
-                + _div \
-                + self._get_output(Fore.GREEN, 'BSTB', self._triggered_bmp_stbd) \
-                + _div )
-
     # message handling ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-
-    def _accumulate_message(self, message):
-        '''
-        Processes the message, keeping count and providing a display of status.
-        '''
-        _event = message.event
-        if _event is Event.BUMPER_PORT:
-            self._print_event(Fore.RED, _event, message.value)
-            if self._triggered_bmp_port < self._message_limit:
-                self._triggered_bmp_port += 1
-        elif _event is Event.BUMPER_CNTR:
-            self._print_event(Fore.BLUE, _event, message.value)
-            if self._triggered_bmp_cntr < self._message_limit:
-                self._triggered_bmp_cntr += 1
-        elif _event is Event.BUMPER_STBD:
-            self._print_event(Fore.GREEN, _event, message.value)
-            if self._triggered_bmp_stbd < self._message_limit:
-                self._triggered_bmp_stbd += 1
-        elif _event is Event.INFRARED_PSID:
-            self._print_event(Fore.RED, _event, message.value)
-            if self._triggered_ir_port_side < self._message_limit:
-                self._triggered_ir_port_side += 1
-        elif _event is Event.INFRARED_PORT:
-            self._print_event(Fore.RED, _event, message.value)
-            if self._triggered_ir_port < self._message_limit:
-                self._triggered_ir_port += 1
-        elif _event is Event.INFRARED_CNTR:
-            self._print_event(Fore.BLUE, _event, message.value)
-            if self._triggered_ir_cntr < self._message_limit:
-                self._triggered_ir_cntr += 1
-        elif _event is Event.INFRARED_STBD:
-            self._print_event(Fore.GREEN, _event, message.value)
-            if self._triggered_ir_stbd < self._message_limit:
-                self._triggered_ir_stbd += 1
-        elif _event is Event.INFRARED_SSID:
-            self._print_event(Fore.GREEN, _event, message.value)
-            if self._triggered_ir_stbd_side < self._message_limit:
-                self._triggered_ir_stbd_side += 1
-        else:
-            self._log.debug(Fore.BLACK + Style.BRIGHT + 'other event: {}'.format(_event.label))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _print_event(self, color, event, value):
@@ -658,18 +590,6 @@ class EventPublisher(Publisher):
         else:
             _style = Fore.BLACK + Style.DIM
         return _style + '{0:>9}'.format( label if ( value < self._message_limit ) else '' )
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    @property
-    def all_triggered(self):
-        return self._triggered_ir_port_side  >= self._message_limit \
-            and self._triggered_ir_port      >= self._message_limit \
-            and self._triggered_ir_cntr      >= self._message_limit \
-            and self._triggered_ir_stbd      >= self._message_limit \
-            and self._triggered_ir_stbd_side >= self._message_limit \
-            and self._triggered_bmp_port     >= self._message_limit \
-            and self._triggered_bmp_cntr     >= self._message_limit \
-            and self._triggered_bmp_stbd     >= self._message_limit
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def print_help(self):
@@ -737,12 +657,5 @@ class _Getch():
 
     def close(self):
         termios.tcsetattr(sys.stdin, termios.TCSADRAIN, self._old_settings)
-
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-class GamepadConnectException(Exception):
-    '''
-    Exception raised when unable to connect to Gamepad.
-    '''
-    pass
 
 #EOF

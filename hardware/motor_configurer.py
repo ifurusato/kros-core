@@ -50,14 +50,14 @@ class MotorConfigurer():
         # configure from command line argument properties
         _args = self._config['kros'].get('arguments')
         self._motors_enabled = _args.get('motors_enabled') or motors_enabled
-        self._log.info(Fore.YELLOW + 'motors enabled? {}'.format(self._motors_enabled))
+        self._log.info('motors enabled?\t{}'.format(self._motors_enabled))
         # default until successful in configuring ThunderBorg:
         self._config['kros'].get('arguments')['using_mocks'] = True
         if not self._motors_enabled: # overrides _enable_mock
             self._enable_mock = True
         else:
             self._enable_mock = _args.get('mock_enabled')
-        self._log.info(Fore.YELLOW + 'mocks enabled? {}'.format(self._enable_mock))
+        self._log.info('mocks enabled?\t{}'.format(self._enable_mock))
         # Import the ThunderBorg library, then configure and return the motors
         self._max_power_ratio = None
         self._import_thunderborg()

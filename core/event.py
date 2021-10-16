@@ -11,7 +11,8 @@
 
 from enum import Enum
 
-from core.speed import Speed, Direction
+from core.direction import Direction
+from core.speed import Speed
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Group(Enum):
@@ -67,12 +68,12 @@ class Event(Enum):
     BUTTON                 = ( 54, "button",                   16,   Group.STOP )
 
     # bumper ................................................................................
-    BUMPER_PORT            = ( 110, "bumper port",             40,   Group.BUMPER )
-    BUMPER_CNTR            = ( 111, "bumper center",           40,   Group.BUMPER )
-    BUMPER_STBD            = ( 112, "bumper stbd",             40,   Group.BUMPER )
-    BUMPER_MAST            = ( 113, "bumper mast",             40,   Group.BUMPER )
-    BUMPER_PAFT            = ( 114, "bumper port aft",         40,   Group.BUMPER )
-    BUMPER_SAFT            = ( 115, "bumper port aft",         40,   Group.BUMPER )
+    BUMPER_PORT            = ( 110, "port bumper",             40,   Group.BUMPER )
+    BUMPER_CNTR            = ( 111, "center bumper",           40,   Group.BUMPER )
+    BUMPER_STBD            = ( 112, "starboard bumper",        40,   Group.BUMPER )
+    BUMPER_MAST            = ( 113, "mast bumper",             40,   Group.BUMPER )
+    BUMPER_PAFT            = ( 114, "port aft bumper",         40,   Group.BUMPER )
+    BUMPER_SAFT            = ( 115, "starboard aft bumper",    40,   Group.BUMPER )
 
     # infrared ..............................................................................
     INFRARED_PSID          = ( 120, "infrared port side",      50,   Group.INFRARED )

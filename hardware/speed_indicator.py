@@ -53,7 +53,7 @@ class SpeedIndicator(Component):
 #       self._log.info(Fore.RED + 'indicate port velocity: {}'.format(value))
         if value != self._port_value:
             self._port_hue = self._get_rgb_from_fixed_colors(value)
-            self._log.debug('convert port velocity: {} to hue: {}'.format(value, self._port_hue))
+            self._log.debug('😈 convert port velocity: {} to hue: {}'.format(value, self._port_hue))
             self._queue_publisher.put(self._message_factory.create_message(Event.RGB, [self._port_hue, self._stbd_hue]))
         self._port_value = value
 
@@ -62,7 +62,7 @@ class SpeedIndicator(Component):
 #       self._log.info(Fore.GREEN + 'indicate stbd velocity: {}'.format(value))
         if value != self._stbd_value:
             self._stbd_hue = self._get_rgb_from_fixed_colors(value)
-            self._log.debug('convert stbd velocity: {} to hue: {}'.format(value, self._stbd_hue))
+            self._log.debug('😈 convert stbd velocity: {} to hue: {}'.format(value, self._stbd_hue))
             self._queue_publisher.put(self._message_factory.create_message(Event.RGB, [self._port_hue, self._stbd_hue]))
         self._stbd_value = value
 

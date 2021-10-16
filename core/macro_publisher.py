@@ -101,9 +101,8 @@ class MacroPublisher(Publisher):
         '''
         _macro = Macro(name, description)
 #       if self._log.level == Level.DEBUG:
-        self._log.info('created macro: ' + Fore.YELLOW + '{}:\n'.format(name) + Fore.CYAN + '{}'.format(_macro))
-#       else:
-#           self._log.info('created macro: ' + Fore.YELLOW + '{}'.format(name))
+        self._log.info('created macro: ' + Fore.YELLOW + '{}'.format(name))
+#       self._log.info('created macro: ' + Fore.YELLOW + '{}:\n'.format(name) + Fore.CYAN + '{}'.format(_macro))
         self.add_macro_to_library(_macro)
         return _macro
 

@@ -102,11 +102,11 @@ class ExternalClock(Publisher):
 #           self._log.info('establishing callback on pin {:d}.'.format(self._pin))
 #           self._pi.set_mode(gpio=self._pin, mode=pigpio.INPUT) # GPIO 12 as input
 #           self._irq_callback = self._pi.callback(self._pin, pigpio.EITHER_EDGE, self._irq_callback_method)
-#           self._log.info('🌿 enabled external clock callback.')
+#           self._log.info('enabled external clock callback.')
 
-            self._log.info('🌿 creating task for clock listener loop; enabled: {}'.format(self.enabled))
+            self._log.info('creating task for clock listener loop; enabled: {}'.format(self.enabled))
             self._message_bus.loop.create_task(self._clock_listener_loop(lambda: self.enabled), name=ExternalClock._LISTENER_LOOP_NAME)
-            self._log.info('🌿 task enabled.')
+            self._log.info('task enabled.')
 
             self._initd = True
         except Exception as e:
@@ -129,7 +129,7 @@ class ExternalClock(Publisher):
 #           self._callbacks.append(callback)
         else:
             _count = next(self._sub_counter)
-            self._log.info('🌿 adding callback {:d}...'.format(_count))
+            self._log.info('adding callback {:d}...'.format(_count))
             _sub = ClockSubscriber(self._config, 'clk-sub:{:d}'.format(_count), self._message_bus, callback, self._level)
             self._subscribers.append(_sub)
 

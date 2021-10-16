@@ -15,11 +15,17 @@ from enum import Enum
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class TriggerBehaviour(Enum):
     '''
-    Indicates what the Behaviour should do when triggered.
+    Indicates what the Behaviour should do when triggered:
+
+      suppress:  suppress the behaviour
+      release:   release the behaviour
+      toggle:    toggle the suppress/release state of the behaviour
+      execute:   execute the behaviour
     '''
     SUPPRESS = ( 0, "suppress")
     RELEASE  = ( 1, "release")
     TOGGLE   = ( 2, "toggle")
+    EXECUTE  = ( 3, "execute")
 
     # ignore the first param since it's already set by __new__
     def __init__(self, num, name):

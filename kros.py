@@ -30,34 +30,35 @@ from core.event import Event, Group
 from core.system import System
 from core.component import Component
 from core.fsm import FiniteStateMachine
+from core.util import Util
 from core.message import Message, Payload
 from core.message_bus import MessageBus
 from core.message_factory import MessageFactory
 from core.config_loader import ConfigLoader
 from core.controller import Controller
 from core.publisher import Publisher
-from core.subscriber import Subscriber, GarbageCollector
-from core.system_subscriber import SystemSubscriber
 from core.queue_publisher import QueuePublisher
 from core.macro_publisher import MacroPublisher
-from core.util import Util
+from hardware.ifs_publisher import IfsPublisher
+from hardware.bumper_publisher import BumperPublisher
+from hardware.mcu_bmp_publisher import McuBumperPublisher
+from hardware.ext_bmp_publisher import ExternalBumperPublisher
 
 from hardware.i2c_scanner import I2CScanner
 from hardware.battery import BatteryCheck
+from hardware.color import Color
 from hardware.external_clock import ExternalClock
 from hardware.irq_clock import IrqClock
 from hardware.killswitch import KillSwitch
 from hardware.motor_configurer import MotorConfigurer
 from hardware.motor_controller import MotorController
+from core.subscriber import Subscriber, GarbageCollector
+from core.system_subscriber import SystemSubscriber
 from hardware.motor_subscriber import MotorSubscriber
 from hardware.rgb_subscriber import RgbSubscriber
 from hardware.bumper_subscriber import BumperSubscriber
 from hardware.infrared_subscriber import InfraredSubscriber
-
-from hardware.ifs_publisher import IfsPublisher
-from hardware.bumper_publisher import BumperPublisher
-from hardware.mcu_bmp_publisher import McuBumperPublisher
-from hardware.ext_bmp_publisher import ExternalBumperPublisher
+from core.macro_subscriber import MacroSubscriber
 
 from mock.event_publisher import EventPublisher
 from mock.external_clock import MockExternalClock
@@ -107,22 +108,22 @@ class KROS(Component, FiniteStateMachine):
         self._system.set_nice()
         globals.put('kros', self)
         # configuration...
-        self._config         = None
-        self._message_bus    = None
-        self._behaviour_mgr  = None
-        self._queue_pub      = None
-        self._macro_pub      = None
-        self._experiment_mgr = None
-        self._arbitrator     = None
-        self._controller     = None
-        self._gamepad        = None
-        self._external_clock = None
-        self._irq_clock      = None
-        self._motor_ctrl     = None
-        self._ifs            = None
-        self._killswitch     = None
-        self._disable_leds   = False
-        self._closing        = False
+        self._config          = None
+        self._message_bus     = None
+        self._behaviour_mgr   = None
+        self._queue_publisher = None
+        self._macro_publisher = None
+        self._experiment_mgr  = None
+        self._arbitrator      = None
+        self._controller      = None
+        self._gamepad         = None
+        self._external_clock  = None
+        self._irq_clock       = None
+        self._motor_ctrl      = None
+        self._ifs             = None
+        self._killswitch      = None
+        self._disable_leds    = False
+        self._closing         = False
         self._log.info('oid: {}'.format(id(self)))
         self._log.info('initialised.')
 
@@ -223,10 +224,10 @@ class KROS(Component, FiniteStateMachine):
         _pubs = arguments.pubs if arguments.pubs else ''
 
         if _cfg.get('enable_queue_publisher') or 'q' in _pubs:
-            self._queue_pub = QueuePublisher(self._config, self._message_bus, self._message_factory, self._level)
+            self._queue_publisher = QueuePublisher(self._config, self._message_bus, self._message_factory, self._level)
         if _cfg.get('enable_macro_publisher') or 'm' in _pubs:
             _callback = None
-            self._macro_pub = MacroPublisher(self._config, self._message_bus, self._message_factory, _callback, self._level)
+            self._macro_publisher = MacroPublisher(self._config, self._message_bus, self._message_factory, _callback, self._level)
 
         _enable_ifs_publisher = _cfg.get('enable_ifs_publisher') or 'i' in _pubs
         if _enable_ifs_publisher:
@@ -267,16 +268,21 @@ class KROS(Component, FiniteStateMachine):
         # create subscribers ...............................
 
         _subs = arguments.subs if arguments.subs else ''
+        if _cfg.get('enable_rgb_subscriber') or 'r' in _subs:
+            self._rgb_subscriber = RgbSubscriber(self._config, self._message_bus, level=self._level)
         if _cfg.get('enable_system_subscriber') or 's' in _subs:
             self._system_subscriber   = SystemSubscriber(self._config, self, self._message_bus, level=self._level)
         if _cfg.get('enable_motor_subscriber') or 'm' in _subs:
             self._motor_subscriber    = MotorSubscriber(self._config, self._message_bus, self._motor_ctrl, level=self._level)
-        if _cfg.get('enable_rgb_subscriber') or 'r' in _subs:
-            self._rgb_subscriber = RgbSubscriber(self._config, self._message_bus, level=self._level)
         if _cfg.get('enable_bumper_subscriber') or 'b' in _subs:
             self._bumper_subscriber   = BumperSubscriber(self._config, self._message_bus, self._message_factory, self._motor_ctrl, level=self._level)
         if _cfg.get('enable_infrared_subscriber') or 'i' in _subs:
             self._infrared_subscriber = InfraredSubscriber(self._config, self._message_bus, self._motor_ctrl, level=self._level) # reacts to IR sensors
+        if _cfg.get('enable_macro_subscriber'):
+            if not self._macro_publisher:
+                raise ConfigurationError('macro subscriber requires macro publisher.')
+            self._macro_subscriber = MacroSubscriber(self._config, self._message_bus, self._macro_publisher, self._level)
+        # and finally, the garbage collector:
         self._garbage_collector   = GarbageCollector(self._config, self._message_bus, level=self._level)
 
         _use_experiment_manager = self._config['kros'].get('component').get('enable_experimental') or Util.is_true(arguments.experimental)
@@ -353,7 +359,7 @@ class KROS(Component, FiniteStateMachine):
         self._irq_clock.enable()
 
         # now in main application loop until quit or Ctrl-C...
-        self._log.info('enabling message bus...')
+        self._log.info(Fore.YELLOW + 'enabling message bus...')
         self._message_bus.enable()
         # that blocks so we never get here until the end...
         self._log.info('main loop closed.')
@@ -407,14 +413,14 @@ class KROS(Component, FiniteStateMachine):
         '''
         Returns the MacroPublisher, None if not used.
         '''
-        return self._macro_pub
+        return self._macro_publisher
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def get_queue_publisher(self):
         '''
         Returns the QueuePublisher, None if not used.
         '''
-        return self._queue_pub
+        return self._queue_publisher
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def get_experiment_manager(self):

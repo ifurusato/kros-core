@@ -24,7 +24,8 @@ globals.init()
 from core.logger import Logger, Level
 from core.component import Component
 from core.orient import Orientation
-from core.speed import Speed, Direction
+from core.direction import Direction
+from core.speed import Speed
 from core.event import Event
 from core.rate import Rate
 from core.message_bus import MessageBus
@@ -93,7 +94,7 @@ class MotorController(Component):
         self._halt_slew_rate       = SlewRate.from_string(_cfg.get('halt_rate'))
         self._log.info('halt rate:\t{}'.format(self._halt_slew_rate.name))
         # slew rate for slower braking behaviour
-        self._emergency_slew_rate  = SlewRate.EXTREMELY_FAST
+        self._emergency_slew_rate  = SlewRate.FASTEST
         self._brake_slew_rate      = SlewRate.from_string(_cfg.get('brake_rate'))
         self._log.info('brake rate:\t{}'.format(self._brake_slew_rate.name))
         self._spin_speed           = Speed.from_string(_cfg.get('spin_speed')) # motor speed when spinning
@@ -208,7 +209,7 @@ class MotorController(Component):
         self._log.info('motor controller:')
         self._log.info('  loop running:\t' + Fore.YELLOW + '{}'.format(self.loop_is_running))
         self._log.info('  is in motion:\t' + Fore.YELLOW + '{}'.format(self.is_in_motion))
-        self._log.info('  is stopped:  \t' + Fore.YELLOW + '{}'.format(self.stopped))
+        self._log.info('  is stopped:  \t' + Fore.YELLOW + '{}'.format(self.is_stopped))
 
         # motors ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
@@ -598,7 +599,7 @@ class MotorController(Component):
         This differs from both halt() and brake() in that it also suppresses
         all behaviours.
         '''
-        if self.stopped:
+        if self.is_stopped:
             self._log.warning('already stopped.')
             # but we do it anyway...
         else:
@@ -640,7 +641,7 @@ class MotorController(Component):
         '''
         Quickly (but not immediately) stops both motors.
         '''
-        if self.stopped:
+        if self.is_stopped:
             self._log.warning('already halted.')
             # but we do it anyway...
         else:
@@ -669,7 +670,7 @@ class MotorController(Component):
         '''
         Slowly coasts both motors to a stop.
         '''
-        if self.stopped:
+        if self.is_stopped:
             self._log.warning('already braked.')
             # but we do it anyway...
         else:
@@ -718,16 +719,17 @@ class MotorController(Component):
         for _count in range(timeout_sec):
             _count += 1
             time.sleep(1.0)
-            if self.stopped:
+            if self.is_stopped:
                 break
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
-    def stopped(self):
+    def is_stopped(self):
         '''
         Returns true if the velocity of both motors is zero.
         '''
-        return self._port_motor.velocity == 0 and self._stbd_motor.velocity == 0
+        return not self.is_in_motion
+#       return self._port_motor.velocity == 0 and self._stbd_motor.velocity == 0
 
   # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
@@ -738,9 +740,27 @@ class MotorController(Component):
         '''
         return self._port_motor.is_in_motion or self._stbd_motor.is_in_motion
 
+  # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    @property
+    def is_moving_ahead(self):
+        '''
+        Returns true if both motors are moving ahead.
+        '''
+        return self._port_motor.is_moving_ahead and self._stbd_motor.is_moving_ahead
+
+  # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    @property
+    def is_moving_astern(self):
+        '''
+        Returns true if both motors are moving astern.
+        '''
+        return self._port_motor.is_moving_astern and self._stbd_motor.is_moving_astern
+
+    # TODO: is_spinning_clockwise() and is_spinning_counter_clockwise()
+
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def print_info(self, count):
-        if self.stopped:
+        if self.is_stopped:
             self._log.info(('[{:04d}] '.format(count) if count else '') + 'velocity: stopped.')
         else:
             self._log.info(('[{:04d}] '.format(count) if count else '')
@@ -769,7 +789,7 @@ class MotorController(Component):
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _get_movement_description(self, port_velocity, stbd_velocity):
         _avg_velocity = ( port_velocity + stbd_velocity ) / 2.0
-
+        # TODO FIXME use existing methods!
         if isclose(port_velocity, 0.0, abs_tol=0.5) and isclose(stbd_velocity, 0.0, abs_tol=0.5):
             # close to stopped
             return 'stopped'
@@ -852,7 +872,7 @@ class MotorController(Component):
         '''
         if not self.closed:
             # if we're moving let's halt first
-            if self.is_in_motion or not self.stopped:
+            if self.is_in_motion or not self.is_stopped:
                 self.halt()
                 while self.wait_til_stopped():
                     pass

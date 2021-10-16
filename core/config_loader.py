@@ -7,7 +7,7 @@
 #
 # author:   Murray Altheim
 # created:  2020-04-15
-# modified: 2020-04-15
+# modified: 2021-10-16
 
 import pprint
 from colorama import init, Fore, Style
@@ -62,5 +62,12 @@ class ConfigLoader(object):
                 fout.write('#\n\n')
             yaml.dump(config, fout, default_flow_style=False)
         self._log.info('configuration written to {}.'.format(filename))
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+class ConfigurationError(Exception):
+    '''
+    This exception is thrown when any error due to configuration occurs.
+    '''
+    pass
 
 #EOF

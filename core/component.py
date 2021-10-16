@@ -7,7 +7,9 @@
 #
 # author:   Murray Altheim
 # created:  2021-06-29
-# modified: 2021-06-29
+# modified: 2021-10-16
+#
+# MissingComponentError at bottom
 #
 
 from core.logger import Logger
@@ -97,7 +99,7 @@ class Component(object):
         '''
         if not self.closed:
             self._enabled = True
-            self._log.info('enabled.')
+            self._log.debug('enabled.')
         else:
             self._log.warning('cannot enable: already closed.')
 
@@ -107,7 +109,7 @@ class Component(object):
         Suppresses this Component.
         '''
         self._suppressed = True
-        self._log.info('suppressed.')
+        self._log.debug('suppressed.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def release(self):
@@ -115,7 +117,7 @@ class Component(object):
         Releases (un-suppresses) this Component.
         '''
         self._suppressed = False
-        self._log.info('released.')
+        self._log.debug('released.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def disable(self):
@@ -125,7 +127,7 @@ class Component(object):
         '''
         if self.enabled:
             self._enabled = False
-            self._log.info('disabled.')
+            self._log.debug('disabled.')
         else:
             self._log.debug('already disabled.')
         return True
@@ -139,9 +141,16 @@ class Component(object):
         if not self.closed:
             _nil = self.disable()
             self._closed = True
-            self._log.info('closed.')
+            self._log.debug('closed.')
         else:
             self._log.debug('already closed.')
         return True
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+class MissingComponentError(Exception):
+    '''
+    Thrown when a required component is not available.
+    '''
+    pass
 
 #EOF

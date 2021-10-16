@@ -331,7 +331,7 @@ class Swerve(Behaviour):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _reset_velocity_multiplier(self, reason):
-        self._log.info(Fore.MAGENTA + 'reset velocity multipliers: ' + Fore.YELLOW + '{}'.format(reason))
+        self._log.info('reset velocity multipliers: ' + Fore.YELLOW + '{}'.format(reason))
         self._port_motor.remove_velocity_multiplier(Swerve._LAMBDA_PORT_NAME)
         self._stbd_motor.remove_velocity_multiplier(Swerve._LAMBDA_STBD_NAME)
 

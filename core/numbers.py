@@ -7,28 +7,36 @@
 #
 # author:   Murray Altheim
 # created:  2021-07-01
-# modified: 2021-07-01
+# modified: 2021-10-16
 #
-# An enumeration of the names of numbers through twelve.
+# An enumeration of the names of numbers through twenty.
 #
 
 from enum import Enum
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Numbers(Enum):
-    ZERO    = ( 0,  'zero' )
-    ONE     = ( 1,  'one' )
-    TWO     = ( 2,  'two' )
-    THREE   = ( 3,  'three' )
-    FOUR    = ( 4,  'four' )
-    FIVE    = ( 5,  'five' )
-    SIX     = ( 6,  'six' )
-    SEVEN   = ( 7,  'seven' )
-    EIGHT   = ( 8,  'eight' )
-    NINE    = ( 9,  'nine' )
-    TEN     = ( 10, 'ten' )
-    ELEVEN  = ( 11, 'eleven' )
-    TWELVE  = ( 12, 'twelve' )
+    ZERO      = ( 0,  'zero' )
+    ONE       = ( 1,  'one' )
+    TWO       = ( 2,  'two' )
+    THREE     = ( 3,  'three' )
+    FOUR      = ( 4,  'four' )
+    FIVE      = ( 5,  'five' )
+    SIX       = ( 6,  'six' )
+    SEVEN     = ( 7,  'seven' )
+    EIGHT     = ( 8,  'eight' )
+    NINE      = ( 9,  'nine' )
+    TEN       = ( 10, 'ten' )
+    ELEVEN    = ( 11, 'eleven' )
+    TWELVE    = ( 12, 'twelve' )
+    THIRTEEN  = ( 13, 'thirteen' )
+    FOURTEEN  = ( 14, 'fourteen' )
+    FIFTEEN   = ( 15, 'fifteen' )
+    SIXTEEN   = ( 16, 'sixteen' )
+    SEVENTEEN = ( 17, 'seventeen' )
+    EIGHTEEN  = ( 18, 'eighteen' )
+    NINETEEN  = ( 19, 'nineteen' )
+    TWENTY    = ( 20, 'twenty' )
 
     def __new__(cls, *args, **kwds):
         obj = object.__new__(cls)
@@ -48,7 +56,7 @@ class Numbers(Enum):
     @staticmethod
     def from_number(num):
         '''
-        Returns 'zero' through 'twelve', then simply a string
+        Returns 'zero' through 'twenty', then simply a string
         version of the number.
         '''
         for n in Numbers:

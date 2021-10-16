@@ -10,6 +10,7 @@
 #
 
 import sys, itertools, time
+from math import isclose
 from colorama import init, Fore, Style
 init()
 
@@ -309,9 +310,28 @@ class Motor(Component):
     def is_in_motion(self):
         '''
         Returns True if the motor is moving, i.e., if the current power
-        setting of the motor is greater than zero.
+        setting of the motor is not equal to zero. Note that this returns
+        False if the value is very close to zero.
         '''
-        return self.current_power > 0.0
+        return not isclose(self.current_power, 0.0, abs_tol=1e-3)
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    @property
+    def is_moving_ahead(self):
+        '''
+        Returns True if the motor is moving ahead (forward), i.e., if the
+        current power setting of the motor is greater than zero.
+        '''
+        return self.is_in_motion and self.current_power > 0.0
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    @property
+    def is_moving_astern(self):
+        '''
+        Returns True if the motor is moving astern (reverse), i.e., if the
+        current power setting of the motor is less than zero.
+        '''
+        return self.is_in_motion and self.current_power < 0.0
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def update_target_velocity(self):
@@ -423,7 +443,7 @@ class Motor(Component):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
-    def stopped(self):
+    def is_stopped(self):
         '''
          Returns True if the motor is entirely stopped.
         '''

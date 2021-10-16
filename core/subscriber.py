@@ -21,6 +21,7 @@ from core.logger import Logger, Level
 from core.component import Component
 from core.util import Util
 from core.event import Event, Group
+from core.message import Message
 from core.fsm import FiniteStateMachine, State
 from core.message_bus import MessageBus
 
@@ -65,7 +66,7 @@ class Subscriber(Component, FiniteStateMachine):
         self._events = [] # list of acceptable event types
         self._brief  = True # brief messages by default
         self._message_bus.register_subscriber(self)
-        self._log.info(Fore.BLACK + 'ready (superclass).')
+#       self._log.info(Fore.BLACK + 'ready (superclass).')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def set_log_level(self, level):
@@ -151,6 +152,8 @@ class Subscriber(Component, FiniteStateMachine):
         to this subcriber, either by being included in the list of acceptable
         events, or by matching the special case Event.ANY.
         '''
+        if not isinstance(message, Message):
+            raise TypeError('expected Message argument, not {}'.format(type(message)))
         return message.event is Event.ANY or message.event in self._events
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -211,7 +214,7 @@ class Subscriber(Component, FiniteStateMachine):
 
 #           breakpoint()
 
-            self._log.debug('end event tracking for message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
+#           self._log.debug('end event tracking for message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
             _event.set()
 
             # we've handled message so pass along to arbitrator
@@ -313,12 +316,12 @@ class Subscriber(Component, FiniteStateMachine):
         :param elapsed:  the optional elapsed time (in milliseconds) for an operation
         '''
         if self._brief:
-            self._log.debug(Style.BRIGHT + title + Style.NORMAL \
+            self._log.info(Style.BRIGHT + title + Style.NORMAL \
                     + ' id: ' + Style.BRIGHT + '{};'.format(message.name) + Style.NORMAL \
                     + ' event: ' + Style.BRIGHT + ( '{}; '.format(message.event.label) if message.event else 'n/a' ) + Style.NORMAL \
                     + ' value: ' + Style.BRIGHT + Util.get_formatted_value(message.payload.value))
         else:
-            self._log.debug(Style.BRIGHT + title + Style.NORMAL + '\n' \
+            self._log.info(Style.BRIGHT + title + Style.NORMAL + '\n' \
                     + Subscriber.LOG_INDENT + 'id: ' + Style.BRIGHT + '{};'.format(message.name) + Style.NORMAL \
                     + ' event: ' + Style.BRIGHT + ( '{}; '.format(message.event.label) if message.event else 'n/a: [gc\'d] ' ) + Style.NORMAL \
                     + ' value: ' + Style.BRIGHT + Util.get_formatted_value(message.payload.value) + '\n' + Style.NORMAL \
@@ -336,7 +339,7 @@ class Subscriber(Component, FiniteStateMachine):
         This also enables the Subscriber, which is upon initialisation disabled.
         '''
         if self.state is not State.STARTED:
-            self._log.info('subscriber {} started.'.format(self.name))
+            self._log.debug('subscriber {} started.'.format(self.name))
             FiniteStateMachine.start(self)
             self.enable()
         else:
@@ -347,7 +350,7 @@ class Subscriber(Component, FiniteStateMachine):
         if self.enabled:
             Component.disable(self)
             FiniteStateMachine.disable(self)
-            self._log.info('subscriber {} disabled.'.format(self.name))
+            self._log.debug('subscriber {} disabled.'.format(self.name))
         else:
             self._log.warning('subscriber {} already disabled.'.format(self.name))
 
@@ -356,7 +359,7 @@ class Subscriber(Component, FiniteStateMachine):
         if not self.closed:
             Component.close(self)
             FiniteStateMachine.close(self)
-            self._log.info('subscriber {} closed.'.format(self.name))
+            self._log.debug('subscriber {} closed.'.format(self.name))
         else:
             self._log.warning('subscriber {} already closed.'.format(self.name))
 
@@ -420,7 +423,7 @@ class GarbageCollector(Subscriber):
             self._message_bus.consumed()
             _message.gc() # mark as garbage collected and don't republish
             if not _message.sent:
-                self._log.warning('garbage collected undelivered message: {}; event: {}'.format(_message.name, _message.event.name))
+                self._log.warning('garbage collected undelivered message: {}; event: {}; value: {}'.format(_message.name, _message.event.name, _message.value))
 #           elif self._message_bus.verbose:
 #           self._log.info('garbage collected message:' + Fore.WHITE + ' {}; event: {}'.format(_message.name, _message.event.label))
         else:

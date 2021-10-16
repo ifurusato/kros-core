@@ -127,29 +127,17 @@ class SlewLimiter(Component):
         self._start_time = self._millis()
         Component.enable(self)
     
-#   def release(self):
-#       Component.release(self)
-#       self._log.info('slew limiter released.')
-
-#   def suppress(self):
-#       Component.suppress(self)
-#       self._log.info('slew limiter suppressed.')
-
-#   def disable(self):
-#       Component.disable(self)
-#       self._log.info('slew limiter disabled.')
-
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class SlewRate(Enum): # tested to 50.0 velocity:
     #                  num   ratio     pid    limit
-    EXTREMELY_SLOW   = ( 0,  0.009,   0.16, 00.0001 ) # 5.1 sec
-    VERY_SLOW        = ( 1,   0.02,   0.22, 00.0002 ) # 3.1 sec
-    SLOWER           = ( 2,   0.05,   0.38, 00.0005 ) # 1.7 sec
-    SLOW             = ( 3,   0.08,   0.48, 00.0010 ) # 1.3 sec
-    NORMAL           = ( 4,   0.10,   0.58, 00.0050 ) # 1.0 sec
-    FAST             = ( 5,   0.25,   0.68, 00.0100 ) # 0.6 sec
-    VERY_FAST        = ( 6,   0.50,   0.90, 00.0200 ) # 0.5 sec
-    EXTREMELY_FAST   = ( 7,   0.95,   0.90, 00.1000 ) # 0.9 sec
+#   SLOWEST          = ( 0,  0.009,   0.16, 00.0001 ) # 5.1 sec
+    SLOWEST          = ( 0,   0.02,   0.22, 00.0002 ) # 3.1 sec
+    SLOWER           = ( 1,   0.05,   0.38, 00.0005 ) # 1.7 sec
+    SLOW             = ( 2,   0.08,   0.48, 00.0010 ) # 1.3 sec
+    NORMAL           = ( 3,   0.10,   0.58, 00.0050 ) # 1.0 sec
+    FAST             = ( 4,   0.25,   0.68, 00.0100 ) # 0.6 sec
+    FASTER           = ( 5,   0.50,   0.90, 00.0200 ) # 0.5 sec
+    FASTEST          = ( 6,   0.95,   0.90, 00.1000 ) # 0.9 sec
 
     def __new__(cls, *args, **kwds):
         obj = object.__new__(cls)

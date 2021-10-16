@@ -7,32 +7,10 @@
 #
 # author:   Murray Altheim
 # created:  2021-07-29
-# modified: 2021-08-02
-#
-# A collection of Enums related to Direction and Speed, as well as various
-# static utility supporting methods.
+# modified: 2021-10-15
 #
 
 from enum import Enum
-from colorama import init, Fore, Style
-init()
-
-from core.logger import Logger, Level
-_log = Logger('speed', Level.INFO)
-
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-class Direction(Enum):
-    AHEAD   = ( 0, 'ahead')
-    ASTERN  = ( 1, 'astern')
-
-    # ignore the first param since it's already set by __new__
-    def __init__(self, num, label):
-        self._label = label
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    @property
-    def label(self):
-        return self._label
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Speed(Enum):
@@ -129,12 +107,12 @@ class Speed(Enum):
     def get_proportional_power(velocity):
         '''
         Returns the proportional (interpolated) power corresponding to the velocity
-        argument. This linear interpolates first across the x axis (velocity, 
-        ranging from -100 to +100), then linear interpolates across the y axis 
+        argument. This linear interpolates first across the x axis (velocity,
+        ranging from -100 to +100), then linear interpolates across the y axis
         (power, ranging from -1.0 to +1.0) to obtain the power value.
 
         The returned value is limited by the positive and negative range expressed
-        in the YAML configuration. 
+        in the YAML configuration.
         '''
         _x_range = Speed.xrange(velocity) # returns the bounding two Speeds
         _s0 = _x_range[0]
@@ -144,7 +122,6 @@ class Speed(Enum):
             _pp = Speed.lerp(_s0.ahead , _s1.ahead, 1.0)
             if velocity < 0:
                 _pp *= -1
-#           _log.info(Fore.RED + 'v={:5.2f};\tX range: ({} to {});          \t\t'.format(velocity, _s0.ahead, _s1.ahead) + Fore.YELLOW + 'power: {:5.2f}'.format(_pp))
         else:
             if velocity < 0:
                 _pc = ((-1 * _s0.velocity) - velocity) / (_s1.velocity - _s0.velocity)
@@ -154,18 +131,17 @@ class Speed(Enum):
             _pp = Speed.lerp(_s0.ahead , _s1.ahead, _pc)
             if velocity < 0:
                 _pp *= -1
-#           _log.info(Fore.GREEN + 'v={:5.2f};\tX range: ({} to {}); xt: {:5.2f}; {:.0%}   \t'.format(velocity, _s0.ahead, _s1.ahead, _xt, _pc) + Fore.YELLOW + 'power: {:5.2f}'.format(_pp))
         return _pp
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @staticmethod
     def lerp(v0: float, v1: float, t: float) -> float:
         return (1 - t) * v0 + t * v1
-    
+
     @staticmethod
     def inv_lerp(a: float, b: float, v: float) -> float:
         return (v - a) / (b - a)
-    
+
     @staticmethod
     def remap(i_min: float, imax: float, o_min: float, o_max: float, v: float) -> float:
         return lerp(o_min, o_max, inv_lerp(i_min, imax, v))

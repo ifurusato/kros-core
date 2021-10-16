@@ -55,7 +55,7 @@ class Publisher(Component, FiniteStateMachine):
         FiniteStateMachine.__init__(self, self._log, name)
         self._name = name
         self._message_bus.register_publisher(self)
-        self._log.info(Fore.BLACK + 'ready (superclass).')
+#       self._log.info(Fore.BLACK + 'ready (superclass).')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
@@ -88,10 +88,8 @@ class Publisher(Component, FiniteStateMachine):
         This is preferred to calling the message bus directly, and
         as a rule should not be overridden by subclasses.
         '''
-#       self._log.debug(Fore.WHITE + '{} publishing message: {} (event: {})'.format(self.name, message.name, message.event.label))
         await self._message_bus.publish_message(message)
         await asyncio.sleep(0.05)
-#       self._log.debug(Fore.WHITE + '{} published message: {} (event: {})'.format(self.name, message.name, message.event.label))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def start(self):

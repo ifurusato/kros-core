@@ -24,7 +24,7 @@ init()
 from core.message_bus import MessageBus
 from core.message_factory import MessageFactory
 from core.orient import Orientation
-from core.speed import Direction
+from core.direction import Direction
 from core.logger import Logger, Level
 from core.config_loader import ConfigLoader
 from hardware.i2c_scanner import I2CScanner, DeviceNotFound
@@ -94,7 +94,7 @@ def test_motors():
 #       _is_stopped = _motor_ctrl.wait_til_stopped()
 #       _log.info(Fore.RED   + '🙆 RETURNED FROM WAIT.')
 #       _count = 0
-#       while _count < 7 and not _motor_ctrl.stopped:
+#       while _count < 7 and not _motor_ctrl.is_stopped:
 #           _log.info(Fore.RED   + '🙆 alive? [{:d}]; waiting...')
 #           _count += 1
 #           time.sleep(1.0)

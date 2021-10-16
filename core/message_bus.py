@@ -126,7 +126,7 @@ class MessageBus(Component):
 #           self._log.info('no outstanding tasks.')
 #       else:
         if len(_tasks) > 0:
-            self._log.info('clearing {:d} outstanding tasks.'.format(len(_tasks)))
+            self._log.debug('clearing {:d} outstanding tasks.'.format(len(_tasks)))
             for _task in _tasks:
                 if not _task.cancelled():
                     _task.cancel()
@@ -224,7 +224,7 @@ class MessageBus(Component):
         if publisher in self._publishers:
             raise ValueError('publisher list already contains \'{}\''.format(publisher.name))
         self._publishers.append(publisher)
-        self._log.info('registered publisher: \'{}\'; {:d} publisher{} in list.'.format( \
+        self._log.debug('registered publisher: \'{}\'; {:d} publisher{} in list.'.format( \
                 publisher.name, len(self._publishers), 's' if len(self._publishers) > 1 else ''))
 
     def get_publisher(self, name):
@@ -278,7 +278,7 @@ class MessageBus(Component):
         if subscriber in self._subscribers:
             raise ValueError('subscriber list already contains \'{}\''.format(subscriber.name))
         self._subscribers.insert(0, subscriber)
-        self._log.info('registered subscriber: \'{}\'; {:d} subscriber{} in list.'.format( \
+        self._log.debug('registered subscriber: \'{}\'; {:d} subscriber{} in list.'.format( \
                 subscriber.name, len(self._subscribers), 's' if len(self._subscribers) > 1 else ''))
 
     def get_subscriber(self, name):
@@ -348,7 +348,7 @@ class MessageBus(Component):
         self._log.info('starting {:d} subscriber{}...'.format(len(self._subscribers), '' if len(self._subscribers) == 1 else 's'))
         for subscriber in self._subscribers:
             subscriber.start()
-        self._log.info('starting consume loop with {:d} subscriber{}...'.format(
+        self._log.debug('starting consume loop with {:d} subscriber{}...'.format(
                 len(self._subscribers), '' if len(self._subscribers) == 1 else 's'))
         try:
             while self.enabled and len(self._subscribers) > 0:
@@ -472,7 +472,7 @@ class MessageBus(Component):
         '''
         Cleanup tasks tied to the service's shutdown.
         '''
-        self._log.info('shutdown...')
+        self._log.info('starting shutdown procedure...')
         if signal:
             self._log.info('received exit signal {}...'.format(signal))
         self._log.info('nacking outstanding tasks...')
@@ -480,8 +480,7 @@ class MessageBus(Component):
         [task.cancel() for task in tasks]
         self._log.info('cancelling {:d} outstanding tasks...'.format(len(tasks)))
         _gathered_tasks = await asyncio.gather(*tasks, return_exceptions=False)
-        self._log.info('stopping loop; gathered tasks: {}'.format(_gathered_tasks))
-        self._log.info('stopping event loop...')
+        self._log.info('gathered tasks: {}'.format(_gathered_tasks))
         if self.loop.is_running():
             self._log.info('stopping event loop...')
             self.loop.stop()

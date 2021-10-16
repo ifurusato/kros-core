@@ -16,6 +16,7 @@ init()
 
 from core.logger import Logger, Level
 from core.event import Event
+from core.message import Message
 from core.message_bus import MessageBus
 from core.message_factory import MessageFactory
 from core.subscriber import Subscriber
@@ -92,15 +93,15 @@ class Behaviour(ABC, Subscriber):
         raise NotImplementedError('trigger_event() must be implemented in subclasses.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def on_trigger(self, event):
+    def on_trigger(self, message):
         '''
         Alter this Behaviour based on its designated trigger event, which is
-        to suppress, release or toggle activity.
+        to suppress, release, toggle, or execute the activity.
         '''
-        if isinstance(event, Event):
-            _trigger_behaviour = self.get_trigger_behaviour(event)
-        else:
-            raise ValueError('expected Event, not {}.'.format(type(event)))
+        if not isinstance(message, Message):
+            raise ValueError('expected Message, not {}.'.format(type(_event)))
+        _event = message.event
+        _trigger_behaviour = self.get_trigger_behaviour(_event)
         if _trigger_behaviour is TriggerBehaviour.SUPPRESS:
             self.suppress()
         elif _trigger_behaviour is TriggerBehaviour.RELEASE:
@@ -110,8 +111,13 @@ class Behaviour(ABC, Subscriber):
                 self.release()
             else:
                 self.suppress()
+        elif _trigger_behaviour is TriggerBehaviour.EXECUTE:
+            if self.is_active:
+                self.execute(message)
+            else:
+                self._log.warning('behaviour {} not active.'.format(self.name))
         else:
-            raise Exception('no trigger behaviour for event: {}'.format(event.name))
+            raise Exception('no trigger behaviour for event: {}'.format(_event.name))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @abstractmethod
