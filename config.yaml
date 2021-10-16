@@ -27,6 +27,7 @@ kros:
         enable_velocity_publisher:   False       # velocity control potentiometer publisher
         enable_queue_publisher:       True       # publishes from globally-available queue
         enable_macro_publisher:       True       # macro processor/publisher (loads external macro scripts)
+        enable_gamepad_publisher:    False       # gamepad event publisher
         # subscribers ............................
         enable_system_subscriber:     True       # system events subscriber
         enable_motor_subscriber:      True       # motor events subscriber
@@ -225,7 +226,7 @@ kros:
         oblq_trigger_distance_cm:    70.0        # port or starboard oblique analog IR sensor max distance before triggering
         side_trigger_distance_cm:    70.0        # port or starboard side analog IR sensor max distance before triggering
     gamepad:
-        enabled:                    False
+        enabled:                   True
         device_path:  '/dev/input/event5'        # the path to the bluetooth gamepad on the pi (see find_gamepad.py)
         loop_delay:                   0.01       # main loop delay was sleep(0.01) or 1/100th second, or 10ms. 50ms is the delay for 20Hz, so 10ms is 5x 20Hz or 100Hz.
         loop_freq_hz:               100          # polling loop frequency (Hz)

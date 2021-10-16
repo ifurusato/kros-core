@@ -64,8 +64,8 @@ from mock.event_publisher import EventPublisher
 from mock.external_clock import MockExternalClock
 from mock.velocity_publisher import VelocityPublisher
 from mock.mock_pot_publisher import MockPotPublisher
-#from mock.gamepad_publisher import GamepadPublisher
-#from mock.gamepad_controller import GamepadController
+from hardware.gamepad_publisher import GamepadPublisher
+#from hardware.gamepad_controller import GamepadController
 
 from behave.behaviour_manager import BehaviourManager
 from behave.avoid import Avoid
@@ -117,6 +117,7 @@ class KROS(Component, FiniteStateMachine):
         self._arbitrator      = None
         self._controller      = None
         self._gamepad         = None
+        self._gamepad_pub     = None
         self._external_clock  = None
         self._irq_clock       = None
         self._motor_ctrl      = None
@@ -260,6 +261,8 @@ class KROS(Component, FiniteStateMachine):
         if _cfg.get('enable_battery_publisher') or 'p' in _pubs:
             self._battery = BatteryCheck(self._config, self._message_bus, self._message_factory, self._level)
     #   _message_bus.print_publishers()
+        if _cfg.get('enable_gamepad_publisher') or 'g' in _pubs:
+            self._gamepad_pub = GamepadPublisher(self._config, self._message_bus, self._message_factory, self._level)
 
         _enable_killswitch= _cfg.get('enable_killswitch') or 'k' in _pubs
         if _enable_killswitch and _pigpio_available:

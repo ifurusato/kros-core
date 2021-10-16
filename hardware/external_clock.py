@@ -83,11 +83,10 @@ class ExternalClock(Publisher):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _get_message(self):
-        _now = self._millis()
         if not self._tick_message:
-            self._tick_message = TickMessage(_now)  # self._message_factory.create_message(event=Event.TICK, value='')
+            self._tick_message = TickMessage(self._millis())
         else:
-            self._tick_message.value = _now # next(self._counter)
+            self._tick_message.value = self._millis()
         return self._tick_message
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈

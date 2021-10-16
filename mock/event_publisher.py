@@ -27,7 +27,7 @@ from core.logger import Logger, Level
 from core.event import Event
 from core.util import Util
 from core.publisher import Publisher
-from mock.gamepad import GamepadConnectException
+from hardware.gamepad import GamepadConnectException
 from mock.mock_gamepad import MockGamepad
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

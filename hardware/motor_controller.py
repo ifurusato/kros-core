@@ -296,6 +296,15 @@ class MotorController(Component):
                         + Fore.GREEN + 'stbd: {:5.2f} / {:5.2f}'.format(_value, self._stbd_motor.velocity))
             self.set_motor_velocity(Orientation.PORT, _value)
             self.set_motor_velocity(Orientation.STBD, _value)
+
+        elif _event is Event.PORT_VELOCITY:
+#           self.set_motor_velocity(Orientation.PORT, _value)
+            self._log.info('🐢 set PORT velocity; value: {}; velocity: {:5.2f}'.format(_value, self._port_motor.velocity))
+
+        elif _event is Event.STBD_VELOCITY:
+#           self.set_motor_velocity(Orientation.STBD, _value)
+            self._log.info('🐢 set STBD velocity; value: {}; velocity: {:5.2f}'.format(_value, self._stbd_motor.velocity))
+
         elif _event is Event.INCREASE_PORT_VELOCITY:
             self._increment_motor_velocity(Orientation.PORT, self._accel_increment)
             if _changed:

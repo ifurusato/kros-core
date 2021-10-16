@@ -21,7 +21,7 @@ from core.config_loader import ConfigLoader
 from core.logger import Logger, Level
 from core.message_bus import MessageBus
 from core.message_factory import MessageFactory
-from mock.gamepad_publisher import GamepadPublisher
+from hardware.gamepad_publisher import GamepadPublisher
 
 _log = Logger('gamepad-test', Level.INFO)
 _gamepad_pub = None
@@ -33,12 +33,16 @@ try:
     filename = 'config.yaml'
     _config = _loader.configure(filename)
 
-    _log.heading('test', 'starting gamepad demo...', None)
+#   _log.heading('test', 'starting gamepad demo...', None)
 
-    _message_bus = MessageBus(Level.INFO)
+    _log.info('creating message bus...')
+    _message_bus = MessageBus(_config, Level.INFO)
+    _log.info('creating message factory...')
     _message_factory = MessageFactory(_message_bus, Level.INFO)
 
+    _log.info('creating gamepad publisher...')
     _gamepad_pub = GamepadPublisher(_config, _message_bus, _message_factory, Level.INFO)
+    _log.info('enabling gamepad publisher...')
     _gamepad_pub.enable()
     while _gamepad_pub.enabled:
         time.sleep(1.0)

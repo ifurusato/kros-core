@@ -136,13 +136,13 @@ def poll_sensors():
 
 # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 def poll_clk_tick():
-    _clk_led.value(True)
+    _clk_pin.value(True)
     if next(g_counter_2) % 100 == 0.0:
 #       _red_led.value(not _red_led.value())
         _red_led.value(1)
         time.sleep_ms(50)
         _red_led.value(0)
-    _clk_led.value(False)
+    _clk_pin.value(False)
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #                            INITIALISE & EXECUTE
@@ -170,7 +170,7 @@ try:
 #   g_red_led = Pin(LED_PIN, Pin.OUT)
     # board red LED
     _red_led = Pin(11, Pin.OUT)
-    _clk_led = Pin(CLK_PIN, Pin.OUT)
+    _clk_pin = Pin(CLK_PIN, Pin.OUT)
 
     # pin configuration
     g_pins = {}
@@ -181,7 +181,7 @@ try:
     _pin_4 = define_pin(MAST_PIN, 'mast\n', ut.COLOR_YELLOW,  False)
     _pin_5 = define_pin(SAFT_PIN, 'saft\n', ut.COLOR_MAGENTA, False)
 
-    # start first polling loop with frequency of 40Hz (25ms)
+    # start first polling loop with frequency of 20Hz (50ms), 40Hz (25ms), 100Hz (10ms), or 200Hz (5ms)
     _timer1 = Timer(period=25, mode=Timer.PERIODIC, callback=lambda n: poll_sensors())
 
     # start second polling loop with frequency of 20Hz (50ms)

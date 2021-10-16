@@ -66,12 +66,20 @@ class MessageBus(Component):
         self._publish_delay_sec      = _cfg.get('publish_delay_sec') # was: 0.01 sec
         self._publishers             = []
         self._subscribers            = []
+        self._start_callbacks        = []
         self._loop                   = None
         self._last_message_timestamp = None
         self._clip_event_list        = _cfg.get('clip_event_list') # used for printing only
         self._clip_length            = _cfg.get('clip_length')
         self._closing                = False # used during shutdown
         self._log.info('ready.')
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def add_callback_on_start(self, callback):
+        '''
+        Add a callback to be executed upon start of the message bus.
+        '''
+        self._start_callbacks.append(callback)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
@@ -345,19 +353,24 @@ class MessageBus(Component):
         loop will not be entered.
         '''
         self._enable_publishers()
-        self._log.info('starting {:d} subscriber{}...'.format(len(self._subscribers), '' if len(self._subscribers) == 1 else 's'))
+        self._log.info('♒ starting {:d} subscriber{}...'.format(len(self._subscribers), '' if len(self._subscribers) == 1 else 's'))
         for subscriber in self._subscribers:
             subscriber.start()
-        self._log.debug('starting consume loop with {:d} subscriber{}...'.format(
+        self._log.info('♒ starting consume loop with {:d} subscriber{}...'.format(
                 len(self._subscribers), '' if len(self._subscribers) == 1 else 's'))
+        self._log.info('♒ start callbacks...')
+        for _callback in self._start_callbacks:
+            _callback()
         try:
             while self.enabled and len(self._subscribers) > 0:
                 for subscriber in self._subscribers:
 #                   self._log.debug('publishing to subscriber {}...'.format(subscriber.name))
                     await subscriber.consume()
 #                   self._log.debug('published to subscriber {}...'.format(subscriber.name))
+            self._log.info('♒ completed consume loop.')
         finally:
-            self._log.info('completed consume loop.')
+            self._log.info('♒ finally: completed consume loop.')
+           
 #           self._log.info('completed consume loop with {:d} subscriber{}...'.format(
 #                   len(self._subscribers), '' if len(self._subscribers) == 1 else 's'))
 #           for subscriber in self._subscribers:

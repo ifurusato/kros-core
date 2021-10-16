@@ -20,11 +20,11 @@ from core.message_factory import MessageFactory
 from hardware.external_clock import ExternalClock
 from hardware.clock_subscriber import ClockSubscriber
 
-
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Recipient():
     def __init__(self, name, ext_clock):
         self._name = name
+        self._ext_clock   = ext_clock
         self._log = Logger(name, Level.INFO)
         self._counter     = itertools.count()
         self._timestamp_a = dt.now()
@@ -43,11 +43,18 @@ class Recipient():
         self._log.info('💛 [{:d}] external callback A;\t'.format(_count) + Fore.YELLOW + ' {:7.4f}ms elapsed.'.format(_elapsed_ms))
         self._timestamp_b = dt.now()
 
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def start_callback(self):
+        self._log.info('👾 start callback...')
+        self._ext_clock.enable()
+
+
 # main ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
 def main():
 
-    _ext_clock = None
+    _ext_clock   = None
+    _message_bus = None
     _log = Logger('ext-clock-test', Level.INFO)
     _log.info('starting test...')
 
@@ -64,26 +71,35 @@ def main():
         _log.info('creating message factory...')
         _message_factory = MessageFactory(_message_bus, Level.INFO)
 
+        _log.info('🌞 1. creating external clock...')
         _ext_clock = ExternalClock(_config, _message_bus, _message_factory, Level.INFO)
 
         _rx = Recipient('rx', _ext_clock)
+        _log.info('🌞 2. creating clock subscribers...')
+        _clock_sub_a = ClockSubscriber(_config, 'rxa', _message_bus, _rx.callback_a, Level.INFO)
+        _clock_sub_b = ClockSubscriber(_config, 'rxb', _message_bus, _rx.callback_b, Level.INFO)
+        _log.info('🌞 3. enabling subscribers...')
+        _clock_sub_a.enable()
+        _clock_sub_b.enable()
+#       _log.info('🌞 4. enabling external clock...')
+#       _ext_clock.enable()
 
-        _recipient_a = ClockSubscriber(_config, 'rxa', _message_bus, _rx.callback_a, Level.INFO)
-        _recipient_b = ClockSubscriber(_config, 'rxb', _message_bus, _rx.callback_b, Level.INFO)
-        _recipient_a.enable()
-        _recipient_b.enable()
-        _ext_clock.enable()
+        _log.info('🌞 5. adding start callbacks...')
+        _message_bus.add_callback_on_start(_rx.start_callback)
 
-        _log.info('🌞 enabling message bus...')
+        _log.info('🌞 6. enabling message bus...')
         _message_bus.enable()
-        _log.info('🌞 message bus enabled.')
+        _log.info('🌞 7. message bus enabled.')
 
-        while True:
-            _log.info(Fore.BLACK + 'waiting for clock toggle.')
-            time.sleep(5.0)
+#       while True:
+#           _log.info(Fore.BLACK + 'waiting for clock toggle.')
+#           time.sleep(5.0)
 
     except KeyboardInterrupt:
-        _log.info(Fore.RED + "caught Ctrl-C.")
+        _log.info(Fore.RED + "🍅 caught Ctrl-C.")
+        if _message_bus:
+            _message_bus.disable()
+            _message_bus.close()
     finally:
         if _ext_clock:
             _log.info("closing external clock...")

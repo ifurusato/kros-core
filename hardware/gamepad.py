@@ -154,12 +154,14 @@ class Gamepad():
         self._log.info('starting event loop...')
         __enabled = True
         while __enabled and f_is_enabled():
-            self._log.info(Fore.BLUE + 'gamepad enabled: {}; f_is_enabled: {}'.format(__enabled, f_is_enabled()))
+            self._log.info(Fore.WHITE + '🎮 gamepad enabled: {}; f_is_enabled: {}'.format(__enabled, f_is_enabled()))
             try:
                 if self._gamepad is None:
                     raise Exception(Gamepad._NOT_AVAILABLE_ERROR + ' [gamepad no longer available]')
                 # loop and filter by event code and print the mapped label
+                self._log.info(Fore.WHITE + '🎮 starting gamepad loop...')
                 for event in self._gamepad.read_loop():
+#                   self._log.info(Fore.WHITE + '🎮 in gamepad loop.')
                     _message = self._handleEvent(event)
                     if callback and _message:
                         await callback(_message)
@@ -167,6 +169,7 @@ class Gamepad():
                     if not f_is_enabled():
                         self._log.info('breaking from event loop.')
                         break
+                self._log.info(Fore.WHITE + '🎮 exit gamepad loop.')
             except KeyboardInterrupt:
                 self._log.info('caught Ctrl-C, exiting...')
                 __enabled = False
@@ -328,7 +331,7 @@ class GamepadControl(Enum):
 
     control            num  code  id          control descripton     event
     '''
-    A_BUTTON        = ( 1,  304,  'cross',    'A (Cross) Button',    Event.SNIFF)
+    A_BUTTON        = ( 1,  304,  'cross',    'A (Cross) Button',    Event.AVOID)
     B_BUTTON        = ( 2,  305,  'circle',   'B (Circle) Button',   Event.STOP)
     X_BUTTON        = ( 3,  307,  'triangle', 'X (Triangle) Button', Event.ROAM)
     Y_BUTTON        = ( 4,  308,  'square',   'Y ((Square) Button',  Event.BRAKE)
