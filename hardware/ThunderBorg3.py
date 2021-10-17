@@ -1,33 +1,40 @@
-#!/usr/bin/env python3
-# coding: latin-1
-"""
-This module is designed to communicate with the ThunderBorg
-
-Use by creating an instance of the class, call the Init function, then command as desired, e.g.
-import ThunderBorg
-TB = ThunderBorg.ThunderBorg()
-TB.Init()
-# User code here, use TB to control the board
-
-Multiple boards can be used when configured with different I²C addresses by creating multiple instances, e.g.
-import ThunderBorg
-TB1 = ThunderBorg.ThunderBorg()
-TB2 = ThunderBorg.ThunderBorg()
-TB1.i2cAddress = 0x15
-TB2.i2cAddress = 0x1516
-TB1.Init()
-TB2.Init()
-# User code here, use TB1 and TB2 to control each board separately
-
-For explanations of the functions available call the Help function, e.g.
-import ThunderBorg
-TB = ThunderBorg.ThunderBorg()
-TB.Help()
-See the website at www.piborg.org/thunderborg for more details
-"""
+#!/usr/bin/env python3.8
+# -*- coding: utf-8 -*-
+#
+# This module is designed to communicate with the ThunderBorg
+# 
+# Use by creating an instance of the class, call the Init function,
+# then command as desired, e.g.
+# 
+#     import ThunderBorg
+#     TB = ThunderBorg.ThunderBorg()
+#     TB.Init()
+#     # User code here, use TB to control the board
+# 
+# Multiple boards can be used when configured with different I2C
+# addresses by creating multiple instances, e.g.
+# 
+#     import ThunderBorg
+#     TB1 = ThunderBorg.ThunderBorg()
+#     TB2 = ThunderBorg.ThunderBorg()
+#     TB1.i2cAddress = 0x15
+#     TB2.i2cAddress = 0x1516
+#     TB1.Init()
+#     TB2.Init()
+#     # User code here, use TB1 and TB2 to control each board separately
+# 
+# For explanations of the functions available call the Help function, e.g.
+# 
+#     import ThunderBorg
+#     TB = ThunderBorg.ThunderBorg()
+#     TB.Help()
+#     See the website at www.piborg.org/thunderborg for more details
+# 
 
 # Import the libraries we need
 import io, fcntl, types, time
+from colorama import init, Fore, Style
+init()
 
 from core.logger import Level, Logger
 
@@ -79,14 +86,14 @@ COMMAND_ANALOG_MAX          = 0x3FF # Maximum value for analog readings
 
 
 def ScanForThunderBorg(busNumber = 1):
-    """
+    '''
 ScanForThunderBorg([busNumber])
 
-Scans the I²C bus for a ThunderBorg boards and returns a list of all usable addresses
-The busNumber if supplied is which I²C bus to scan, 0 for Rev 1 boards, 1 for Rev 2 boards, if not supplied the default is 1
-    """
+Scans the I2C bus for a ThunderBorg boards and returns a list of all usable addresses
+The busNumber if supplied is which I2C bus to scan, 0 for Rev 1 boards, 1 for Rev 2 boards, if not supplied the default is 1
+    '''
     found = []
-    print('Scanning I²C bus #{:d}'.format(busNumber))
+    print('Scanning I2C bus #{:d}'.format(busNumber))
     bus = ThunderBorg(Level.INFO)
     for address in range(0x03, 0x78, 1):
         try:
@@ -117,25 +124,25 @@ def SetNewAddress(newAddress, oldAddress = -1, busNumber = 1):
     """
 SetNewAddress(newAddress, [oldAddress], [busNumber])
 
-Scans the I²C bus for the first ThunderBorg and sets it to a new I2C address
+Scans the I2C bus for the first ThunderBorg and sets it to a new I2C address
 If oldAddress is supplied it will change the address of the board at that address rather than scanning the bus
-The busNumber if supplied is which I²C bus to scan, 0 for Rev 1 boards, 1 for Rev 2 boards, if not supplied the default is 1
-Warning, this new I²C address will still be used after resetting the power on the device
+The busNumber if supplied is which I2C bus to scan, 0 for Rev 1 boards, 1 for Rev 2 boards, if not supplied the default is 1
+Warning, this new I2C address will still be used after resetting the power on the device
     """
     if newAddress < 0x03:
-        print('Error, I²C addresses below 3 (0x03) are reserved, use an address between 3 (0x03) and 119 (0x77)')
+        print('Error, I2C addresses below 3 (0x03) are reserved, use an address between 3 (0x03) and 119 (0x77)')
         return
     elif newAddress > 0x77:
-        print('Error, I²C addresses above 119 (0x77) are reserved, use an address between 3 (0x03) and 119 (0x77)')
+        print('Error, I2C addresses above 119 (0x77) are reserved, use an address between 3 (0x03) and 119 (0x77)')
         return
     if oldAddress < 0x0:
         found = ScanForThunderBorg(busNumber)
         if len(found) < 1:
-            print('No ThunderBorg boards found, cannot set a new I²C address!')
+            print('No ThunderBorg boards found, cannot set a new I2C address!')
             return
         else:
             oldAddress = found[0]
-    print('Changing I²C address from 0x{:02X} to 0x{:02X} (bus #{:d})'.format(oldAddress, newAddress, busNumber))
+    print('Changing I2C address from 0x{:02X} to 0x{:02X} (bus #{:d})'.format(oldAddress, newAddress, busNumber))
     bus = ThunderBorg()
     bus.InitBusOnly(busNumber, oldAddress)
     try:
@@ -178,26 +185,26 @@ Warning, this new I²C address will still be used after resetting the power on th
             foundChip = False
             print('Missing ThunderBorg at 0x{:02X}'.format(newAddress))
     if foundChip:
-        print('New I²C address of 0x{:02X} set successfully'.format(newAddress))
+        print('New I2C address of 0x{:02X} set successfully'.format(newAddress))
     else:
-        print('Failed to set new I²C address...')
+        print('Failed to set new I2C address...')
 
 
 # Class used to control ThunderBorg
 class ThunderBorg:
-    """
+    '''
 This module is designed to communicate with the ThunderBorg
 
-busNumber               I²C bus on which the ThunderBorg is attached (Rev 1 is bus 0, Rev 2 is bus 1)
-bus                     the smbus object used to talk to the I²C bus
-i2cAddress              The I²C address of the ThunderBorg chip to control
+busNumber               I2C bus on which the ThunderBorg is attached (Rev 1 is bus 0, Rev 2 is bus 1)
+bus                     the smbus object used to talk to the I2C bus
+i2cAddress              The I2C address of the ThunderBorg chip to control
 foundChip               True if the ThunderBorg chip can be seen, False otherwise
 printFunction           Function reference to call when printing text, if None "print" is used
-    """
+    '''
 
     # Shared values used by this class
     busNumber               = 1                     # Check here for Rev 1 vs Rev 2 and select the correct bus
-    i2cAddress              = I2C_ID_THUNDERBORG    # I²C address, override for a different address
+    i2cAddress              = I2C_ID_THUNDERBORG    # I2C address, override for a different address
     foundChip               = False
     printFunction           = None
     i2cWrite                = None
@@ -343,130 +350,7 @@ If tryOtherBus is True, this function will attempt to use the other bus if the T
             self.Print('ThunderBorg loaded on bus %d'.format(self.busNumber))
 
 
-    def SetMotor2(self, power):
-        """
-SetMotor2(power)
-
-Sets the drive level for motor 2, from +1 to -1.
-e.g.
-SetMotor2(0)     -> motor 2 is stopped
-SetMotor2(0.75)  -> motor 2 moving forward at 75% power
-SetMotor2(-0.5)  -> motor 2 moving reverse at 50% power
-SetMotor2(1)     -> motor 2 moving forward at 100% power
-        """
-#       print('SetMotor2() power: {}'.format(power))
-        if power < 0:
-            # Reverse
-            command = COMMAND_SET_B_REV
-            pwm = -int(PWM_MAX * power)
-            if pwm > PWM_MAX:
-                pwm = PWM_MAX
-        else:
-            # Forward / stopped
-            command = COMMAND_SET_B_FWD
-            pwm = int(PWM_MAX * power)
-            if pwm > PWM_MAX:
-                pwm = PWM_MAX
-
-        try:
-            self.RawWrite(command, [pwm])
-        except KeyboardInterrupt:
-            raise
-        except:
-            self.Print('Failed sending motor 2 drive level!')
-
-
-    def GetMotor2(self):
-        """
-power = GetMotor2()
-
-Gets the drive level for motor 2, from +1 to -1.
-e.g.
-0     -> motor 2 is stopped
-0.75  -> motor 2 moving forward at 75% power
--0.5  -> motor 2 moving reverse at 50% power
-1     -> motor 2 moving forward at 100% power
-        """
-        try:
-            i2cRecv = self.RawRead(COMMAND_GET_B, I2C_MAX_LEN)
-        except KeyboardInterrupt:
-            raise
-        except:
-#           self.Print('Failed reading motor 2 drive level!')
-            self._log.debug('failed reading motor 2 drive level.')
-            return None
-
-        power = float(i2cRecv[2]) / float(PWM_MAX)
-
-        if i2cRecv[1] == COMMAND_VALUE_FWD:
-            return power
-        elif i2cRecv[1] == COMMAND_VALUE_REV:
-            return -power
-        else:
-            return
-
-
-    def SetMotor1(self, power):
-        """
-SetMotor1(power)
-
-Sets the drive level for motor 1, from +1 to -1.
-e.g.
-SetMotor1(0)     -> motor 1 is stopped
-SetMotor1(0.75)  -> motor 1 moving forward at 75% power
-SetMotor1(-0.5)  -> motor 1 moving reverse at 50% power
-SetMotor1(1)     -> motor 1 moving forward at 100% power
-        """
-#       print('SetMotor1() power: {}'.format(power))
-        if power < 0:
-            # Reverse
-            command = COMMAND_SET_A_REV
-            pwm = -int(PWM_MAX * power)
-            if pwm > PWM_MAX:
-                pwm = PWM_MAX
-        else:
-            # Forward / stopped
-            command = COMMAND_SET_A_FWD
-            pwm = int(PWM_MAX * power)
-            if pwm > PWM_MAX:
-                pwm = PWM_MAX
-
-        try:
-            self.RawWrite(command, [pwm])
-        except KeyboardInterrupt:
-            raise
-        except:
-            self.Print('Failed sending motor 1 drive level!')
-
-
-    def GetMotor1(self):
-        """
-power = GetMotor1()
-
-Gets the drive level for motor 1, from +1 to -1.
-e.g.
-0     -> motor 1 is stopped
-0.75  -> motor 1 moving forward at 75% power
--0.5  -> motor 1 moving reverse at 50% power
-1     -> motor 1 moving forward at 100% power
-        """
-        try:
-            i2cRecv = self.RawRead(COMMAND_GET_A, I2C_MAX_LEN)
-        except KeyboardInterrupt:
-            raise
-        except:
-#           self.Print('Failed reading motor 1 drive level!')
-            self._log.debug('failed reading motor 1 drive level.')
-            return None
-
-        power = float(i2cRecv[2]) / float(PWM_MAX)
-
-        if i2cRecv[1] == COMMAND_VALUE_FWD:
-            return power
-        elif i2cRecv[1] == COMMAND_VALUE_REV:
-            return -power
-        else:
-            return
+    # Motors  ¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿
 
 
     def SetMotors(self, power):
@@ -500,29 +384,6 @@ SetMotors(1)     -> all motors are moving forward at 100% power
         except:
             self.Print('Failed sending all motors drive level!')
 
-    # ..........................................................................
-    # bespoke (not part of ThunderBorg code)
-
-    def SetMotor1Off(self):
-        try:
-            command = COMMAND_SET_A_FWD
-            self.RawWrite(command, [0])
-        except KeyboardInterrupt:
-            raise
-        except:
-            self.Print('Failed zeroing motor 1 drive level!')
-
-    def SetMotor2Off(self):
-        try:
-            command = COMMAND_SET_B_FWD
-            self.RawWrite(command, [0])
-        except KeyboardInterrupt:
-            raise
-        except:
-            self.Print('Failed zeroing motor 2 drive level!')
-
-    # ..........................................................................
-
 
     def MotorsOff(self):
         """
@@ -536,6 +397,169 @@ Sets all motors to stopped, useful when ending a program
             raise
         except:
             self.Print('Failed sending motors off command!')
+
+
+    # Motor 1 ¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿
+
+
+    def SetMotor1(self, power):
+        """
+SetMotor1(power)
+
+Sets the drive level for motor 1, from +1 to -1.
+e.g.
+SetMotor1(0)     -> motor 1 is stopped
+SetMotor1(0.75)  -> motor 1 moving forward at 75% power
+SetMotor1(-0.5)  -> motor 1 moving reverse at 50% power
+SetMotor1(1)     -> motor 1 moving forward at 100% power
+        """
+#       print('SetMotor1() power: {}'.format(power))
+        if power < 0:
+            # Reverse
+            command = COMMAND_SET_A_REV
+            pwm = -int(PWM_MAX * power)
+            if pwm > PWM_MAX:
+                pwm = PWM_MAX
+        else:
+            # Forward / stopped
+            command = COMMAND_SET_A_FWD
+            pwm = int(PWM_MAX * power)
+            if pwm > PWM_MAX:
+                pwm = PWM_MAX
+
+#       self._log.info(Fore.RED + 'SetMotor1({}).'.format(power))
+        try:
+            self.RawWrite(command, [pwm])
+        except KeyboardInterrupt:
+            raise
+        except:
+            self.Print('Failed sending motor 1 drive level!')
+
+
+    def SetMotor1Off(self):
+        '''
+        Bespoke method (not part of ThunderBorg API code).
+        '''
+        try:
+            command = COMMAND_SET_A_FWD
+            self.RawWrite(command, [0])
+        except KeyboardInterrupt:
+            raise
+        except:
+            self.Print('Failed zeroing motor 1 drive level!')
+
+
+    def GetMotor1(self):
+        """
+power = GetMotor1()
+
+Gets the drive level for motor 1, from +1 to -1.
+e.g.
+0     -> motor 1 is stopped
+0.75  -> motor 1 moving forward at 75% power
+-0.5  -> motor 1 moving reverse at 50% power
+1     -> motor 1 moving forward at 100% power
+        """
+        try:
+            i2cRecv = self.RawRead(COMMAND_GET_A, I2C_MAX_LEN)
+        except KeyboardInterrupt:
+            raise
+        except:
+#           self.Print('Failed reading motor 1 drive level!')
+            self._log.debug('failed reading motor 1 drive level.')
+            return None
+
+        power = float(i2cRecv[2]) / float(PWM_MAX)
+
+        if i2cRecv[1] == COMMAND_VALUE_FWD:
+            return power
+        elif i2cRecv[1] == COMMAND_VALUE_REV:
+            return -power
+        else:
+            return
+
+
+    # Motor 2 ¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿
+
+
+    def SetMotor2(self, power):
+        """
+SetMotor2(power)
+
+Sets the drive level for motor 2, from +1 to -1.
+e.g.
+SetMotor2(0)     -> motor 2 is stopped
+SetMotor2(0.75)  -> motor 2 moving forward at 75% power
+SetMotor2(-0.5)  -> motor 2 moving reverse at 50% power
+SetMotor2(1)     -> motor 2 moving forward at 100% power
+        """
+#       print('SetMotor2() power: {}'.format(power))
+        if power < 0:
+            # Reverse
+            command = COMMAND_SET_B_REV
+            pwm = -int(PWM_MAX * power)
+            if pwm > PWM_MAX:
+                pwm = PWM_MAX
+        else:
+            # Forward / stopped
+            command = COMMAND_SET_B_FWD
+            pwm = int(PWM_MAX * power)
+            if pwm > PWM_MAX:
+                pwm = PWM_MAX
+
+#       self._log.info(Fore.GREEN + 'SetMotor2({}).'.format(power))
+        try:
+            self.RawWrite(command, [pwm])
+        except KeyboardInterrupt:
+            raise
+        except:
+            self.Print('Failed sending motor 2 drive level!')
+
+
+    def SetMotor2Off(self):
+        '''
+        Bespoke method (not part of ThunderBorg API code).
+        '''
+        try:
+            command = COMMAND_SET_B_FWD
+            self.RawWrite(command, [0])
+        except KeyboardInterrupt:
+            raise
+        except:
+            self.Print('Failed zeroing motor 2 drive level!')
+
+
+    def GetMotor2(self):
+        """
+power = GetMotor2()
+
+Gets the drive level for motor 2, from +1 to -1.
+e.g.
+0     -> motor 2 is stopped
+0.75  -> motor 2 moving forward at 75% power
+-0.5  -> motor 2 moving reverse at 50% power
+1     -> motor 2 moving forward at 100% power
+        """
+        try:
+            i2cRecv = self.RawRead(COMMAND_GET_B, I2C_MAX_LEN)
+        except KeyboardInterrupt:
+            raise
+        except:
+#           self.Print('Failed reading motor 2 drive level!')
+            self._log.debug('failed reading motor 2 drive level.')
+            return None
+
+        power = float(i2cRecv[2]) / float(PWM_MAX)
+
+        if i2cRecv[1] == COMMAND_VALUE_FWD:
+            return power
+        elif i2cRecv[1] == COMMAND_VALUE_REV:
+            return -power
+        else:
+            return
+
+
+    # LEDs ¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿
 
 
     def SetLed1(self, r, g, b):
@@ -685,7 +709,7 @@ state = GetLedShowBattery()
 Gets if the system is using the LEDs to show the current battery level, true for enabled, false for disabled
 If enabled the LED colours will be ignored and will use the current battery reading instead
 This sweeps from fully green for maximum voltage (35 V) to fully red for minimum voltage (7 V)
-        """ 
+        """
         try:
             i2cRecv = self.RawRead(COMMAND_GET_LED_BATT_MON, I2C_MAX_LEN)
         except KeyboardInterrupt:
@@ -698,6 +722,9 @@ This sweeps from fully green for maximum voltage (35 V) to fully red for minimum
             return False
         else:
             return True
+
+
+    # ¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿
 
 
     def SetCommsFailsafe(self, state):
@@ -728,7 +755,7 @@ state = GetCommsFailsafe()
 
 Read the current system state of the communications failsafe, True for enabled, False for disabled
 The failsafe will turn the motors off unless it is commanded at least once every 1/4 of a second
-        """ 
+        """
         try:
             i2cRecv = self.RawRead(COMMAND_GET_FAILSAFE, I2C_MAX_LEN)
         except KeyboardInterrupt:
@@ -761,7 +788,7 @@ Faults will self-clear, they do not need to be reset, however some faults requir
 The easiest way to check is to put both motors at a low power setting which is high enough for them to rotate easily, such as 30%
 Note that the fault state may be true at power up, this is normal and should clear when both motors have been driven
 For more details check the website at www.piborg.org/thunderborg and double check the wiring instructions
-        """ 
+        """
         try:
             i2cRecv = self.RawRead(COMMAND_GET_DRIVE_A_FAULT, I2C_MAX_LEN)
         except KeyboardInterrupt:
@@ -794,7 +821,7 @@ Faults will self-clear, they do not need to be reset, however some faults requir
 The easiest way to check is to put both motors at a low power setting which is high enough for them to rotate easily, such as 30%
 Note that the fault state may be true at power up, this is normal and should clear when both motors have been driven
 For more details check the website at www.piborg.org/thunderborg and double check the wiring instructions
-        """ 
+        """
         try:
             i2cRecv = self.RawRead(COMMAND_GET_DRIVE_B_FAULT, I2C_MAX_LEN)
         except KeyboardInterrupt:
@@ -815,7 +842,7 @@ voltage = GetBatteryReading()
 
 Reads the current battery level from the main input.
 Returns the value as a voltage based on the 3.3 V rail as a reference.
-        """ 
+        """
         try:
             i2cRecv = self.RawRead(COMMAND_GET_BATT_VOLT, I2C_MAX_LEN)
         except KeyboardInterrupt:
@@ -860,7 +887,7 @@ minimum, maximum = GetBatteryMonitoringLimits()
 Reads the current battery monitoring limits used for setting the LED colour.
 The values are between 0 and 36.3 V.
 The colours shown range from full red at minimum or below, yellow half way, and full green at maximum or higher.
-        """ 
+        """
         try:
             i2cRecv = self.RawRead(COMMAND_GET_BATT_LIMITS, I2C_MAX_LEN)
         except KeyboardInterrupt:

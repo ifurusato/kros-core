@@ -132,7 +132,6 @@ class PIDController(Component):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def set_velocity(self, target_velocity):
-
         if self.enabled:
             self._pid.setpoint = target_velocity
             _velocity = self._motor.velocity
@@ -144,7 +143,7 @@ class PIDController(Component):
 #           _mean_setpoint = self._get_mean_setpoint(self._pid.setpoint)
 #           if _mean_setpoint == 0.0:
 #               self._log.info(Fore.WHITE + Style.DIM + 'set power for {} motor: {:<5.2f} (pid output: {:5.2f})'.format(self._orientation.label, _motor_power, _pid_output))
-#               self._motor.set_motor_power(0.0)
+#               self._motor. set_motor_power(0.0)
 #           else:
 #           self._log.info(Fore.WHITE + Style.BRIGHT + 'set {} motor;\n    velocity: {:5.2f}; targetv : {:5.2f}; PID setpoint: {:5.2f}; motor power: {:<5.2f} (self._power: {:5.2f}; pid output: {:5.2f})'.format(
 #                   self._orientation.label, _velocity, target_velocity, self._pid.setpoint, _motor_power, self._power, _pid_output))

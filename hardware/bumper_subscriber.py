@@ -91,6 +91,16 @@ class BumperSubscriber(Subscriber):
         self._log.info('arbitrated payload for event {}; value: {}'.format(message.payload.event.name, message.payload.value))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def get_current_target_velocities(self):
+        '''
+        Return a tuple containing the current target velocities of the port
+        and starboard motors.
+        '''
+        _port_target_velocity = self._motor_ctrl.get_motor(Orientation.PORT).target_velocity
+        _stbd_target_velocity = self._motor_ctrl.get_motor(Orientation.STBD).target_velocity
+        return ( _port_target_velocity, _stbd_target_velocity )
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def process_message(self, message):
         '''
         Process the message. This gets a bit programmatic, as we here define
@@ -149,8 +159,11 @@ class BumperSubscriber(Subscriber):
         '''
         if self._motor_ctrl.is_moving_ahead:
             self._log.info(Fore.BLUE + '😝 responding to CNTR bumper: emergency stop...')
+            # capture current target velocities and include in message payload
+            _velocities = self.get_current_target_velocities()
             self._motor_ctrl.emergency_stop()
-            self._queue_publisher.put(self._message_factory.create_message(Event.AVOID, Orientation.CNTR))
+#           self._queue_publisher.put(self._message_factory.create_message(Event.AVOID, ( Orientation.CNTR, _velocities )))
+            self._queue_publisher.put(self._message_factory.create_message(Event.AVOID, _velocities))
         else:
             self._log.warning('😝 CNTR bumper triggered but robot does not appear to be moving forward.')
 

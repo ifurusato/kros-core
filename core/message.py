@@ -20,6 +20,7 @@ from colorama import init, Fore, Style
 init()
 
 from core.logger import Logger, Level
+from core.stringbuilder import StringBuilder
 from core.event import Event
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -128,7 +129,7 @@ class Message(object):
     def sent(self):
         '''
         Returns the number of times this message's payload has been sent to
-        the Arbitrator. 
+        the Arbitrator.
 
         A special case: if a Message returns -1 it effectively means that it
         never expires.
@@ -167,6 +168,29 @@ class Message(object):
             raise Exception('message {} already processed by {}.'.format(self.name, processor.name))
         else:
             self._processors[processor] = True
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def __hash__(self):
+        return hash((self._timestamp, self._message_id, self._instance_name, self._sent, self._expired, self._gc, self._payload))
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def __eq__(self, other):
+        return isinstance(other, Message) and self.__hash__() == other.__hash__()
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def __str__(self):
+        _sb = StringBuilder('Message[', indent=2, delim='\n')
+        _sb.append('id={}'.format(id(self)))
+        _sb.append('hash={}'.format(hash(self)))
+        _sb.append('name={}'.format(self.name))
+        _sb.append('timestamp={}'.format(self.timestamp))
+        _sb.append('message id={}'.format(self.message_id))
+        _sb.append('sent={}'.format(self.sent))
+        _sb.append('expired={}'.format(self.expired))
+        _sb.append('gcd={}'.format(self.gcd))
+        _sb.append('payload={}'.format(self.payload))
+        _sb.append(']', indent=0, delim=StringBuilder.NONE)
+        return _sb.to_string()
 
     # garbage collection ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
@@ -273,11 +297,25 @@ class Payload(object):
     def value(self, value):
         self._value = value
 
-    # equals ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def __hash__(self):
+        return hash((self._event, self._value))
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def __eq__(self, other):
-        if other is None:
-            return False
-        return self.event == other.event and self.value == other.value
+        return isinstance(other, Payload) and self.__hash__() == other.__hash__()
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def __str__(self):
+        _sb = StringBuilder('Payload[', indent=6, delim='\n')
+        _sb.append('id={}'.format(id(self)))
+        _sb.append('hash={}'.format(hash(self)))
+        _sb.append('priority={}'.format(self.priority))
+        _sb.append('event={}'.format(self.event))
+        _sb.append('value type={}'.format(type(self.value)))
+        _sb.append('value={}'.format(self.value))
+        _sb.append(']', indent=4, delim=StringBuilder.NONE)
+        return _sb.to_string()
 
     # not equals ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 #  def __ne__(self, other):

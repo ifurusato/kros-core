@@ -28,6 +28,7 @@ from core.direction import Direction
 from core.speed import Speed
 from core.event import Event
 from core.rate import Rate
+from core.message import Message, Payload
 from core.message_bus import MessageBus
 from hardware.motor_configurer import MotorConfigurer
 from hardware.slew import SlewRate
@@ -83,7 +84,7 @@ class MotorController(Component):
         self._slew_limiter_enabled = config['kros'].get('motor').get('enable_slew_limiter')
         _cfg = config['kros'].get('motor').get('motor_controller')
         self._verbose              = _cfg.get('verbose')
-        self._loop_freq_hz        = _cfg.get('loop_freq_hz')      # main loop frequency
+        self._loop_freq_hz         = _cfg.get('loop_freq_hz')      # main loop frequency
         self._loop_delay_sec       = 1 / self._loop_freq_hz 
         self._log.info('loop frequency:\t{}Hz ({:4.2f}s)'.format(self._loop_freq_hz, self._loop_delay_sec))
         self._rate                 = Rate(self._loop_freq_hz, Level.ERROR)
@@ -281,8 +282,11 @@ class MotorController(Component):
         if not self.enabled:
             self._log.warning('disabled: ignoring velocity dispatch.')
             return
+        if not isinstance(payload, Payload):
+            raise TypeError('expected Payload, not {}'.format(type(payload)))
         if reset_slew:
             self._reset_slew_rate()
+        self._log.info('🐢 A. set velocity; payload type {}; payload: {}'.format(type(payload), payload))
         _event = payload.event
 #       self._log.debug('dispatch velocity event: {}'.format(_event.label))
         _value = payload.value
@@ -290,6 +294,8 @@ class MotorController(Component):
         if not self.loop_is_running:
             self.start_loop()
         if _event is Event.VELOCITY:
+            self._log.info('🐢 B. set velocity; payload value type {}; value: {}'.format(type(_value), _value))
+            # FIXME the values coming in are 20.0, 20.0, not what's perhaps expected?
             if _changed:
                 self._log.info('set velocity;\t'
                         + Fore.RED + 'port: {:5.2f} / {:5.2f}; '.format(_value, self._port_motor.velocity)
@@ -487,7 +493,6 @@ class MotorController(Component):
         elif _event is Event.INFRARED_SSID:
             self._log.info('INFRARED STBD SIDE.')
 #           self._brake()
-
         else:
             raise ValueError('unrecognised infrared event {}'.format(_event.label))
 
@@ -502,7 +507,6 @@ class MotorController(Component):
             return self._stbd_motor
         else:
             raise Exception('expected PORT or STBD orientation.')
-        pass
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def set_motor_velocity(self, orientation, target_velocity):
@@ -589,7 +593,7 @@ class MotorController(Component):
         # suppress any behaviours
 #       self._suppress_behaviours()
         # now stop very fast
-        self._set_slew_rate(self._emergency_slew_rate)
+#       self._set_slew_rate(self._emergency_slew_rate)
         self._port_motor.target_velocity = 0.0
         self._stbd_motor.target_velocity = 0.0
         # we rely on this ultimately

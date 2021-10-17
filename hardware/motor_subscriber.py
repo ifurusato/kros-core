@@ -64,6 +64,7 @@ class MotorSubscriber(Subscriber):
         if _event.group is Group.STOP:
             self._motor_ctrl.dispatch_stop_event(message.payload)
         elif _event.group is Group.VELOCITY:
+            self._log.info('🙅 dispatching velocity event message...')
             self._motor_ctrl.dispatch_velocity_event(message.payload)
         elif _event.group is Group.THETA:
             self._motor_ctrl.dispatch_theta_event(message.payload)

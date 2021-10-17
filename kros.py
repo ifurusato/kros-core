@@ -228,7 +228,7 @@ class KROS(Component, FiniteStateMachine):
             self._queue_publisher = QueuePublisher(self._config, self._message_bus, self._message_factory, self._level)
         if _cfg.get('enable_macro_publisher') or 'm' in _pubs:
             _callback = None
-            self._macro_publisher = MacroPublisher(self._config, self._message_bus, self._message_factory, _callback, self._level)
+            self._macro_publisher = MacroPublisher(self._config, self._message_bus, self._message_factory, self._queue_publisher, _callback, self._level)
 
         _enable_ifs_publisher = _cfg.get('enable_ifs_publisher') or 'i' in _pubs
         if _enable_ifs_publisher:
@@ -284,7 +284,7 @@ class KROS(Component, FiniteStateMachine):
         if _cfg.get('enable_macro_subscriber'):
             if not self._macro_publisher:
                 raise ConfigurationError('macro subscriber requires macro publisher.')
-            self._macro_subscriber = MacroSubscriber(self._config, self._message_bus, self._macro_publisher, self._level)
+            self._macro_subscriber = MacroSubscriber(self._config, self._message_bus, self._message_factory, self._macro_publisher, self._level)
         # and finally, the garbage collector:
         self._garbage_collector   = GarbageCollector(self._config, self._message_bus, level=self._level)
 

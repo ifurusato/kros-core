@@ -43,16 +43,22 @@ if _kros:
             # come to a halt for 2 seconds
             _macro.add_event(Event.HALT, 1000)
             _macro.add_event(Event.STOP, 50)
-            # print an emoji to the KROS log console via a lambda function
-            _func = lambda: globals.get('kros').get_logger().info('😥 Done!')
-            _macro.add_function(_func, 1)
+
+            # notify on completion of macro via a lambda function
+            _func1 = lambda: globals.get('kros').get_macro_publisher().on_completion('😃 COMPLETE!')
+            _macro.add_function(_func1)
+
+            # print an emoji to the KROS log console
+            _func2 = lambda: globals.get('kros').get_logger().info('💀 Done!')
+            _macro.add_function(_func2)
+
             _log.info('loaded.')
 
         else:
-            _log.error('macro processor not available..')
+            _log.error('😥 macro processor not available..')
 
     except Exception as e:
-        _log.error('{} encountered, exiting: {}'.format(type(e), e))
+        _log.error('😨 {} encountered, exiting: {}'.format(type(e), e))
         traceback.print_exc(file=sys.stdout)
     finally:
         pass

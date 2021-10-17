@@ -34,13 +34,15 @@ class MacroSubscriber(Subscriber):
 
     :param config:            the application configuration
     :param message_bus:       the message bus
+    :param message_factory:   the message factory, used to create a completion message
     :param macro_publisher:   the macro publisher/processor
     :param level:             the logging level
     '''
-    def __init__(self, config, message_bus, macro_publisher, level=Level.INFO):
+    def __init__(self, config, message_bus, message_factory, macro_publisher, level=Level.INFO):
         Subscriber.__init__(self, MacroSubscriber.CLASS_NAME, config, message_bus=message_bus, suppressed=False, enabled=False, level=level)
         if not isinstance(macro_publisher, MacroPublisher):
             raise ValueError('wrong type for macro_publisher argument: {}'.format(type(macro_publisher)))
+        self._message_factory = message_factory
         self._macro_publisher = macro_publisher
         self.add_events([ Event.by_group(Group.MACRO), Event.AVOID ])
 #       self.add_events([ Event.by_group(Group.MACRO), Event.by_group(Group.BEHAVIOUR) ])
@@ -78,15 +80,16 @@ class MacroSubscriber(Subscriber):
             _name = _event.label
             self._log.info('🐹 processing acceptable message {} with macro name: '.format(message.name) + Fore.YELLOW + '{}'.format(_name))
             _value = message.payload.value
-            self._log.info('🐻 name {}; '.format(_value)) # TODO react differently depending on which bumper
-            self._macro_publisher.queue_macro_by_name(_name)
+            self._log.info('🎃 name {}; '.format(_value)) # TODO react differently depending on which bumper
+            # TODO permit passing a Message as a value so we don't need to create one here...
+            # add a VELOCITY completion message as a payload
+            _message = self._message_factory.create_message(Event.VELOCITY, _value)
+            self._macro_publisher.queue_macro_by_name(_name, _message)
+#           self._macro_publisher.queue_macro_by_name(_name, message.payload)
 #           self._macro_publisher.queue_event(message.payload)
         else:
             self._log.warning('unrecognised infrared event on message {}'.format(message.name) + ''.format(_event.label))
         await Subscriber.process_message(self, message)
         self._log.debug('post-processing message {}'.format(message.name))
-
-
-
 
 #EOF

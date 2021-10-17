@@ -16,14 +16,14 @@ kros:
     component:                                   # enable specific publish/subscribe components
         enable_killswitch:            True       # kill switch
         enable_behaviours:            True       # enable BehaviourManager (Behaviours enabled individually)
-        enable_experimental:          True       # enable ExperimentManager and load any Experiments
+        enable_experimental:         False       # enable ExperimentManager and load any Experiments
         # publishers .............................
-        enable_ifs_publisher:        False       # enable Integrated Front Sensor publisher
+        enable_ifs_publisher:         True       # enable Integrated Front Sensor publisher
         enable_ext_bumper_publisher: False       # enable External Bumper Publisher, or:
         enable_mcu_bumper_publisher:  True       #   enable MCU+UART Bumper Publisher, or:
         enable_bumper_publisher:     False       #   enable standard GPIO Bumper publisher
         enable_event_publisher:       True       # keyboard robot simulator (required for running CLI)
-        enable_battery_publisher:    False       # battery check publisher
+        enable_battery_publisher:     True       # battery check publisher
         enable_velocity_publisher:   False       # velocity control potentiometer publisher
         enable_queue_publisher:       True       # publishes from globally-available queue
         enable_macro_publisher:       True       # macro processor/publisher (loads external macro scripts)
@@ -36,9 +36,9 @@ kros:
         enable_rgb_subscriber:        True       # display on RGB matrix
         enable_macro_subscriber:      True       # macro subscriber
     behaviour:
-        enable_avoid_behaviour:      False       # enable avoidance behaviour
+        enable_avoid_behaviour:       True       # enable avoidance behaviour
         enable_roam_behaviour:       False       # enable roam behaviour
-        enable_swerve_behaviour:      True       # enable swerve behaviour
+        enable_swerve_behaviour:     False       # enable swerve behaviour
         enable_moth_behaviour:       False       # enable moth behaviour
         enable_sniff_behaviour:      False       # enable sniff behaviour
         enable_idle_behaviour:       False       # enable idle behaviour
@@ -133,9 +133,9 @@ kros:
             loop_freq_hz:            20          # main loop delay in hz
             accel_increment:          5.0        # normal incremental acceleration
             decel_increment:          5.0        # normal incremental deceleration
-            halt_rate:         'VERY_FAST'       # slew rate for quick halt behaviour
+            halt_rate:            'FASTER'       # slew rate for quick halt behaviour
             brake_rate:           'NORMAL'       # slew rate for slower braking behaviour
-            spin_speed:             'MAXIMUM'       # motor speed when spinning
+            spin_speed:          'MAXIMUM'       # motor speed when spinning
             verbose:                False        # noisy messaging
         odometry:
             enable_odometry:         True        # if true we enable motor encoders and odometry
@@ -157,7 +157,7 @@ kros:
         slew_limiter:
             minimum_output:         -90.0        # lower limit of permitted velocity output values
             maximum_output:          90.0        # upper limit of permitted velocity output values
-            default_rate:      'VERY_FAST'       # select value of enum: EXTREMELY_SLOW, VERY_SLOW, SLOWER, SLOW, NORMAL, FAST, VERY_FAST
+            default_rate:        'FASTER'       # select value of enum: SLOWEST, SLOWER, SLOW, NORMAL, FAST, FASTER, FASTEST
             hysteresis:               2.0        # how close do we get to the target velocity?
             use_elapsed_time:        True        # used elapsed time or percentage
         jerk_limiter:
@@ -256,9 +256,9 @@ kros:
         mcu_bumper:
             loop_freq_hz:            20          # polling loop frequency (Hz)
         queue:
-            loop_freq_hz:            10          # polling loop frequency (Hz)
+            loop_freq_hz:            20          # polling loop frequency (Hz)
         macro:
-            loop_freq_hz:            10          # polling loop frequency (Hz)
+            loop_freq_hz:            20          # polling loop frequency (Hz)
             quiescent_loop_freq_hz:   5          # quiescent loop frequency (Hz)
             wait_limit_ms:         5000          # the longest we will ever wait for anything (because we are impatient)
             macro_path:         'macro'          # the location of the macros to load on startup

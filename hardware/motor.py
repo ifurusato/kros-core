@@ -169,7 +169,7 @@ class Motor(Component):
 
         This is a function that alters the target velocity as a multiplier.
         '''
-        self._log.info(Fore.MAGENTA + 'adding \'{}\' lambda to motor;\t'.format(name) + ' type: {}'.format(type(lambda_function)))
+        self._log.info(Fore.MAGENTA + '♈ adding \'{}\' lambda to motor;\t'.format(name) + ' type: {}'.format(type(lambda_function)))
         if name in self.__velocity_lambdas:
             self._log.warning('motor already contains a \'{}\' lambda.'.format(name))
         self.__velocity_lambdas[name] = lambda_function
@@ -382,23 +382,16 @@ class Motor(Component):
             if self._pid_controller.is_active: # via PID
                 self._pid_controller.set_velocity(_current_target_velocity)
             else: # via Speed
-                _power = Speed.get_proportional_power(_current_target_velocity)
-                self.__set_motor_power(_power)
+#               _power = Speed.get_proportional_power(_current_target_velocity)
+#               self.set_motor_power(_power)
+                raise Exception('unsupported direct speed control of motor.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def set_motor_power(self, target_power):
         '''
         Direct-drive the motor via a target power argument, whose value must be
-        between -1.0 and 1.0.
-        '''
-        self.__set_motor_power(target_power)
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def __set_motor_power(self, target_power):
-        '''
-        Sets the motor power to a number between -1.0 to 1.0, with the actual
-        limits set by the max_power_ratio, which alters the value to match
-        the power/motor voltage ratio.
+        between -1.0 and 1.0, with the actual limits set by the max_power_ratio,
+        which alters the value to match the power/motor voltage ratio.
 
         If the JerkLimiter is active this acts as a sanity check on
         overly-rapid changes to motor power.
@@ -407,30 +400,31 @@ class Motor(Component):
         '''
         if target_power is None:
             raise ValueError('null target_power argument.')
-        elif ( not self.enabled ) and target_power > 0.0: # though we'll let the power be set to zero
+        elif not self.enabled and target_power > 0.0: # though we'll let the power be set to zero
             self._log.warning('motor enabled {}, ignoring setting of {:<5.2f}'.format(self.enabled, target_power))
             return
-        _current_power = self.current_power
+#       _current_power = self.current_power
         # even if disabled or suppressed, JerkLimiter still clips
-        if self._jerk_limiter:
-            target_power = self._jerk_limiter.limit(self.current_power, target_power)
+#       if self._jerk_limiter:
+#           target_power = self._jerk_limiter.limit(self.current_power, target_power)
         # keep track of highest-applied target power
-        self.__max_applied_power = max(abs(target_power), self.__max_applied_power)
+#       self.__max_applied_power = max(abs(target_power), self.__max_applied_power)
 
         # okay, let's go .........................
         # driving power is modified by the max power ratio to reduce battery voltage to motor voltage
-        _raw_driving_power = float(target_power * self.max_power_ratio)
+#       _raw_driving_power = float(target_power * self.max_power_ratio)
         # temporary, just for safety
-        _driving_power = self._power_clip(_raw_driving_power)
-        if self._orientation is Orientation.PORT:
-#           self._log.debug('power: target {:5.2f} converted to driving {:<5.2f} clipped to: {:5.2f}'.format(target_power, _raw_driving_power, _driving_power))
-            self._tb.SetMotor1(_driving_power)
-            pass
-        else:
-#           self._log.debug('power: target {:5.2f} converted to driving {:<5.2f} clipped to: {:5.2f}'.format(target_power, _raw_driving_power, _driving_power))
-            self._tb.SetMotor2(_driving_power)
-            pass
-        self._last_driving_power = _driving_power
+#       _driving_power = self._power_clip(float(target_power * self.max_power_ratio))
+#       _driving_power = self._power_clip(_raw_driving_power)
+        _driving_power = round(self._power_clip(float(target_power * self.max_power_ratio)), 4) # round to 4 decimal
+        if self._last_driving_power != _driving_power:
+            if self._orientation is Orientation.PORT:
+#               self._log.debug('power: target {:5.2f} converted to driving {:<5.2f} clipped to: {:5.2f}'.format(target_power, _raw_driving_power, _driving_power))
+                self._tb.SetMotor1(_driving_power)
+            else:
+#               self._log.debug('power: target {:5.2f} converted to driving {:<5.2f} clipped to: {:5.2f}'.format(target_power, _raw_driving_power, _driving_power))
+                self._tb.SetMotor2(_driving_power)
+            self._last_driving_power = _driving_power
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
