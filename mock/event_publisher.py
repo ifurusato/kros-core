@@ -27,7 +27,6 @@ from core.logger import Logger, Level
 from core.event import Event
 from core.util import Util
 from core.publisher import Publisher
-from hardware.gamepad import GamepadConnectException
 from mock.mock_gamepad import MockGamepad
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -170,7 +169,7 @@ class EventPublisher(Publisher):
                 self._log.error('gamepad missing supporting library: {}'.format(e))
                 self._gamepad = None
 #               self._gamepad_released = False
-            except GamepadConnectException as e:
+            except ConnectionError as e:
                 self._log.error('unable to connect to gamepad.')
 #               self._log.error('unable to connect to gamepad: {}'.format(e))
                 self._gamepad = None

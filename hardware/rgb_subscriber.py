@@ -27,7 +27,7 @@ from hardware.motor_controller import MotorController
 try:
     from rgbmatrix5x5 import RGBMatrix5x5
 except ImportError:
-    from mock.rgbmatrix5x5 import MockRGBMatrix5x5 as RGBMatrix5x5
+    from mock.rgbmatrix5x5 import MockRGBMatrix5x5
 #   print(Fore.RED + 'This script requires the rgbmatrix5x5 module. Some features will be disabled.\n'
 #           + 'Install with: sudo pip3 install rgbmatrix5x5')
 
@@ -51,12 +51,13 @@ class RgbSubscriber(Subscriber):
             self._stbd_rgbmatrix.set_clear_on_exit()
             self._height = self._stbd_rgbmatrix.height
             self._width  = self._stbd_rgbmatrix.width
+            self._log.info('using rgbmatrix display.')
         else:
-            self._stbd_rgbmatrix = None
-            self._stbd_rgbmatrix = RGBMatrix5x5(address=0x74)
+            self._log.warning('no rgbmatrix display found; using mock...')
+            self._stbd_rgbmatrix = MockRGBMatrix5x5(address=0x74)
+#           self._stbd_rgbmatrix = None
             self._height = 5
             self._width  = 5
-            self._log.warning('test ignored: no rgbmatrix displays found.')
         self.add_event(Event.RGB)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈

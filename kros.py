@@ -64,8 +64,8 @@ from mock.event_publisher import EventPublisher
 from mock.external_clock import MockExternalClock
 from mock.velocity_publisher import VelocityPublisher
 from mock.mock_pot_publisher import MockPotPublisher
-from hardware.gamepad_publisher import GamepadPublisher
 #from hardware.gamepad_controller import GamepadController
+#from hardware.gamepad_publisher import GamepadPublisher # lazily-imported
 
 from behave.behaviour_manager import BehaviourManager
 from behave.avoid import Avoid
@@ -262,7 +262,11 @@ class KROS(Component, FiniteStateMachine):
             self._battery = BatteryCheck(self._config, self._message_bus, self._message_factory, self._level)
     #   _message_bus.print_publishers()
         if _cfg.get('enable_gamepad_publisher') or 'g' in _pubs:
-            self._gamepad_pub = GamepadPublisher(self._config, self._message_bus, self._message_factory, self._level)
+            try:
+                from hardware.gamepad_publisher import GamepadPublisher
+                self._gamepad_pub = GamepadPublisher(self._config, self._message_bus, self._message_factory, self._level)
+            except Exception as e:
+                self._log.error('unable to import GamepadePublisher: {}'.format(e))
 
         _enable_killswitch= _cfg.get('enable_killswitch') or 'k' in _pubs
         if _enable_killswitch and _pigpio_available:

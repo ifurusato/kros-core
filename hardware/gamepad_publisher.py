@@ -13,8 +13,6 @@
 # a paired Bluetooth device. This differs from GamepadDemo in that it simply
 # displays the Gamepad output signals. No motors, video, etc.
 #
-# GamepadConnectException at bottom.
-#
 
 import itertools, traceback
 import time # only used for connection
@@ -57,7 +55,7 @@ class GamepadPublisher(Publisher):
             try:
                 self._log.info('🎮 creating gamepad...')
                 self._gamepad = Gamepad(self._config, self._message_bus, self._message_factory, self._level)
-            except GamepadConnectException as e:
+            except ConnectionError as e:
                 self._log.error('unable to connect to gamepad: {}'.format(e))
                 self._gamepad = None
                 self._gamepad_enabled = False
@@ -250,12 +248,5 @@ class GamepadPublisher(Publisher):
 #            return Event.SHUTDOWN
 #        else:
 #            return None
-
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-class GamepadConnectException(Exception):
-    '''
-    Exception raised when unable to connect to Gamepad.
-    '''
-    pass
 
 #EOF

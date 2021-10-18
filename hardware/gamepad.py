@@ -12,7 +12,7 @@
 # This class interprets the signals arriving from the 8BitDo N30 Pro gamepad,
 # a paired Bluetooth device.
 #
-# GamepadControl, GamepadScan, and GamepadConnectException at bottom.
+# GamepadControl and GamepadScan bottom.
 #
 
 import os, sys, time, asyncio
@@ -120,7 +120,7 @@ class Gamepad():
         except Exception as e:
             self._enabled = False
             self._gamepad = None
-            raise GamepadConnectException('unable to connect to input device path {}: {}'.format(self._device_path, e))
+            raise ConnectionError('unable to connect to input device path {}: {}'.format(self._device_path, e))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def enable(self):
@@ -452,12 +452,5 @@ class GamepadScan(object):
         else:
             self._log.info(Style.BRIGHT + 'does not match:     {}'.format(_latest_device))
             return False
-
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-class GamepadConnectException(Exception):
-    '''
-    Exception raised when unable to connect to Gamepad.
-    '''
-    pass
 
 # EOF

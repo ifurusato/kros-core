@@ -54,8 +54,8 @@ class IfsPublisher(Publisher):
         self._group   = 0
         self._counter = itertools.count()
         _cfg = config['kros'].get('publisher').get('integrated_front_sensor')
-        _loop_freq_hz        = _cfg.get('loop_freq_hz')
-        self._log.info('😛 ifs publish loop frequency: {:d}Hz'.format(_loop_freq_hz))
+        _loop_freq_hz = _cfg.get('loop_freq_hz')
+        self._log.info('ifs publish loop frequency: {:d}Hz'.format(_loop_freq_hz))
         self._publish_delay_sec = 1.0 / _loop_freq_hz
         self._log.info('ready.')
 

@@ -39,13 +39,17 @@ class MockRGBMatrix5x5(Component):
         pass
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def set_all(self, red, green, blue):
-        self._log.info('RGB: ('
-                + Fore.RED + '{}'.format(red)
-                + Fore.CYAN + ', '
-                + Fore.GREEN + '{}'.format(green)
-                + Fore.CYAN + ', '
-                + Fore.BLUE + '{}'.format(blue)
-                + Fore.CYAN + ')')
+    def set_pixel(self, x, y, r, g, b, brightness=1.0):
+        self._log.info('set pixel ({},{}): '.format(x, y)
+            + Fore.RED   + '{}'.format(r) + Fore.CYAN + ', '
+            + Fore.GREEN + '{}'.format(g) + Fore.CYAN + ', '
+            + Fore.BLUE  + '{}'.format(b) + Fore.CYAN + ')')
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def set_all(self, r, g, b, brightness=1.0):
+        self._log.info('set all pixels: ('
+                + Fore.RED   + '{}'.format(r) + Fore.CYAN + ', '
+                + Fore.GREEN + '{}'.format(g) + Fore.CYAN + ', '
+                + Fore.BLUE  + '{}'.format(b) + Fore.CYAN + ')')
 
 #EOF

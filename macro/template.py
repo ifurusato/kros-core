@@ -25,6 +25,7 @@ _kros = globals.get('kros')
 if _kros:
     try:
         _template_log.info('found KROS! begin loading macro...')
+        _template_log.heading('Macro Template', 'A starter template for a macro.')
         _macro_publisher = _kros.get_macro_publisher()
         if _macro_publisher:
 
@@ -36,9 +37,12 @@ if _kros:
             _macro.add_event(Event.SLOW_AHEAD, 3000)
             # come to a halt for 2.5 seconds
             _macro.add_event(Event.HALT, 2500)
+
+            # notify on completion of macro via a lambda function and wait 50ms
+            _macro.add_function(lambda: globals.get('kros').get_macro_publisher().on_completion('😃 COMPLETE!'), 50)
+
             # print an emoji via a lambda function
-            _func = lambda: globals.get('kros').get_logger().info('🤣 Done!')
-            _macro.add_function(_func, 1000)
+            _macro.add_function(lambda: globals.get('kros').get_logger().info('🤣 Done!'))
             _template_log.info('loaded.')
 
         else:

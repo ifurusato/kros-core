@@ -29,6 +29,7 @@ if _kros:
     _start_time = dt.now()
     try:
         _test_log.info('found KROS! begin loading macro...')
+        _test_log.heading('Test Macro', 'Creates a randomly-timed sequence of events.')
 
         _macro_publisher = _kros.get_macro_publisher()
         if _macro_publisher:

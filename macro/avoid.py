@@ -19,12 +19,12 @@ from core.logger import Logger, Level
 from core.system import System
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-_log = Logger('avoid-macro', Level.ERROR)
+_avoid_log = Logger('avoid-macro', Level.ERROR)
 _kros = globals.get('kros')
 if _kros:
     try:
-        _log.info('found KROS! begin loading macro...')
-        _log.heading('Avoid Macro', 'An avoidance behaviour that backs away from an obstacle and turns.')
+        _avoid_log.info('found KROS! begin loading macro...')
+        _avoid_log.heading('Avoid Macro', 'An avoidance behaviour that backs away from an obstacle and turns.')
         _macro_publisher = _kros.get_macro_publisher()
         if _macro_publisher:
 
@@ -52,17 +52,17 @@ if _kros:
             _func2 = lambda: globals.get('kros').get_logger().info('💀 Done!')
             _macro.add_function(_func2)
 
-            _log.info('loaded.')
+            _avoid_log.info('loaded.')
 
         else:
-            _log.error('😥 macro processor not available..')
+            _avoid_log.error('😥 macro processor not available..')
 
     except Exception as e:
-        _log.error('😨 {} encountered, exiting: {}'.format(type(e), e))
+        _avoid_log.error('😨 {} encountered, exiting: {}'.format(type(e), e))
         traceback.print_exc(file=sys.stdout)
     finally:
         pass
 else:
-    _log.error('KROS not available.')
+    _avoid_log.error('KROS not available.')
 
 #EOF
