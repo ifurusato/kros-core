@@ -74,6 +74,8 @@ kros:
         clip_event_list:          False          # if True clip length of displayed event list 
         clip_length:                 42          # max length of displayed event list 
     hardware:
+        status:
+            led_pin:                   21        # pin connected to status LED
         digital_potentiometer:                   # IO Expander-based RGB Potentiometer board
             i2c_address:             0x0E        # I²C address for the device
             brightness:               1.0        # brightness of the RGB LED (0.0-1.0)
@@ -486,8 +488,6 @@ devices:
 #    button:
 #        pin:           24                        # pin connected to hardware button
 #        toggle:      True                        # toggle or momentary button
-#    status:
-#        led_pin:       21                        # pin connected to status LED
 ##   bumper:
 ##       port_pin:      21                        # pin connected to port bumper
 ##       cntr_pin:      19                        # pin connected to center bumper
