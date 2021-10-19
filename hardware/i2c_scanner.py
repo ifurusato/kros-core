@@ -37,21 +37,20 @@ class I2CScanner(object):
     def __init__(self, config, level):
         super().__init__()
         self._log = Logger('i2cscan', level)
-        self._log.debug('initialising...')
         self._config = config
         self._int_list = []
         self._hex_list = []
+        self._bus      = None
         try:
+            self._log.info('initialising...')
             from smbus2 import SMBus
             bus_number = 1  # 1 indicates /dev/i2c-1
             self._bus = SMBus(bus_number)
             self._log.info('ready.')
         except ImportError:
-            self._log.warning('unable to initialise: this script requires smbus2. Will operate without but returns an empty result. [1]')
-            self._bus = None
-        except Exception:
-            self._log.warning('unable to initialise: this script requires smbus2. Will operate without but returns an empty result. [2]')
-            self._bus = None
+            self._log.warning('import error, unable to initialise: this script requires smbus2. Will operate but always return an empty result.')
+        except Exception as e:
+            self._log.warning('{} while initialising: will operate but always return an empty result.'.format(e))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def get_hex_addresses(self):

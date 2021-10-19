@@ -74,9 +74,10 @@ class McuBumperPublisher(Publisher):
 
         self._log.info('starting...\t' + Fore.YELLOW + 'type Ctrl-C to exit.')
         if not os.path.exists(_port):
-            raise Exception('port {} does not exist.'.format(_port))
-        self._serial = serial.Serial(port=_port, baudrate=_baud_rate, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, timeout=0.5)
-
+            self._log.info('disabled: port {} does not exist.'.format(_port))
+            self._serial = None
+        else:
+            self._serial = serial.Serial(port=_port, baudrate=_baud_rate, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, timeout=0.5)
         self._log.info('ready.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -96,13 +97,16 @@ class McuBumperPublisher(Publisher):
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def enable(self):
         if not self.enabled:
-            Publisher.enable(self)
-            if self._message_bus.get_task_by_name(McuBumperPublisher._PUBLISHER_LOOP):
-                raise Exception('already enabled.')
+            if self._serial:
+                if self._message_bus.get_task_by_name(McuBumperPublisher._PUBLISHER_LOOP):
+                    raise Exception('already enabled.')
+                else:
+                    Publisher.enable(self)
+                    self._log.info('creating task for publisher loop...')
+                    self._message_bus.loop.create_task(self._publisher_loop(lambda: self.enabled), name=McuBumperPublisher._PUBLISHER_LOOP)
+                    self._log.info('enabled.')
             else:
-                self._log.info('creating task for publisher loop...')
-                self._message_bus.loop.create_task(self._publisher_loop(lambda: self.enabled), name=McuBumperPublisher._PUBLISHER_LOOP)
-                self._log.info('enabled.')
+                self._log.warning('cannot enable publisher loop: no serial interface available.')
         else:
             self._log.warning('failed to enable publisher loop.')
 
