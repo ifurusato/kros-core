@@ -79,7 +79,8 @@ class MotorController(Component):
         self._loop_thread          = None
         self._loop_enabled         = False
         self._event_counter        = itertools.count()
-        self._last_velocity        = None
+        self._last_port_velocity   = None
+        self._last_stbd_velocity   = None
         # configured constants
         self._slew_limiter_enabled = config['kros'].get('motor').get('enable_slew_limiter')
         _cfg = config['kros'].get('motor').get('motor_controller')
@@ -286,30 +287,38 @@ class MotorController(Component):
             raise TypeError('expected Payload, not {}'.format(type(payload)))
         if reset_slew:
             self._reset_slew_rate()
-        self._log.info('🐢 A. set velocity; payload type {}; payload: {}'.format(type(payload), payload))
+        self._log.info('🐢 A. dispatch velocity event; payload type {}; payload: {}'.format(type(payload), payload))
         _event = payload.event
 #       self._log.debug('dispatch velocity event: {}'.format(_event.label))
+
         _value = payload.value
-        _changed = self._last_velocity != _value
+        self._log.info('🐢 B. dispatch velocity event; payload value type {}; value: {}'.format(type(_value), _value))
+        if isinstance(_value, tuple):
+            _port_velocity = _value[0]
+            _stbd_velocity = _value[1]
+        else:
+            _port_velocity = _value
+            _stbd_velocity = _value
+
+        _changed = self._last_port_velocity != _port_velocity or self._last_stbd_velocity != _stbd_velocity
+
         if not self.loop_is_running:
             self.start_loop()
         if _event is Event.VELOCITY:
-            self._log.info('🐢 B. set velocity; payload value type {}; value: {}'.format(type(_value), _value))
-            # FIXME the values coming in are 20.0, 20.0, not what's perhaps expected?
             if _changed:
                 self._log.info('set velocity;\t'
-                        + Fore.RED + 'port: {:5.2f} / {:5.2f}; '.format(_value, self._port_motor.velocity)
-                        + Fore.GREEN + 'stbd: {:5.2f} / {:5.2f}'.format(_value, self._stbd_motor.velocity))
-            self.set_motor_velocity(Orientation.PORT, _value)
-            self.set_motor_velocity(Orientation.STBD, _value)
+                        + Fore.RED   + 'port: {:5.2f} / {:5.2f}; '.format(_port_velocity, self._port_motor.velocity)
+                        + Fore.GREEN + 'stbd: {:5.2f} / {:5.2f}'.format(_stbd_velocity, self._stbd_motor.velocity))
+            self.set_motor_velocity(Orientation.PORT, _port_velocity)
+            self.set_motor_velocity(Orientation.STBD, _stbd_velocity)
 
         elif _event is Event.PORT_VELOCITY:
-#           self.set_motor_velocity(Orientation.PORT, _value)
-            self._log.info('🐢 set PORT velocity; value: {}; velocity: {:5.2f}'.format(_value, self._port_motor.velocity))
+            self.set_motor_velocity(Orientation.PORT, _port_velocity)
+            self._log.info('🐢 set PORT velocity; value: {}; velocity: {:5.2f}'.format(_port_velocity, self._port_motor.velocity))
 
         elif _event is Event.STBD_VELOCITY:
-#           self.set_motor_velocity(Orientation.STBD, _value)
-            self._log.info('🐢 set STBD velocity; value: {}; velocity: {:5.2f}'.format(_value, self._stbd_motor.velocity))
+            self.set_motor_velocity(Orientation.STBD, _stbd_velocity)
+            self._log.info('🐢 set STBD velocity; value: {}; velocity: {:5.2f}'.format(_stbd_velocity, self._stbd_motor.velocity))
 
         elif _event is Event.INCREASE_PORT_VELOCITY:
             self._increment_motor_velocity(Orientation.PORT, self._accel_increment)
@@ -347,7 +356,7 @@ class MotorController(Component):
                         + Fore.GREEN + 'stbd: {:5.2f}'.format(self._stbd_motor.velocity))
         else:
             raise ValueError('unrecognised velocity event {}'.format(_event.label))
-        self._last_velocity = _value
+        self._last_port_velocity = _port_velocity
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def dispatch_chadburn_event(self, payload):

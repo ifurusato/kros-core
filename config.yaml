@@ -38,7 +38,7 @@ kros:
     behaviour:
         enable_avoid_behaviour:       True       # enable avoidance behaviour
         enable_roam_behaviour:       False       # enable roam behaviour
-        enable_swerve_behaviour:     False       # enable swerve behaviour
+        enable_swerve_behaviour:      True       # enable swerve behaviour
         enable_moth_behaviour:       False       # enable moth behaviour
         enable_sniff_behaviour:      False       # enable sniff behaviour
         enable_idle_behaviour:       False       # enable idle behaviour
