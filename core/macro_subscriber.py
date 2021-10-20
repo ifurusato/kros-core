@@ -80,7 +80,7 @@ class MacroSubscriber(Subscriber):
             _name = _event.label
             self._log.info('🐹 processing acceptable message {} with macro name: '.format(message.name) + Fore.YELLOW + '{}'.format(_name))
             _value = message.payload.value
-            self._log.info('🎃 name {}; '.format(_value)) # TODO react differently depending on which bumper
+            self._log.info('🎃 type: {}; name {}; '.format(type(_value), _value)) # TODO react differently depending on which bumper
             # TODO permit passing a Message as a value so we don't need to create one here...
             # add a VELOCITY completion message as a payload
             _message = self._message_factory.create_message(Event.VELOCITY, _value)

@@ -43,7 +43,6 @@ class RgbSubscriber(Subscriber):
     '''
     def __init__(self, config, message_bus, level=Level.INFO):
         Subscriber.__init__(self, RgbSubscriber.CLASS_NAME, config, message_bus=message_bus, suppressed=False, enabled=False, level=level)
-
         _i2c_scanner = I2CScanner(config, Level.WARN)
         if _i2c_scanner.has_address([0x74]):
             self._stbd_rgbmatrix = RGBMatrix5x5(address=0x74)
@@ -59,6 +58,8 @@ class RgbSubscriber(Subscriber):
             self._height = 5
             self._width  = 5
         self.add_event(Event.RGB)
+        self._clear()
+        self._log.info('ready.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def _arbitrate_message(self, message):

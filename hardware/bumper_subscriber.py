@@ -116,14 +116,15 @@ class BumperSubscriber(Subscriber):
             if not self._motor_ctrl.is_in_motion:
                 self._log.info(Fore.YELLOW + '😝 {} triggered but robot does not appear to be moving.'.format(_event.label))
             elif Event.is_bumper_event(_event):
+                _velocities = self.get_current_target_velocities()
                 if _event is Event.BUMPER_MAST:
                     self.respond_to_mast_bumper_event()
                 elif _event is Event.BUMPER_PORT:
-                    self.respond_to_port_bumper_event()
+                    self.respond_to_port_bumper_event(_velocities)
                 elif _event is Event.BUMPER_CNTR:
-                    self.respond_to_cntr_bumper_event()
+                    self.respond_to_cntr_bumper_event(_velocities)
                 elif _event is Event.BUMPER_STBD:
-                    self.respond_to_stbd_bumper_event()
+                    self.respond_to_stbd_bumper_event(_velocities)
                 elif _event is Event.BUMPER_PAFT:
                     self.respond_to_paft_bumper_event()
                 elif _event is Event.BUMPER_SAFT:
@@ -136,23 +137,24 @@ class BumperSubscriber(Subscriber):
             self._log.warning('disabled: ignoring bumper dispatch.')
 
         await Subscriber.process_message(self, message)
-        self._log.debug('post-processing message {}'.format(message.name))
+        self._log.info('post-processing message {}'.format(message.name))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def respond_to_port_bumper_event(self):
+    def respond_to_port_bumper_event(self, velocities):
         '''
         Respond to a port bumper event by first an emergency stop, and then
         if the robot is actually moving forward, publishing an AVOID message.
         '''
         if self._motor_ctrl.is_moving_ahead:
             self._log.info(Fore.RED + '😝 responding to port bumper: emergency stop...')
-            self._motor_ctrl.emergency_stop()
-            self._queue_publisher.put(self._message_factory.create_message(Event.AVOID, Orientation.PORT))
+#           self._motor_ctrl.stop()
+#           self._queue_publisher.put(self._message_factory.create_message(Event.AVOID, Orientation.PORT))
+            self._queue_publisher.put(self._message_factory.create_message(Event.AVOID, ( Orientation.PORT, velocities )))
         else:
             self._log.warning('😝 PORT bumper triggered but robot does not appear to be moving forward.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def respond_to_cntr_bumper_event(self):
+    def respond_to_cntr_bumper_event(self, velocities):
         '''
         Respond to a center bumper event by first an emergency stop, and then
         if the robot is actually moving forward, publishing an AVOID message.
@@ -160,23 +162,23 @@ class BumperSubscriber(Subscriber):
         if self._motor_ctrl.is_moving_ahead:
             self._log.info(Fore.BLUE + '😝 responding to CNTR bumper: emergency stop...')
             # capture current target velocities and include in message payload
-            _velocities = self.get_current_target_velocities()
-            self._motor_ctrl.emergency_stop()
-#           self._queue_publisher.put(self._message_factory.create_message(Event.AVOID, ( Orientation.CNTR, _velocities )))
-            self._queue_publisher.put(self._message_factory.create_message(Event.AVOID, _velocities))
+#           self._motor_ctrl.stop()
+#           self._queue_publisher.put(self._message_factory.create_message(Event.AVOID, velocities))
+            self._queue_publisher.put(self._message_factory.create_message(Event.AVOID, ( Orientation.CNTR, velocities )))
         else:
             self._log.warning('😝 CNTR bumper triggered but robot does not appear to be moving forward.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def respond_to_stbd_bumper_event(self):
+    def respond_to_stbd_bumper_event(self, velocities):
         '''
         Respond to a starboard bumper event by first an emergency stop, and then
         if the robot is actually moving forward, publishing an AVOID message.
         '''
         if self._motor_ctrl.is_moving_ahead:
             self._log.info(Fore.GREEN + '😝 responding to STBD bumper: emergency stop...')
-            self._motor_ctrl.emergency_stop()
-            self._queue_publisher.put(self._message_factory.create_message(Event.AVOID, Orientation.STBD))
+#           self._motor_ctrl.stop()
+#           self._queue_publisher.put(self._message_factory.create_message(Event.AVOID, Orientation.STBD))
+            self._queue_publisher.put(self._message_factory.create_message(Event.AVOID, ( Orientation.STBD, velocities )))
         else:
             self._log.warning('😝 CNTR bumper triggered but robot does not appear to be moving forward.')
 
@@ -214,7 +216,7 @@ class BumperSubscriber(Subscriber):
         '''
         if self._motor_ctrl.is_moving_astern:
             self._log.info(Fore.RED + '😝 responding to port aft bumper: emergency stop...')
-            self._motor_ctrl.emergency_stop()
+            self._motor_ctrl.stop()
         else:
             self._log.info(Fore.YELLOW + '😝 port aft bumper triggered but robot does not appear to be moving astern.')
 
@@ -227,7 +229,7 @@ class BumperSubscriber(Subscriber):
         '''
         if self._motor_ctrl.is_moving_astern:
             self._log.info(Fore.GREEN + '😝 responding to starboard aft bumper: emergency stop...')
-            self._motor_ctrl.emergency_stop()
+            self._motor_ctrl.stop()
         else:
             self._log.info(Fore.YELLOW + '😝 starboard aft bumper triggered but robot does not appear to be moving astern.')
 

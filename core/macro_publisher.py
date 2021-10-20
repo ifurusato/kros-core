@@ -18,9 +18,6 @@ from datetime import datetime as dt
 from colorama import init, Fore, Style
 init(autoreset=True)
 
-import core.globals as globals # needed for lambda support
-globals.init()
-
 from core.logger import Logger, Level
 from core.system import System
 from core.util import Util
@@ -65,13 +62,13 @@ class MacroPublisher(Publisher):
         self._log.info('quiescent loop frequency: {} Hz.'.format(_quiescent_loop_freq_hz))
         self._wait_limit_ms     = _cfg.get('wait_limit_ms') # the longest we will ever wait for anything
         self._log.info('wait limit: {:d}ms.'.format(self._wait_limit_ms))
-        self._load_macros       = _cfg.get('load_macros')
+        self._load_macros       = False #_cfg.get('load_macros')
         self._log.info('load macros? {}'.format(self._load_macros))
         self._macro_path        = _cfg.get('macro_path')
         self._log.info('macro path: {}'.format(self._macro_path))
-        self._library           = MacroLibrary()
         self._macros            = Macros()
         self._counter           = itertools.count()
+        self.set_macro_library(MacroLibrary('default'))
         # loop variables
         self._macro             = None
         self._statement         = None # placeholder
@@ -82,6 +79,17 @@ class MacroPublisher(Publisher):
     @property
     def name(self):
         return 'macro'
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def set_macro_library(self, library):
+        '''
+        Sets the MacroLibrary used by this publisher, replacing any existing one.
+        '''
+        if isinstance(library, MacroLibrary):
+            self._log.info('setting macro library: ' + Fore.YELLOW + '{}'.format(library.name))
+            self._library = library
+        else:
+            raise TypeError('expected macro library, not {}.'.format(type(library)))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def print_info(self):
@@ -215,6 +223,11 @@ class MacroPublisher(Publisher):
         return self._macro
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def on_poot(self, args):
+        self._log.info('🍊 on poot: {}'.format(args))
+        pass
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def on_completion(self, args):
         self._log.info('🍉 on completion: {}'.format(args))
         _exec_macro = self.get_executing_macro()
@@ -249,23 +262,32 @@ class MacroPublisher(Publisher):
         '''
         self._log.info('🐰 starting macro listener loop.')
         while f_is_enabled():
+            if self.suppressed:
+                self._log.info('🌈 🐰 macro play suppressed.')
+                # we just wait quietly for a macro to show up.
+                await asyncio.sleep(self._quiescent_delay_sec)
             # check if there's either a running macro or one available
-            if self._macro or not self._macros.empty(): # either we have a macro or there is one available
+            elif self._macro or not self._macros.empty(): # either we have a macro or there is one available
+                print(Fore.GREEN + '🍀 loop: a')
                 _count = next(self._counter)
                 if not self._macro: # if we don't have a current macro, pop one from the stack
+                    print(Fore.GREEN + '🍀 loop: b')
                     self._macro = self._macros.get()
                     if self._macro:
                         _payload = self._macro.payload
                         self._log.info('🐰 macro {} payload: '.format(self._macro.name) + Fore.YELLOW + '{}'.format(_payload))
                 # otherwise continue to execute the existing macro...
                 if not self._statement: # if no existing statement, poll one from the macro.
+                    print(Fore.GREEN + '🍀 loop: c')
                     if not self._macro.empty():
                         self._statement = self._macro.poll()
                         self._log.info('🐰 event: ' + Fore.YELLOW + '{}:\t'.format(self._statement.label)
                                 + Fore.MAGENTA + 'duration: {:5.2f}ms'.format(self._statement.duration_ms))
                         self._start_time = dt.now()
+                    print(Fore.GREEN + '🍀 loop: d')
                 # if there is an active statement waiting...
                 if self._statement:
+                    print(Fore.GREEN + '🍀 loop: e')
                     # then process this statement...
                     _elapsed_ms = (dt.now() - self._start_time).total_seconds() * 1000.0
                     if _elapsed_ms < self._statement.duration_ms and _elapsed_ms < self._wait_limit_ms:

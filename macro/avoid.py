@@ -13,16 +13,35 @@
 #
 
 import sys, traceback
+from colorama import init, Fore, Style
+init()
 
 import core.globals as globals
+globals.init()
+
 from core.logger import Logger, Level
 from core.system import System
+
+def poot(arg):
+    print(Fore.GREEN + '🍀 self.poot() arg: {}'.format(arg) + Style.RESET_ALL)
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 _avoid_log = Logger('avoid-macro', Level.ERROR)
 _kros = globals.get('kros')
 if _kros:
+
     try:
+
+        if globals.get('avoid_script') == None:
+            globals.put('avoid_script', self)
+            _self = self
+            print('♉ _self.1: {}'.format(_self))
+        else:
+            _self = globals.get('avoid_script')
+            print('♉ _self.2: {}'.format(_self))
+        
+        print('♉ _self.3: {}'.format(_self))
+
         _avoid_log.info('found KROS! begin loading macro...')
         _avoid_log.heading('Avoid Macro', 'An avoidance behaviour that backs away from an obstacle and turns.')
         _macro_publisher = _kros.get_macro_publisher()
@@ -32,9 +51,22 @@ if _kros:
             _macro_description = 'a simple avoidance behaviour.' # optional
             _macro = _macro_publisher.create_macro(_macro_name, _macro_description)
 
+#           poot('♉♉♉♉ ARGUMENT 1')
+
             # print an emoji to the KROS log console
-            _func1 = lambda: globals.get('kros').get_logger().info('😈 AVOID begin!')
+            _func1 = lambda: globals.get('kros').get_logger().info('😈 AVOID 1.')
             _macro.add_function(_func1)
+
+#           poot('♉♉♉♉ ARGUMENT 2')
+
+#           _selfglobals.get('avoid_script').poot('😈♉ POOT 1.')
+#           _self.poot('😈♉ POOT 1.')
+
+            _func2 = lambda: globals.get('kros').get_logger().info('😈 AVOID 2; self type: {}'.format(self))
+            _macro.add_function(_func2)
+
+            _func3 = lambda: globals.get('avoid_script').poot('😈 AVOID 3; self type: {}'.format(self))
+            _macro.add_function(_func3)
 
             # come to a stop for 1 second
             _macro.add_event(Event.STOP, 1000)
@@ -49,12 +81,12 @@ if _kros:
             _macro.add_event(Event.STOP, 50)
 
             # notify on completion of macro via a lambda function
-            _func2 = lambda: globals.get('kros').get_macro_publisher().on_completion('😃 COMPLETE!')
-            _macro.add_function(_func2)
+            _func4 = lambda: globals.get('kros').get_macro_publisher().on_completion('😃 COMPLETE!')
+            _macro.add_function(_func4)
 
             # print an emoji to the KROS log console
-            _func3 = lambda: globals.get('kros').get_logger().info('💀 Done!')
-            _macro.add_function(_func3)
+            _func5 = lambda: globals.get('kros').get_logger().info('💀 Done!')
+            _macro.add_function(_func5)
 
             _avoid_log.info('loaded.')
 

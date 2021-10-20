@@ -289,74 +289,95 @@ class MotorController(Component):
             self._reset_slew_rate()
         self._log.info('🐢 A. dispatch velocity event; payload type {}; payload: {}'.format(type(payload), payload))
         _event = payload.event
-#       self._log.debug('dispatch velocity event: {}'.format(_event.label))
-
         _value = payload.value
-        self._log.info('🐢 B. dispatch velocity event; payload value type {}; value: {}'.format(type(_value), _value))
-        if isinstance(_value, tuple):
-            _port_velocity = _value[0]
-            _stbd_velocity = _value[1]
-        else:
-            _port_velocity = _value
-            _stbd_velocity = _value
-
-        _changed = self._last_port_velocity != _port_velocity or self._last_stbd_velocity != _stbd_velocity
+        self._log.info('🐢 B. dispatch velocity event {}; payload value type {}; value: {}'.format(_event.label, type(_value), _value))
 
         if not self.loop_is_running:
             self.start_loop()
-        if _event is Event.VELOCITY:
-            if _changed:
-                self._log.info('set velocity;\t'
-                        + Fore.RED   + 'port: {:5.2f} / {:5.2f}; '.format(_port_velocity, self._port_motor.velocity)
-                        + Fore.GREEN + 'stbd: {:5.2f} / {:5.2f}'.format(_stbd_velocity, self._stbd_motor.velocity))
-            self.set_motor_velocity(Orientation.PORT, _port_velocity)
-            self.set_motor_velocity(Orientation.STBD, _stbd_velocity)
 
-        elif _event is Event.PORT_VELOCITY:
-            self.set_motor_velocity(Orientation.PORT, _port_velocity)
-            self._log.info('🐢 set PORT velocity; value: {}; velocity: {:5.2f}'.format(_port_velocity, self._port_motor.velocity))
+        if _event is Event.VELOCITY or _event is Event.PORT_VELOCITY or _event is Event.STBD_VELOCITY:
 
-        elif _event is Event.STBD_VELOCITY:
-            self.set_motor_velocity(Orientation.STBD, _stbd_velocity)
-            self._log.info('🐢 set STBD velocity; value: {}; velocity: {:5.2f}'.format(_stbd_velocity, self._stbd_motor.velocity))
+#           _port_velocity = 0.0
+#           _stbd_velocity = 0.0
+            if isinstance(_value, tuple):
+                if isinstance(_value[0], Orientation):
+                    self._log.info('🐢 C. dispatch velocity event {}; payload value type {} (tuple mixed); value: {}'.format(_event.label, type(_value), _value))
+                    _orientation = _value[0]
+                    _velocities  = _value[1]
+                    _port_velocity = _velocities[0]
+                    _stbd_velocity = _velocities[1]
+                else:
+                    self._log.info('🐢 D. dispatch velocity event {}; payload value type {} (tuple mono); value: {}'.format(_event.label, type(_value), _value))
+                    _port_velocity = _value[0]
+                    _stbd_velocity = _value[1]
 
-        elif _event is Event.INCREASE_PORT_VELOCITY:
-            self._increment_motor_velocity(Orientation.PORT, self._accel_increment)
-            if _changed:
+            elif isinstance(_value, float):
+                self._log.info('🐢 E. dispatch velocity event {}; payload value type {} (float); value: {}'.format(_event.label, type(_value), _value))
+                _port_velocity = _value
+                _stbd_velocity = _value
+
+            elif isinstance(_value, int):
+                self._log.info('🐢 F. dispatch velocity event {}; payload value type {} (int); value: {}'.format(_event.label, type(_value), _value))
+                _port_velocity = float(_value)
+                _stbd_velocity = float(_value)
+
+            elif isinstance(_value, Orientation):
+                raise TypeError('expected either a single or a tuple of velocity values, not an Orientation.')
+            else:
+                raise TypeError('expected either a single or a tuple of velocity values, not a {}'.format(type(_value)))
+
+            if _event is Event.VELOCITY:
+                _changed = self._last_port_velocity != _port_velocity or self._last_stbd_velocity != _stbd_velocity
+                if _changed:
+                    self._log.info('set velocity;\t'
+                            + Fore.RED   + 'port: {:5.2f} / {:5.2f}; '.format(_port_velocity, self._port_motor.velocity)
+                            + Fore.GREEN + 'stbd: {:5.2f} / {:5.2f}'.format(_stbd_velocity, self._stbd_motor.velocity))
+                self.set_motor_velocity(Orientation.PORT, _port_velocity)
+                self.set_motor_velocity(Orientation.STBD, _stbd_velocity)
+    
+            elif _event is Event.PORT_VELOCITY:
+                self.set_motor_velocity(Orientation.PORT, _port_velocity)
+                self._log.info('🐢 set PORT velocity; value: {}; velocity: {:5.2f}'.format(_port_velocity, self._port_motor.velocity))
+    
+            elif _event is Event.STBD_VELOCITY:
+                self.set_motor_velocity(Orientation.STBD, _stbd_velocity)
+                self._log.info('🐢 set STBD velocity; value: {}; velocity: {:5.2f}'.format(_stbd_velocity, self._stbd_motor.velocity))
+
+            self._last_port_velocity = _port_velocity
+            self._last_stbd_velocity = _stbd_velocity
+
+        else:
+
+            if _event is Event.INCREASE_PORT_VELOCITY:
+                self._increment_motor_velocity(Orientation.PORT, self._accel_increment)
                 self._log.info('increase PORT velocity; velocity: {:5.2f}'.format(self._port_motor.velocity))
-            pass
-        elif _event is Event.DECREASE_PORT_VELOCITY:
-            self._increment_motor_velocity(Orientation.PORT, -1 * self._decel_increment)
-            if _changed:
+                pass
+            elif _event is Event.DECREASE_PORT_VELOCITY:
+                self._increment_motor_velocity(Orientation.PORT, -1 * self._decel_increment)
                 self._log.info('decrease PORT velocity; velocity: {:5.2f}'.format(self._port_motor.velocity))
-            pass
-        elif _event is Event.INCREASE_STBD_VELOCITY:
-            self._increment_motor_velocity(Orientation.STBD, self._accel_increment)
-            if _changed:
+                pass
+            elif _event is Event.INCREASE_STBD_VELOCITY:
+                self._increment_motor_velocity(Orientation.STBD, self._accel_increment)
                 self._log.info('increase STBD velocity; velocity: {:5.2f}'.format(self._stbd_motor.velocity))
-            pass
-        elif _event is Event.DECREASE_STBD_VELOCITY:
-            self._increment_motor_velocity(Orientation.STBD, -1 * self._decel_increment)
-            if _changed:
+                pass
+            elif _event is Event.DECREASE_STBD_VELOCITY:
+                self._increment_motor_velocity(Orientation.STBD, -1 * self._decel_increment)
                 self._log.info('decrease STBD velocity; velocity: {:5.2f}'.format(self._stbd_motor.velocity))
-            pass
-        elif _event is Event.INCREASE_VELOCITY:
-            self._increment_motor_velocity(Orientation.PORT, self._accel_increment)
-            self._increment_motor_velocity(Orientation.STBD, self._accel_increment)
-            if _changed:
+                pass
+            elif _event is Event.INCREASE_VELOCITY:
+                self._increment_motor_velocity(Orientation.PORT, self._accel_increment)
+                self._increment_motor_velocity(Orientation.STBD, self._accel_increment)
                 self._log.info('increase velocity;\t'
                         + Fore.RED + 'port: {:5.2f};\t'.format(self._port_motor.velocity)
                         + Fore.GREEN + 'stbd: {:5.2f}'.format(self._stbd_motor.velocity))
-        elif _event is Event.DECREASE_VELOCITY:
-            self._increment_motor_velocity(Orientation.PORT, -1 * self._decel_increment)
-            self._increment_motor_velocity(Orientation.STBD, -1 * self._decel_increment)
-            if _changed:
+            elif _event is Event.DECREASE_VELOCITY:
+                self._increment_motor_velocity(Orientation.PORT, -1 * self._decel_increment)
+                self._increment_motor_velocity(Orientation.STBD, -1 * self._decel_increment)
                 self._log.info('decrease velocity;\t'
                         + Fore.RED + 'port: {:5.2f};\t'.format(self._port_motor.velocity)
                         + Fore.GREEN + 'stbd: {:5.2f}'.format(self._stbd_motor.velocity))
-        else:
-            raise ValueError('unrecognised velocity event {}'.format(_event.label))
-        self._last_port_velocity = _port_velocity
+            else:
+                raise ValueError('unrecognised velocity event {}'.format(_event.label))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def dispatch_chadburn_event(self, payload):
@@ -600,7 +621,23 @@ class MotorController(Component):
     def emergency_stop(self):
         self._log.info('emergency stop...')
         # suppress any behaviours
-#       self._suppress_behaviours()
+        _kros = globals.get('kros')
+        _behaviour_mgr = _kros.get_behaviour_manager()
+        if _behaviour_mgr:
+            self._log.info('suppressing behaviours...')
+#           _behaviour_mgr.suppress()
+            _behaviour_mgr.suppress_all_behaviours()
+        else:
+            self._log.info('behaviour manager: ' + Fore.YELLOW + 'disabled')
+
+        self._macro_publisher = _kros.get_macro_publisher()
+        if self._macro_publisher:
+            # suppress any macros
+            self._log.info('suppressing macros...')
+            self._macro_publisher.suppress()
+        else:
+            self._log.info('no macro-publisher available.')
+
         # now stop very fast
 #       self._set_slew_rate(self._emergency_slew_rate)
         self._port_motor.target_velocity = 0.0
@@ -865,7 +902,7 @@ class MotorController(Component):
                 self._log.info('using queue publisher to publish speed indicator events.')
                 self._speed_indicator = SpeedIndicator(self._queue_publisher, self._port_motor, self._stbd_motor)
             else:
-                self._log.warning('no speed indicator.')
+                self._log.warning('no speed indicator (no queue publisher available).')
 
             self._port_motor.enable()
             self._stbd_motor.enable()

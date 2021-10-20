@@ -144,22 +144,22 @@ class McuBumperPublisher(Publisher):
     def _publish_message_for_orientation(self, orientation):
         if orientation is Orientation.PORT:
             self._log.info('🌎 orientation:\t' + Fore.RED + Style.BRIGHT     + '{} ({})'.format(orientation.name, orientation.label))
-            self._queue_publisher.put(self._message_factory.create_message(Event.BUMPER_PORT, orientation))
+            self._queue_publisher.put(self._message_factory.create_message(Event.BUMPER_PORT, None))
         elif orientation is Orientation.CNTR:
             self._log.info('🌎 orientation:\t' + Fore.BLUE + Style.BRIGHT    + '{} ({})'.format(orientation.name, orientation.label))
-            self._queue_publisher.put(self._message_factory.create_message(Event.BUMPER_CNTR, orientation))
+            self._queue_publisher.put(self._message_factory.create_message(Event.BUMPER_CNTR, None))
         elif orientation is Orientation.STBD:
             self._log.info('🌎 orientation:\t' + Fore.GREEN + Style.BRIGHT   + '{} ({})'.format(orientation.name, orientation.label))
-            self._queue_publisher.put(self._message_factory.create_message(Event.BUMPER_STBD, orientation))
+            self._queue_publisher.put(self._message_factory.create_message(Event.BUMPER_STBD, None))
         elif orientation is Orientation.PAFT:
             self._log.info('🌎 orientation:\t' + Fore.CYAN + Style.BRIGHT    + '{} ({})'.format(orientation.name, orientation.label))
-            self._queue_publisher.put(self._message_factory.create_message(Event.BUMPER_PAFT, orientation))
+            self._queue_publisher.put(self._message_factory.create_message(Event.BUMPER_PAFT, None))
         elif orientation is Orientation.MAST:
             self._log.info('🌎 orientation:\t' + Fore.YELLOW + Style.BRIGHT  + '{} ({})'.format(orientation.name, orientation.label))
-            self._queue_publisher.put(self._message_factory.create_message(Event.BUMPER_MAST, orientation))
+            self._queue_publisher.put(self._message_factory.create_message(Event.BUMPER_MAST, None))
         elif orientation is Orientation.SAFT:
             self._log.info('🌎 orientation:\t' + Fore.MAGENTA + Style.BRIGHT + '{} ({})'.format(orientation.name, orientation.label))
-            self._queue_publisher.put(self._message_factory.create_message(Event.BUMPER_SAFT, orientation))
+            self._queue_publisher.put(self._message_factory.create_message(Event.BUMPER_SAFT, None))
         else:
             self._log.warning('unmatched: \'{}\'; ({:d} chars)'.format(_data, len(_data)))
 

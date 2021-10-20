@@ -18,7 +18,9 @@ from colorama import init, Fore, Style
 init(autoreset=True)
 
 from core.logger import Logger, Level
+from core.direction import Direction
 from core.event import Event
+from core.speed import Speed
 from core.stringbuilder import StringBuilder
 from core.dequeue import DeQueue
 
@@ -36,18 +38,35 @@ class Statement(object):
     :param function:      the lambda function to execute for the Statement
     :param duration_ms:   the duration in milliseconds of the Statement
     '''
-    def __init__(self, label=None, event=None, function=None, duration_ms=None):
+#   def __init__(self, label=None, event=None, function=None, duration_ms=None):
+    def __init__(self, label=None, event=None, function=None, arguments=None):
         '''
         Command can be either a lambda or an Event.
         '''
+        print(Fore.WHITE + 'arguments type: {}; arguments: {}'.format(type(arguments), arguments))
         self._label         = label
         self._function      = function
-        if self._function:
+        self._direction     = None
+        self._speed         = None
+        self._duration_ms   = 0
+        if self._function: # if we have a lambda we declare a LAMBDA event
             self._event = Event.LAMBDA
         else:
             self._event = event
-        self._duration_ms   = duration_ms
-        self._is_lambda     = function != None
+        if arguments:
+            if isinstance(arguments, int): # then the value is a duration in milliseconds
+                self._duration_ms = arguments 
+            elif isinstance(arguments, tuple): # then the value is a tuple that must be decomposed
+                if isinstance(arguments[0], Direction):
+                    self._direction = arguments[0]
+                elif isinstance(arguments[0], Speed):
+                    self._speed = arguments[0]
+                if isinstance(arguments[1], Direction):
+                    self._direction = arguments[1]
+                elif isinstance(arguments[1], Speed):
+                    self._speed = arguments[1]
+            else:
+                raise TypeError('unrecognised arguments to Statement; type: {}; value: {}'.format(type(arguments), arguments))
 
     @property
     def label(self):
@@ -55,7 +74,15 @@ class Statement(object):
 
     @property
     def is_lambda(self):
-        return self._is_lambda
+        return self._event == Event.LAMBDA
+
+    @property
+    def speed(self):
+        return self._speed
+
+    @property
+    def direction(self):
+        return self._direction
 
     @property
     def duration_ms(self):
@@ -76,7 +103,7 @@ class Statement(object):
         return isinstance(other, Statement) and self.__hash__() == other.__hash__()
 
     def __hash__(self):
-        return hash((self._label, self._duration_ms, self._is_lambda, self._event, self._function))
+        return hash((self._label, self._duration_ms, self._event, self._function))
 
     def __deepcopy__(self, memo):
         return Statement(label=self.label, event=self.event, function=self.function, duration_ms=self.duration_ms)
@@ -87,7 +114,6 @@ class Statement(object):
         _sb.append('id={}'.format(id(self)))
         _sb.append('hash={}'.format(hash(self)))
         _sb.append('label={}'.format(self._label))
-        _sb.append('is_lambda={}'.format(self._is_lambda))
         _sb.append('event={}'.format(self._event))
         _sb.append('duration={}ms'.format(self._duration_ms))
         _sb.append('function={}'.format('lambda' if self._function else 'none'))
@@ -106,14 +132,14 @@ class Macro(object):
     :param queue:             an optional initial queue
     :param statement_limit:   optionally limits the size of the queue (unlimited/-1 default)
     '''
-    def __init__(self, name, description=None, queue=None, statement_limit=-1):
-        self._name = name
+    def __init__(self, name=None, description=None, queue=None, statement_limit=-1):
+        self._name        = name
         self._description = description
+        self._payload     = None
         if queue:
             self._queue = queue
         else:
             self._queue = DeQueue(maxsize=statement_limit, mode=DeQueue.QUEUE)
-        self._payload = None
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
@@ -148,19 +174,23 @@ class Macro(object):
         return self._queue.poll()
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def add_event(self, event, duration_ms=0):
+#   def add_event(self, event, duration_ms=0):
+    def add_event(self, event, arguments=None):
         '''
         Add an Event to the queue.
+        Optional arguments are provided as a tuple.
         '''
-        _statement = Statement(label='stmt-{}'.format(chr(97 + self.size)), event=event, function=None, duration_ms=duration_ms)
+        _statement = Statement(label='stmt-{}'.format(chr(97 + self.size)), event=event, function=None, arguments=arguments)
         self._queue.put(_statement)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def add_function(self, function, duration_ms=0):
+#   def add_function(self, function, duration_ms=0):
+    def add_function(self, function, arguments=None):
         '''
-        Add a lambda function to the queue, encapsulated in an Event:
+        Add a lambda function to the queue, encapsulated in an Event.
+        Optional arguments are provided as a tuple.
         '''
-        _statement = Statement(label='stmt-{}'.format(chr(97 + self.size)), event=Event.LAMBDA, function=function, duration_ms=duration_ms)
+        _statement = Statement(label='stmt-{}'.format(chr(97 + self.size)), event=Event.LAMBDA, function=function, arguments=arguments)
         self._queue.put(_statement)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -220,11 +250,16 @@ class Macros(DeQueue):
 class MacroLibrary():
     '''
     A reference library for named Macros.
-
     '''
-    def __init__(self, level=Level.INFO):
+    def __init__(self, name='unnamed', level=Level.INFO):
         self._log = Logger('macro-lib', level)
+        self._name = name
         self._macros = {}
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    @property
+    def name(self):
+        return self._name
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property

@@ -22,6 +22,8 @@ from colorama import init, Fore, Style
 init()
 
 import core.globals as globals
+globals.init()
+
 from core.message_factory import MessageFactory
 from core.logger import Logger, Level
 from core.event import Event

@@ -39,6 +39,9 @@ from core.controller import Controller
 from core.publisher import Publisher
 from core.queue_publisher import QueuePublisher
 from core.macro_publisher import MacroPublisher
+from core.macro_subscriber import MacroSubscriber
+from core.kr01_macrolibrary import KR01MacroLibrary
+
 from hardware.ifs_publisher import IfsPublisher
 from hardware.bumper_publisher import BumperPublisher
 from hardware.mcu_bmp_publisher import McuBumperPublisher
@@ -58,7 +61,7 @@ from hardware.motor_subscriber import MotorSubscriber
 from hardware.rgb_subscriber import RgbSubscriber
 from hardware.bumper_subscriber import BumperSubscriber
 from hardware.infrared_subscriber import InfraredSubscriber
-from core.macro_subscriber import MacroSubscriber
+from hardware.status import Status
 
 from mock.event_publisher import EventPublisher
 from mock.external_clock import MockExternalClock
@@ -123,6 +126,7 @@ class KROS(Component, FiniteStateMachine):
         self._motor_ctrl      = None
         self._ifs             = None
         self._killswitch      = None
+        self._status_light    = None
         self._disable_leds    = False
         self._closing         = False
         self._log.info('oid: {}'.format(id(self)))
@@ -229,6 +233,8 @@ class KROS(Component, FiniteStateMachine):
         if _cfg.get('enable_macro_publisher') or 'm' in _pubs:
             _callback = None
             self._macro_publisher = MacroPublisher(self._config, self._message_bus, self._message_factory, self._queue_publisher, _callback, self._level)
+            _library = KR01MacroLibrary(self._macro_publisher)
+            self._macro_publisher.set_macro_library(_library)
 
         _enable_ifs_publisher = _cfg.get('enable_ifs_publisher') or 'i' in _pubs
         if _enable_ifs_publisher:
@@ -335,6 +341,10 @@ class KROS(Component, FiniteStateMachine):
         '''
         self._log.heading('starting', 'starting k-series robot operating system (kros)...', '[2/2]' )
         FiniteStateMachine.start(self)
+
+        self._status_light = Status(self._config, Level.INFO)
+        self._status_light.enable()
+
         self._disable_leds = self._config['pi'].get('disable_leds')
         if self._disable_leds:
             # disable Pi LEDs since they may be distracting
@@ -485,10 +495,11 @@ class KROS(Component, FiniteStateMachine):
         elif self._closing:
             self._log.warning('already closing.')
         elif self.enabled:
+            self._log.info('disabling...')
             if self._experiment_mgr:
                 self._experiment_mgr.disable()
             while not Component.disable(self):
-                self._log.info('disabling...')
+                self._log.info('disabling component...')
             if self._motor_ctrl:
                 self._motor_ctrl.disable()
                 self._motor_ctrl.close()
@@ -522,32 +533,40 @@ class KROS(Component, FiniteStateMachine):
         else:
             self._log.info('closing...')
             if self._experiment_mgr:
+                self._log.info('closing experiment manager...')
                 self._experiment_mgr.close()
             if self._motor_ctrl:
+                self._log.info('closing motor controller...')
                 self._motor_ctrl.close()
             while not Component.close(self): # will call disable()
-                self._log.info('closing...')
+                self._log.info('closing component...')
             self._closing = True
             while self.enabled:
                 self._log.warning('waiting for disable...')
                 time.sleep(0.1)
             if self._behaviour_mgr:
+                self._log.info('closing behaviour manager...')
                 self._behaviour_mgr.close()
             if self._gamepad:
+                self._log.info('closing gamepad...')
                 self._gamepad.close()
             if self._ifs:
+                self._log.info('closing ifs...')
                 self._ifs.close()
             if self._killswitch:
+                self._log.info('closing killswitch...')
                 self._killswitch.close()
-            time.sleep(0.1)
+#           time.sleep(0.1)
             if self._message_bus:
-#               self._log.info('closing message bus from kros...')
+                self._log.info('closing message bus from kros...')
                 self._message_bus.close()
-#               self._log.info('closed message bus.')
-            time.sleep(1.0)
+                self._log.info('closed message bus.')
+#           time.sleep(1.0)
             if self._disable_leds: # restore normal function of Pi LEDs
                 self._set_pi_leds(True)
             FiniteStateMachine.close(self)
+            if self._status_light:
+                self._status_light.close()
             self._closing = False
             self._log.info('application closed.')
             self._log.close()
