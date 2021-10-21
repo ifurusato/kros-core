@@ -9,9 +9,10 @@
 # created:  2020-01-17
 # modified: 2021-10-19
 #
+# Lazily imports RPi.GPIO
+#
 
 #import time, threading
-import RPi.GPIO as GPIO
 
 from core.logger import Level, Logger
 
@@ -36,13 +37,19 @@ class Status():
             raise ValueError('no configuration provided.')
         _config = config['kros'].get('hardware').get('status')
         self._led_pin = _config.get('led_pin')
-        self._gpio = GPIO
-        self._gpio.setwarnings(False)
-        self._gpio.setmode(GPIO.BCM)
-        self._gpio.setup(self._led_pin, GPIO.OUT, initial=GPIO.LOW)
-        self._blink_thread = None
-#       self._blinking = False
-        self._log.info('ready.')
+        try:
+            import RPi.GPIO as GPIO
+
+            self._gpio = GPIO
+            self._gpio.setwarnings(False)
+            self._gpio.setmode(GPIO.BCM)
+            self._gpio.setup(self._led_pin, GPIO.OUT, initial=GPIO.LOW)
+            self._blink_thread = None
+#           self._blinking = False
+            self._log.info('ready.')
+        except ModuleNotFoundError as e:
+            self._log.error('This script requires the RPi.GPIO library. Some features will be disabled.\nInstall with: sudo apt install rpi.gpio')
+            self._gpio = None
 
 #   # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 #   def blink(self, active):
@@ -79,12 +86,14 @@ class Status():
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def enable(self):
         self._log.info('enable status light.')
-        self._gpio.output(self._led_pin, True)
+        if self._gpio:
+            self._gpio.output(self._led_pin, True)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def disable(self):
         self._log.info('disable status light.')
-        self._gpio.output(self._led_pin,False)
+        if self._gpio:
+            self._gpio.output(self._led_pin,False)
 #       self._blinking = False
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈

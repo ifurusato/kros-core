@@ -36,7 +36,9 @@ class Statement(object):
     :param label:         the label or description of the statement
     :param event:         the Event to publish for the Statement
     :param function:      the lambda function to execute for the Statement
-    :param duration_ms:   the duration in milliseconds of the Statement
+    :param arguments:     either an int or float as the duration in milliseconds
+                          of the Statement, or a tuple containing context-specific
+                          objects used for processing the Statement
     '''
 #   def __init__(self, label=None, event=None, function=None, duration_ms=None):
     def __init__(self, label=None, event=None, function=None, arguments=None):
@@ -48,6 +50,7 @@ class Statement(object):
         self._function      = function
         self._direction     = None
         self._speed         = None
+        self._arguments     = arguments
         self._duration_ms   = 0
         if self._function: # if we have a lambda we declare a LAMBDA event
             self._event = Event.LAMBDA
@@ -85,6 +88,10 @@ class Statement(object):
         return self._direction
 
     @property
+    def arguments(self):
+        return self._arguments
+
+    @property
     def duration_ms(self):
         return self._duration_ms
 
@@ -106,7 +113,7 @@ class Statement(object):
         return hash((self._label, self._duration_ms, self._event, self._function))
 
     def __deepcopy__(self, memo):
-        return Statement(label=self.label, event=self.event, function=self.function, duration_ms=self.duration_ms)
+        return Statement(label=self.label, event=self.event, function=self.function, arguments=self.arguments)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def __str__(self):
@@ -115,6 +122,7 @@ class Statement(object):
         _sb.append('hash={}'.format(hash(self)))
         _sb.append('label={}'.format(self._label))
         _sb.append('event={}'.format(self._event))
+        _sb.append('arguments={}'.format(self._arguments))
         _sb.append('duration={}ms'.format(self._duration_ms))
         _sb.append('function={}'.format('lambda' if self._function else 'none'))
         _sb.append(']', indent=8, delim=StringBuilder.NONE)

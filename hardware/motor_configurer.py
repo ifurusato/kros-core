@@ -52,7 +52,7 @@ class MotorConfigurer():
         self._motors_enabled = _args.get('motors_enabled') or motors_enabled
         self._log.info('motors enabled?\t{}'.format(self._motors_enabled))
         # default until successful in configuring ThunderBorg:
-        self._config['kros'].get('arguments')['using_mocks'] = True
+        self._is_mocked = False
         if not self._motors_enabled: # overrides _enable_mock
             self._enable_mock = True
         else:
@@ -125,20 +125,22 @@ class MotorConfigurer():
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _import_thunderborg(self):
-        if self._motors_enabled and not self._enable_mock:
+        if self._motors_enabled:
             self._log.info('configure thunderborg & motors...')
             try:
                 _thunderborg_address = self._config['kros'].get('motor').get('thunderborg_address')
                 if self._i2c_scanner.has_address([_thunderborg_address]):
-                    self._log.info('importing ThunderBorg at address 0x[:02X]...'.format(_thunderborg_address))
+                    self._log.info('🉐 importing ThunderBorg at address 0x[:02X]...'.format(_thunderborg_address))
                     import hardware.ThunderBorg3 as ThunderBorg
                     self._log.info('successfully imported ThunderBorg.')
                 else:
-                    self._log.info('importing mock ThunderBorg...')
+                    self._log.info('⏲ importing mock ThunderBorg...')
+                    self._is_mocked = True # we default if no ThunderBorg found
                     self._enable_mock = True # we default if no ThunderBorg found
                     import mock.thunderborg as ThunderBorg
                     self._log.info('successfully imported mock ThunderBorg.')
 
+                self._log.debug('instantiating thunderborg...')
                 self._tb = ThunderBorg.ThunderBorg(Level.INFO)  # create a new ThunderBorg object
                 self._tb.Init()                       # set the board up (checks the board is connected)
                 self._log.info('successfully instantiated ThunderBorg.')

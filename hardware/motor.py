@@ -92,17 +92,13 @@ class Motor(Component):
         self._slew_limiter       = SlewLimiter(config, orientation, suppressed=_suppress_slew_limiter,
                 enabled=_enable_slew_limiter, level=level)
         # provides closed loop velocity feedback .....................
-        self._using_mocks = config['kros'].get('arguments').get('using_mocks')
-        if self._using_mocks:
-            self._log.info(Fore.YELLOW + 'using mocks: {}'.format(self._using_mocks))
+        if tb.is_mock:
             self._velocity       = MockVelocity(orientation, level=level)
-#           raise Exception('using mocked velocity.')
         else:
             self._velocity       = Velocity(config, self, level=level)
-#           raise Exception('using un-mocked velocity.')
-            # add callback from motor's update method
-            self.add_callback(self._velocity.tick)
-            self._velocity.enable()
+        # add callback from motor's update method
+        self.add_callback(self._velocity.tick)
+        self._velocity.enable()
         # pid controller .............................................
         _enable_pid_controller   = _cfg.get('enable_pid_controller')
         _suppress_pid_controller = not _enable_pid_controller
@@ -271,9 +267,6 @@ class Motor(Component):
         self.__target_velocity = target_velocity
         if self._indicator_callback:
             self._indicator_callback(target_velocity)
-        if self._using_mocks:
-#           raise Exception('using velocity mock!')
-            self._velocity.velocity = target_velocity
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property

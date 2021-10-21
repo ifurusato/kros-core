@@ -53,7 +53,7 @@ class AvoidMacro(Macro):
         # come to a stop for 500ms
         self.add_event(Event.STOP, 500)
 
-        self.add_function(lambda: globals.get('kros').get_macro_publisher().on_pott('🍊 POOT!'))
+        self.add_function(lambda: globals.get('kros').get_macro_publisher().on_poot('🍊 POOT!'))
 
         # move half astern for 2.5 seconds (duration argument is in milliseconds)
         self.add_event(Event.HALF_ASTERN, 300)
