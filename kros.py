@@ -116,6 +116,7 @@ class KROS(Component, FiniteStateMachine):
         self._behaviour_mgr   = None
         self._queue_publisher = None
         self._macro_publisher = None
+        self._ifs_publisher   = None
         self._experiment_mgr  = None
         self._arbitrator      = None
         self._controller      = None
@@ -432,12 +433,20 @@ class KROS(Component, FiniteStateMachine):
         '''
         return self._macro_publisher
 
+
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def get_queue_publisher(self):
         '''
         Returns the QueuePublisher, None if not used.
         '''
         return self._queue_publisher
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def get_ifs_publisher(self):
+        '''
+        Returns the IfsPublisher, None if not used.
+        '''
+        return self._ifs_publisher
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def get_experiment_manager(self):

@@ -74,6 +74,34 @@ class IfsPublisher(Publisher):
             self._log.warning('failed to enable publisher.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def toggle(self):
+        if self.suppressed:
+            self._ifs.release()
+#           self.release()
+        else:
+            self._ifs.suppress()
+#           self.suppress()
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def release(self):
+        '''
+        Releases (un-suppresses) this Publisher.
+        '''
+        if not self.enabled:
+            self._log.warning('ifs publisher not enabled.')
+        else:
+            Publisher.release(self)
+            self._log.info('ifs publisher released.')
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def suppress(self):
+        '''
+        Suppresses this Publisher.
+        '''
+        Publisher.suppress(self)
+        self._log.info('ifs publisher suppressed.')
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def _ifs_listener_loop(self, f_is_enabled):
         self._log.info('starting infrared listener loop.')
         while f_is_enabled():
@@ -98,24 +126,25 @@ class IfsPublisher(Publisher):
           Group 2: the side infrared sensors
 
         '''
-        self._log.info('poll...')
-        _group = self._get_sensor_group()
-        self._log.info(Fore.YELLOW + '[{:04d}] sensor group: {}'.format(self._count, _group))
-        _start_time = dt.now()
-        if _group == 1: # center infrared group ..............................
-            self._log.info(Fore.BLUE + '[{:04d}] CNTR ifs poll start; group: {}'.format(self._count, _group))
-            self._ifs._poll_cntr_infrared()
-        elif _group == 2: # oblique infrared group .............................
-            self._log.info(Fore.YELLOW + '[{:04d}] OBLQ ifs poll start; group: {}'.format(self._count, _group))
-            self._ifs._poll_oblique_infrared()
-        elif _group == 3: # side infrared group ................................
-            self._log.info(Fore.RED + '[{:04d}] SIDE ifs poll start; group: {}'.format(self._count, _group))
-            self._ifs._poll_side_infrared()
-        else:
-            raise Exception('invalid group number: {:d}'.format(_group))
-        _delta = dt.now() - _start_time
-        _elapsed_ms = int(_delta.total_seconds() * 1000)
-        self._log.info(Fore.BLACK + '[{:04d}] poll end; elapsed processing time: {:d}ms'.format(self._count, _elapsed_ms))
+        self._log.info('🍒 poll...')
+        if not self.suppressed:
+            _group = self._get_sensor_group()
+            self._log.info(Fore.YELLOW + '[{:04d}] sensor group: {}'.format(self._count, _group))
+            _start_time = dt.now()
+            if _group == 1: # center infrared group ..............................
+                self._log.info(Fore.BLUE + '[{:04d}] CNTR ifs poll start; group: {}'.format(self._count, _group))
+                self._ifs._poll_cntr_infrared()
+            elif _group == 2: # oblique infrared group .............................
+                self._log.info(Fore.YELLOW + '[{:04d}] OBLQ ifs poll start; group: {}'.format(self._count, _group))
+                self._ifs._poll_oblique_infrared()
+            elif _group == 3: # side infrared group ................................
+                self._log.info(Fore.RED + '[{:04d}] SIDE ifs poll start; group: {}'.format(self._count, _group))
+                self._ifs._poll_side_infrared()
+            else:
+                raise Exception('invalid group number: {:d}'.format(_group))
+            _delta = dt.now() - _start_time
+            _elapsed_ms = int(_delta.total_seconds() * 1000)
+            self._log.info(Fore.BLACK + '[{:04d}] poll end; elapsed processing time: {:d}ms'.format(self._count, _elapsed_ms))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _get_sensor_group(self):

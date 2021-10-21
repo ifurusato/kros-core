@@ -40,7 +40,7 @@ def test_ioe():
     assert _ioe is not None
 
     _show_ir  = True
-    _show_bmp = True
+    _show_bmp = False # not currently using bumpers on the IO Expander
 
 #   _bmp_port_triggered = False
 #   _bmp_cntr_triggered = False

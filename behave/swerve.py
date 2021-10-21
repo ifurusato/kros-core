@@ -339,6 +339,7 @@ class Swerve(Behaviour):
     def get_trigger_behaviour(self, event):
         return TriggerBehaviour.TOGGLE
 
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
     def trigger_event(self):
         '''
@@ -346,6 +347,7 @@ class Swerve(Behaviour):
         '''
         return Event.SWERVE
 
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def enable(self):
         '''
         Enables this Component.
@@ -365,6 +367,7 @@ class Swerve(Behaviour):
             else:
                 self._log.warning('unable to enable swerve behaviour.')
 
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def release(self):
         '''
         Releases (un-suppresses) this Component.
@@ -376,6 +379,7 @@ class Swerve(Behaviour):
             self._set_velocity_multipliers('releasing swerve.')
             self._log.info('swerve released.')
 
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def suppress(self):
         '''
         Suppresses this Component.
@@ -384,6 +388,7 @@ class Swerve(Behaviour):
         self._reset_velocity_multiplier('suppressing swerve.')
         self._log.info('swerve suppressed.')
 
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def disable(self):
         '''
         Disables this Component.

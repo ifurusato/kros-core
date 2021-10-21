@@ -272,9 +272,9 @@ class EventPublisher(Publisher):
                         elif och == 118: # 'v' toggle verbose
                             self._toggle_verbosity()
                             continue
-                        elif och == 119: # 'w' reload macro scripts
+                        elif och == 119: # 'w' toggle IFS publisher
 #                           self._toggle_flood()
-                            self._reload_macros()
+                            self._toggle_ifs()
                             continue
                         elif och == 121: # 'y'
                             self._toggle_behaviour_manager()
@@ -500,16 +500,16 @@ class EventPublisher(Publisher):
                 self._message_bus.loop.create_task(self._gamepad._gamepad_loop(self._gamepad_callback, lambda: self._gamepad_released), name=GAMEPAD_TASK_NAME)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def _reload_macros(self):
+    def _toggle_ifs(self):
         '''
-        Reloads the macro scripts from their source directory.
+        Toggles the suppress/release flag of the IfsPublisher.
         '''
         _kros = globals.get('kros')
-        _macro_publisher = _kros.get_macro_publisher()
-        if _macro_publisher:
-            _macro_publisher.load_macro_files()
+        _ifs_publisher = _kros.get_ifs_publisher()
+        if _ifs_publisher:
+            _ifs_publisher.toggle()
         else:
-            self._log.info('macro processor: ' + Fore.YELLOW + 'disabled.')
+            self._log.info('ifs publisher: ' + Fore.YELLOW + 'disabled.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _toggle_flood(self):
@@ -612,7 +612,7 @@ class EventPublisher(Publisher):
        ┃ FUL AST ┃ HAF AST ┃ SLO AST ┃ DSL AST ┃  HALT   ┃ DSL AHD ┃ SLO AHD ┃ HAF AHD ┃ FUL AHD ┃  STOP   ┃  BRAKE  ┃  EVEN   ┃ SHUTDWN ┃
   ┏━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┛
   ┃   TAB   ┃    Q    ┃    W    ┃    E    ┃    R    ┃    T    ┃    Y    ┃    U    ┃    I    ┃    O    ┃    P    ┃    [    ┃    ]    ┃
-  ┃ GAMEPAD ┃  QUIT   ┃ REL MAC ┃   POT   ┃  ROAM   ┃  AVOID  ┃ BEH_MGR ┃  IDLE   ┃  INFO   ┃ SWERVE  ┃ POP_MSG ┃ IN_PORT ┃ IN_STBD ┃
+  ┃ GAMEPAD ┃  QUIT   ┃   IFS   ┃   POT   ┃  ROAM   ┃  AVOID  ┃ BEH_MGR ┃  IDLE   ┃  INFO   ┃ SWERVE  ┃ POP_MSG ┃ IN_PORT ┃ IN_STBD ┃
   ┗━━━━━━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┳━━━━┻━━━━┓
                  ┃    A    ┃    S    ┃    D    ┃    F    ┃    G    ┃    H    ┃    J    ┃    K    ┃    L    ┃    :    ┃    "    ┃   RET   ┃
                  ┃ IR_PSID ┃ IR_PORT ┃ IR_CNTR ┃ IR_STBD ┃ IR_SSID ┃  HELP   ┃ BM_PORT ┃ BM_CNTR ┃ BM_STBD ┃ DE_PORT ┃ DE_STBD ┃  CLEAR  ┃
@@ -623,7 +623,7 @@ class EventPublisher(Publisher):
 
                                TAB:      toggle gamepad
   FUL AST:   full astern       QUIT:     quit application             IR_PSID:  port side infrared           MTR_INF:  toggle motor info
-  HAF AST:   half astern       REL MAC:  reload macro scripts         IR_PORT:  port infrared                SP_PORT:  spin port
+  HAF AST:   half astern       IFS:      toggle ifs                   IR_PORT:  port infrared                SP_PORT:  spin port
   SLO AST:   slow astern       POT:      toggle potentiometer         IR_CNTR:  center infrared              TN_PORT:  turn to port
   DSL AST:   dead slow astern  ROAM:     trigger roam behaviour       IR_STBD:  starboard infrared           VERBOSE:  toggle verbosity
   HALT:      halt              AVOID:    trigger avoidance behaviour  IR_SSID:  starboard side infrared      TN_STBD:  turn to starboard

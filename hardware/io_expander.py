@@ -53,7 +53,8 @@ class IoExpander(Component):
         if config is None:
             raise ValueError('no configuration provided.')
         _config = config['kros'].get('io_expander')
-        self._callback = callback
+        self._enable_bumpers   = enable_bumpers
+        self._callback         = callback
         # infrared
         self._port_side_ir_pin = _config.get('port_side_ir_pin')  # pin connected to port side infrared
         self._port_ir_pin      = _config.get('port_ir_pin')       # pin connected to port infrared
@@ -73,10 +74,10 @@ class IoExpander(Component):
                     + Fore.RED + ' moth port={:d};'.format(self._port_moth_pin) \
                     + Fore.GREEN + ' moth stbd={:d};'.format(self._stbd_moth_pin) + Style.RESET_ALL)
         # bumpers
-        self._port_bmp_pin     = _config.get('port_bmp_pin')      # pin connected to port bumper
-        self._cntr_bmp_pin     = _config.get('cntr_bmp_pin')      # pin connected to center bumper
-        self._stbd_bmp_pin     = _config.get('stbd_bmp_pin')      # pin connected to starboard bumper
-        if enable_bumpers:
+        if self._enable_bumpers:
+            self._port_bmp_pin = _config.get('port_bmp_pin')      # pin connected to port bumper
+            self._cntr_bmp_pin = _config.get('cntr_bmp_pin')      # pin connected to center bumper
+            self._stbd_bmp_pin = _config.get('stbd_bmp_pin')      # pin connected to starboard bumper
             self._log.info('bumper pin assignments:\t' \
                     + Fore.RED + ' port={:d};'.format(self._port_bmp_pin) \
                     + Fore.BLUE + ' center={:d};'.format(self._cntr_bmp_pin) \
@@ -209,19 +210,28 @@ class IoExpander(Component):
     # bumpers ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
     def get_port_bmp_value(self):
-        return ( self._ioe.input(self._port_bmp_pin) == 0 )
+        if self._enable_bumpers:
+            return ( self._ioe.input(self._port_bmp_pin) == 0 )
+        else:
+            return False
 
     def get_cntr_bmp_value(self):
-        _value = self._ioe.input(self._cntr_bmp_pin)
-        if _value == 0:
-            print(Fore.GREEN + 'get_cntr_bmp_value({}): {}'.format(type(_value), _value) + Style.RESET_ALL)
-            return True
+        if self._enable_bumpers:
+            _value = self._ioe.input(self._cntr_bmp_pin)
+            if _value == 0:
+                print(Fore.GREEN + 'get_cntr_bmp_value({}): {}'.format(type(_value), _value) + Style.RESET_ALL)
+                return True
+            else:
+                print(Fore.RED + 'get_cntr_bmp_value({}): {}'.format(type(_value), _value) + Style.RESET_ALL)
+                return False
         else:
-            print(Fore.RED + 'get_cntr_bmp_value({}): {}'.format(type(_value), _value) + Style.RESET_ALL)
             return False
 
     def get_stbd_bmp_value(self):
-        return ( self._ioe.input(self._stbd_bmp_pin) == 0 )
+        if self._enable_bumpers:
+            return ( self._ioe.input(self._stbd_bmp_pin) == 0 )
+        else:
+            return False
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     # raw values are unprocessed values from the IO Expander (used for testing)
@@ -257,13 +267,22 @@ class IoExpander(Component):
     # raw bumpers ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
     def get_raw_port_bmp_value(self):
-        return self._ioe.input(self._port_bmp_pin)
+        if self._enable_bumpers:
+            return self._ioe.input(self._port_bmp_pin)
+        else:
+            return 1
 
     def get_raw_cntr_bmp_value(self):
-        return self._ioe.input(self._cntr_bmp_pin)
+        if self._enable_bumpers:
+            return self._ioe.input(self._cntr_bmp_pin)
+        else:
+            return 1
 
     def get_raw_stbd_bmp_value(self):
-        return self._ioe.input(self._stbd_bmp_pin)
+        if self._enable_bumpers:
+            return self._ioe.input(self._stbd_bmp_pin)
+        else:
+            return 1
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def close(self):
