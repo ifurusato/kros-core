@@ -26,7 +26,7 @@ init()
 from core.logger import Level, Logger
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-class ThunderBorg(object):
+class MockThunderBorg(object):
     """
 This module is designed to communicate with the ThunderBorg
     """

@@ -22,6 +22,7 @@ from core.message_bus import MessageBus
 from hardware.pid_ctrl import PIDController
 from hardware.slew import SlewLimiter
 from hardware.jerk import JerkLimiter
+from mock.thunderborg import MockThunderBorg
 from mock.velocity import MockVelocity
 from hardware.velocity import Velocity
 
@@ -92,7 +93,7 @@ class Motor(Component):
         self._slew_limiter       = SlewLimiter(config, orientation, suppressed=_suppress_slew_limiter,
                 enabled=_enable_slew_limiter, level=level)
         # provides closed loop velocity feedback .....................
-        if tb.is_mock:
+        if isinstance(tb, MockThunderBorg):
             self._velocity       = MockVelocity(orientation, level=level)
         else:
             self._velocity       = Velocity(config, self, level=level)

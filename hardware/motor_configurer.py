@@ -133,15 +133,17 @@ class MotorConfigurer():
                     self._log.info('🉐 importing ThunderBorg at address 0x[:02X]...'.format(_thunderborg_address))
                     import hardware.ThunderBorg3 as ThunderBorg
                     self._log.info('successfully imported ThunderBorg.')
+                    self._log.info('🉐 instantiating thunderborg...')
+                    self._tb = ThunderBorg.ThunderBorg(Level.INFO)  # create a new ThunderBorg object
                 else:
-                    self._log.info('⏲ importing mock ThunderBorg...')
+                    self._log.info('⏲  importing mock ThunderBorg...')
                     self._is_mocked = True # we default if no ThunderBorg found
                     self._enable_mock = True # we default if no ThunderBorg found
-                    import mock.thunderborg as ThunderBorg
+                    from mock.thunderborg import MockThunderBorg #as ThunderBorg
                     self._log.info('successfully imported mock ThunderBorg.')
+                    self._log.info('⏲  instantiating mock thunderborg...')
+                    self._tb = MockThunderBorg(Level.INFO)  # create a new ThunderBorg object
 
-                self._log.debug('instantiating thunderborg...')
-                self._tb = ThunderBorg.ThunderBorg(Level.INFO)  # create a new ThunderBorg object
                 self._tb.Init()                       # set the board up (checks the board is connected)
                 self._log.info('successfully instantiated ThunderBorg.')
                 if not self._tb.foundChip:
