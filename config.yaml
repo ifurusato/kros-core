@@ -204,11 +204,11 @@ kros:
 #               FULL:                80.0
 #               MAXIMUM:             90.0
     io_expander: # note: these are IO Expander pins, not RPi pins
-        port_side_ir_pin:            8           # pin connected to port side infrared
+        psid_ir_pin:                 8           # pin connected to port side infrared
         port_ir_pin:                10           # pin connected to port infrared
         cntr_ir_pin:                11           # pin connected to center infrared
         stbd_ir_pin:                 9           # pin connected to starboard infrared
-        stbd_side_ir_pin:            7           # pin connected to starboard side infrared
+        ssid_ir_pin:                 7           # pin connected to starboard side infrared
 #       port_bmp_pin:                6           # pin connected to port bumper
 #       cntr_bmp_pin:                4           # pin connected to center bumper
 #       stbd_bmp_pin:                5           # pin connected to starboard bumper

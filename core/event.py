@@ -68,19 +68,19 @@ class Event(Enum):
     BUTTON                 = ( 54, "button",                   16,   Group.STOP )
 
     # bumper ................................................................................
-    BUMPER_PORT            = ( 110, "port bumper",             40,   Group.BUMPER )
-    BUMPER_CNTR            = ( 111, "center bumper",           40,   Group.BUMPER )
-    BUMPER_STBD            = ( 112, "starboard bumper",        40,   Group.BUMPER )
-    BUMPER_MAST            = ( 113, "mast bumper",             40,   Group.BUMPER )
-    BUMPER_PAFT            = ( 114, "port aft bumper",         40,   Group.BUMPER )
-    BUMPER_SAFT            = ( 115, "starboard aft bumper",    40,   Group.BUMPER )
+    BUMPER_MAST            = ( 110, "mast bumper",             40,   Group.BUMPER )
+    BUMPER_PAFT            = ( 111, "port aft bumper",         43,   Group.BUMPER )
+    BUMPER_PORT            = ( 112, "port bumper",             42,   Group.BUMPER )
+    BUMPER_CNTR            = ( 113, "center bumper",           41,   Group.BUMPER )
+    BUMPER_STBD            = ( 114, "starboard bumper",        42,   Group.BUMPER )
+    BUMPER_SAFT            = ( 115, "starboard aft bumper",    44,   Group.BUMPER )
 
     # infrared ..............................................................................
-    INFRARED_PSID          = ( 120, "infrared port side",      50,   Group.INFRARED )
-    INFRARED_PORT          = ( 121, "infrared port",           50,   Group.INFRARED )
+    INFRARED_PSID          = ( 120, "infrared port side",      52,   Group.INFRARED )
+    INFRARED_PORT          = ( 121, "infrared port",           51,   Group.INFRARED )
     INFRARED_CNTR          = ( 122, "infrared cntr",           50,   Group.INFRARED )
-    INFRARED_STBD          = ( 123, "infrared stbd",           50,   Group.INFRARED )
-    INFRARED_SSID          = ( 124, "infrared stbd side",      50,   Group.INFRARED )
+    INFRARED_STBD          = ( 123, "infrared stbd",           51,   Group.INFRARED )
+    INFRARED_SSID          = ( 124, "infrared stbd side",      52,   Group.INFRARED )
 
     # velocity directives ...................................................................
     VELOCITY               = ( 200, "velocity",               100,   Group.VELOCITY ) # with value

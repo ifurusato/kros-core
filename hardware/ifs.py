@@ -84,10 +84,15 @@ class IntegratedFrontSensor(Component):
         self._cntr_raw_min_trigger     = self._config.get('cntr_raw_min_trigger')
         self._oblq_raw_min_trigger     = self._config.get('oblq_raw_min_trigger')
         self._side_raw_min_trigger     = self._config.get('side_raw_min_trigger')
+        self._log.info('event raw min trigger:       \t' \
+                + Fore.RED   + ' port side={:>5.2f}; port={:>5.2f};'.format(self._side_raw_min_trigger, self._oblq_raw_min_trigger) \
+                + Fore.BLUE  + ' center={:>5.2f};'.format(self._cntr_raw_min_trigger) \
+                + Fore.GREEN + ' stbd={:>5.2f}; stbd side={:>5.2f}'.format(self._oblq_raw_min_trigger, self._side_raw_min_trigger))
+
         self._cntr_trigger_distance_cm = self._config.get('cntr_trigger_distance_cm')
         self._oblq_trigger_distance_cm = self._config.get('oblq_trigger_distance_cm')
         self._side_trigger_distance_cm = self._config.get('side_trigger_distance_cm')
-        self._log.info('event thresholds:    \t' \
+        self._log.info('event trigger distance (cm): \t' \
                 + Fore.RED   + ' port side={:>5.2f}; port={:>5.2f};'.format(self._side_trigger_distance_cm, self._oblq_trigger_distance_cm) \
                 + Fore.BLUE  + ' center={:>5.2f};'.format(self._cntr_trigger_distance_cm) \
                 + Fore.GREEN + ' stbd={:>5.2f}; stbd side={:>5.2f}'.format(self._oblq_trigger_distance_cm, self._side_trigger_distance_cm))
@@ -96,16 +101,16 @@ class IntegratedFrontSensor(Component):
         self._io_expander = IoExpander(config, Level.INFO)
         # these are used to support running averages
         _queue_limit = 2 # larger number means it takes longer to change
-        self._deque_cntr      = Deque([], maxlen=_queue_limit)
-        self._deque_port      = Deque([], maxlen=_queue_limit)
-        self._deque_stbd      = Deque([], maxlen=_queue_limit)
-        self._deque_port_side = Deque([], maxlen=_queue_limit)
-        self._deque_stbd_side = Deque([], maxlen=_queue_limit)
-        self._cntr_count      = 0
-        self._port_count      = 0
-        self._stbd_count      = 0
-        self._port_side_count = 0
-        self._stbd_side_count = 0
+        self._deque_cntr  = Deque([], maxlen=_queue_limit)
+        self._deque_port  = Deque([], maxlen=_queue_limit)
+        self._deque_stbd  = Deque([], maxlen=_queue_limit)
+        self._deque_psid  = Deque([], maxlen=_queue_limit)
+        self._deque_ssid  = Deque([], maxlen=_queue_limit)
+        self._cntr_count  = 0
+        self._port_count  = 0
+        self._stbd_count  = 0
+        self._psid_count  = 0
+        self._ssid_count  = 0
         globals.put('ifs', self)
         self._log.info('ready.')
 
@@ -126,11 +131,11 @@ class IntegratedFrontSensor(Component):
                 + Fore.YELLOW + '{}\t'.format(self._io_expander.enabled)
                 + Fore.CYAN + 'suppressed: '
                 + Fore.YELLOW + '{}'.format(self._io_expander.suppressed))
-        self._log.info('psid: ' + Fore.RED   + '{:d}'.format(self._port_side_count)
+        self._log.info('psid: ' + Fore.RED   + '{:d}'.format(self._psid_count)
                 + Fore.CYAN + '; port: ' + Fore.RED   + '{:d}'.format(self._port_count)
                 + Fore.CYAN + '; cntr: ' + Fore.BLUE  + '{:d}'.format(self._cntr_count)
                 + Fore.CYAN + '; stbd: ' + Fore.GREEN + '{:d}'.format(self._stbd_count)
-                + Fore.CYAN + '; ssid: ' + Fore.GREEN + '{:d}'.format(self._stbd_side_count))
+                + Fore.CYAN + '; ssid: ' + Fore.GREEN + '{:d}'.format(self._ssid_count))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def poll_port_bumper(self):
@@ -194,11 +199,13 @@ class IntegratedFrontSensor(Component):
         or None if nothing is within the configured minimum trigger range.
         '''
         if self.is_active and self._io_expander.is_active:
+            if orientation is Orientation.SSID:
+                self._log.info(Fore.MAGENTA + '👾 polling infrared: {}'.format(orientation))
             _ir_data = self._get_ir_value(orientation)
             if _ir_data > self._get_raw_min_trigger(orientation):
                 _value = self._get_mean_distance(orientation, self.convert_to_distance(_ir_data))
                 if _value != None and _value < self._get_trigger_distance_cm(orientation):
-                    return self._get_event_for_orientation(self, orientation, _value)
+                    return self._get_event_for_orientation(orientation, _value)
         return None
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -210,11 +217,12 @@ class IntegratedFrontSensor(Component):
         elif orientation is Orientation.STBD:
             return self._io_expander.get_stbd_ir_value()
         elif orientation is Orientation.PSID:
-            return self._io_expander.get_port_side_ir_value()
+            return self._io_expander.get_psid_ir_value()
         elif orientation is Orientation.SSID:
-            return self._io_expander.get_stbd_side_ir_value()
+            self._log.info(Fore.GREEN + '🌳 getting ir value for orientation: {}; value: {}'.format(orientation, self._io_expander.get_ssid_ir_value()))
+            return self._io_expander.get_ssid_ir_value()
         else:
-            raise TypeError('unsupported orientation argument.')
+            raise TypeError('unsupported orientation argument: {}'.format(orientation))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _get_raw_min_trigger(self, orientation):
@@ -223,9 +231,10 @@ class IntegratedFrontSensor(Component):
         elif orientation is Orientation.PORT or orientation is Orientation.STBD:
             return self._oblq_raw_min_trigger
         elif orientation is Orientation.PSID or orientation is Orientation.SSID:
+            self._log.info(Fore.GREEN + '🌳 getting raw min trigger for orientation: {}; value: {}'.format(orientation, self._side_raw_min_trigger))
             return self._side_raw_min_trigger
         else:
-            raise TypeError('unsupported orientation argument.')
+            raise TypeError('unsupported orientation argument: {}'.format(orientation))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _get_trigger_distance_cm(self, orientation):
@@ -234,127 +243,31 @@ class IntegratedFrontSensor(Component):
         elif orientation is Orientation.PORT or orientation is Orientation.STBD:
             return self._oblq_trigger_distance_cm 
         elif orientation is Orientation.PSID or orientation is Orientation.SSID:
+            self._log.info(Fore.GREEN + '🌳 getting trigger distance for orientation: {}; value: {}'.format(orientation, self._side_trigger_distance_cm))
             return self._side_trigger_distance_cm
         else:
-            raise TypeError('unsupported orientation argument.')
+            raise TypeError('unsupported orientation argument: {}'.format(orientation))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _get_event_for_orientation(self, orientation, value):
         if orientation is Orientation.CNTR:
+            self._cntr_count += 1
             return self._message_factory.create_message(Event.INFRARED_CNTR, value)
         elif orientation is Orientation.PORT:
+            self._port_count += 1
             return self._message_factory.create_message(Event.INFRARED_PORT, value)
         elif orientation is Orientation.STBD:
+            self._stbd_count += 1
             return self._message_factory.create_message(Event.INFRARED_STBD, value)
         elif orientation is Orientation.PSID:
+            self._psid_count += 1
             return self._message_factory.create_message(Event.INFRARED_PSID, value)
         elif orientation is Orientation.SSID:
+            self._ssid_count += 1
+            self._log.info(Fore.GREEN + '🌳 getting event for orientation: {}'.format(orientation))
             return self._message_factory.create_message(Event.INFRARED_SSID, value)
         else:
-            raise TypeError('unsupported orientation argument.')
-
-#    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-#    # Group 1: the center infrared sensor
-#    def poll_cntr_infrared(self):
-#        '''
-#        Polls the center infrared sensor, returning a list of one item or None
-#        if nothing is within range.
-#        '''
-#        if self.is_active and self._io_expander.is_active:
-#            self._cntr_count += 1
-#            _cntr_ir_data = self._io_expander.get_cntr_ir_value()
-#            if _cntr_ir_data > self._cntr_raw_min_trigger:
-##               self._log.info(Fore.BLUE + 'ANALOG IR CENTER:\t' + (Fore.RED if (_cntr_ir_data > 100.0) else Fore.YELLOW)
-##                       + Style.BRIGHT + '{:d} exceeds trigger of {:d}'.format(_cntr_ir_data, self._cntr_raw_min_trigger)
-##                       + Style.DIM + '\t(analog value 0-255)')
-#                _value = self._get_mean_distance(Orientation.CNTR, self.convert_to_distance(_cntr_ir_data))
-#                if _value != None and _value < self._cntr_trigger_distance_cm:
-##                   self._log.info(Fore.BLUE + Style.NORMAL + 'CNTR\tmean distance:\t{:5.2f}/{:5.2f}cm'.format(\
-##                           _value, self._cntr_trigger_distance_cm) + Style.DIM + '; raw: {:d}'.format(_cntr_ir_data))
-#                    _message = self._message_factory.create_message(Event.INFRARED_CNTR, _value)
-##                   self._log.info('created message for event: {}; value: {:5.2f}'.format(_message.event, _message.value))
-#                    return [ _message ]
-#        return None
-#
-#    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-#    # Group 2: the oblique infrared sensors
-#    def poll_oblique_infrared(self):
-#        '''
-#        Polls the port and starboard oblique infrared sensors, returning a list
-#        containing of two messages (either can be None), or None means no value.
-#        '''
-#        if not self.is_active:
-#            return None
-#        _port_ir_message = None
-#        _stbd_ir_message = None
-#        # port analog infrared sensor ......................
-#        _port_ir_data      = self._io_expander.get_port_ir_value()
-#        if _port_ir_data > self._oblq_raw_min_trigger:
-#            self._port_count += 1
-#            self._log.info('ANALOG IR OBLIQUE:\t' + (Fore.RED if (_port_ir_data > 100.0) else Fore.YELLOW) \
-#                    + Style.BRIGHT + '{:d}'.format(_port_ir_data) + Style.DIM + '\t(analog value 0-255)')
-#            _value = self._get_mean_distance(Orientation.PORT, self.convert_to_distance(_port_ir_data))
-#            if _value != None and _value < self._oblq_trigger_distance_cm:
-#                self._log.info(Fore.RED + Style.DIM + 'PORT     \tmean distance:\t{:5.2f}/{:5.2f}cm'.format(\
-#                        _value, self._oblq_trigger_distance_cm) + Style.DIM + '; raw: {:d}'.format(_port_ir_data))
-#                _port_ir_message = self._message_factory.create_message(Event.INFRARED_PORT, _value)
-#        # starboard analog infrared sensor .................
-#        _stbd_ir_data      = self._io_expander.get_stbd_ir_value()
-#        if _stbd_ir_data > self._oblq_raw_min_trigger:
-#            self._stbd_count += 1
-#            self._log.info('ANALOG IR OBLIQUE:\t' + (Fore.RED if (_stbd_ir_data > 100.0) else Fore.YELLOW) \
-#                    + Style.BRIGHT + '{:d}'.format(_stbd_ir_data) + Style.DIM + '\t(analog value 0-255)')
-#            _value = self._get_mean_distance(Orientation.STBD, self.convert_to_distance(_stbd_ir_data))
-#            if _value != None and _value < self._oblq_trigger_distance_cm:
-#                self._log.info(Fore.GREEN + Style.DIM + 'STBD     \tmean distance:\t{:5.2f}/{:5.2f}cm'.format(\
-#                        _value, self._oblq_trigger_distance_cm) + Style.DIM + '; raw: {:d}'.format(_stbd_ir_data))
-#                _stbd_ir_message = self._message_factory.create_message(Event.INFRARED_STBD, _value)
-#        if _port_ir_message or _stbd_ir_message:
-#            return [_port_ir_message, _stbd_ir_message]
-#        else:
-#            return None
-#
-#    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-#    # Group 3: the side infrared sensors
-#    def poll_side_infrared(self):
-#        '''
-#        Returns a list of two items (either of which can be None), or None if
-#        there is no value available.
-#        '''
-#        if not self.is_active:
-#            return None
-#        # port side analog infrared sensor .................
-#        _port_side_ir_data = self._io_expander.get_port_side_ir_value()
-#        if _port_side_ir_data > self._side_raw_min_trigger:
-#            self._port_side_count += 1
-#            self._log.info(Fore.RED + 'ANALOG IR SIDE:\t' + (Fore.RED if (_port_side_ir_data > 100.0) else Fore.YELLOW) \
-#                    + Style.BRIGHT + '{:d}'.format(_port_side_ir_data) + Style.DIM + '\t(analog value 0-255)')
-#            _value = self._get_mean_distance(Orientation.PSID, self.convert_to_distance(_port_side_ir_data))
-#            if _value != None and _value < self._side_trigger_distance_cm:
-#                self._log.info(Fore.RED + Style.DIM + 'PSID\tmean distance:\t{:5.2f}/{:5.2f}cm'.format(\
-#                        _value, self._side_trigger_distance_cm) + Style.DIM + '; raw: {:d}'.format(_port_side_ir_data))
-#                _port_side_ir_message = self._message_factory.create_message(Event.INFRARED_PSID, _value)
-#        else:
-#            _port_side_ir_message = None
-#
-#        # starboard side analog infrared sensor ............
-#        _stbd_side_ir_data = self._io_expander.get_stbd_side_ir_value()
-#        if _stbd_side_ir_data > self._side_raw_min_trigger:
-#            self._stbd_side_count += 1
-#            self._log.info('ANALOG IR SIDE:\t' + (Fore.RED if (_stbd_side_ir_data > 100.0) else Fore.YELLOW) \
-#                    + Style.BRIGHT + '{:d}'.format(_stbd_side_ir_data) + Style.DIM + '\t(analog value 0-255)')
-#            _value = self._get_mean_distance(Orientation.SSID, self.convert_to_distance(_stbd_side_ir_data))
-#            if _value != None and _value < self._side_trigger_distance_cm:
-#                self._log.info(Fore.GREEN + Style.DIM + 'SSID\tmean distance:\t{:5.2f}/{:5.2f}cm'.format(\
-#                        _value, self._side_trigger_distance_cm) + Style.DIM + '; raw: {:d}'.format(_stbd_side_ir_data))
-#                _stbd_side_ir_message = self._message_factory.create_message(Event.INFRARED_SSID, _value)
-#        else:
-#            _stbd_side_ir_message = None
-#
-#        if _port_side_ir_message or _stbd_side_ir_message:
-#            return [_port_side_ir_message, _stbd_side_ir_message]
-#        else:
-#            return None
+            raise TypeError('unsupported orientation argument: {}'.format(orientation))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _get_mean_distance(self, orientation, value):
@@ -370,9 +283,9 @@ class IntegratedFrontSensor(Component):
         elif orientation is Orientation.STBD:
             _deque = self._deque_stbd
         elif orientation is Orientation.PSID:
-            _deque = self._deque_port_side
+            _deque = self._deque_psid
         elif orientation is Orientation.SSID:
-            _deque = self._deque_stbd_side
+            _deque = self._deque_ssid
         else:
             raise ValueError('unsupported orientation.')
         _deque.append(value)

@@ -71,6 +71,6 @@ class InfraredSubscriber(Subscriber):
         else:
             self._log.warning('unrecognised infrared event on message {}'.format(message.name) + ''.format(message.event.label))
         await Subscriber.process_message(self, message)
-        self._log.info('post-processing message {}'.format(message.name))
+#       self._log.debug('post-processing message {}'.format(message.name))
 
 #EOF

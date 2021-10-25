@@ -56,16 +56,16 @@ class IoExpander(Component):
         self._enable_bumpers   = enable_bumpers
         self._callback         = callback
         # infrared
-        self._port_side_ir_pin = _config.get('port_side_ir_pin')  # pin connected to port side infrared
-        self._port_ir_pin      = _config.get('port_ir_pin')       # pin connected to port infrared
-        self._cntr_ir_pin      = _config.get('cntr_ir_pin')       # pin connected to center infrared
-        self._stbd_ir_pin      = _config.get('stbd_ir_pin')       # pin connected to starboard infrared
-        self._stbd_side_ir_pin = _config.get('stbd_side_ir_pin')  # pin connected to starboard side infrared
+        self._psid_ir_pin      = _config.get('psid_ir_pin') # pin connected to port side infrared
+        self._port_ir_pin      = _config.get('port_ir_pin') # pin connected to port infrared
+        self._cntr_ir_pin      = _config.get('cntr_ir_pin') # pin connected to center infrared
+        self._stbd_ir_pin      = _config.get('stbd_ir_pin') # pin connected to starboard infrared
+        self._ssid_ir_pin      = _config.get('ssid_ir_pin') # pin connected to starboard side infrared
         if enable_infrared: 
             self._log.info('infrared pin assignments:\t' \
-                    + Fore.RED + ' port side={:d}; port={:d};'.format(self._port_side_ir_pin, self._port_ir_pin) \
+                    + Fore.RED + ' port side={:d}; port={:d};'.format(self._psid_ir_pin, self._port_ir_pin) \
                     + Fore.BLUE + ' center={:d};'.format(self._cntr_ir_pin) \
-                    + Fore.GREEN + ' stbd={:d}; stbd side={:d}'.format(self._stbd_ir_pin, self._stbd_side_ir_pin) + Style.RESET_ALL)
+                    + Fore.GREEN + ' stbd={:d}; stbd side={:d}'.format(self._stbd_ir_pin, self._ssid_ir_pin) + Style.RESET_ALL)
         # moth/anti-moth
         self._port_moth_pin = _config.get('port_moth_pin')  # pin connected to port moth sensor
         self._stbd_moth_pin = _config.get('stbd_moth_pin')  # pin connected to starboard moth sensor
@@ -118,18 +118,18 @@ class IoExpander(Component):
             self._ioe.set_adc_vref(3.3)  # input voltage of IO Expander, this is 3.3 on Breakout Garden
 
             if enable_infrared: # analog infrared sensors
-                self._ioe.set_mode(self._port_side_ir_pin, io.ADC)
-                self._ioe.set_mode(self._port_ir_pin,      io.ADC)
-                self._ioe.set_mode(self._cntr_ir_pin,      io.ADC)
-                self._ioe.set_mode(self._stbd_ir_pin,      io.ADC)
-                self._ioe.set_mode(self._stbd_side_ir_pin, io.ADC)
+                self._ioe.set_mode(self._psid_ir_pin, io.ADC)
+                self._ioe.set_mode(self._port_ir_pin, io.ADC)
+                self._ioe.set_mode(self._cntr_ir_pin, io.ADC)
+                self._ioe.set_mode(self._stbd_ir_pin, io.ADC)
+                self._ioe.set_mode(self._ssid_ir_pin, io.ADC)
             if enable_moth: # moth sensors
-                self._ioe.set_mode(self._port_moth_pin,    io.ADC)
-                self._ioe.set_mode(self._stbd_moth_pin,    io.ADC)
+                self._ioe.set_mode(self._port_moth_pin, io.ADC)
+                self._ioe.set_mode(self._stbd_moth_pin, io.ADC)
             if enable_bumpers: # digital bumpers
-                self._ioe.set_mode(self._port_bmp_pin,     io.IN_PU)
-                self._ioe.set_mode(self._cntr_bmp_pin,     io.IN_PU)
-                self._ioe.set_mode(self._stbd_bmp_pin,     io.IN_PU)
+                self._ioe.set_mode(self._port_bmp_pin, io.IN_PU)
+                self._ioe.set_mode(self._cntr_bmp_pin, io.IN_PU)
+                self._ioe.set_mode(self._stbd_bmp_pin, io.IN_PU)
 
 #       except ImportError:
 #           self._log.warning("This script requires the pimoroni-ioexpander module\nInstall with: pip3 install --user pimoroni-ioexpander [1]")
@@ -184,22 +184,20 @@ class IoExpander(Component):
 
     # infrared sensors ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
-    def get_port_side_ir_value(self):
-        return int(round(self._ioe.input(self._port_side_ir_pin) * 100.0))
+    def get_psid_ir_value(self):
+        return int(round(self._ioe.input(self._psid_ir_pin) * 100.0))
 
     def get_port_ir_value(self):
         return int(round(self._ioe.input(self._port_ir_pin) * 100.0))
 
     def get_cntr_ir_value(self):
-        if not self._ioe:
-            return None
         return int(round(self._ioe.input(self._cntr_ir_pin) * 100.0))
 
     def get_stbd_ir_value(self):
         return int(round(self._ioe.input(self._stbd_ir_pin) * 100.0))
 
-    def get_stbd_side_ir_value(self):
-        return int(round(self._ioe.input(self._stbd_side_ir_pin) * 100.0))
+    def get_ssid_ir_value(self):
+        return int(round(self._ioe.input(self._ssid_ir_pin) * 100.0))
 
     # moth/anti-moth ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
@@ -239,7 +237,7 @@ class IoExpander(Component):
     # raw infrared sensors ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
     def get_raw_port_side_ir_value(self):
-        return self._ioe.input(self._port_side_ir_pin)
+        return self._ioe.input(self._psid_ir_pin)
 
     def get_raw_port_ir_value(self):
         return self._ioe.input(self._port_ir_pin)
@@ -251,7 +249,7 @@ class IoExpander(Component):
         return self._ioe.input(self._stbd_ir_pin)
 
     def get_raw_stbd_side_ir_value(self):
-        return self._ioe.input(self._stbd_side_ir_pin)
+        return self._ioe.input(self._ssid_ir_pin)
 
     # raw moth sensors ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 

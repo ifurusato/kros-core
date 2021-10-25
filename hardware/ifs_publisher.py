@@ -117,8 +117,8 @@ class IfsPublisher(Publisher):
         self._log.info('starting infrared listener loop.')
         while f_is_enabled():
             _count = next(self._counter)
-            for _orientation, n in list(enumerate([Orientation.CNTR, Orientation.PORT, Orientation.STBD, Orientation.PSID, Orientation.SSID])):
-                self._log.info('polling infrared {} (n:{})...'.format(_orientation, n))
+            for n, _orientation in list(enumerate([Orientation.CNTR, Orientation.PORT, Orientation.STBD, Orientation.PSID, Orientation.SSID])):
+#               self._log.debug(Fore.BLACK + 'polling infrared {} (n:{})...'.format(_orientation, n))
                 _message = self._ifs.poll_infrared(_orientation)
                 if _message:
                     if not isinstance(_message, Message):
