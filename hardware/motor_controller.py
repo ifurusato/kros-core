@@ -221,19 +221,19 @@ class MotorController(Component):
 
         self._log.info(Fore.RED + '\t{}{}'.format('port',(' ' * 9))
                 + Fore.CYAN + 'power: ' + Fore.YELLOW + '{:5.2f}'.format(self._port_motor.current_power))
-        self._log.info(Fore.RED + '\t{}'.format('motor') \
+        self._log.info(Fore.RED + '\tmotor' \
                 + Fore.CYAN + ' {}enabled: '.format((' ' * 5))
                 + Fore.YELLOW + '{}\t'.format(self._port_motor.enabled)
                 + Fore.CYAN + 'suppressed: '
                 + Fore.YELLOW + '{}'.format(self._port_motor.suppressed))
 
-        self._log.info(Fore.RED + '\t{}'.format('slew') \
+        self._log.info(Fore.RED + '\tslew' \
                 + Fore.CYAN + ' {}enabled: '.format((' ' * max(0, (10 - len('port')))))
                 + Fore.YELLOW + '{}\t'.format(self._port_motor.slew_limiter.enabled)
                 + Fore.CYAN + 'suppressed: '
                 + Fore.YELLOW + '{}'.format(self._port_motor.slew_limiter.suppressed))
 
-        self._log.info(Fore.RED + '\t{}'.format('pid') \
+        self._log.info(Fore.RED + '\tpid' \
                 + Fore.CYAN + ' {}enabled: '.format((' ' * max(0, (11 - len('port')))))
                 + Fore.YELLOW + '{}\t'.format(self._port_motor.pid_controller.enabled)
                 + Fore.CYAN + 'suppressed: '

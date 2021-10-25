@@ -17,9 +17,9 @@ init()
 import core.globals as globals
 from core.config_loader import ConfigLoader
 from core.logger import Logger, Level
-from core.orient import Orientation
 from core.component import Component
 from core.event import Event
+from core.orient import Orientation
 from core.message import Message
 from core.message_bus import MessageBus
 from core.message_factory import MessageFactory
@@ -114,12 +114,23 @@ class IntegratedFrontSensor(Component):
         return 'ifs'
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def get_info(self):
-
-        return 'ifs: {}; ioe: {}; psid: {:d}; port: {:d}; cntr: {:d}; stbd: {:d}; ssid: {:d}'.format(\
-                self.is_active, self._io_expander.is_active,
-                self._cntr_count, self._port_count, self._stbd_count, self._port_side_count, self._stbd_side_count)
-#               len(self._deque_port_side), len(self._deque_port), len(self._deque_cntr), len(self._deque_stbd), len(self._deque_stbd_side))
+    def print_info(self):
+        self._log.info('integrated front sensor:')
+        self._log.info('\tifs' \
+                + Fore.CYAN + ' {}enabled: '.format((' ' * 7))
+                + Fore.YELLOW + '{}\t'.format(self.enabled)
+                + Fore.CYAN + 'suppressed: '
+                + Fore.YELLOW + '{}'.format(self.suppressed))
+        self._log.info('\tioe' \
+                + Fore.CYAN + ' {}enabled: '.format((' ' * 7))
+                + Fore.YELLOW + '{}\t'.format(self._io_expander.enabled)
+                + Fore.CYAN + 'suppressed: '
+                + Fore.YELLOW + '{}'.format(self._io_expander.suppressed))
+        self._log.info('psid: ' + Fore.RED   + '{:d}'.format(self._port_side_count)
+                + Fore.CYAN + '; port: ' + Fore.RED   + '{:d}'.format(self._port_count)
+                + Fore.CYAN + '; cntr: ' + Fore.BLUE  + '{:d}'.format(self._cntr_count)
+                + Fore.CYAN + '; stbd: ' + Fore.GREEN + '{:d}'.format(self._stbd_count)
+                + Fore.CYAN + '; ssid: ' + Fore.GREEN + '{:d}'.format(self._stbd_side_count))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def poll_port_bumper(self):
@@ -177,95 +188,173 @@ class IntegratedFrontSensor(Component):
         return [_port_bmp_message, _cntr_bmp_message, _stbd_bmp_message] if _port_bmp_message or _cntr_bmp_message or _stbd_bmp_message else None
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    # Group 1: the center infrared sensor
-    def poll_cntr_infrared(self):
+    def poll_infrared(self, orientation):
         '''
-        Polls the center infrared sensor, returning the value or None if nothing
-        is within range.
+        Polls the specified infrared sensor, returning a populated Message,
+        or None if nothing is within the configured minimum trigger range.
         '''
         if self.is_active and self._io_expander.is_active:
-            self._cntr_count += 1
-            _cntr_ir_data = self._io_expander.get_cntr_ir_value()
-            if _cntr_ir_data > self._cntr_raw_min_trigger:
-#               self._log.info(Fore.BLUE + 'ANALOG IR CENTER:\t' + (Fore.RED if (_cntr_ir_data > 100.0) else Fore.YELLOW)
-#                       + Style.BRIGHT + '{:d} exceeds trigger of {:d}'.format(_cntr_ir_data, self._cntr_raw_min_trigger)
-#                       + Style.DIM + '\t(analog value 0-255)')
-                _value = self._get_mean_distance(Orientation.CNTR, self.convert_to_distance(_cntr_ir_data))
-                if _value != None and _value < self._cntr_trigger_distance_cm:
-#                   self._log.info(Fore.BLUE + Style.NORMAL + 'CNTR\tmean distance:\t{:5.2f}/{:5.2f}cm'.format(\
-#                           _value, self._cntr_trigger_distance_cm) + Style.DIM + '; raw: {:d}'.format(_cntr_ir_data))
-                    _message = self._message_factory.create_message(Event.INFRARED_CNTR, _value)
-#                   self._log.info('created message for event: {}; value: {:5.2f}'.format(_message.event, _message.value))
-                    return _message
+            _ir_data = self._get_ir_value(orientation)
+            if _ir_data > self._get_raw_min_trigger(orientation):
+                _value = self._get_mean_distance(orientation, self.convert_to_distance(_ir_data))
+                if _value != None and _value < self._get_trigger_distance_cm(orientation):
+                    return self._get_event_for_orientation(self, orientation, _value)
         return None
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    # Group 2: the oblique infrared sensors
-    def poll_oblique_infrared(self):
-        '''
-        Polls the port and starboard oblique infrared sensors, returning a tuple
-        containing the results, where None means no value.
-        '''
-        if not self.is_active:
-            return None
-        _port_ir_message = None
-        _stbd_ir_message = None
-        # port analog infrared sensor ......................
-        _port_ir_data      = self._io_expander.get_port_ir_value()
-        if _port_ir_data > self._oblq_raw_min_trigger:
-            self._port_count += 1
-            self._log.info('ANALOG IR OBLIQUE:\t' + (Fore.RED if (_port_ir_data > 100.0) else Fore.YELLOW) \
-                    + Style.BRIGHT + '{:d}'.format(_port_ir_data) + Style.DIM + '\t(analog value 0-255)')
-            _value = self._get_mean_distance(Orientation.PORT, self.convert_to_distance(_port_ir_data))
-            if _value != None and _value < self._oblq_trigger_distance_cm:
-                self._log.info(Fore.RED + Style.DIM + 'PORT     \tmean distance:\t{:5.2f}/{:5.2f}cm'.format(\
-                        _value, self._oblq_trigger_distance_cm) + Style.DIM + '; raw: {:d}'.format(_port_ir_data))
-                _port_ir_message = self._message_factory.create_message(Event.INFRARED_PORT, _value)
-        # starboard analog infrared sensor .................
-        _stbd_ir_data      = self._io_expander.get_stbd_ir_value()
-        if _stbd_ir_data > self._oblq_raw_min_trigger:
-            self._stbd_count += 1
-            self._log.info('ANALOG IR OBLIQUE:\t' + (Fore.RED if (_stbd_ir_data > 100.0) else Fore.YELLOW) \
-                    + Style.BRIGHT + '{:d}'.format(_stbd_ir_data) + Style.DIM + '\t(analog value 0-255)')
-            _value = self._get_mean_distance(Orientation.STBD, self.convert_to_distance(_stbd_ir_data))
-            if _value != None and _value < self._oblq_trigger_distance_cm:
-                self._log.info(Fore.GREEN + Style.DIM + 'STBD     \tmean distance:\t{:5.2f}/{:5.2f}cm'.format(\
-                        _value, self._oblq_trigger_distance_cm) + Style.DIM + '; raw: {:d}'.format(_stbd_ir_data))
-                _stbd_ir_message = self._message_factory.create_message(Event.INFRARED_STBD, _value)
-        return [_port_ir_message, _stbd_ir_message]
+    def _get_ir_value(self, orientation):
+        if orientation is Orientation.CNTR:
+            return self._io_expander.get_cntr_ir_value()
+        elif orientation is Orientation.PORT:
+            return self._io_expander.get_port_ir_value()
+        elif orientation is Orientation.STBD:
+            return self._io_expander.get_stbd_ir_value()
+        elif orientation is Orientation.PSID:
+            return self._io_expander.get_port_side_ir_value()
+        elif orientation is Orientation.SSID:
+            return self._io_expander.get_stbd_side_ir_value()
+        else:
+            raise TypeError('unsupported orientation argument.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    # Group 3: the side infrared sensors
-    def poll_side_infrared(self):
-        if not self.is_active:
-            return None
-        # port side analog infrared sensor .................
-        _port_side_ir_data = self._io_expander.get_port_side_ir_value()
-        if _port_side_ir_data > self._side_raw_min_trigger:
-            self._port_side_count += 1
-            self._log.info(Fore.RED + 'ANALOG IR SIDE:\t' + (Fore.RED if (_port_side_ir_data > 100.0) else Fore.YELLOW) \
-                    + Style.BRIGHT + '{:d}'.format(_port_side_ir_data) + Style.DIM + '\t(analog value 0-255)')
-            _value = self._get_mean_distance(Orientation.PSID, self.convert_to_distance(_port_side_ir_data))
-            if _value != None and _value < self._side_trigger_distance_cm:
-                self._log.info(Fore.RED + Style.DIM + 'PSID\tmean distance:\t{:5.2f}/{:5.2f}cm'.format(\
-                        _value, self._side_trigger_distance_cm) + Style.DIM + '; raw: {:d}'.format(_port_side_ir_data))
-                _port_side_ir_message = self._message_factory.create_message(Event.INFRARED_PSID, _value)
+    def _get_raw_min_trigger(self, orientation):
+        if orientation is Orientation.CNTR:
+            return self._cntr_raw_min_trigger
+        elif orientation is Orientation.PORT or orientation is Orientation.STBD:
+            return self._oblq_raw_min_trigger
+        elif orientation is Orientation.PSID or orientation is Orientation.SSID:
+            return self._side_raw_min_trigger
         else:
-            _port_side_ir_message = None
-        # starboard side analog infrared sensor ............
-        _stbd_side_ir_data = self._io_expander.get_stbd_side_ir_value()
-        if _stbd_side_ir_data > self._side_raw_min_trigger:
-            self._stbd_side_count += 1
-            self._log.info('ANALOG IR SIDE:\t' + (Fore.RED if (_stbd_side_ir_data > 100.0) else Fore.YELLOW) \
-                    + Style.BRIGHT + '{:d}'.format(_stbd_side_ir_data) + Style.DIM + '\t(analog value 0-255)')
-            _value = self._get_mean_distance(Orientation.SSID, self.convert_to_distance(_stbd_side_ir_data))
-            if _value != None and _value < self._side_trigger_distance_cm:
-                self._log.info(Fore.GREEN + Style.DIM + 'SSID\tmean distance:\t{:5.2f}/{:5.2f}cm'.format(\
-                        _value, self._side_trigger_distance_cm) + Style.DIM + '; raw: {:d}'.format(_stbd_side_ir_data))
-                _stbd_side_ir_message = self._message_factory.create_message(Event.INFRARED_SSID, _value)
+            raise TypeError('unsupported orientation argument.')
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def _get_trigger_distance_cm(self, orientation):
+        if orientation is Orientation.CNTR:
+            return self._cntr_trigger_distance_cm
+        elif orientation is Orientation.PORT or orientation is Orientation.STBD:
+            return self._oblq_trigger_distance_cm 
+        elif orientation is Orientation.PSID or orientation is Orientation.SSID:
+            return self._side_trigger_distance_cm
         else:
-            _stbd_side_ir_message = None
-        return [_port_side_ir_message, _stbd_side_ir_message]
+            raise TypeError('unsupported orientation argument.')
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def _get_event_for_orientation(self, orientation, value):
+        if orientation is Orientation.CNTR:
+            return self._message_factory.create_message(Event.INFRARED_CNTR, value)
+        elif orientation is Orientation.PORT:
+            return self._message_factory.create_message(Event.INFRARED_PORT, value)
+        elif orientation is Orientation.STBD:
+            return self._message_factory.create_message(Event.INFRARED_STBD, value)
+        elif orientation is Orientation.PSID:
+            return self._message_factory.create_message(Event.INFRARED_PSID, value)
+        elif orientation is Orientation.SSID:
+            return self._message_factory.create_message(Event.INFRARED_SSID, value)
+        else:
+            raise TypeError('unsupported orientation argument.')
+
+#    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+#    # Group 1: the center infrared sensor
+#    def poll_cntr_infrared(self):
+#        '''
+#        Polls the center infrared sensor, returning a list of one item or None
+#        if nothing is within range.
+#        '''
+#        if self.is_active and self._io_expander.is_active:
+#            self._cntr_count += 1
+#            _cntr_ir_data = self._io_expander.get_cntr_ir_value()
+#            if _cntr_ir_data > self._cntr_raw_min_trigger:
+##               self._log.info(Fore.BLUE + 'ANALOG IR CENTER:\t' + (Fore.RED if (_cntr_ir_data > 100.0) else Fore.YELLOW)
+##                       + Style.BRIGHT + '{:d} exceeds trigger of {:d}'.format(_cntr_ir_data, self._cntr_raw_min_trigger)
+##                       + Style.DIM + '\t(analog value 0-255)')
+#                _value = self._get_mean_distance(Orientation.CNTR, self.convert_to_distance(_cntr_ir_data))
+#                if _value != None and _value < self._cntr_trigger_distance_cm:
+##                   self._log.info(Fore.BLUE + Style.NORMAL + 'CNTR\tmean distance:\t{:5.2f}/{:5.2f}cm'.format(\
+##                           _value, self._cntr_trigger_distance_cm) + Style.DIM + '; raw: {:d}'.format(_cntr_ir_data))
+#                    _message = self._message_factory.create_message(Event.INFRARED_CNTR, _value)
+##                   self._log.info('created message for event: {}; value: {:5.2f}'.format(_message.event, _message.value))
+#                    return [ _message ]
+#        return None
+#
+#    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+#    # Group 2: the oblique infrared sensors
+#    def poll_oblique_infrared(self):
+#        '''
+#        Polls the port and starboard oblique infrared sensors, returning a list
+#        containing of two messages (either can be None), or None means no value.
+#        '''
+#        if not self.is_active:
+#            return None
+#        _port_ir_message = None
+#        _stbd_ir_message = None
+#        # port analog infrared sensor ......................
+#        _port_ir_data      = self._io_expander.get_port_ir_value()
+#        if _port_ir_data > self._oblq_raw_min_trigger:
+#            self._port_count += 1
+#            self._log.info('ANALOG IR OBLIQUE:\t' + (Fore.RED if (_port_ir_data > 100.0) else Fore.YELLOW) \
+#                    + Style.BRIGHT + '{:d}'.format(_port_ir_data) + Style.DIM + '\t(analog value 0-255)')
+#            _value = self._get_mean_distance(Orientation.PORT, self.convert_to_distance(_port_ir_data))
+#            if _value != None and _value < self._oblq_trigger_distance_cm:
+#                self._log.info(Fore.RED + Style.DIM + 'PORT     \tmean distance:\t{:5.2f}/{:5.2f}cm'.format(\
+#                        _value, self._oblq_trigger_distance_cm) + Style.DIM + '; raw: {:d}'.format(_port_ir_data))
+#                _port_ir_message = self._message_factory.create_message(Event.INFRARED_PORT, _value)
+#        # starboard analog infrared sensor .................
+#        _stbd_ir_data      = self._io_expander.get_stbd_ir_value()
+#        if _stbd_ir_data > self._oblq_raw_min_trigger:
+#            self._stbd_count += 1
+#            self._log.info('ANALOG IR OBLIQUE:\t' + (Fore.RED if (_stbd_ir_data > 100.0) else Fore.YELLOW) \
+#                    + Style.BRIGHT + '{:d}'.format(_stbd_ir_data) + Style.DIM + '\t(analog value 0-255)')
+#            _value = self._get_mean_distance(Orientation.STBD, self.convert_to_distance(_stbd_ir_data))
+#            if _value != None and _value < self._oblq_trigger_distance_cm:
+#                self._log.info(Fore.GREEN + Style.DIM + 'STBD     \tmean distance:\t{:5.2f}/{:5.2f}cm'.format(\
+#                        _value, self._oblq_trigger_distance_cm) + Style.DIM + '; raw: {:d}'.format(_stbd_ir_data))
+#                _stbd_ir_message = self._message_factory.create_message(Event.INFRARED_STBD, _value)
+#        if _port_ir_message or _stbd_ir_message:
+#            return [_port_ir_message, _stbd_ir_message]
+#        else:
+#            return None
+#
+#    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+#    # Group 3: the side infrared sensors
+#    def poll_side_infrared(self):
+#        '''
+#        Returns a list of two items (either of which can be None), or None if
+#        there is no value available.
+#        '''
+#        if not self.is_active:
+#            return None
+#        # port side analog infrared sensor .................
+#        _port_side_ir_data = self._io_expander.get_port_side_ir_value()
+#        if _port_side_ir_data > self._side_raw_min_trigger:
+#            self._port_side_count += 1
+#            self._log.info(Fore.RED + 'ANALOG IR SIDE:\t' + (Fore.RED if (_port_side_ir_data > 100.0) else Fore.YELLOW) \
+#                    + Style.BRIGHT + '{:d}'.format(_port_side_ir_data) + Style.DIM + '\t(analog value 0-255)')
+#            _value = self._get_mean_distance(Orientation.PSID, self.convert_to_distance(_port_side_ir_data))
+#            if _value != None and _value < self._side_trigger_distance_cm:
+#                self._log.info(Fore.RED + Style.DIM + 'PSID\tmean distance:\t{:5.2f}/{:5.2f}cm'.format(\
+#                        _value, self._side_trigger_distance_cm) + Style.DIM + '; raw: {:d}'.format(_port_side_ir_data))
+#                _port_side_ir_message = self._message_factory.create_message(Event.INFRARED_PSID, _value)
+#        else:
+#            _port_side_ir_message = None
+#
+#        # starboard side analog infrared sensor ............
+#        _stbd_side_ir_data = self._io_expander.get_stbd_side_ir_value()
+#        if _stbd_side_ir_data > self._side_raw_min_trigger:
+#            self._stbd_side_count += 1
+#            self._log.info('ANALOG IR SIDE:\t' + (Fore.RED if (_stbd_side_ir_data > 100.0) else Fore.YELLOW) \
+#                    + Style.BRIGHT + '{:d}'.format(_stbd_side_ir_data) + Style.DIM + '\t(analog value 0-255)')
+#            _value = self._get_mean_distance(Orientation.SSID, self.convert_to_distance(_stbd_side_ir_data))
+#            if _value != None and _value < self._side_trigger_distance_cm:
+#                self._log.info(Fore.GREEN + Style.DIM + 'SSID\tmean distance:\t{:5.2f}/{:5.2f}cm'.format(\
+#                        _value, self._side_trigger_distance_cm) + Style.DIM + '; raw: {:d}'.format(_stbd_side_ir_data))
+#                _stbd_side_ir_message = self._message_factory.create_message(Event.INFRARED_SSID, _value)
+#        else:
+#            _stbd_side_ir_message = None
+#
+#        if _port_side_ir_message or _stbd_side_ir_message:
+#            return [_port_side_ir_message, _stbd_side_ir_message]
+#        else:
+#            return None
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _get_mean_distance(self, orientation, value):

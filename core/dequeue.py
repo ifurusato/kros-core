@@ -126,7 +126,7 @@ class DeQueue(object):
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def push(self, item):
         '''
-        An alias for put(item).
+        An alias for put(item). 
         '''
         self.put(item)
 
@@ -134,10 +134,14 @@ class DeQueue(object):
     def put(self, item):
         '''
         Put the item onto the queue.
+
+        This has an additional feature over the default in that will ignore
+        null arguments rather than raise an exception.
         '''
         if self.full():
             raise Full()
-        self._queue.put(item)
+        if item:
+            self._queue.put(item)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def pop(self):

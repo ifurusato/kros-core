@@ -63,7 +63,7 @@ class InfraredSubscriber(Subscriber):
         :param message:  the message to process.
         '''
         if message.gcd:
-            raise GarbageCollectedError('cannot process message: message has been garbage collected. [3]')
+            raise GarbageCollectedError('cannot process message: message has been garbage collected.')
         _event = message.event
         self._log.info('🌞 pre-processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.label))
         if Event.is_infrared_event(_event):

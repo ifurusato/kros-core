@@ -366,10 +366,9 @@ class EventPublisher(Publisher):
         _battery_check = self._message_bus.get_publisher('battery')
         _ifs = globals.get('ifs')
         if _ifs:
-            _msg = _ifs.get_info()
+            _ifs.print_info()
         else:
-            _msg = 'no ifs information available.'
-        self._log.info('integrated front sensor:  \t' + Fore.YELLOW + '{}'.format(_msg))
+            self._log.info('integrated front sensor:  \t' + Fore.YELLOW + 'no ifs information available.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _print_macro_info(self):
