@@ -57,7 +57,19 @@ class IfsPublisher(Publisher):
         _cfg = config['kros'].get('publisher').get('integrated_front_sensor')
         _loop_freq_hz = _cfg.get('loop_freq_hz')
         self._log.info('ifs publish loop frequency: {:d}Hz'.format(_loop_freq_hz))
-        self._publish_delay_sec = 1.0 / _loop_freq_hz
+        self._publish_delay_sec  = 1.0 / _loop_freq_hz
+        self._enable_publishing  = True
+        # configure poll profiles ......
+        # profile using all sensors in sequence
+        self._std_profile        = [Orientation.CNTR, Orientation.PORT, Orientation.STBD, Orientation.PSID, Orientation.SSID]
+        # profile using only center and oblique (no sides)
+        self._forward_profile    = [Orientation.CNTR, Orientation.PORT, Orientation.STBD]
+        # performance profile that prioritises center, then oblique, then sides
+        self._perforance_profile = [ # center: 6/12; oblique: 4/12; side: 2/12
+                Orientation.CNTR, Orientation.PORT, Orientation.CNTR, Orientation.STBD,
+                Orientation.CNTR, Orientation.PSID, Orientation.CNTR, Orientation.SSID,
+                Orientation.CNTR, Orientation.PORT, Orientation.CNTR, Orientation.STBD ]
+        self._profile = self._perforance_profile # configurable?
         self._log.info('ready.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -117,15 +129,15 @@ class IfsPublisher(Publisher):
         self._log.info('starting infrared listener loop.')
         while f_is_enabled():
             _count = next(self._counter)
-            for n, _orientation in list(enumerate([Orientation.CNTR, Orientation.PORT, Orientation.STBD, Orientation.PSID, Orientation.SSID])):
-#               self._log.debug(Fore.BLACK + 'polling infrared {} (n:{})...'.format(_orientation, n))
+            for n, _orientation in list(enumerate(self._profile)):
                 _message = self._ifs.poll_infrared(_orientation)
                 if _message:
                     if not isinstance(_message, Message):
                         raise Exception('expected Message, not {}'.format(type(_message)))
                     self._log.info(Style.BRIGHT + 'ifs-publishing message:' + Fore.WHITE + Style.NORMAL + ' {}'.format(_message.name)
                             + Fore.CYAN + ' event: {}; '.format(_message.event.label) + Fore.YELLOW + 'value: {:5.2f}cm'.format(_message.value))
-                    await Publisher.publish(self, _message)
+                    if self._enable_publishing:
+                        await Publisher.publish(self, _message)
             await asyncio.sleep(self._publish_delay_sec)
         self._log.info('ifs publish loop complete.')
 

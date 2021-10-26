@@ -199,8 +199,7 @@ class IntegratedFrontSensor(Component):
         or None if nothing is within the configured minimum trigger range.
         '''
         if self.is_active and self._io_expander.is_active:
-            if orientation is Orientation.SSID:
-                self._log.info(Fore.MAGENTA + '👾 polling infrared: {}'.format(orientation))
+#           self._log.info(Fore.MAGENTA + '👾 polling infrared: {}'.format(orientation))
             _ir_data = self._get_ir_value(orientation)
             if _ir_data > self._get_raw_min_trigger(orientation):
                 _value = self._get_mean_distance(orientation, self.convert_to_distance(_ir_data))
@@ -219,7 +218,7 @@ class IntegratedFrontSensor(Component):
         elif orientation is Orientation.PSID:
             return self._io_expander.get_psid_ir_value()
         elif orientation is Orientation.SSID:
-            self._log.info(Fore.GREEN + '🌳 getting ir value for orientation: {}; value: {}'.format(orientation, self._io_expander.get_ssid_ir_value()))
+#           self._log.info(Fore.GREEN + 'getting ir value for orientation: {}; value: {}'.format(orientation, self._io_expander.get_ssid_ir_value()))
             return self._io_expander.get_ssid_ir_value()
         else:
             raise TypeError('unsupported orientation argument: {}'.format(orientation))
@@ -231,7 +230,7 @@ class IntegratedFrontSensor(Component):
         elif orientation is Orientation.PORT or orientation is Orientation.STBD:
             return self._oblq_raw_min_trigger
         elif orientation is Orientation.PSID or orientation is Orientation.SSID:
-            self._log.info(Fore.GREEN + '🌳 getting raw min trigger for orientation: {}; value: {}'.format(orientation, self._side_raw_min_trigger))
+#           self._log.info(Fore.GREEN + 'getting raw min trigger for orientation: {}; value: {}'.format(orientation, self._side_raw_min_trigger))
             return self._side_raw_min_trigger
         else:
             raise TypeError('unsupported orientation argument: {}'.format(orientation))
@@ -241,9 +240,9 @@ class IntegratedFrontSensor(Component):
         if orientation is Orientation.CNTR:
             return self._cntr_trigger_distance_cm
         elif orientation is Orientation.PORT or orientation is Orientation.STBD:
-            return self._oblq_trigger_distance_cm 
+            return self._oblq_trigger_distance_cm
         elif orientation is Orientation.PSID or orientation is Orientation.SSID:
-            self._log.info(Fore.GREEN + '🌳 getting trigger distance for orientation: {}; value: {}'.format(orientation, self._side_trigger_distance_cm))
+#           self._log.info(Fore.GREEN + 'getting trigger distance for orientation: {}; value: {}'.format(orientation, self._side_trigger_distance_cm))
             return self._side_trigger_distance_cm
         else:
             raise TypeError('unsupported orientation argument: {}'.format(orientation))
@@ -252,19 +251,23 @@ class IntegratedFrontSensor(Component):
     def _get_event_for_orientation(self, orientation, value):
         if orientation is Orientation.CNTR:
             self._cntr_count += 1
+            self._log.info(Fore.BLUE  + '💙   infrared CNTR triggered: value: {:5.2f}cm; count: {:d}'.format(value, self._cntr_count))
             return self._message_factory.create_message(Event.INFRARED_CNTR, value)
         elif orientation is Orientation.PORT:
             self._port_count += 1
+            self._log.info(Fore.RED   + '❤️    infrared PORT triggered: value: {:5.2f}cm; count: {:d}'.format(value, self._port_count))
             return self._message_factory.create_message(Event.INFRARED_PORT, value)
         elif orientation is Orientation.STBD:
             self._stbd_count += 1
+            self._log.info(Fore.GREEN + '💚   infrared STBD triggered: value: {:5.2f}cm; count: {:d}'.format(value, self._stbd_count))
             return self._message_factory.create_message(Event.INFRARED_STBD, value)
         elif orientation is Orientation.PSID:
             self._psid_count += 1
+            self._log.info(Fore.RED   + '❤️ ❤️  infrared PSID triggered: value: {:5.2f}cm; count: {:d}'.format(value, self._psid_count))
             return self._message_factory.create_message(Event.INFRARED_PSID, value)
         elif orientation is Orientation.SSID:
             self._ssid_count += 1
-            self._log.info(Fore.GREEN + '🌳 getting event for orientation: {}'.format(orientation))
+            self._log.info(Fore.GREEN + '💚💚 infrared SSID triggered: value: {:5.2f}cm; count: {:d}'.format(value, self._ssid_count))
             return self._message_factory.create_message(Event.INFRARED_SSID, value)
         else:
             raise TypeError('unsupported orientation argument: {}'.format(orientation))
@@ -294,10 +297,7 @@ class IntegratedFrontSensor(Component):
         for x in _deque:
             _n += 1
             _mean += ( x - _mean ) / _n
-        if _n < 1:
-            return float('nan');
-        else:
-            return _mean
+        return float('nan') if _n < 1 else _mean
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def convert_to_distance(self, value):
