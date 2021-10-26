@@ -28,7 +28,7 @@ class MockIoExpander(Component):
     '''
     def __init__(self, config, level):
         self._log = Logger('mock-ioe', level)
-        Component.__init__(self, self._log, suppressed=True, enabled=False)
+        Component.__init__(self, self._log, suppressed=False, enabled=True)
         if config is None:
             raise ValueError('no configuration provided.')
         self._counter = itertools.count()

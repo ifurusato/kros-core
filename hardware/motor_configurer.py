@@ -160,9 +160,9 @@ class MotorConfigurer():
                 self._tb.SetLedShowBattery(True)
 
                 # initialise ThunderBorg ...........................
-                self._log.debug('getting battery reading...')
+                self._log.debug('🏁 getting battery reading...')
                 # get battery voltage to determine max motor power
-                # could be: Makita 12V or 18V power tool battery, or 12V line supply
+                # could be: Makita 12V or 18V power tool battery, 12V line supply, or mocked value
                 voltage_in = self._tb.GetBatteryReading()
                 if voltage_in is None:
                     raise OSError('cannot continue: cannot read battery voltage.')
@@ -207,31 +207,23 @@ class MotorConfigurer():
     def _import_mock_thunderborg(self):
         self._log.info('configure thunderborg & motors...')
         try:
-            import mock.thunderborg as ThunderBorg
-            self._log.info('successfully imported mock ThunderBorg.')
-            self._tb = ThunderBorg.ThunderBorg(Level.WARN)  # create a new ThunderBorg object
+            from mock.thunderborg import MockThunderBorg as ThunderBorg
+            self._log.info('🏁 successfully imported mock ThunderBorg.')
+            self._tb = ThunderBorg(Level.WARN)  # create a new ThunderBorg object
 #           self._tb.Init()                       # set the board up (checks the board is connected)
-            self._log.info(Fore.YELLOW + 'successfully instantiated mock ThunderBorg.')
+            self._log.info(Fore.YELLOW + '🏁 successfully instantiated mock ThunderBorg.')
 #           self._tb.SetLedShowBattery(True)
             _voltage_in  = 19.0
             _voltage_out = 9.0
             self._max_power_ratio = _voltage_out / float(_voltage_in)
         except OSError as e:
-            if self._enable_mock:
-                self._log.info('using mock ThunderBorg.')
-                import mock.thunderborg as ThunderBorg
-            else:
-                self._log.error('unable to import ThunderBorg: {}'.format(e))
-                traceback.print_exc(file=sys.stdout)
-                raise Exception('unable to instantiate ThunderBorg [2].')
+#           self._log.error('OSError importing ThunderBorg: {}'.format(e))
+            traceback.print_exc(file=sys.stdout)
+            raise Exception('OSError instantiating ThunderBorg: {}'.format(e))
         except Exception as e:
-            if self._enable_mock:
-                self._log.info('using mock ThunderBorg.')
-                import mock.thunderborg as ThunderBorg
-            else:
-                self._log.error('unable to import ThunderBorg: {}'.format(e))
-                traceback.print_exc(file=sys.stdout)
-                raise Exception('unable to instantiate ThunderBorg [2].')
+#           self._log.error('{} importing ThunderBorg: {}'.format(type(e), e))
+            traceback.print_exc(file=sys.stdout)
+            raise Exception('unable to instantiate ThunderBorg: {}'.format(e))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
