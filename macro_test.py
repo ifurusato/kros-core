@@ -11,53 +11,66 @@
 #
 
 import pytest
-import sys, signal, traceback
+import sys, signal, time, traceback
 from datetime import datetime as dt
 from colorama import init, Fore, Style
+init(autoreset=True)
 
 from core.logger import Logger, Level
 from core.dequeue import DeQueue
 from core.event import Event
+from core.queue_publisher import QueuePublisher
 from core.config_loader import ConfigLoader
 from core.message_bus import MessageBus
 from core.message_factory import MessageFactory
 from core.macro_publisher import MacroPublisher
 
+from core.kr01_macrolibrary import KR01MacroLibrary
+
+
+# main logger
+_log = Logger('main', Level.INFO)
+
 # exception handler ............................................................
 def signal_handler(signal, frame):
     global _message_bus
-    print(Fore.RED + '🍇 Ctrl-C caught: exiting...' + Style.RESET_ALL)
+    _log.info('🍇 Ctrl-C caught: exiting...')
     if _message_bus:
-        _message_bus.disable()
         _message_bus.close()
     else:
-        print('signal_handler() no message bus available!')
-    print(Fore.CYAN + 'exit.' + Style.RESET_ALL)
+        _log.warning('🍇 signal_handler() no message bus available!')
+    _log.info(Fore.CYAN + '🍇 exit.')
     sys.exit(0)
 
-def close_message_bus():
-#   print('🍉 closing message bus...')
-#   signal_handler(None, None)
-    global _message_bus
-    if _message_bus and _message_bus.is_running:
-#       print('closing...')
-        _message_bus.disable()
+def callback_method():
+    global _enabled, _message_bus
+    _enabled = False
+    _log.info('🍒 callback method: closing message bus...')
+    if _message_bus:
         _message_bus.close()
-#       print('closed.')
+        _log.info('🍒 message bus closed.')
     else:
-        print('close() message bus already closed or not available!')
-#   print('🍉 closed messag bus.')
-#   sys.exit(0)
+        _log.warning('signal_handler() no message bus available!')
+
+# ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+def __blink__(message_bus):
+    global _enabled
+    _enabled = True
+    _log.info(Fore.YELLOW + '🍋 blink: message bus enabled: {}; suppressed: {}'.format(message_bus.enabled, message_bus.suppressed))
+    message_bus.enable()
+    _log.info('🍋 blink complete.')
 
 # ..............................................................................
 @pytest.mark.unit
 def test_macro_publisher():
-    global _message_bus
+    global _enabled, _message_bus
 
     _log = Logger('macro-pub-test', Level.INFO)
     _log.info('begin.')
 
     _start_time = dt.now()
+
+    _enabled = True
 
     try:
 
@@ -71,52 +84,26 @@ def test_macro_publisher():
         _message_bus = MessageBus(_config, _level)
         _log.info('creating message factory...')
         _message_factory = MessageFactory(_message_bus, _level)
+        _queue_publisher = QueuePublisher(_config, _message_bus, _message_factory, _level)
 
-        _macro_publisher = MacroPublisher(_config, _message_bus, _message_factory, callback=close_message_bus, level=Level.INFO)
-        _macro = _macro_publisher.create_macro('test')
+        _macro_publisher = MacroPublisher(_config, _message_bus, _message_factory, _queue_publisher, callback=callback_method, level=Level.INFO)
+        _library = KR01MacroLibrary(_macro_publisher)
+        _macro_publisher.set_macro_library(_library)
+        
+        _log.info(Fore.YELLOW + 'message bus enabled: {}; suppressed: {}'.format(_message_bus.enabled, _message_bus.suppressed))
+        _log.info(Fore.YELLOW + 'macro publisher enabled: {}; suppressed: {}'.format(_macro_publisher.enabled, _macro_publisher.suppressed))
 
-        _event_queue = DeQueue(mode=DeQueue.QUEUE)
+        _macro_name = 'test'
+        _log.info('queuing \'{}\' macro...'.format(_macro_name))
+        _macro_publisher.queue_macro_by_name(_macro_name)
 
-        _event_queue.put(Event.SLOW_AHEAD)
-        _event_queue.put(Event.STOP)
-        _event_queue.put(Event.SPIN_STBD)
-        _event_queue.put(Event.EVEN)
-        _event_queue.put(Event.HALT)
-        _event_queue.put(Event.SHUTDOWN)
-        _event_queue.put(Event.EXPERIMENT_1)
-        _event_queue.put(Event.EXPERIMENT_2)
-        _event_queue.put(Event.EXPERIMENT_3)
-        _event_queue.put(Event.EXPERIMENT_4)
-        _event_queue.put(Event.EXPERIMENT_5)
+        _message_bus.enable()
 
-        # alternately loads events and lambdas...
-        _log.info('loading...')
-        _steps = 5
-        for i in range(_steps):
-            _duration_ms = 100 + ( i * 100 )
-            if i % 2:
-                _event = _event_queue.poll()
-                _macro.add_event(_event, _duration_ms)
-                _log.info('added event...')
-            else:
-                _func = lambda: _log.info('n={}'.format(i))
-                _macro.add_function(_func, _duration_ms)
-                _log.info('added function...')
+        _log.info('enabled, continuing...')
 
-#       _macro_publisher.queue_macro(_macro)
-        print(Fore.CYAN + '{}'.format(_macro))
-
-#       _log.info('enabling message bus...')
-#       _message_bus.enable()
-
-#       _log.info('queue loaded; enabling macro processor...')
-#       _macro_publisher.enable()
-
-#       if _message_bus:
-#           _message_bus.close()
-
-#       _log.info('queue loaded; starting process...')
-#       _macro_publisher.start()
+        while _enabled:
+            _log.info(Fore.BLACK + 'waiting...')
+            time.sleep(2.0)
 
     except KeyboardInterrupt:
         _log.info('Ctrl-C caught; exiting...')
@@ -124,8 +111,9 @@ def test_macro_publisher():
         _log.error('{} encountered, exiting: {}'.format(type(e), e))
         traceback.print_exc(file=sys.stdout)
     finally:
+        _enabled = False
         _log.info('finally.')
-        close_message_bus()
+        sys.exit(0)
 
     _elapsed_ms = round(( dt.now() - _start_time ).total_seconds() * 1000.0)
     _log.info(Fore.YELLOW + 'complete: elapsed: {:d}ms'.format(_elapsed_ms))

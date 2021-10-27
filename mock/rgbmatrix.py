@@ -10,6 +10,9 @@
 # modified: 2021-06-27
 #
 
+from colorama import init, Fore, Style
+init()
+
 from core.logger import Level, Logger
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

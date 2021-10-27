@@ -676,7 +676,7 @@ def parse_args():
             print(Fore.CYAN + '{}'.format(parser.format_help()) + Style.RESET_ALL)
             return -1
         else:
-            globals.put('log_to_file', args.log)
+            globals.put('log-to-file', args.log)
             return args
     except NotImplementedError as nie:
         _log.error('unrecognised log level \'{}\': {}'.format(args.level, nie))

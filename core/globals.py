@@ -21,8 +21,12 @@ def init():
         import core.globals as globals
         globals.init()
 
-        globals.put('variable_name', _value)
-        _value = globals.get('variable_name')
+        globals.put('variable-name', _value)
+        _value = globals.get('variable-name')
+
+    You can call your variables anything you like, but by convention, both
+    for consistency and to clearly differentiate between actual variable
+    names we are using dashes as delimiters within variable names.
 
     Note that you should only need to call 'globals.init()' on your first
     module access or your main() method.

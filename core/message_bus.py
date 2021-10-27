@@ -543,8 +543,9 @@ class MessageBus(Component):
             Component.enable(self)
             self._log.info('starting message bus forever loop...')
             # this call will block
-            self._get_event_loop()
-            self._log.info('exited message bus forever loop.')
+            return self._get_event_loop()
+#           self._log.info('exited message bus forever loop.')
+        return None
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def has_event_loop(self):
@@ -560,26 +561,36 @@ class MessageBus(Component):
 
         Calling this method will basically start the OS, blocking until disabled.
         '''
+        self._log.info('🌼 _get_event_loop() a.')
         if not self._loop:
+            self._log.info('🌼 _get_event_loop() b1.')
             self._loop = asyncio.get_event_loop()
+            self._log.info('🌼 _get_event_loop() b2.')
             if self._log.level is Level.DEBUG:
                 self._loop.set_debug(True) # also set asyncio debug
+            self._log.info('🌼 _get_event_loop() c.')
             # may want to catch other signals too
             signals = (signal.SIGHUP, signal.SIGTERM, signal.SIGINT)
+            self._log.info('🌼 _get_event_loop() d.')
             for s in signals:
                 self._loop.add_signal_handler(
                     s, lambda s = s: asyncio.create_task(self.shutdown(s), name='shutdown'),)
+            self._log.info('🌼 _get_event_loop() e.')
             self._loop.set_exception_handler(self.handle_exception)
+            self._log.info('🌼 _get_event_loop() f.')
             self._loop.create_task(self._start_consuming(), name='__event_loop__')
+            self._log.info('🌼 _get_event_loop() g.')
         if not self._loop.is_running():
+            self._log.info('🌼 _get_event_loop() h.')
             self._log.info('starting asyncio task loop...')
 #           try:
             self._loop.run_forever()
+            self._log.info('🌼 _get_event_loop() i.')
 #           finally:
 #               if self.loop.is_running() and not self.loop.is_closed():
 #                   self.loop.run_until_complete(self.loop.shutdown_asyncgens())
 #                   self.loop.close()
-#       return self._loop
+        return self._loop
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def disable(self):

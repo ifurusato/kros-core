@@ -18,6 +18,9 @@ from datetime import datetime as dt
 from colorama import init, Fore, Style
 init(autoreset=True)
 
+import core.globals as globals
+globals.init()
+
 from core.logger import Logger, Level
 from core.system import System
 from core.util import Util
@@ -62,7 +65,7 @@ class MacroPublisher(Publisher):
         self._log.info('quiescent loop frequency: {} Hz.'.format(_quiescent_loop_freq_hz))
         self._wait_limit_ms     = _cfg.get('wait_limit_ms') # the longest we will ever wait for anything
         self._log.info('wait limit: {:d}ms.'.format(self._wait_limit_ms))
-        self._load_macros       = False #_cfg.get('load_macros')
+        self._load_macros       = _cfg.get('load_macros')
         self._log.info('load macros? {}'.format(self._load_macros))
         self._macro_path        = _cfg.get('macro_path')
         self._log.info('macro path: {}'.format(self._macro_path))
@@ -73,6 +76,8 @@ class MacroPublisher(Publisher):
         self._macro             = None
         self._statement         = None # placeholder
         self._start_time        = dt.now()
+        # add singleton to globals
+        globals.put('macro-publisher', self)
         self._log.info('ready.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -102,9 +107,7 @@ class MacroPublisher(Publisher):
         populated. This automatically adds it to the macro library.
         '''
         _macro = Macro(name, description)
-#       if self._log.level == Level.DEBUG:
         self._log.info('created macro: ' + Fore.YELLOW + '{}'.format(name))
-#       self._log.info('created macro: ' + Fore.YELLOW + '{}:\n'.format(name) + Fore.CYAN + '{}'.format(_macro))
         self.add_macro_to_library(_macro)
         return _macro
 
@@ -223,35 +226,33 @@ class MacroPublisher(Publisher):
         return self._macro
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def on_poot(self, args):
-        self._log.info('🍊 on poot: {}'.format(args))
+    def on_begin(self, args):
+        self._log.info('🍊 on begin: {}'.format(args))
         pass
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def on_completion(self, args):
-        self._log.info('🍉 on completion: {}'.format(args))
+        self._log.info('🌸 on completion: {}'.format(args))
         _exec_macro = self.get_executing_macro()
         if _exec_macro:
-            self._log.info('🍉 😷 has executing macro!')
+            self._log.info('🌸 has executing macro!')
             if _exec_macro.payload:
                 _payload = _exec_macro.payload
                 if isinstance(_payload, Message):
                     _message = _payload
                     _actual_payload = _message.payload
-                    self._log.info('🍉 publishing Message {} with Event {} from payload:\n'.format(_message.name, _message.event.name) + Fore.YELLOW + '{}'.format(_actual_payload))
-                    # TODO publish this message now!
+                    self._log.info('🌸 publishing Message {} with Event {} from payload:\n'.format(_message.name, _message.event.name) + Fore.YELLOW + '{}'.format(_actual_payload))
                     self._queue_publisher.put(_message)
-
                 elif isinstance(_payload, Payload):
-                    self._log.info('🍉 has Payload:\n' + Fore.YELLOW + '{}'.format(_payload))
+                    self._log.info('🌸 has Payload:\n' + Fore.YELLOW + '{}'.format(_payload))
                     # TODO
                 else:
-                    self._log.info('🍉 has unknown payload:\n' + Fore.YELLOW + '{}'.format(_payload))
+                    self._log.info('🌸 has unknown payload:\n' + Fore.YELLOW + '{}'.format(_payload))
                     # TODO
             else:
-                self._log.info('🍉 💩 has NO payload!')
+                self._log.info('🌸 has NO payload!')
         else:
-            self._log.info('🍉 💩 has NO executing macro!')
+            self._log.info('🌸 has NO executing macro!')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def _macro_listener_loop(self, f_is_enabled):
@@ -268,26 +269,21 @@ class MacroPublisher(Publisher):
                 await asyncio.sleep(self._quiescent_delay_sec)
             # check if there's either a running macro or one available
             elif self._macro or not self._macros.empty(): # either we have a macro or there is one available
-                print(Fore.GREEN + '🍀 loop: a')
                 _count = next(self._counter)
                 if not self._macro: # if we don't have a current macro, pop one from the stack
-                    print(Fore.GREEN + '🍀 loop: b')
                     self._macro = self._macros.get()
                     if self._macro:
                         _payload = self._macro.payload
                         self._log.info('🐰 macro {} payload: '.format(self._macro.name) + Fore.YELLOW + '{}'.format(_payload))
                 # otherwise continue to execute the existing macro...
                 if not self._statement: # if no existing statement, poll one from the macro.
-                    print(Fore.GREEN + '🍀 loop: c')
                     if not self._macro.empty():
                         self._statement = self._macro.poll()
                         self._log.info('🐰 event: ' + Fore.YELLOW + '{}:\t'.format(self._statement.label)
                                 + Fore.MAGENTA + 'duration: {:5.2f}ms'.format(self._statement.duration_ms))
                         self._start_time = dt.now()
-                    print(Fore.GREEN + '🍀 loop: d')
                 # if there is an active statement waiting...
                 if self._statement:
-                    print(Fore.GREEN + '🍀 loop: e')
                     # then process this statement...
                     _elapsed_ms = (dt.now() - self._start_time).total_seconds() * 1000.0
                     if _elapsed_ms < self._statement.duration_ms and _elapsed_ms < self._wait_limit_ms:

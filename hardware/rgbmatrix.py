@@ -24,17 +24,13 @@ try:
     except ImportError:
         sys.exit("This script requires the numpy module.\nInstall with: pip3 install --user numpy")
     try:
-        import smbus
-    except ImportError:
-        print(Fore.RED + "This script requires the smbus module. Some features will be disabled.\nInstall with: pip3 install --user smbus")
-    try:
         import psutil
     except ImportError:
         print(Fore.RED + "This script requires the psutil module. Some features will be disabled.\nInstall with: pip3 install --user psutil")
     from rgbmatrix5x5 import RGBMatrix5x5
 except ImportError:
     from mock.rgbmatrix5x5 import MockRGBMatrix5x5 as RGBMatrix5x5
-    print(Fore.RED + 'This script requires the rgbmatrix5x5 module. Some features will be disabled.\nInstall with: sudo pip3 install smbus')
+    print(Fore.RED + 'This script requires the rgbmatrix5x5 module. Some features will be disabled.\nInstall with: sudo pip3 install rgbmatrix5x5')
 
 from core.logger import Level, Logger
 from core.orient import Orientation

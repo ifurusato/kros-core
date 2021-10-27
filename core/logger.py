@@ -84,17 +84,17 @@ class Logger(object):
         # configuration preliminaries ............
         if log_to_file:
             _log_to_file = log_to_file
-            globals.put('log_to_file', True)
-        elif globals and globals.has('log_to_file'):
-            _log_to_file = globals.get('log_to_file')
+            globals.put('log-to-file', True)
+        elif globals and globals.has('log-to-file'):
+            _log_to_file = globals.get('log-to-file')
         else:
             _log_to_file = False
 
         # get or create log statistics object
-        _log_stats = globals.get('log_stats')
+        _log_stats = globals.get('log-stats')
         if not _log_stats:
             _log_stats = LogStats()
-            globals.put('log_stats', _log_stats)
+            globals.put('log-stats', _log_stats)
         self._log_stats = _log_stats
 
         # configuration ..........................
@@ -139,14 +139,14 @@ class Logger(object):
                 _filename = './log/kros-{}.csv'.format(_ts)
                 self.info("logging to file: {}".format(_filename))
                 # do we already have a file handler?
-                if globals.has('log_file_handler'): # use existing file handler
-                    self._fh = globals.get('log_file_handler')
+                if globals.has('log-file-handler'): # use existing file handler
+                    self._fh = globals.get('log-file-handler')
                 elif _strip_ansi_codes: # using new ANSI filtering file handler
                     self._fh = AnsiFilteringRotatingFileHandler(filename=_filename, mode='w', maxBytes=262144, backupCount=10)
-                    globals.put('log_file_handler', self._fh)
+                    globals.put('log-file-handler', self._fh)
                 else: # using new rotating file handler
                     self._fh = RotatingFileHandler(filename=_filename, mode='w', maxBytes=262144, backupCount=10)
-                    globals.put('log_file_handler', self._fh)
+                    globals.put('log-file-handler', self._fh)
 #               self._fh.setLevel(level.value)
                 if self._include_timestamp:
                     self._fh.setFormatter(logging.Formatter('%(asctime)s.%(msecs)03dZ\t|%(name)s|%(message)s', datefmt=self._date_format))

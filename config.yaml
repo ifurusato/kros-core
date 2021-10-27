@@ -227,6 +227,7 @@ kros:
         cntr_trigger_distance_cm:    50.0        # center analog IR sensor max distance before triggering
         oblq_trigger_distance_cm:    70.0        # port or starboard oblique analog IR sensor max distance before triggering
         side_trigger_distance_cm:    70.0        # port or starboard side analog IR sensor max distance before triggering
+        bumper_threshold_cm:         15          # below this value we treat the infrared like a bumper
     gamepad:
         enabled:                   False
         device_path:  '/dev/input/event5'        # the path to the bluetooth gamepad on the pi (see find_gamepad.py)
@@ -264,7 +265,7 @@ kros:
             quiescent_loop_freq_hz:   5          # quiescent loop frequency (Hz)
             wait_limit_ms:         5000          # the longest we will ever wait for anything (because we are impatient)
             macro_path:         'macro'          # the location of the macros to load on startup
-            load_macros:           True          # if True load macros from ./macro/ directory
+            load_macros:          False          # if True load *.py as macros from ./macro/ directory
     hihp:
         ack_pin:                     21          # GPIO pin connected to acknowledge pin (white)
         int_pin:                     26          # GPIO pin connected to interrupt pin (grey)

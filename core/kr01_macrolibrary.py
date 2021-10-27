@@ -41,36 +41,53 @@ class KR01MacroLibrary(MacroLibrary):
         MacroLibrary.__init__(self, 'kr01', level)
         self._macro_publisher = macro_publisher
         # now create instances of the Macro subclasses in this class.
-        self.put(AvoidMacro(self._macro_publisher))
+        self.put(AvoidMacro())
+        self.put(TestMacro())
         self._log.info('ready.')
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class AvoidMacro(Macro):
 
-    def __init__(self, macro_publisher):
+    def __init__(self, *args):
         Macro.__init__(self, name='avoid', description='a simple avoidance behaviour')
-        self._macro_publisher = macro_publisher
+#       self._macro_publisher = macro_publisher
+
+        # notify on start of macro via a lambda function
+        self.add_function(lambda: globals.get('macro-publisher').on_begin('🍏 BEGIN!'))
+
         # come to a stop for 500ms
         self.add_event(Event.STOP, 500)
 
-        self.add_function(lambda: globals.get('kros').get_macro_publisher().on_poot('🍊 POOT!'))
-
         # move half astern for 2.5 seconds (duration argument is in milliseconds)
-        self.add_event(Event.HALF_ASTERN, 300)
+        self.add_event(Event.HALF_ASTERN, 200)
 
         # slow the reversing of the port motor to turn to starboard for a half second
         self.add_event(Event.PORT_VELOCITY, (Direction.ASTERN, Speed.DEAD_SLOW))
-        self.add_event(Event.STBD_VELOCITY, (Direction.ASTERN, Speed.ONE_THIRD))
+        self.add_event(Event.STBD_VELOCITY, (Direction.ASTERN, Speed.STOP))
 
         # come to a halt for 1 second
-        self.add_event(Event.HALT, 1000)
+        self.add_event(Event.HALT, 500)
 
         # notify on completion of macro via a lambda function
-        self.add_function(lambda: globals.get('kros').get_macro_publisher().on_completion('🍅 COMPLETE!'))
-
+        self.add_function(lambda: globals.get('macro-publisher').on_completion('🍍 COMPLETE!'))
 
         # print an emoji to the KROS log console
-        _func5 = lambda: globals.get('kros').get_logger().info('⛔ Done!')
+        _func5 = lambda: globals.get('kros').get_logger().info('🍎 Done!')
         self.add_function(_func5)
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+class TestMacro(Macro):
+
+    def __init__(self, *args):
+        Macro.__init__(self, name='test', description='a simple test macro')
+#       self._macro_publisher = macro_publisher
+        # notify on start of macro via a lambda function
+        self.add_function(lambda: globals.get('macro-publisher').on_begin('🍏 BEGIN!'))
+        # come to a stop
+        self.add_event(Event.STOP, 100)
+        # notify on completion of macro via a lambda function
+        self.add_function(lambda: globals.get('macro-publisher').on_completion('🍍 COMPLETE!'))
+
 
 #EOF

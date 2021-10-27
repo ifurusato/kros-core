@@ -88,7 +88,6 @@ class IntegratedFrontSensor(Component):
                 + Fore.RED   + ' port side={:>5.2f}; port={:>5.2f};'.format(self._side_raw_min_trigger, self._oblq_raw_min_trigger) \
                 + Fore.BLUE  + ' center={:>5.2f};'.format(self._cntr_raw_min_trigger) \
                 + Fore.GREEN + ' stbd={:>5.2f}; stbd side={:>5.2f}'.format(self._oblq_raw_min_trigger, self._side_raw_min_trigger))
-
         self._cntr_trigger_distance_cm = self._config.get('cntr_trigger_distance_cm')
         self._oblq_trigger_distance_cm = self._config.get('oblq_trigger_distance_cm')
         self._side_trigger_distance_cm = self._config.get('side_trigger_distance_cm')
@@ -96,6 +95,10 @@ class IntegratedFrontSensor(Component):
                 + Fore.RED   + ' port side={:>5.2f}; port={:>5.2f};'.format(self._side_trigger_distance_cm, self._oblq_trigger_distance_cm) \
                 + Fore.BLUE  + ' center={:>5.2f};'.format(self._cntr_trigger_distance_cm) \
                 + Fore.GREEN + ' stbd={:>5.2f}; stbd side={:>5.2f}'.format(self._oblq_trigger_distance_cm, self._side_trigger_distance_cm))
+
+        # closer than this distance we treat it as a bumper
+        self._bumper_threshold_cm = self._config.get('bumper_threshold_cm')
+        self._log.info('bumper threshold: {:d}cm'.format(self._bumper_threshold_cm))
         # hardware pin assignments are defined in IO Expander
         # create/configure IO Expander
         self._io_expander = IoExpander(config, Level.INFO)
@@ -249,26 +252,32 @@ class IntegratedFrontSensor(Component):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _get_event_for_orientation(self, orientation, value):
+        '''
+        Returns either an infrared Message or a bumper Message if the value
+        (distance in cm) is closer than the bumper threshold.
+
+        TODO: we have no equivalent bumper events for side infrared sensors.
+        '''
         if orientation is Orientation.CNTR:
             self._cntr_count += 1
             self._log.info(Fore.BLUE  + '💙   infrared CNTR triggered: value: {:5.2f}cm; count: {:d}'.format(value, self._cntr_count))
-            return self._message_factory.create_message(Event.INFRARED_CNTR, value)
+            return self._message_factory.create_message(Event.BUMPER_CNTR if value < self._bumper_threshold_cm else Event.INFRARED_CNTR, value)
         elif orientation is Orientation.PORT:
             self._port_count += 1
             self._log.info(Fore.RED   + '❤️    infrared PORT triggered: value: {:5.2f}cm; count: {:d}'.format(value, self._port_count))
-            return self._message_factory.create_message(Event.INFRARED_PORT, value)
+            return self._message_factory.create_message(Event.BUMPER_PORT if value < self._bumper_threshold_cm else Event.INFRARED_PORT, value)
         elif orientation is Orientation.STBD:
             self._stbd_count += 1
             self._log.info(Fore.GREEN + '💚   infrared STBD triggered: value: {:5.2f}cm; count: {:d}'.format(value, self._stbd_count))
-            return self._message_factory.create_message(Event.INFRARED_STBD, value)
+            return self._message_factory.create_message(Event.BUMPER_STBD if value < self._bumper_threshold_cm else Event.INFRARED_STBD, value)
         elif orientation is Orientation.PSID:
             self._psid_count += 1
             self._log.info(Fore.RED   + '❤️ ❤️  infrared PSID triggered: value: {:5.2f}cm; count: {:d}'.format(value, self._psid_count))
-            return self._message_factory.create_message(Event.INFRARED_PSID, value)
+            return self._message_factory.create_message(  Event.INFRARED_PSID, value)
         elif orientation is Orientation.SSID:
             self._ssid_count += 1
             self._log.info(Fore.GREEN + '💚💚 infrared SSID triggered: value: {:5.2f}cm; count: {:d}'.format(value, self._ssid_count))
-            return self._message_factory.create_message(Event.INFRARED_SSID, value)
+            return self._message_factory.create_message(  Event.INFRARED_SSID, value)
         else:
             raise TypeError('unsupported orientation argument: {}'.format(orientation))
 

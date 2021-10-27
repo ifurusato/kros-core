@@ -7,7 +7,7 @@
 #
 # author:   altheim
 # created:  2021-09-29
-# modified: 2021-10-06
+# modified: 2021-10-27
 #
 # A example template for a Macro. Copy and modify this file.
 #
@@ -33,16 +33,17 @@ if _kros:
             _macro_description = 'a macro template.' # optional
             _macro = _macro_publisher.create_macro(_macro_name, _macro_description)
 
+            # print an emoji via a lambda function
+            _macro.add_function(lambda: globals.get('kros').get_logger().info('message to logger!'))
+
             # move slow ahead for 3 seconds (duration argument is in milliseconds)
             _macro.add_event(Event.SLOW_AHEAD, 3000)
             # come to a halt for 2.5 seconds
             _macro.add_event(Event.HALT, 2500)
 
             # notify on completion of macro via a lambda function and wait 50ms
-            _macro.add_function(lambda: globals.get('kros').get_macro_publisher().on_completion('😃 COMPLETE!'), 50)
+            _macro.add_function(lambda: globals.get('macro-publisher').on_completion('complete!'), 50)
 
-            # print an emoji via a lambda function
-            _macro.add_function(lambda: globals.get('kros').get_logger().info('🤣 Done!'))
             _template_log.info('loaded.')
 
         else:

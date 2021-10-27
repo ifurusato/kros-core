@@ -132,12 +132,13 @@ class BumperSubscriber(Subscriber):
                 else:
                     raise Exception('unrecognised bumper event on message {}; '.format(message.name) + '{}'.format(message.event.label))
             else:
-                raise Exception('unexpected event on message {}; '.format(message.name) + '{}'.format(message.event.label))
+                # we shouldn't be seeing non-bumper events here
+                self._log.warning('unexpected event on message {}; '.format(message.name) + '{}'.format(message.event.label))
         else:
             self._log.warning('disabled: ignoring bumper dispatch.')
 
         await Subscriber.process_message(self, message)
-        self._log.info('post-processing message {}'.format(message.name))
+#       self._log.info('post-processing message {}'.format(message.name))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def respond_to_port_bumper_event(self, velocities):
