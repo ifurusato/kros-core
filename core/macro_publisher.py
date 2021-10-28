@@ -86,6 +86,13 @@ class MacroPublisher(Publisher):
         return 'macro'
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def set_loop_frequency(self, loop_freq_hz):
+        '''
+        Override the configured loop delay. The argument is in hertz.
+        '''
+        self._loop_delay_sec = 1.0 / loop_freq_hz
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def set_macro_library(self, library):
         '''
         Sets the MacroLibrary used by this publisher, replacing any existing one.
@@ -227,32 +234,33 @@ class MacroPublisher(Publisher):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def on_begin(self, args):
-        self._log.info('🍊 on begin: {}'.format(args))
+        self._log.info(Fore.GREEN + 'on begin: {}'.format(args))
         pass
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def on_completion(self, args):
-        self._log.info('🌸 on completion: {}'.format(args))
+        self._log.info(Fore.GREEN + 'on completion: {}'.format(args))
         _exec_macro = self.get_executing_macro()
         if _exec_macro:
-            self._log.info('🌸 has executing macro!')
+            self._log.info(Fore.GREEN + 'has executing macro!')
             if _exec_macro.payload:
                 _payload = _exec_macro.payload
                 if isinstance(_payload, Message):
                     _message = _payload
                     _actual_payload = _message.payload
-                    self._log.info('🌸 publishing Message {} with Event {} from payload:\n'.format(_message.name, _message.event.name) + Fore.YELLOW + '{}'.format(_actual_payload))
+                    self._log.info(Fore.GREEN + 'publishing Message {} with Event {} from payload:\n'.format(_message.name, _message.event.name)
+                            + Fore.YELLOW + '{}'.format(_actual_payload))
                     self._queue_publisher.put(_message)
                 elif isinstance(_payload, Payload):
-                    self._log.info('🌸 has Payload:\n' + Fore.YELLOW + '{}'.format(_payload))
+                    self._log.info(Fore.GREEN + 'has Payload:\n' + Fore.YELLOW + '{}'.format(_payload))
                     # TODO
                 else:
-                    self._log.info('🌸 has unknown payload:\n' + Fore.YELLOW + '{}'.format(_payload))
+                    self._log.info(Fore.GREEN + 'has unknown payload:\n' + Fore.YELLOW + '{}'.format(_payload))
                     # TODO
             else:
-                self._log.info('🌸 has NO payload!')
+                self._log.info(Fore.GREEN + 'macro stored no state: no follow-on event publication.')
         else:
-            self._log.info('🌸 has NO executing macro!')
+            self._log.info(Fore.GREEN + 'has NO executing macro!')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def _macro_listener_loop(self, f_is_enabled):
@@ -261,10 +269,10 @@ class MacroPublisher(Publisher):
         amount of time has passed, then either publish the Statement's Event
         or process its lambda.
         '''
-        self._log.info('🐰 starting macro listener loop.')
+        self._log.info(Fore.GREEN + 'starting macro listener loop.')
         while f_is_enabled():
             if self.suppressed:
-                self._log.info('🌈 🐰 macro play suppressed.')
+                self._log.info(Fore.GREEN + 'macro play suppressed.')
                 # we just wait quietly for a macro to show up.
                 await asyncio.sleep(self._quiescent_delay_sec)
             # check if there's either a running macro or one available
@@ -274,13 +282,44 @@ class MacroPublisher(Publisher):
                     self._macro = self._macros.get()
                     if self._macro:
                         _payload = self._macro.payload
-                        self._log.info('🐰 macro {} payload: '.format(self._macro.name) + Fore.YELLOW + '{}'.format(_payload))
+                        self._log.info(Fore.GREEN + 'loading macro \'{}\' with stored state payload: '.format(self._macro.name) + Fore.YELLOW + '{}'.format(_payload))
                 # otherwise continue to execute the existing macro...
                 if not self._statement: # if no existing statement, poll one from the macro.
                     if not self._macro.empty():
                         self._statement = self._macro.poll()
-                        self._log.info('🐰 event: ' + Fore.YELLOW + '{}:\t'.format(self._statement.label)
-                                + Fore.MAGENTA + 'duration: {:5.2f}ms'.format(self._statement.duration_ms))
+
+                        _label       = self._statement.label
+                        self._log.info(Fore.BLUE + 'label:    \t{}'.format(_label))
+
+                        _is_lambda   = self._statement.is_lambda
+                        self._log.info(Fore.BLUE + 'lambda?   \t{}'.format(_is_lambda))
+
+                        _event       = self._statement.event
+                        if _event:
+                            self._log.info(Fore.BLUE + 'event:    \t{}'.format(_event))
+
+                        _speed = self._statement.speed
+                        if _speed:
+                            self._log.info(Fore.BLUE + 'speed:    \t{}'.format(_speed))
+
+                        _direction   = self._statement.direction
+                        if _direction:
+                            self._log.info(Fore.BLUE + 'direction:\t{}'.format(_direction))
+
+                        _arguments   = self._statement.arguments
+                        self._log.info(Fore.BLUE + 'arguments:\t{}'.format(_arguments))
+
+                        _duration_ms = self._statement.duration_ms
+                        self._log.info(Fore.BLUE + 'duration: \t{}ms'.format(_duration_ms))
+
+                        _function    = self._statement.function
+                        self._log.info(Fore.BLUE + 'function: \t{}'.format(_function))
+
+                        self._log.info(Fore.GREEN + 'event: ' 
+                                + Fore.YELLOW + '{}'.format(self._statement.event.label)
+                                + Fore.GREEN  + '\tid: '
+                                + Fore.YELLOW + '{}'.format(self._statement.label)
+                                + Fore.MAGENTA + '\tduration: {:5.2f}ms'.format(self._statement.duration_ms))
                         self._start_time = dt.now()
                 # if there is an active statement waiting...
                 if self._statement:
@@ -289,37 +328,37 @@ class MacroPublisher(Publisher):
                     if _elapsed_ms < self._statement.duration_ms and _elapsed_ms < self._wait_limit_ms:
                         # if the elapsed time is less than the required delay keep waiting...
                         _elapsed_ms = (dt.now() - self._start_time).total_seconds() * 1000.0
-                        self._log.info(Fore.CYAN + Style.DIM + '🐰 e. still waiting on event: ' + Fore.YELLOW + '{}:\t'.format(self._statement.label)
+                        self._log.info(Fore.GREEN + 'still waiting on event: ' + Fore.YELLOW + '{}:\t'.format(self._statement.label)
                                 + Fore.MAGENTA + '{:5.2f}ms elapsed.'.format(_elapsed_ms))
                     else:
                         # then execute the statement...
                         if self._statement.is_lambda:
                             _func = self._statement.function
-                            self._log.info(Fore.GREEN + '🐰 executing lambda: ' + Fore.YELLOW + '{}: (type: {})\t'.format(self._statement.label, type(_func))
+                            self._log.info(Fore.GREEN + 'executing lambda: ' + Fore.YELLOW + '{}\t'.format(self._statement.label)
                                     + Fore.MAGENTA + '{:5.2f}ms elapsed.'.format(_elapsed_ms))
                             _func()
                         else:
                             _event = self._statement.event
-                            self._log.info(Fore.GREEN + '🐰 publishing event:  ' + Fore.YELLOW + '{}:\t'.format(self._statement.label)
+                            self._log.info(Fore.GREEN + 'publishing event:  ' + Fore.YELLOW + '{}:\t'.format(self._statement.label)
                                     + Fore.MAGENTA + '{:5.2f}ms elapsed.'.format(_elapsed_ms))
                             _message = self.message_factory.create_message(_event, self._statement.duration_ms)
                             if _message is not None:
-                                self._log.info(Style.BRIGHT + '🐰 macro-publishing message:' + Fore.WHITE + Style.NORMAL + ' {}'.format(_message.name)
+                                self._log.info(Fore.GREEN + 'macro-publishing message:' + Fore.WHITE + Style.NORMAL + ' {}'.format(_message.name)
                                         + Fore.CYAN + ' event: {}; '.format(_message.event.label) + Fore.YELLOW + 'timestamp: {}'.format(_message.value))
                                 await Publisher.publish(self, _message)
-                                self._log.info(Style.BRIGHT + '🐰 macro-published message:' + Fore.WHITE + Style.NORMAL + ' {}'.format(_message.name)
-                                        + Fore.CYAN + ' event: {}; '.format(_message.event.label) + Fore.YELLOW + 'timestamp: {}'.format(_message.value))
+#                               self._log.debug('macro-published message:' + Fore.WHITE + Style.NORMAL + ' {}'.format(_message.name)
+#                                       + Fore.CYAN + ' event: {}; '.format(_message.event.label) + Fore.YELLOW + 'timestamp: {}'.format(_message.value))
                         # end loop
                         self._statement = None
 
                 else: # no statement so we do nothing...
-                    self._log.info(Style.DIM + '🐰 no active statement.')
+                    self._log.info(Fore.GREEN + 'no active statement.')
                     pass
 
                 if not self._statement and self._macro.empty():
                     # we're finished with that macro, so execute any callbacks...
                     for _callback in self.__callbacks:
-                        self._log.info('🐰 executing callback...')
+                        self._log.info(Fore.GREEN + 'executing macro callback...')
                         _callback()
                     self.__callbacks.clear()
                     self._macro = None
@@ -331,7 +370,7 @@ class MacroPublisher(Publisher):
                 await asyncio.sleep(self._quiescent_delay_sec)
 
         # end of while loop ........................
-        self._log.info('🐰 macro publish loop complete.')
+        self._log.info(Fore.GREEN + 'macro publish loop complete.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def disable(self):

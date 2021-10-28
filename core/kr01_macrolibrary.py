@@ -68,13 +68,11 @@ class AvoidMacro(Macro):
         # come to a halt for 1 second
         self.add_event(Event.HALT, 500)
 
-        # notify on completion of macro via a lambda function
-        self.add_function(lambda: globals.get('macro-publisher').on_completion('🍍 COMPLETE!'))
-
         # print an emoji to the KROS log console
-        _func5 = lambda: globals.get('kros').get_logger().info('🍎 Done!')
-        self.add_function(_func5)
+        self.add_function(lambda: globals.get('kros').get_logger().info('🍊 message logged!'))
 
+        # notify on completion of macro via a lambda function
+        self.add_function(lambda: globals.get('macro-publisher').on_completion('🍎 COMPLETE!'))
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class TestMacro(Macro):
@@ -83,11 +81,26 @@ class TestMacro(Macro):
         Macro.__init__(self, name='test', description='a simple test macro')
 #       self._macro_publisher = macro_publisher
         # notify on start of macro via a lambda function
-        self.add_function(lambda: globals.get('macro-publisher').on_begin('🍏 BEGIN!'))
-        # come to a stop
-        self.add_event(Event.STOP, 100)
-        # notify on completion of macro via a lambda function
-        self.add_function(lambda: globals.get('macro-publisher').on_completion('🍍 COMPLETE!'))
+#       self.add_function(lambda: globals.get('macro-publisher').on_begin('🍏 BEGIN!'))
 
+        # 1. event with duration in milliseconds ...............................
+
+        # come to a stop
+#       self.add_event(Event.STOP, 123)
+
+        # 2. event with direction and speed ....................................
+
+        self.add_event(Event.PORT_VELOCITY, (Direction.ASTERN, Speed.DEAD_SLOW))
+
+        # 3. event with direction, speed, and duration .........................
+
+#       self.add_event(Event.STBD_VELOCITY, (Direction.AHEAD, Speed.DEAD_SLOW, 333))
+
+        # 4. event with current state event ....................................
+
+        # TODO
+
+        # notify on completion of macro via a lambda function
+#       self.add_function(lambda: globals.get('macro-publisher').on_completion('🍎 COMPLETE!'))
 
 #EOF

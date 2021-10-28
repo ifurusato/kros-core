@@ -87,6 +87,9 @@ def test_macro_publisher():
         _queue_publisher = QueuePublisher(_config, _message_bus, _message_factory, _level)
 
         _macro_publisher = MacroPublisher(_config, _message_bus, _message_factory, _queue_publisher, callback=callback_method, level=Level.INFO)
+        _loop_freq_hz = 1
+        _macro_publisher.set_loop_frequency(_loop_freq_hz)
+
         _library = KR01MacroLibrary(_macro_publisher)
         _macro_publisher.set_macro_library(_library)
         
