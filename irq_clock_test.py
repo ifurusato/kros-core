@@ -29,8 +29,8 @@ def callback_method():
     _queue.push(_elapsed_ms)
     _mean_ms = statistics.median(_queue.queue)
     _hz = 1000 * ( 1 / _mean_ms )
-    _log.info('[{:04d}] callback: '.format(next(_counter)) 
-            + Fore.YELLOW  + '{:6.3f}ms elapsed; '.format(_elapsed_ms) 
+    _log.info('[{:04d}] callback: '.format(next(_counter))
+            + Fore.YELLOW  + '{:6.3f}ms elapsed; '.format(_elapsed_ms)
             + Fore.MAGENTA + '{:6.3f}ms average; '.format(_mean_ms)
             + Fore.GREEN   + '{:6.3f}Hz average'.format(_hz))
     _timestamp = dt.now()
@@ -77,3 +77,4 @@ def main():
 if __name__== "__main__":
     main()
 
+#EOF
