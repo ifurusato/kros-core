@@ -7,7 +7,7 @@
 #
 # author:   altheim
 # created:  2021-09-23
-# modified: 2021-10-15
+# modified: 2021-10-30
 #
 # Macro instances used for the KR01 robot.
 #
@@ -20,7 +20,7 @@ globals.init()
 
 from core.logger import Logger, Level
 from core.event import Event
-from core.orient import Orientation
+from core.orientation import Orientation
 from core.direction import Direction
 from core.speed import Speed
 from core.macros import Macro, MacroLibrary

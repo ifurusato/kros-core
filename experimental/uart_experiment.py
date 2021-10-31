@@ -37,7 +37,7 @@ globals.init()
 
 from core.logger import Logger, Level
 from core.event import Event
-from core.orient import Orientation
+from core.orientation import Orientation
 from core.publisher import Publisher
 from experimental.experiment import Experiment
 

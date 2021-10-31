@@ -25,7 +25,7 @@ init()
 
 from core.message_bus import MessageBus
 from core.message_factory import MessageFactory
-from core.orient import Orientation
+from core.orientation import Orientation
 from core.rate import Rate
 from core.logger import Logger, Level
 from core.config_loader import ConfigLoader

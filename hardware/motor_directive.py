@@ -7,12 +7,12 @@
 #
 # author:   Murray Altheim
 # created:  2021-10-30
-# modified: 2021-10-30
+# modified: 2021-10-31
 #
 
 from core.stringbuilder import StringBuilder
 from core.message import Payload
-from core.orient import Orientation
+from core.orientation import Orientation
 from core.direction import Direction
 from core.speed import Speed
 

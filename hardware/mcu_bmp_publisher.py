@@ -21,10 +21,10 @@ init()
 import core.globals as globals
 globals.init()
 
-from core.dequeue import DeQueue
 from core.logger import Logger, Level
+from core.dequeue import DeQueue
 from core.event import Event
-from core.orient import Orientation
+from core.orientation import Orientation
 from core.publisher import Publisher
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

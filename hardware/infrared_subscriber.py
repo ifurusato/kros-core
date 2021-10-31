@@ -17,8 +17,8 @@ from colorama import init, Fore, Style
 init()
 
 from core.logger import Logger, Level
-from core.orient import Orientation
 from core.event import Event, Group
+from core.orientation import Orientation
 from core.subscriber import Subscriber
 from hardware.motor_controller import MotorController
 

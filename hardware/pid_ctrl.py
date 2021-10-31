@@ -18,10 +18,10 @@ init()
 
 from core.logger import Logger, Level
 from core.component import Component
-from core.orient import Orientation
+from core.event import Event
+from core.orientation import Orientation
 from core.message import Message
 from core.message_bus import MessageBus
-from core.event import Event
 from hardware.pid import PID
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

@@ -18,11 +18,11 @@ from datetime import datetime as dt
 from colorama import init, Fore, Style
 init()
 
-from core.message_factory import MessageFactory
 from core.logger import Logger, Level
 from core.event import Event
-from core.orient import Orientation
+from core.orientation import Orientation
 from core.message import Message
+from core.message_factory import MessageFactory
 from core.publisher import Publisher
 from hardware.ifs import IntegratedFrontSensor
 

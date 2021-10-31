@@ -17,9 +17,9 @@ init()
 from core.logger import Logger, Level
 from core.component import Component
 from core.event import Event
+from core.orientation import Orientation
 from core.speed import Speed
 from core.util import Util
-from core.orient import Orientation
 from behave.behaviour import Behaviour
 from behave.trigger_behaviour import TriggerBehaviour
 from hardware.motor_controller import MotorController
@@ -115,7 +115,7 @@ class Roam(Behaviour):
         self._wait_count    = self._wait_ticks
         self._log.info(Style.BRIGHT + 'cruise wait time:    \t{:4.2f} ticks'.format(self._wait_ticks))
         self._counter   = itertools.count()
-        self._modulo    = 20 # 100: every 10 ticks 2Hz; 200: 1Hz; 
+        self._modulo    = 20 # 100: every 10 ticks 2Hz; 200: 1Hz;
         # .................................
         self.add_event(Event.INFRARED_CNTR)
         self._log.info('ready.')

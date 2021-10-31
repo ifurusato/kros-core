@@ -33,7 +33,7 @@ except ImportError:
     print(Fore.RED + 'This script requires the rgbmatrix5x5 module. Some features will be disabled.\nInstall with: sudo pip3 install rgbmatrix5x5')
 
 from core.logger import Level, Logger
-from core.orient import Orientation
+from core.orientation import Orientation
 from core.ranger import Ranger
 from hardware.color import Color
 from mock.rgbmatrix import MockRGBMatrix5x5 # for testing and simulation

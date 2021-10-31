@@ -15,11 +15,13 @@ from colorama import init, Fore, Style
 init()
 
 import core.globals as globals
-from core.config_loader import ConfigLoader
+globals.init()
+
 from core.logger import Logger, Level
+from core.config_loader import ConfigLoader
 from core.component import Component
 from core.event import Event
-from core.orient import Orientation
+from core.orientation import Orientation
 from core.message import Message
 from core.message_bus import MessageBus
 from core.message_factory import MessageFactory

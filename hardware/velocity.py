@@ -18,10 +18,10 @@ import sys, math, time
 from colorama import init, Fore, Style
 init()
 
-from core.orient import Orientation
-from core.message import Message
-from core.event import Event
 from core.logger import Level, Logger
+from core.event import Event
+from core.message import Message
+from core.orientation import Orientation
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Velocity(object):

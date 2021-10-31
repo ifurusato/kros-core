@@ -19,7 +19,7 @@ from colorama import init, Fore, Style
 init()
 
 from core.logger import Logger, Level
-from core.orient import Orientation
+from core.orientation import Orientation
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class PID(object):

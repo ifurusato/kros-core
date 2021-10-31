@@ -26,7 +26,7 @@ init()
 from core.logger import Logger, Level
 from core.config_loader import ConfigLoader
 from core.message_bus import MessageBus
-from core.orient import Orientation
+from core.orientation import Orientation
 from core.message_factory import MessageFactory
 from core.ranger import Ranger
 from hardware.i2c_scanner import I2CScanner

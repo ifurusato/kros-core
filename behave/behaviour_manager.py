@@ -18,8 +18,8 @@ init()
 
 from core.logger import Logger, Level
 from core.component import Component
-from core.orient import Orientation
 from core.event import Event, Group
+from core.orientation import Orientation
 from core.message import Message
 from core.subscriber import Subscriber
 from core.util import Util

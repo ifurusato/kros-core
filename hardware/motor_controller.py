@@ -7,7 +7,7 @@
 #
 # author:   Murray Altheim
 # created:  2021-02-16
-# modified: 2021-07-22
+# modified: 2021-10-31
 #
 
 import sys, time
@@ -23,10 +23,10 @@ globals.init()
 
 from core.logger import Logger, Level
 from core.component import Component
-from core.orient import Orientation
+from core.event import Event
+from core.orientation import Orientation
 from core.direction import Direction
 from core.speed import Speed
-from core.event import Event
 from core.rate import Rate
 from core.message import Message, Payload
 from core.message_bus import MessageBus
@@ -35,8 +35,6 @@ from hardware.motor_configurer import MotorConfigurer
 from hardware.motor_directive import MotorDirective
 from hardware.slew import SlewRate
 from hardware.speed_indicator import SpeedIndicator
-
-#from behave.travel import Travel # perhaps doesn't belong here
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class MotorController(Component):

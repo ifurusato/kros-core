@@ -21,7 +21,7 @@ from core.event import Event
 from core.speed import Speed
 from core.util import Util
 from core.ranger import Ranger
-from core.orient import Orientation
+from core.orientation import Orientation
 from behave.behaviour import Behaviour
 from behave.trigger_behaviour import TriggerBehaviour
 from hardware.motor_controller import MotorController

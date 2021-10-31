@@ -16,7 +16,7 @@ init()
 
 from core.logger import Level, Logger
 from core.component import Component
-from core.orient import Orientation
+from core.orientation import Orientation
 from core.speed import Speed
 from core.message_bus import MessageBus
 from hardware.pid_ctrl import PIDController

@@ -18,7 +18,7 @@ init()
 
 from core.logger import Logger, Level
 from core.config_loader import ConfigLoader
-from core.orient import Orientation
+from core.orientation import Orientation
 from hardware.slew import SlewLimiter
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

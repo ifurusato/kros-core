@@ -7,7 +7,7 @@
 #
 # author:   Murray Altheim
 # created:  2021-02-16
-# modified: 2021-04-22
+# modified: 2021-10-22
 #
 
 import asyncio
@@ -17,8 +17,8 @@ from colorama import init, Fore, Style
 init()
 
 from core.logger import Logger, Level
-from core.orient import Orientation
 from core.event import Event, Group
+from core.orientation import Orientation
 from core.message import Message
 from core.subscriber import Subscriber
 from core.macro_publisher import MacroPublisher

@@ -17,7 +17,7 @@ from colorama import init, Fore, Style
 init(autoreset=True)
 
 from core.logger import Level, Logger
-from core.orient import Orientation
+from core.orientation import Orientation
 from core.ranger import Ranger
 
 try:

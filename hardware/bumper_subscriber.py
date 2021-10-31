@@ -7,7 +7,7 @@
 #
 # author:   Murray Altheim
 # created:  2021-02-16
-# modified: 2021-04-22
+# modified: 2021-10-30
 #
 
 import asyncio
@@ -20,8 +20,8 @@ import core.globals as globals
 globals.init()
 
 from core.logger import Logger, Level
-from core.orient import Orientation
 from core.event import Event, Group
+from core.orientation import Orientation
 from core.subscriber import Subscriber
 from hardware.motor_controller import MotorController
 
@@ -31,7 +31,7 @@ class BumperSubscriber(Subscriber):
     CLASS_NAME = 'bumper'
 
     '''
-    A subscriber to bumper events. 
+    A subscriber to bumper events.
 
     This is currently acting as a Behaviour, publishing AVOID events back to
     the MessageBus via the QueuePublisher.

@@ -19,12 +19,14 @@ from colorama import init, Fore, Style
 init()
 
 import core.globals as globals
+globals.init()
+
 from core.logger import Logger, Level
 from core.component import Component, MissingComponentError
 from core.event import Event, Group
+from core.orientation import Orientation
 from core.speed import Speed
 from core.util import Util
-from core.orient import Orientation
 from behave.behaviour import Behaviour
 from behave.trigger_behaviour import TriggerBehaviour
 from hardware.motor_controller import MotorController
@@ -79,7 +81,7 @@ class Avoid(Behaviour):
         # NOTE: we used to respond to any bumper events, but now we just get triggered directly
 #       self.add_events([ Group.BUMPER, Event.INFRARED_PORT, Event.INFRARED_STBD ])
         self._counter   = itertools.count()
-        self._modulo    = 20 # 100: every 10 ticks 2Hz; 200: 1Hz; 
+        self._modulo    = 20 # 100: every 10 ticks 2Hz; 200: 1Hz;
         self._log.info('ready.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈

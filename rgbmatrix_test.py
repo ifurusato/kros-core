@@ -16,8 +16,8 @@ from colorama import init, Fore, Style
 init()
 
 from core.logger import Logger, Level
-from core.orient import Orientation
 from core.config_loader import ConfigLoader
+from core.orientation import Orientation
 from hardware.i2c_scanner import I2CScanner
 from hardware.color import Color
 from hardware.rgbmatrix import RgbMatrix, DisplayType, WipeDirection

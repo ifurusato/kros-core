@@ -17,11 +17,11 @@ from colorama import init, Fore, Style
 init(autoreset=True)
 
 from core.logger import Logger, Level
-from core.orient import Orientation
+from core.event import Event, Group
+from core.orientation import Orientation
+from core.subscriber import Subscriber
 from hardware.i2c_scanner import I2CScanner
 from hardware.color import Color
-from core.event import Event, Group
-from core.subscriber import Subscriber
 from hardware.motor_controller import MotorController
 #from hardware.rgbmatrix import RgbMatrix, DisplayType
 try:
