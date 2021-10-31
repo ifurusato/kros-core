@@ -70,6 +70,9 @@ class Matrices(object):
             self._log.warning('no matrix displays available.')
         # define perentage to column converter
         self._percent_to_column = Ranger(0, 100, 0, 21)
+        # TEMP counter
+        self._hw_i = -1
+        self._hwdt = 1
         self._log.info('ready.')
 
     # ..........................................................................
@@ -193,6 +196,19 @@ class Matrices(object):
             raise Exception('unrecognised parameter for direction: {}'.format(direction))
 
     # ..........................................................................
+    def horizontal_whack(self):
+        self._hw_i += self._hwdt
+        if self._hw_i >= 11:
+            self._hw_i = 11
+            self._hwdt = -1
+        elif self._hw_i <= 0:
+            self._hw_i      = 0
+            self._hwdt = 1
+#       self._log.info(Fore.WHITE + 'matrix on col: {:d}; dt: {:d}.'.format(self._hw_i, self._hwdt))
+        self._port_matrix.gradient(-1, self._hw_i)
+        self._stbd_matrix.gradient(-1, self._hw_i)
+
+    # ..........................................................................
     def _horizontal_wipe(self, direction, enable, delay_secs):
         '''
         Method called by thread.
@@ -205,6 +221,7 @@ class Matrices(object):
         else:
             self._log.info('matrix horizontal wipe left {}...'.format('on' if enable else 'off'))   
             raise NotImplementedError()
+        self._log.info(Fore.WHITE + '🍄 configured matrix horizontal wipe left on r[0]: {:d}; r[1]: {:d}; r[2]: {:d}...'.format(r[0], r[1], r[2]))
         for i in range(r[0], r[1], r[2]):
             self._log.debug('matrix at {:d}'.format(i))   
             if self._port_matrix:

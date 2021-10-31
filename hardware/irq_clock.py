@@ -32,9 +32,10 @@ class IrqClock(Component):
     Lazily-imports and configures pigpio when the enabled.
 
     :param config:     The application configuration.
+    :param pin:        the optional input pin, overriding the configuration.
     :param level:      the logging level.
     '''
-    def __init__(self, config, level=Level.INFO):
+    def __init__(self, config, pin=None, level=Level.INFO):
         self._log = Logger('irq-clock', level)
         Component.__init__(self, self._log, suppressed=False, enabled=True)
         if config is None:
@@ -43,7 +44,7 @@ class IrqClock(Component):
         self._initd        = False
         self.__callbacks   = []
         self._pi_callback = None
-        self._pin = _cfg.get('pin')
+        self._pin = pin if pin else _cfg.get('pin')
         self._log.info('IRQ clock pin:\t{:d}'.format(self._pin))
         self._log.info('ready.')
 
@@ -65,7 +66,9 @@ class IrqClock(Component):
                         raise Exception('unable to establish connection to Pi.')
                     self._log.info('establishing callback on pin {:d}.'.format(self._pin))
                     self._pi.set_mode(gpio=self._pin, mode=pigpio.INPUT)
-                    self._pi_callback = self._pi.callback(self._pin, pigpio.FALLING_EDGE, self._callback_method)
+                    _edge = pigpio.EITHER_EDGE
+#                   _edge = pigpio.FALLING_EDGE
+                    self._pi_callback = self._pi.callback(self._pin, _edge, self._callback_method)
                     self._log.info('configured IRQ clock.')
                 except Exception as e:
                     self._log.error('unable to enable IRQ clock: {}'.format(e))

@@ -21,6 +21,7 @@ from core.logger import Logger, Level
 from core.config_loader import ConfigLoader
 from hardware.i2c_scanner import I2CScanner
 from hardware.matrix import Matrices
+from hardware.irq_clock import IrqClock
 
 # ..............................................................................
 @pytest.mark.unit
@@ -34,6 +35,10 @@ def test_matrix():
         # read YAML configuration
         _config = ConfigLoader(Level.INFO).configure()
 
+        _pin = 5
+        _log.info('🌞 1. creating external clock on pin {:d}...'.format(_pin))
+        _irq_clock = IrqClock(_config, _pin, Level.INFO)
+
         _log.info(Fore.CYAN + 'start matrices test...')
 
         _i2c_scanner = I2CScanner(_config, Level.WARN)
@@ -46,19 +51,23 @@ def test_matrix():
 
         _matrices = Matrices(_enable_port, _enable_stbd, level=Level.INFO)
 
+        _irq_clock.add_callback(_matrices.horizontal_whack)
+
 #       _log.info('matrix write text...')
 #       _matrices.text('HE', 'LP')
 #       time.sleep(3)
 #       _matrices.clear_all()
 #       time.sleep(1)
 
-        _log.info('matrix on...')
-        _matrices.on()
-        time.sleep(2)
+#       _log.info('matrix on...')
+#       _matrices.on()
+#       time.sleep(2)
 
-        _log.info('matrix off...')
-        _matrices.clear_all()
-        time.sleep(1)
+#       _log.info('matrix off...')
+#       _matrices.clear_all()
+#       time.sleep(1)
+
+        _irq_clock.enable()
 
 #       _log.info('manual gradient wipes...')
 #       for i in range(1,8):
@@ -83,25 +92,26 @@ def test_matrix():
 #       _matrices.clear_all()
 #       time.sleep(1)
 
-        _log.info('starting matrix horizontal wipe right...')
-        _matrices.wipe(Matrices.RIGHT, True, 0.00)
-        time.sleep(0.0)
-        _log.info('starting matrix horizontal wipe left...')
-        _matrices.wipe(Matrices.LEFT, False, 0.00)
-        _matrices.clear_all()
+#       _log.info('starting matrix horizontal wipe right...')
+#       _matrices.wipe(Matrices.RIGHT, True, 0.00)
+#       time.sleep(0.0)
+#       _log.info('starting matrix horizontal wipe left...')
+#       _matrices.wipe(Matrices.LEFT, False, 0.00)
+#       _matrices.clear_all()
         # UP and LEFT not implemented
 
-        # now the cylon scanning loop ......
-        _matrices.clear_all()
-        _log.info('starting column on ranged matrices, ' + Fore.YELLOW + 'Ctrl-C to quit.')
+#       # now the cylon scanning loop ......
+#       _matrices.clear_all()
+#       _log.info('starting column on ranged matrices, ' + Fore.YELLOW + 'Ctrl-C to quit.')
         while True:
-            for c in range(0,22):
-                _matrices.column(c)
-                time.sleep(0.001)
-            for c in range(21,-1,-1):
-                _matrices.column(c)
-                time.sleep(0.001)
-        time.sleep(0.5)
+#           for c in range(0,22):
+#               _matrices.column(c)
+#               time.sleep(0.001)
+#           for c in range(21,-1,-1):
+#               _matrices.column(c)
+#               time.sleep(0.001)
+            time.sleep(1)
+#       time.sleep(0.5)
         _matrices.clear_all()
 
     except KeyboardInterrupt:

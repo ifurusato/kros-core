@@ -81,6 +81,7 @@ def main():
         _log.info('🌞 3. enabling subscribers...')
         _clock_sub_a.enable()
         _clock_sub_b.enable()
+
 #       _log.info('🌞 4. enabling external clock...')
 #       _ext_clock.enable()
 
