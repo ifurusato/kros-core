@@ -137,7 +137,7 @@ kros:
             decel_increment:          5.0        # normal incremental deceleration
             halt_rate:            'FASTER'       # slew rate for quick halt behaviour
             brake_rate:           'NORMAL'       # slew rate for slower braking behaviour
-            spin_speed:          'MAXIMUM'       # motor speed when spinning
+            spin_speed:       'TWO_THIRDS'       # motor speed when spinning
             verbose:                False        # noisy messaging
         odometry:
             enable_odometry:         True        # if true we enable motor encoders and odometry
@@ -166,25 +166,25 @@ kros:
             jerk_tolerance:          10          # percentage limit of permitted change per iteration
         speed:                                   # configured motor speeds for chadburn events
             astern:
-                MAXIMUM:             -0.90
-                FULL:                -0.80
-                THREE_QUARTER:       -0.60
-                TWO_THIRDS:          -0.55
-                HALF:                -0.40
-                ONE_THIRD:           -0.33
-                SLOW:                -0.25
+                MAXIMUM:             -0.80
+                FULL:                -0.50
+                THREE_QUARTER:       -0.40
+                TWO_THIRDS:          -0.35
+                HALF:                -0.30
+                ONE_THIRD:           -0.25
+                SLOW:                -0.20
                 DEAD_SLOW:           -0.15
                 STOP:                 0.0
             ahead:
                 STOP:                 0.0
                 DEAD_SLOW:            0.15
                 SLOW:                 0.20
-                ONE_THIRD:            0.28
-                HALF:                 0.35
-                TWO_THIRDS:           0.50
-                THREE_QUARTER:        0.60
-                FULL:                 0.80
-                MAXIMUM:              0.90
+                ONE_THIRD:            0.25
+                HALF:                 0.30
+                TWO_THIRDS:           0.35
+                THREE_QUARTER:        0.40
+                FULL:                 0.50
+                MAXIMUM:              0.80
 #           astern:
 #               MAXIMUM:            -90.0
 #               FULL:               -80.0
@@ -321,6 +321,7 @@ devices:
     0x48: 'ADS1015'
     0x69: 'ICM20948'
     0x74: '5x5 RGB Matrix'
+    0x75: '11x7 LED Matrix'
     0x77: '5x5 RGB Matrix (or 11x7 LED Matrix)'
 
 # HT0740 0x38 or 0x39 or 0x3A or 0x3B

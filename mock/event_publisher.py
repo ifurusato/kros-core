@@ -89,7 +89,6 @@ class EventPublisher(Publisher):
             Event.BUMPER_PORT, Event.BUMPER_CNTR, Event.BUMPER_STBD,
             Event.INCREASE_VELOCITY, Event.DECREASE_VELOCITY,
             Event.BRAKE, Event.HALT, Event.STOP,
-            Event.AHEAD, Event.ASTERN,
             Event.ROAM, Event.AVOID, Event.MOTH, Event.SNIFF, Event.IDLE,
             Event.NOOP, Event.SHUTDOWN,
         ]

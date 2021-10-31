@@ -67,7 +67,24 @@ class InfraredSubscriber(Subscriber):
         _event = message.event
         self._log.info('🌞 pre-processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.label))
         if Event.is_infrared_event(_event):
-            self._motor_ctrl.dispatch_infrared_event(message.payload)
+#           self._motor_ctrl.dispatch_infrared_event(message.payload)
+            if _event is Event.INFRARED_PSID:
+                self._log.info('INFRARED PORT SIDE.')
+#               self._brake()
+            elif _event is Event.INFRARED_PORT:
+                self._log.info('INFRARED PORT.')
+#               self._brake()
+            elif _event is Event.INFRARED_CNTR:
+                self._log.info('INFRARED CNTR.')
+#               self._brake()
+            elif _event is Event.INFRARED_STBD:
+                self._log.info('INFRARED STBD.')
+#               self._brake()
+            elif _event is Event.INFRARED_SSID:
+                self._log.info('INFRARED STBD SIDE.')
+#               self._brake()
+            else:
+                raise ValueError('unrecognised infrared event {}'.format(_event.label))
         else:
             self._log.warning('unrecognised infrared event on message {}'.format(message.name) + ''.format(message.event.label))
         await Subscriber.process_message(self, message)

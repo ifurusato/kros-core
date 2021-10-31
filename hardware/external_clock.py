@@ -93,7 +93,7 @@ class ExternalClock(Publisher):
     def _initialise(self):
         try:
 
-#           self._log.info('🌿 importing pigpio...')
+#           self._log.info('importing pigpio...')
 #           import pigpio
 #           self._pi = pigpio.pi()
 #           if not self._pi.connected:

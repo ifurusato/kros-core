@@ -218,7 +218,7 @@ class KROS(Component, FiniteStateMachine):
         _motor_configurer = MotorConfigurer(self._config, self._message_bus, _i2c_scanner, level=self._level)
         self._motor_ctrl = MotorController(self._config, self._message_bus, _motor_configurer, self._irq_clock != None, self._level)
         if self._use_external_clock:
-            self._irq_clock.add_callback(self._motor_ctrl._ext_callback_method)
+            self._irq_clock.add_callback(self._motor_ctrl._external_callback_method)
 #           self._external_clock.add_callback(self._motor_ctrl._ext_callback_method, True)
 
         # create components ....................................................

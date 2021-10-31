@@ -7,10 +7,11 @@
 #
 # author:   altheim
 # created:  2021-09-23
-# modified: 2021-10-15
+# modified: 2021-10-27
 #
 
 import importlib
+from dill.source import getsource # used only to print lambdas
 import sys, os, asyncio, itertools
 from copy import deepcopy
 from pathlib import Path
@@ -28,6 +29,7 @@ from core.event import Event
 from core.message import Message, Payload
 from core.publisher import Publisher
 from core.macros import MacroLibrary, Macros, Macro, Statement
+from hardware.motor_directive import MotorDirective
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class MacroPublisher(Publisher):
@@ -287,43 +289,12 @@ class MacroPublisher(Publisher):
                 if not self._statement: # if no existing statement, poll one from the macro.
                     if not self._macro.empty():
                         self._statement = self._macro.poll()
-
-                        _label       = self._statement.label
-                        self._log.info(Fore.BLUE + 'label:    \t{}'.format(_label))
-
-                        _is_lambda   = self._statement.is_lambda
-                        self._log.info(Fore.BLUE + 'lambda?   \t{}'.format(_is_lambda))
-
-                        _event       = self._statement.event
-                        if _event:
-                            self._log.info(Fore.BLUE + 'event:    \t{}'.format(_event))
-
-                        _speed = self._statement.speed
-                        if _speed:
-                            self._log.info(Fore.BLUE + 'speed:    \t{}'.format(_speed))
-
-                        _direction   = self._statement.direction
-                        if _direction:
-                            self._log.info(Fore.BLUE + 'direction:\t{}'.format(_direction))
-
-                        _arguments   = self._statement.arguments
-                        self._log.info(Fore.BLUE + 'arguments:\t{}'.format(_arguments))
-
-                        _duration_ms = self._statement.duration_ms
-                        self._log.info(Fore.BLUE + 'duration: \t{}ms'.format(_duration_ms))
-
-                        _function    = self._statement.function
-                        self._log.info(Fore.BLUE + 'function: \t{}'.format(_function))
-
-                        self._log.info(Fore.GREEN + 'event: ' 
-                                + Fore.YELLOW + '{}'.format(self._statement.event.label)
-                                + Fore.GREEN  + '\tid: '
-                                + Fore.YELLOW + '{}'.format(self._statement.label)
-                                + Fore.MAGENTA + '\tduration: {:5.2f}ms'.format(self._statement.duration_ms))
+                        # set start time at moment we polled the statement
                         self._start_time = dt.now()
+
                 # if there is an active statement waiting...
-                if self._statement:
-                    # then process this statement...
+                if self._statement: # then process this statement...
+
                     _elapsed_ms = (dt.now() - self._start_time).total_seconds() * 1000.0
                     if _elapsed_ms < self._statement.duration_ms and _elapsed_ms < self._wait_limit_ms:
                         # if the elapsed time is less than the required delay keep waiting...
@@ -331,23 +302,17 @@ class MacroPublisher(Publisher):
                         self._log.info(Fore.GREEN + 'still waiting on event: ' + Fore.YELLOW + '{}:\t'.format(self._statement.label)
                                 + Fore.MAGENTA + '{:5.2f}ms elapsed.'.format(_elapsed_ms))
                     else:
-                        # then execute the statement...
-                        if self._statement.is_lambda:
-                            _func = self._statement.function
+                        if self._statement.is_lambda: # then execute the embedded lambda function of the statement...
+                            self._log.info(Fore.BLUE + 'statement is lambda.')
+                            _function = self._statement.function
+                            self._log.info(Fore.BLUE + 'function:\t' + Fore.WHITE + '{}'.format(getsource(_function).rstrip()))
                             self._log.info(Fore.GREEN + 'executing lambda: ' + Fore.YELLOW + '{}\t'.format(self._statement.label)
                                     + Fore.MAGENTA + '{:5.2f}ms elapsed.'.format(_elapsed_ms))
-                            _func()
-                        else:
-                            _event = self._statement.event
-                            self._log.info(Fore.GREEN + 'publishing event:  ' + Fore.YELLOW + '{}:\t'.format(self._statement.label)
-                                    + Fore.MAGENTA + '{:5.2f}ms elapsed.'.format(_elapsed_ms))
-                            _message = self.message_factory.create_message(_event, self._statement.duration_ms)
-                            if _message is not None:
-                                self._log.info(Fore.GREEN + 'macro-publishing message:' + Fore.WHITE + Style.NORMAL + ' {}'.format(_message.name)
-                                        + Fore.CYAN + ' event: {}; '.format(_message.event.label) + Fore.YELLOW + 'timestamp: {}'.format(_message.value))
-                                await Publisher.publish(self, _message)
-#                               self._log.debug('macro-published message:' + Fore.WHITE + Style.NORMAL + ' {}'.format(_message.name)
-#                                       + Fore.CYAN + ' event: {}; '.format(_message.event.label) + Fore.YELLOW + 'timestamp: {}'.format(_message.value))
+                            _function()
+
+                        else: # process the embedded event of the statement
+                            await self._publish_from_statement_event(self._statement, _elapsed_ms)
+
                         # end loop
                         self._statement = None
 
@@ -371,6 +336,56 @@ class MacroPublisher(Publisher):
 
         # end of while loop ........................
         self._log.info(Fore.GREEN + 'macro publish loop complete.')
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    async def _publish_from_statement_event(self, statement, elapsed_ms):
+        '''
+        Publish a Message to the MessageBus based on the content of the
+        current Statement.
+        '''
+        self._log.info(Fore.BLUE + '🌜 statement is event.')
+
+        _label = statement.label
+        self._log.info(Fore.BLUE + 'label:    \t{}'.format(_label))
+        _arguments = statement.arguments
+
+        # process required arguments .................................
+
+        self._log.info(Fore.BLUE + 'arguments:\t{}'.format(_arguments))
+        _event = statement.event
+        if _event:
+            self._log.info(Fore.BLUE + 'event:    \t{}'.format(_event))
+        _duration_ms = statement.duration_ms
+        self._log.info(Fore.BLUE + 'duration: \t{}ms'.format(_duration_ms))
+        self._log.info(Fore.GREEN + 'event: ' 
+                + Fore.YELLOW + '{}'.format(_event.label)
+                + Fore.GREEN  + '\tid: '
+                + Fore.YELLOW + '{}'.format(_label)
+                + Fore.MAGENTA + '\tduration: {:5.2f}ms'.format(_duration_ms))
+
+        # process optional arguments .................................
+        _speed     = statement.speed
+        self._log.info(Fore.BLUE + 'speed:    \t{}'.format(_speed))
+        _direction = statement.direction
+        self._log.info(Fore.BLUE + 'direction:\t{}'.format(_direction))
+
+        if _speed and _direction:
+            _motor_directive = MotorDirective(_event, _direction, _speed)
+            _message = self.message_factory.create_message(_event, _motor_directive)
+            self._log.info(Fore.GREEN + 'macro-publishing event: ' + Fore.YELLOW + '{}:\t'.format(_label)
+                    + Fore.BLUE + 'speed: {}; '.format(_speed)
+                    + Fore.BLUE + 'direction: {}; '.format(_direction)
+                    + Fore.MAGENTA + '{:5.2f}ms elapsed.'.format(elapsed_ms))
+        else: # we only have an event
+            _message = self.message_factory.create_message(_event)
+            self._log.info(Fore.GREEN + 'macro-publishing event: ' + Fore.YELLOW + '{}:\t'.format(_label)
+                    + Fore.MAGENTA + '{:5.2f}ms elapsed.'.format(elapsed_ms))
+
+        if _message is not None:
+            await Publisher.publish(self, _message)
+#           self._log.debug('macro-published message:' + Fore.WHITE + Style.NORMAL + ' {}'.format(_message.name)
+#                   + Fore.CYAN + ' event: {}; '.format(_message.event.label) + Fore.YELLOW + 'timestamp: {}'.format(_message.value))
+
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def disable(self):

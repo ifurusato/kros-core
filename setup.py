@@ -80,6 +80,7 @@ setup(
         'numpy',
         'pytest',
         'pyyaml',
+        'dill',
         'gpiozero',
         'psutil',
         'pimoroni-ioexpander'

@@ -30,11 +30,18 @@ class Message(object):
 
     '''
     IMPORTANT: Don't create one of these directly: use the MessageFactory class.
+
+    :param event:    the Event associated with this Message
+    :param value:    the value (or Payload) associated with this Message
     '''
     def __init__(self, event, value):
         if event is None:
             raise ValueError('null event argument.')
-        self._payload       = Payload(event, value)
+        if isinstance(value, Payload):
+            print(Fore.GREEN + '🌿 is Payload.' + Style.RESET_ALL)
+            self._payload  = value
+        else: 
+            self._payload  = Payload(event, value)
         self._timestamp     = dt.now()
         self._message_id    = uuid.uuid4()
         # generate instance name

@@ -7,7 +7,7 @@
 #
 # author:   Murray Altheim
 # created:  2021-02-16
-# modified: 2021-04-22
+# modified: 2021-10-31
 #
 
 import asyncio
@@ -21,11 +21,13 @@ from core.orient import Orientation
 from core.event import Event, Group
 from core.subscriber import Subscriber
 from hardware.motor_controller import MotorController
+from hardware.motor_directive import MotorDirective
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class MotorSubscriber(Subscriber):
     '''
-    A mocked dual motor controller with encoders.
+    Subscribes to motor-related events, passing stop, chadburn, velocity
+    and theta directives to the motor controller.
 
     :param name:         the subscriber name (for logging)
     :param config:       the application configuration
@@ -61,15 +63,21 @@ class MotorSubscriber(Subscriber):
         if message.gcd:
             raise GarbageCollectedError('cannot process message: message has been garbage collected.')
         _event = message.event
+        self._log.info('🙅 processing message with event: {}...'.format(_event.label))
+
+        # STOP and CHADBURN events need no further processing
         if _event.group is Group.STOP:
+            self._log.info('🙅 dispatching STOP event message...')
             self._motor_ctrl.dispatch_stop_event(message.payload)
+        elif _event.group is Group.CHADBURN:
+            self._log.info('🙅 dispatching CHADBURN event message...')
+            self._motor_ctrl.dispatch_chadburn_event(message.payload)
         elif _event.group is Group.VELOCITY:
-            self._log.info('🙅 dispatching velocity event message...')
+            self._log.info('🙅 dispatching VELOCITY event message...')
             self._motor_ctrl.dispatch_velocity_event(message.payload)
         elif _event.group is Group.THETA:
+            self._log.info('🙅 dispatching THETA event message...')
             self._motor_ctrl.dispatch_theta_event(message.payload)
-        elif _event.group is Group.CHADBURN:
-            self._motor_ctrl.dispatch_chadburn_event(message.payload)
         else:
             self._log.warning('unrecognised message {}'.format(message.name) + ''.format(message.event.label))
         await Subscriber.process_message(self, message)

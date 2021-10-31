@@ -11,6 +11,10 @@
 #
 
 from enum import Enum
+from colorama import init, Fore, Style
+init()
+
+from core.util import Util
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Speed(Enum):
@@ -22,17 +26,17 @@ class Speed(Enum):
     set to zero; these must be set from the YAML application configuration
     via the configure() method.
     '''
-    #                                                proportional power
-    #                    label             velocity    astern  ahead
-    STOP          = ( 1, 'stop',                  0,      0.0,   0.0 )
-    DEAD_SLOW     = ( 2, 'dead slow',            20,      0.0,   0.0 )
-    SLOW          = ( 3, 'slow',                 30,      0.0,   0.0 )
-    ONE_THIRD     = ( 4, 'one third speed',      40,      0.0,   0.0 )
-    HALF          = ( 5, 'half speed',           50,      0.0,   0.0 )
-    TWO_THIRDS    = ( 6, 'two thirds speed',     67,      0.0,   0.0 )
-    THREE_QUARTER = ( 7, 'three quarter speed',  75,      0.0,   0.0 )
-    FULL          = ( 8, 'full speed',           90,      0.0,   0.0 )
-    MAXIMUM       = ( 9, 'maximum speed',       100,      0.0,   0.0 )
+    #                                                  proportional power
+    #                    label             velocity      astern  ahead
+    STOP          = ( 1, 'stop',                  0.0,      0.0,   0.0 )
+    DEAD_SLOW     = ( 2, 'dead slow',            20.0,      0.0,   0.0 )
+    SLOW          = ( 3, 'slow',                 30.0,      0.0,   0.0 )
+    ONE_THIRD     = ( 4, 'one third speed',      40.0,      0.0,   0.0 )
+    HALF          = ( 5, 'half speed',           50.0,      0.0,   0.0 )
+    TWO_THIRDS    = ( 6, 'two thirds speed',     67.0,      0.0,   0.0 )
+    THREE_QUARTER = ( 7, 'three quarter speed',  75.0,      0.0,   0.0 )
+    FULL          = ( 8, 'full speed',           90.0,      0.0,   0.0 )
+    MAXIMUM       = ( 9, 'maximum speed',       100.0,      0.0,   0.0 )
 
     # ignore the first param since it's already set by __new__
     def __init__(self, num, label, velocity, astern, ahead):
@@ -91,7 +95,7 @@ class Speed(Enum):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def __str__(self):
-        return 'Speed.{}:{}v={:d};\t{:5.2f}->{:5.2f}.'.format(self.name, (' ' * max(0, (16 - len(self.name)))),
+        return 'Speed.{}:{}v={:5.2f};\t{:5.2f}->{:5.2f}.'.format(self.name, (' ' * max(0, (16 - len(self.name)))),
                 self._velocity, self._astern, self._ahead)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -176,6 +180,14 @@ class Speed(Enum):
         if len(r) == 1:
             raise Exception('only 1: speed: {}'.format(r))
         return r
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    @staticmethod
+    def print_configuration(log):
+        log.info('configured speeds:')
+        for _speed in Speed:
+            log.info('  {}:{}astern: '.format(_speed.label, Util.repeat(' ', 21 - len(_speed.label))) + Fore.YELLOW + '{:>5.2f}'.format(_speed.astern) 
+                    + Fore.CYAN + '   ahead: ' + Fore.YELLOW + '{:>5.2f}'.format(_speed.ahead))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @staticmethod

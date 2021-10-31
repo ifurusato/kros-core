@@ -20,6 +20,7 @@ globals.init()
 
 from core.logger import Logger, Level
 from core.event import Event
+from core.orient import Orientation
 from core.direction import Direction
 from core.speed import Speed
 from core.macros import Macro, MacroLibrary
@@ -62,8 +63,8 @@ class AvoidMacro(Macro):
         self.add_event(Event.HALF_ASTERN, 200)
 
         # slow the reversing of the port motor to turn to starboard for a half second
-        self.add_event(Event.PORT_VELOCITY, (Direction.ASTERN, Speed.DEAD_SLOW))
-        self.add_event(Event.STBD_VELOCITY, (Direction.ASTERN, Speed.STOP))
+        self.add_event(Event.PORT_VELOCITY, (Orientation.PORT, Direction.ASTERN, Speed.DEAD_SLOW))
+        self.add_event(Event.STBD_VELOCITY, (Orientation.STBD, Direction.ASTERN, Speed.STOP))
 
         # come to a halt for 1 second
         self.add_event(Event.HALT, 500)
@@ -81,7 +82,7 @@ class TestMacro(Macro):
         Macro.__init__(self, name='test', description='a simple test macro')
 #       self._macro_publisher = macro_publisher
         # notify on start of macro via a lambda function
-#       self.add_function(lambda: globals.get('macro-publisher').on_begin('🍏 BEGIN!'))
+        self.add_function(lambda: globals.get('macro-publisher').on_begin('🍏 BEGIN!'))
 
         # 1. event with duration in milliseconds ...............................
 

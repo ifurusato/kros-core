@@ -120,7 +120,7 @@ class I2CScanner(object):
                         self._log.error('Error unk: {0} on address {1}'.format(e, hex(address)))
                 self._bus.close()
                 self._bus = None
-                self._log.info("found {:d} device(s).".format(device_count))
+                self._log.info("found {:d} I²C device(s).".format(device_count))
             else:
                 self._log.info("found no devices (no smbus available).")
         return self._int_list
@@ -130,7 +130,7 @@ class I2CScanner(object):
         self._addrDict = dict(list(map(lambda x, y:(x,y), self.get_int_addresses(), self.get_hex_addresses())))
         for _address in self.get_int_addresses():
             _device_name = self.get_device_for_address(_address)
-            self._log.info('found device at I²C address 0x{:02X}: '.format(_address) + Fore.YELLOW + '{}'.format(_device_name))
+            self._log.info('  I²C address 0x{:02X}: '.format(_address) + Fore.YELLOW + '{}'.format(_device_name))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def get_device_for_address(self, address):

@@ -34,9 +34,10 @@ class MessageFactory(object):
         self._log.info('ready.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def create_message(self, event, value):
+    def create_message(self, event, value=None):
         '''
-        Create and return a new message with the supplied event and value.
+        Create and return a new message with the supplied event and optional
+        value. Not all event types are associated with a value.
         '''
         _message = Message(event=event, value=value)
         _message.set_subscribers(self._message_bus.subscribers)

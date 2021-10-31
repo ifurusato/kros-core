@@ -6,7 +6,7 @@
 #
 # author:   Murray Altheim
 # created:  2020-02-21
-# modified: 2020-03-26
+# modified: 2021-10-31
 #
 
 from enum import Enum
@@ -116,17 +116,21 @@ class Event(Enum):
     # chadburn event ........................................................................
     # the num values here are fixed, and used in ./hardware/motors
     # astern ...............
-    ASTERN                 = ( 400, "astern",                 100,   Group.CHADBURN, Direction.ASTERN ) # with value
-    DEAD_SLOW_ASTERN       = ( 401, "dead slow astern",       100,   Group.CHADBURN, Direction.ASTERN, Speed.DEAD_SLOW )
-    SLOW_ASTERN            = ( 402, "slow astern",            100,   Group.CHADBURN, Direction.ASTERN, Speed.SLOW )
+#   ASTERN                 = ( 400, "astern",                 100,   Group.CHADBURN, Direction.ASTERN ) # with value
+    FULL_ASTERN            = ( 401, "full astern",            100,   Group.CHADBURN, Direction.ASTERN, Speed.FULL )
+    TWO_THIRDS_ASTERN      = ( 402, "two thids astern",       100,   Group.CHADBURN, Direction.ASTERN, Speed.TWO_THIRDS )
     HALF_ASTERN            = ( 403, "half astern",            100,   Group.CHADBURN, Direction.ASTERN, Speed.HALF )
-    FULL_ASTERN            = ( 404, "full astern",            100,   Group.CHADBURN, Direction.ASTERN, Speed.FULL )
+    ONE_THIRD_ASTERN       = ( 404, "one third astern",       100,   Group.CHADBURN, Direction.ASTERN, Speed.ONE_THIRD )
+    SLOW_ASTERN            = ( 405, "slow astern",            100,   Group.CHADBURN, Direction.ASTERN, Speed.SLOW )
+    DEAD_SLOW_ASTERN       = ( 406, "dead slow astern",       100,   Group.CHADBURN, Direction.ASTERN, Speed.DEAD_SLOW )
     # ahead ................
-    AHEAD                  = ( 410, "ahead",                  100,   Group.CHADBURN, Direction.AHEAD ) # with value
-    DEAD_SLOW_AHEAD        = ( 411, "dead slow ahead",        100,   Group.CHADBURN, Direction.AHEAD, Speed.DEAD_SLOW )
-    SLOW_AHEAD             = ( 412, "slow ahead",             100,   Group.CHADBURN, Direction.AHEAD, Speed.SLOW )
+#   AHEAD                  = ( 410, "ahead",                  100,   Group.CHADBURN, Direction.AHEAD ) # with value
+    FULL_AHEAD             = ( 411, "full ahead",             100,   Group.CHADBURN, Direction.AHEAD, Speed.FULL )
+    TWO_THIRDS_AHEAD       = ( 412, "two thirds ahead",       100,   Group.CHADBURN, Direction.AHEAD, Speed.TWO_THIRDS )
     HALF_AHEAD             = ( 413, "half ahead",             100,   Group.CHADBURN, Direction.AHEAD, Speed.HALF )
-    FULL_AHEAD             = ( 414, "full ahead",             100,   Group.CHADBURN, Direction.AHEAD, Speed.FULL )
+    ONE_THIRD_AHEAD        = ( 414, "one third ahead",        100,   Group.CHADBURN, Direction.AHEAD, Speed.ONE_THIRD )
+    SLOW_AHEAD             = ( 415, "slow ahead",             100,   Group.CHADBURN, Direction.AHEAD, Speed.SLOW )
+    DEAD_SLOW_AHEAD        = ( 416, "dead slow ahead",        100,   Group.CHADBURN, Direction.AHEAD, Speed.DEAD_SLOW )
 
     # high level behaviours .................................................................
     AVOID                  = ( 500, "avoid",                  150,   Group.BEHAVIOUR )
