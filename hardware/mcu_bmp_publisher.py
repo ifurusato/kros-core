@@ -7,11 +7,13 @@
 #
 # author:   Murray Altheim
 # created:  2021-10-11
-# modified: 2021-10-11
+# modified: 2021-10-30
+#
+# lazily installs serial module
 #
 
 import os, itertools
-import serial
+#import serial
 import asyncio
 from colorama import init, Fore, Style
 init()
@@ -37,7 +39,7 @@ class McuBumperPublisher(Publisher):
     This is currently subclassing Publisher but more as an experiment as it
     actually relies upon the QueuePublisher for the actual passing of messages
     to the MessageBus, and hence could be downclassed to a Component. We'll
-    see how performance works out before making that change. 
+    see how performance works out before making that change.
 
     :param config:          the application configuration
     :param message_bus:     the asynchronous message bus
@@ -69,7 +71,7 @@ class McuBumperPublisher(Publisher):
         # _baud_rate = 9600
         # _baud_rate = 19200
         _baud_rate = 38400
-        # (50, 75, 110, 134, 150, 200, 300, 600, 1200, 1800, 2400, 4800, 9600, 19200, 38400, 57600, 115200, 
+        # (50, 75, 110, 134, 150, 200, 300, 600, 1200, 1800, 2400, 4800, 9600, 19200, 38400, 57600, 115200,
         # 230400, 460800, 500000, 576000, 921600, 1000000, 1152000, 1500000, 2000000, 2500000, 3000000, 3500000, 4000000)
 
         self._log.info('starting...\t' + Fore.YELLOW + 'type Ctrl-C to exit.')
@@ -77,7 +79,13 @@ class McuBumperPublisher(Publisher):
             self._log.info('disabled: port {} does not exist.'.format(_port))
             self._serial = None
         else:
-            self._serial = serial.Serial(port=_port, baudrate=_baud_rate, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, timeout=0.5)
+            try:
+                import serial
+                self._serial = serial.Serial(port=_port, baudrate=_baud_rate, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, timeout=0.5)
+            except ModuleNotFoundError as e:
+                self._log.error("This script requires the serial module\nInstall with: pip3 install --user serial")
+                self._serial = None
+#           except Exception as e:
         self._log.info('ready.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈

@@ -57,6 +57,9 @@ class IoExpander(Component):
         self._enable_bumpers   = enable_bumpers
         self._callback         = callback
         self._i2c_scanner      = I2CScanner(config, self._log.level)
+        # get application argument
+        self._mock_enabled = config['kros'].get('arguments').get('mock_enabled')
+        self._log.info('mock enabled: {}'.format(self._mock_enabled))
         # infrared
         self._psid_ir_pin      = _config.get('psid_ir_pin') # pin connected to port side infrared
         self._port_ir_pin      = _config.get('port_ir_pin') # pin connected to port infrared
@@ -96,36 +99,35 @@ class IoExpander(Component):
         # configure board
         _ioe_address = 0x18
         if self._i2c_scanner.has_address([_ioe_address]):
-            self._log.info(Fore.WHITE + '🌼 found IO Expander, configuring...')
-
+            self._log.info('found IO Expander, configuring...')
             # proceed...
             try:
                 import ioexpander as io
                 if self._callback:
-                    self._log.info(Fore.WHITE + 'configuring interrupts...')
-    
+                    self._log.info('configuring interrupts...')
+
                     self._ioe = io.IOE(i2c_addr=0x18, interrupt_pin=4)
                     # swap the interrupt pin for the Rotary Encoder breakout
-    
+
                     self._ioe.enable_interrupt_out()
     #               self._ioe.enable_interrupt_out(pin_swap=True)
-                    self._log.info(Fore.WHITE + 'adding callback on interrupt...')
+                    self._log.info('adding callback on interrupt...')
                     self._ioe.on_interrupt(self._callback_method)
-                    self._log.info(Fore.WHITE + 'added callback on interrupt.')
-    
+                    self._log.info('added callback on interrupt.')
+
                     self._rate = Rate(20)
                     self._thread_enabled = True
-                    self._log.info(Fore.WHITE + 'added monitoring thread...')
+                    self._log.info('added monitoring thread...')
                     self._thread = Thread(name='monitor', target=self._monitor_interrupt_loop, args=[lambda: self._thread_enabled])
                     self._thread.start()
-    
+
                 else:
                     # no interrupt
                     self._log.info(Fore.RED + 'configuring without interrupts...')
                     self._ioe = io.IOE(i2c_addr=0x18)
-    
+
                 self._ioe.set_adc_vref(3.3)  # input voltage of IO Expander, this is 3.3 on Breakout Garden
-    
+
                 if enable_infrared: # analog infrared sensors
                     self._ioe.set_mode(self._psid_ir_pin, io.ADC)
                     self._ioe.set_mode(self._port_ir_pin, io.ADC)
@@ -144,10 +146,13 @@ class IoExpander(Component):
                 self._ioe = None
                 raise Exception('you must install the library for the IO Expander, or unplug it and use the mocked version.')
 
-        else:
+        elif self._mock_enabled:
             # use mock IOExpander
-            self._log.info(Fore.WHITE + '🌼 IO Expander not found, using mocked version...')
+            self._log.info('no IO Expander found, using mocked version...')
             self._ioe = MockIoExpander(config, level)
+        else:
+            self._log.info('no IO Expander found, no front sensor functionality.')
+            self._ioe = None
 
 #       self._log.warning('using mock IO Expander: error configuring: {}'.format(e))
 #       except Exception as e:
@@ -292,11 +297,11 @@ class IoExpander(Component):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def close(self):
-        self._log.info(Fore.WHITE + 'close()')
+        self._log.info('closing...')
         self._thread_enabled = False
         Component.close(self)
         if self._thread != None:
             self._thread.join(timeout=1.0)
-            self._log.info(Fore.WHITE + 'thread joined.')
+            self._log.info('thread joined.')
 
 # EOF
