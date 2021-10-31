@@ -123,7 +123,7 @@ class McuBumperPublisher(Publisher):
         self._log.info('starting mcu bumper publisher loop:\t' + Fore.YELLOW + ( '; (suppressed, type \'m\' to release)' if self.suppressed else '(released)') )
         while f_is_enabled():
             _count = next(self._counter)
-#           self._log.info('❄️  [{:03d}] begin publisher loop...'.format(_count))
+#           self._log.info('[{:03d}] begin publisher loop...'.format(_count))
             try:
 #               self._log.info('waiting for serial read line... ')
                 _bytes = self._serial.readline() # read until '\n' terminated line
@@ -151,22 +151,22 @@ class McuBumperPublisher(Publisher):
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _publish_message_for_orientation(self, orientation):
         if orientation is Orientation.PORT:
-            self._log.info('🌎 orientation:\t' + Fore.RED + Style.BRIGHT     + '{} ({})'.format(orientation.name, orientation.label))
+            self._log.info('orientation:\t' + Fore.RED + Style.BRIGHT     + '{} ({})'.format(orientation.name, orientation.label))
             self._queue_publisher.put(self._message_factory.create_message(Event.BUMPER_PORT, None))
         elif orientation is Orientation.CNTR:
-            self._log.info('🌎 orientation:\t' + Fore.BLUE + Style.BRIGHT    + '{} ({})'.format(orientation.name, orientation.label))
+            self._log.info('orientation:\t' + Fore.BLUE + Style.BRIGHT    + '{} ({})'.format(orientation.name, orientation.label))
             self._queue_publisher.put(self._message_factory.create_message(Event.BUMPER_CNTR, None))
         elif orientation is Orientation.STBD:
-            self._log.info('🌎 orientation:\t' + Fore.GREEN + Style.BRIGHT   + '{} ({})'.format(orientation.name, orientation.label))
+            self._log.info('orientation:\t' + Fore.GREEN + Style.BRIGHT   + '{} ({})'.format(orientation.name, orientation.label))
             self._queue_publisher.put(self._message_factory.create_message(Event.BUMPER_STBD, None))
         elif orientation is Orientation.PAFT:
-            self._log.info('🌎 orientation:\t' + Fore.CYAN + Style.BRIGHT    + '{} ({})'.format(orientation.name, orientation.label))
+            self._log.info('orientation:\t' + Fore.CYAN + Style.BRIGHT    + '{} ({})'.format(orientation.name, orientation.label))
             self._queue_publisher.put(self._message_factory.create_message(Event.BUMPER_PAFT, None))
         elif orientation is Orientation.MAST:
-            self._log.info('🌎 orientation:\t' + Fore.YELLOW + Style.BRIGHT  + '{} ({})'.format(orientation.name, orientation.label))
+            self._log.info('orientation:\t' + Fore.YELLOW + Style.BRIGHT  + '{} ({})'.format(orientation.name, orientation.label))
             self._queue_publisher.put(self._message_factory.create_message(Event.BUMPER_MAST, None))
         elif orientation is Orientation.SAFT:
-            self._log.info('🌎 orientation:\t' + Fore.MAGENTA + Style.BRIGHT + '{} ({})'.format(orientation.name, orientation.label))
+            self._log.info('orientation:\t' + Fore.MAGENTA + Style.BRIGHT + '{} ({})'.format(orientation.name, orientation.label))
             self._queue_publisher.put(self._message_factory.create_message(Event.BUMPER_SAFT, None))
         else:
             self._log.warning('unmatched: \'{}\'; ({:d} chars)'.format(_data, len(_data)))
