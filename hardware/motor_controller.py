@@ -276,19 +276,19 @@ class MotorController(Component):
                     # increase or decrease BOTH ..............................
                 if _event is Event.INCREASE_VELOCITY:
                     # INCREASE_VELOCITY      = ( 207, "increase velocity",      100,   Group.VELOCITY )
-                    self._log.info('🐢 1. dispatch velocity event {}; type {}; payload: {}; value: {}'.format(_event.label, type(payload), payload, _value))
+                    self._log.info('🐢 C. dispatch velocity event {}; type {}; payload: {}; value: {}'.format(_event.label, type(payload), payload, _value))
                 elif _event is Event.DECREASE_VELOCITY:
                     # DECREASE_VELOCITY      = ( 208, "decrease velocity",      100,   Group.VELOCITY )
-                    self._log.info('🐢 2. dispatch velocity event {}; type {}; payload: {}; value: {}'.format(_event.label, type(payload), payload, _value))
+                    self._log.info('🐢 D. dispatch velocity event {}; type {}; payload: {}; value: {}'.format(_event.label, type(payload), payload, _value))
 
             elif isinstance(payload, Payload):
                 # TODO get speed value as int or float
                 _event = payload.event
                 _value = payload.value
-                self._log.info('🐢 C. dispatch velocity event; Payload type {}; payload: {}; value: {}'.format(type(payload), payload, _value))
+                self._log.info('🐢 E. dispatch velocity event; Payload type {}; payload: {}; value: {}'.format(type(payload), payload, _value))
 
                 if _event is Event.VELOCITY or _event is Event.PORT_VELOCITY or _event is Event.STBD_VELOCITY:
-                    self._log.info('🐢 D. dispatch velocity event {}; type {}; payload: {}; value: {}'.format(_event.label, type(payload), payload, _value))
+                    self._log.info('🐢 F. dispatch velocity event {}; type {}; payload: {}; value: {}'.format(_event.label, type(payload), payload, _value))
                     # set velocity from int, float, or Speed .................
                     # VELOCITY               = ( 200, "velocity",               100,   Group.VELOCITY ) # with value
                     # PORT_VELOCITY          = ( 201, "port velocity",          100,   Group.VELOCITY ) # with value
@@ -296,24 +296,31 @@ class MotorController(Component):
                     pass
 
                 elif _event is Event.INCREASE_PORT_VELOCITY:
-                    self._log.info('🐢 E. dispatch velocity INCREASE_PORT_VELOCITY; payload type: {}; payload: {}; value: {}'.format(type(payload), payload, _value))
+                    self._log.info('🐢🐢 G. dispatch velocity INCREASE_PORT_VELOCITY; payload type: {}; payload: {}; value: {}'.format(type(payload), payload, _value))
+                    self._increment_motor_velocity(Orientation.PORT, self._accel_increment)
+                    self._log.info('increase PORT velocity; velocity: {:5.2f}'.format(self._port_motor.velocity))
                     pass
                 elif _event is Event.DECREASE_PORT_VELOCITY:
-                    self._log.info('🐢 F. dispatch velocity DECREASE_PORT_VELOCITY; payload type: {}; payload: {}; value: {}'.format(type(payload), payload, _value))
+                    self._log.info('🐢🐢 H. dispatch velocity DECREASE_PORT_VELOCITY; payload type: {}; payload: {}; value: {}'.format(type(payload), payload, _value))
+                    self._increment_motor_velocity(Orientation.PORT, -1 * self._decel_increment)
+                    self._log.info('decrease PORT velocity; velocity: {:5.2f}'.format(self._port_motor.velocity))
                     pass
                 elif _event is Event.INCREASE_STBD_VELOCITY:
-                    self._log.info('🐢 G. dispatch velocity INCREASE_STBD_VELOCITY; payload type: {}; payload: {}; value: {}'.format(type(payload), payload, _value))
+                    self._log.info('🐢🐢 I. dispatch velocity INCREASE_STBD_VELOCITY; payload type: {}; payload: {}; value: {}'.format(type(payload), payload, _value))
+                    self._increment_motor_velocity(Orientation.STBD, self._accel_increment)
+                    self._log.info('increase STBD velocity; velocity: {:5.2f}'.format(self._stbd_motor.velocity))
                     pass
                 elif _event is Event.DECREASE_STBD_VELOCITY:
-                    self._log.info('🐢 H. dispatch velocity DECREASE_STBD_VELOCITY; payload type: {}; payload: {}; value: {}'.format(type(payload), payload, _value))
-                    pass
+                    self._log.info('🐢🐢 J. dispatch velocity DECREASE_STBD_VELOCITY; payload type: {}; payload: {}; value: {}'.format(type(payload), payload, _value))
+                    self._increment_motor_velocity(Orientation.STBD, -1 * self._decel_increment)
+                    self._log.info('decrease STBD velocity; velocity: {:5.2f}'.format(self._stbd_motor.velocity))
 
             else:
                 raise TypeError('expected Payload or MotorDirective, not {}'.format(type(payload)))
             if reset_slew:
                 self._reset_slew_rate()
 
-            self._log.info('🐢 D. dispatch velocity event {}; payload value type {}; value: {}'.format(_event.label, type(_value), _value))
+            self._log.info('🐢 Z. dispatch velocity event {}; payload value type {}; value: {}'.format(_event.label, type(_value), _value))
             return # TEMP
 
             # # velocity directives ............................................

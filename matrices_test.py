@@ -14,6 +14,7 @@
 
 import pytest
 import sys, time
+import numpy as np
 from colorama import init, Fore, Style
 init()
 
@@ -51,7 +52,11 @@ def test_matrix():
 
         _matrices = Matrices(_enable_port, _enable_stbd, level=Level.INFO)
 
-        _irq_clock.add_callback(_matrices.horizontal_whack)
+        _matrices.set_brightness(0.5)
+        _matrices.show()
+
+#       _irq_clock.add_callback(_matrices.horizontal_scroll)
+        _irq_clock.add_callback(_matrices.snow)
 
 #       _log.info('matrix write text...')
 #       _matrices.text('HE', 'LP')
@@ -59,15 +64,21 @@ def test_matrix():
 #       _matrices.clear_all()
 #       time.sleep(1)
 
-#       _log.info('matrix on...')
-#       _matrices.on()
-#       time.sleep(2)
-
 #       _log.info('matrix off...')
 #       _matrices.clear_all()
 #       time.sleep(1)
 
         _irq_clock.enable()
+
+        # flash bright then fade out
+#       _matrices.set_brightness(1.0)
+#       _log.info('matrix on...')
+#       _matrices.on()
+#       for b in np.arange(1.0, 0.0, -0.01):
+#           _log.info('brightness: {:5.2f}'.format(b))
+#           _matrices.set_brightness(b)
+#           _matrices.show()
+#           time.sleep(0.01)
 
 #       _log.info('manual gradient wipes...')
 #       for i in range(1,8):

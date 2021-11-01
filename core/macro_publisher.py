@@ -12,7 +12,7 @@
 
 import importlib
 import sys, os, asyncio, itertools
-#from dill.source import getsource # used only to print lambdas
+from dill.source import getsource # used only to print lambdas
 from copy import deepcopy
 from pathlib import Path
 from datetime import datetime as dt
@@ -75,12 +75,13 @@ class MacroPublisher(Publisher):
         self._counter           = itertools.count()
         self.set_macro_library(MacroLibrary('default'))
         # attempt to import dill (problematic, optional)
-        try:
-            from dill.source import getsource # used only to print lambdas
-            self._dilled = True
-        except Exception as e:
-            self._log.error('unable to import dill: {}'.format(e))
-            self._dilled = False
+        self._dilled = True
+#       try:
+#           from dill.source import getsource # used only to print lambdas
+#           self._dilled = True
+#       except Exception as e:
+#           self._log.error('unable to import dill: {}'.format(e))
+#           self._dilled = False
         # loop variables
         self._macro             = None
         self._statement         = None # placeholder

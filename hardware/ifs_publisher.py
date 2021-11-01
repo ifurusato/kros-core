@@ -89,13 +89,10 @@ class IfsPublisher(Publisher):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def toggle(self):
-        self._log.info('👁️ ifs publisher: ' + Fore.YELLOW + 'suppressed? {}'.format(self.suppressed))
         if self.suppressed:
             self.release()
-            self._log.info('👁️ ifs publisher: ' + Fore.YELLOW + 'released.')
         else:
             self.suppress()
-            self._log.info('👁️ ifs publisher: ' + Fore.YELLOW + 'suppressed.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def release(self):

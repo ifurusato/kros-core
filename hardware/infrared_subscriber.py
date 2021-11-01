@@ -20,6 +20,7 @@ from core.logger import Logger, Level
 from core.event import Event, Group
 from core.orientation import Orientation
 from core.subscriber import Subscriber
+from core.message_bus import MessageRoutingError
 from hardware.motor_controller import MotorController
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -41,6 +42,8 @@ class InfraredSubscriber(Subscriber):
             raise ValueError('wrong type for motor_ctrl argument: {}'.format(type(motor_ctrl)))
         self._motor_ctrl = motor_ctrl
         self.add_events(Event.by_group(Group.INFRARED))
+        self._log.info('subscribed to events: {}'.format(self.print_events()))
+        self._log.info('ready.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def _arbitrate_message(self, message):
@@ -66,27 +69,29 @@ class InfraredSubscriber(Subscriber):
             raise GarbageCollectedError('cannot process message: message has been garbage collected.')
         _event = message.event
         self._log.info('🌞 pre-processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.label))
-        if Event.is_infrared_event(_event):
-#           self._motor_ctrl.dispatch_infrared_event(message.payload)
-            if _event is Event.INFRARED_PSID:
-                self._log.info('INFRARED PORT SIDE.')
-#               self._brake()
-            elif _event is Event.INFRARED_PORT:
-                self._log.info('INFRARED PORT.')
-#               self._brake()
-            elif _event is Event.INFRARED_CNTR:
-                self._log.info('INFRARED CNTR.')
-#               self._brake()
-            elif _event is Event.INFRARED_STBD:
-                self._log.info('INFRARED STBD.')
-#               self._brake()
-            elif _event is Event.INFRARED_SSID:
-                self._log.info('INFRARED STBD SIDE.')
-#               self._brake()
-            else:
-                raise ValueError('unrecognised infrared event {}'.format(_event.label))
+        if not Event.is_infrared_event(_event):
+            raise MessageRoutingError('unrecognised infrared event on message {}'.format(message.name) + ''.format(message.event.label))
+#       self._log.warning('unrecognised infrared event on message {}'.format(message.name) + ''.format(message.event.label))
+
+#       self._motor_ctrl.dispatch_infrared_event(message.payload)
+        if _event is Event.INFRARED_PSID:
+            self._log.info('INFRARED PORT SIDE.')
+#           self._brake()
+        elif _event is Event.INFRARED_PORT:
+            self._log.info('INFRARED PORT.')
+#           self._brake()
+        elif _event is Event.INFRARED_CNTR:
+            self._log.info('INFRARED CNTR.')
+#           self._brake()
+        elif _event is Event.INFRARED_STBD:
+            self._log.info('INFRARED STBD.')
+#           self._brake()
+        elif _event is Event.INFRARED_SSID:
+            self._log.info('INFRARED STBD SIDE.')
+#           self._brake()
         else:
-            self._log.warning('unrecognised infrared event on message {}'.format(message.name) + ''.format(message.event.label))
+            raise ValueError('unrecognised infrared event {}'.format(_event.label))
+    
         await Subscriber.process_message(self, message)
 #       self._log.debug('post-processing message {}'.format(message.name))
 

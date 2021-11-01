@@ -10,7 +10,7 @@
 # modified: 2021-09-02
 #
 
-import sys, time
+import sys, time, random
 import importlib.util
 from threading import Thread
 from colorama import init, Fore, Style
@@ -96,6 +96,14 @@ class Matrices(object):
             return self._stbd_matrix
 
     # ..........................................................................
+    def set_brightness(self, brightness):
+        '''
+        Set the brightness of each display to a value between 0.0 and 1.0.
+        '''
+        self._port_matrix.set_brightness(brightness)
+        self._stbd_matrix.set_brightness(brightness)
+
+    # ..........................................................................
     def on(self):
         '''
         Turns the lights on, i.e., enables all LEDs in each matrix.
@@ -158,6 +166,14 @@ class Matrices(object):
             self._port_matrix.show()
 
     # ..........................................................................
+    def snow(self):
+        '''
+        Displays random dots on both displays.
+        '''
+        self._stbd_matrix.snow()
+        self._port_matrix.snow()
+
+    # ..........................................................................
     def horizontal_gradient(self, cols):
         '''
         Set the displays to a horizontally-changing gradient.
@@ -196,7 +212,7 @@ class Matrices(object):
             raise Exception('unrecognised parameter for direction: {}'.format(direction))
 
     # ..........................................................................
-    def horizontal_whack(self):
+    def horizontal_scroll(self):
         self._hw_i += self._hwdt
         if self._hw_i >= 11:
             self._hw_i = 11
@@ -252,6 +268,13 @@ class Matrices(object):
             time.sleep(delay_secs)
 
     # ..........................................................................
+    def show(self):
+        if self._port_matrix:
+            self._port_matrix.show()
+        if self._stbd_matrix:
+            self._stbd_matrix.show()
+
+    # ..........................................................................
     def clear_all(self):
         '''
         Turns the lights off and disables any running threads.
@@ -290,6 +313,14 @@ class Matrix(object):
         self._screens = 0
         self._thread = None
         self._log.info('ready.')
+
+    # ..........................................................................
+    def show(self):
+        self._matrix11x7.show()
+
+    # ..........................................................................
+    def set_brightness(self, brightness):
+        self._matrix11x7.set_brightness(brightness)
 
     # ..........................................................................
     def text(self, message, is_small_font, is_scrolling):
@@ -378,6 +409,7 @@ class Matrix(object):
         if not self._matrix11x7:
             self._log.debug('no matrix 11x7 display available.')
             return
+        self._matrix11x7.set_brightness(1.0)
         self._matrix(self._matrix11x7.height, self._matrix11x7.width)
 
     # ..........................................................................
@@ -396,6 +428,14 @@ class Matrix(object):
         _rows = min(self._matrix11x7.height, rows) if rows >= 0 else self._matrix11x7.height
         _cols = min(self._matrix11x7.width, cols) if cols >= 0 else self._matrix11x7.width
         self._matrix(_rows, _cols)
+
+    # ..........................................................................
+    def snow(self):
+        x = random.randrange(0, self._matrix11x7.width)
+        y = random.randrange(0, self._matrix11x7.height)
+        bright = random.random() / 2.0
+        self._matrix11x7.pixel(x, y, bright)
+        self._matrix11x7.show()
 
     # ..........................................................................
     def _matrix(self, rows, cols):

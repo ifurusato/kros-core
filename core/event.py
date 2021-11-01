@@ -16,21 +16,20 @@ from core.speed import Speed
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Group(Enum):
-    NONE       = 0
-    SYSTEM     = 1
-    MACRO      = 2
-    GAMEPAD    = 3
-    STOP       = 4
-    BUMPER     = 5
-    INFRARED   = 6
-#   SENSOR     = 7
-    VELOCITY   = 8
-    THETA      = 9
-    CHADBURN   = 10
-    BEHAVIOUR  = 11
-    CLOCK      = 12
-    EXPERIMENT = 13
-    OTHER      = 14
+    NONE       =  0
+    SYSTEM     =  1
+    MACRO      =  2
+    GAMEPAD    =  3
+    STOP       =  4
+    BUMPER     =  5
+    INFRARED   =  6
+    VELOCITY   =  7
+    THETA      =  8
+    CHADBURN   =  9
+    BEHAVIOUR  = 10
+    CLOCK      = 11
+    EXPERIMENT = 12
+    OTHER      = 13
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Event(Enum):

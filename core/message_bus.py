@@ -25,13 +25,15 @@
 #
 # see; /usr/local/lib/python3.8/asyncio/queues.py
 #
+# class MessageRoutingError at bottom.
+#
 
 import sys, time, traceback, logging
 import asyncio, signal
+from asyncio.queues import Queue, QueueEmpty
 from datetime import datetime as dt
 from colorama import init, Fore, Style
 init()
-from asyncio.queues import Queue, QueueEmpty
 
 from core.logger import Logger, Level
 from core.util import Util
@@ -666,5 +668,12 @@ class PeekableQueue(Queue):
             except Empty or QueueEmpty:
                 continue
         self._log.info('cleared.')
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+class MessageRoutingError(Exception):
+    '''
+    A Message was routed to the wrong Subscriber.
+    '''
+    pass
 
 #EOF
