@@ -266,24 +266,61 @@ class MotorController(Component):
 #               self.start_loop()
             if not self.loop_is_running:
                 raise Exception('loop not running')
-            if not isinstance(payload, Payload):
-                raise TypeError('expected Payload, not {}'.format(type(payload)))
-            # FIXME
-            if not isinstance(payload, MotorDirective):
-                raise TypeError('expected MotorDirective, not {}'.format(type(payload)))
+            if isinstance(payload, MotorDirective):
+                self._log.info('🐢 B. dispatch velocity event; MotorDirective type {}; payload: {}'.format(type(payload), payload))
+                # TODO get Speed and Direction
+                _event = payload.event
+                _motor_directive = payload
+                _value = payload.value
 
+                    # increase or decrease BOTH ..............................
+                if _event is Event.INCREASE_VELOCITY:
+                    # INCREASE_VELOCITY      = ( 207, "increase velocity",      100,   Group.VELOCITY )
+                    self._log.info('🐢 1. dispatch velocity event {}; type {}; payload: {}; value: {}'.format(_event.label, type(payload), payload, _value))
+                elif _event is Event.DECREASE_VELOCITY:
+                    # DECREASE_VELOCITY      = ( 208, "decrease velocity",      100,   Group.VELOCITY )
+                    self._log.info('🐢 2. dispatch velocity event {}; type {}; payload: {}; value: {}'.format(_event.label, type(payload), payload, _value))
+
+            elif isinstance(payload, Payload):
+                # TODO get speed value as int or float
+                _event = payload.event
+                _value = payload.value
+                self._log.info('🐢 C. dispatch velocity event; Payload type {}; payload: {}; value: {}'.format(type(payload), payload, _value))
+
+                if _event is Event.VELOCITY or _event is Event.PORT_VELOCITY or _event is Event.STBD_VELOCITY:
+                    self._log.info('🐢 D. dispatch velocity event {}; type {}; payload: {}; value: {}'.format(_event.label, type(payload), payload, _value))
+                    # set velocity from int, float, or Speed .................
+                    # VELOCITY               = ( 200, "velocity",               100,   Group.VELOCITY ) # with value
+                    # PORT_VELOCITY          = ( 201, "port velocity",          100,   Group.VELOCITY ) # with value
+                    # STBD_VELOCITY          = ( 202, "stbd velocity",          100,   Group.VELOCITY ) # with value
+                    pass
+
+                elif _event is Event.INCREASE_PORT_VELOCITY:
+                    self._log.info('🐢 E. dispatch velocity INCREASE_PORT_VELOCITY; payload type: {}; payload: {}; value: {}'.format(type(payload), payload, _value))
+                    pass
+                elif _event is Event.DECREASE_PORT_VELOCITY:
+                    self._log.info('🐢 F. dispatch velocity DECREASE_PORT_VELOCITY; payload type: {}; payload: {}; value: {}'.format(type(payload), payload, _value))
+                    pass
+                elif _event is Event.INCREASE_STBD_VELOCITY:
+                    self._log.info('🐢 G. dispatch velocity INCREASE_STBD_VELOCITY; payload type: {}; payload: {}; value: {}'.format(type(payload), payload, _value))
+                    pass
+                elif _event is Event.DECREASE_STBD_VELOCITY:
+                    self._log.info('🐢 H. dispatch velocity DECREASE_STBD_VELOCITY; payload type: {}; payload: {}; value: {}'.format(type(payload), payload, _value))
+                    pass
+
+            else:
+                raise TypeError('expected Payload or MotorDirective, not {}'.format(type(payload)))
             if reset_slew:
                 self._reset_slew_rate()
 
-            self._log.info('🐢 B. dispatch velocity event; payload type {}; payload: {}'.format(type(payload), payload))
-            _event = payload.event
-            _value = payload.value
-            self._log.info('🐢 C. dispatch velocity event {}; payload value type {}; value: {}'.format(_event.label, type(_value), _value))
+            self._log.info('🐢 D. dispatch velocity event {}; payload value type {}; value: {}'.format(_event.label, type(_value), _value))
+            return # TEMP
 
-#           _motor_directive = _payload
-#           self._log.info('🙅 processing message with event {} and motor directive of direction: {} and speed: {}.'.format(
+            # # velocity directives ............................................
+
+#           self._log.info('processing message with event {} and motor directive of direction: {} and speed: {}.'.format(
 #                   _event.label, _motor_directive.direction, _motor_directive.speed))
-
+            '''
             if _event is Event.VELOCITY or _event is Event.PORT_VELOCITY or _event is Event.STBD_VELOCITY:
 
     #           _port_velocity = 0.0
@@ -367,6 +404,8 @@ class MotorController(Component):
                             + Fore.GREEN + 'stbd: {:5.2f}'.format(self._stbd_motor.velocity))
                 else:
                     raise ValueError('unrecognised velocity event {}'.format(_event.label))
+            '''
+
         else:
             self._log.warning('disabled: ignoring velocity dispatch.')
 

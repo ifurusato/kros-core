@@ -11,8 +11,8 @@
 #
 
 import importlib
-from dill.source import getsource # used only to print lambdas
 import sys, os, asyncio, itertools
+#from dill.source import getsource # used only to print lambdas
 from copy import deepcopy
 from pathlib import Path
 from datetime import datetime as dt
@@ -74,6 +74,13 @@ class MacroPublisher(Publisher):
         self._macros            = Macros()
         self._counter           = itertools.count()
         self.set_macro_library(MacroLibrary('default'))
+        # attempt to import dill (problematic, optional)
+        try:
+            from dill.source import getsource # used only to print lambdas
+            self._dilled = True
+        except Exception as e:
+            self._log.error('unable to import dill: {}'.format(e))
+            self._dilled = False
         # loop variables
         self._macro             = None
         self._statement         = None # placeholder
@@ -305,7 +312,10 @@ class MacroPublisher(Publisher):
                         if self._statement.is_lambda: # then execute the embedded lambda function of the statement...
                             self._log.info(Fore.BLUE + 'statement is lambda.')
                             _function = self._statement.function
-                            self._log.info(Fore.BLUE + 'function:\t' + Fore.WHITE + '{}'.format(getsource(_function).rstrip()))
+                            if self._dilled:
+                                self._log.info(Fore.BLUE + 'function:\t' + Fore.WHITE + '{}'.format(getsource(_function).rstrip()))
+                            else:
+                                self._log.info(Fore.BLUE + 'function:\t' + Fore.WHITE + '{}'.format(_function))
                             self._log.info(Fore.GREEN + 'executing lambda: ' + Fore.YELLOW + '{}\t'.format(self._statement.label)
                                     + Fore.MAGENTA + '{:5.2f}ms elapsed.'.format(_elapsed_ms))
                             _function()
