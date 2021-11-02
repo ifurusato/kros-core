@@ -272,7 +272,25 @@ class MotorController(Component):
                 _event = payload.event
                 _motor_directive = payload
                 _value = payload.value
+                _orientation = _motor_directive.orientation
+                _direction   = _motor_directive.direction
+                _speed       = _motor_directive.speed
 
+            elif isinstance(payload, Payload):
+                # TODO get speed value as int or float
+                _event = payload.event
+                _value = payload.value
+                _orientation = Orientation.BOTH
+                _direction   = None
+                _speed       = None
+                self._log.info('🐢 E. dispatch velocity event; Payload type {}; payload: {}; value: {}'.format(type(payload), payload, _value))
+
+            self._log.info('🐢🐢 Z. dispatch velocity event;\nPayload type {}; payload: {}; value: {};\n'.format(
+                    type(payload), payload, _value) + Fore.YELLOW + 'orientation: {}; direction: {}; speed: {}'.format(
+                    _orientation, _direction, _speed))
+
+            return
+            if True:
                     # increase or decrease BOTH ..............................
                 if _event is Event.INCREASE_VELOCITY:
                     # INCREASE_VELOCITY      = ( 207, "increase velocity",      100,   Group.VELOCITY )
@@ -281,11 +299,8 @@ class MotorController(Component):
                     # DECREASE_VELOCITY      = ( 208, "decrease velocity",      100,   Group.VELOCITY )
                     self._log.info('🐢 D. dispatch velocity event {}; type {}; payload: {}; value: {}'.format(_event.label, type(payload), payload, _value))
 
-            elif isinstance(payload, Payload):
-                # TODO get speed value as int or float
-                _event = payload.event
-                _value = payload.value
-                self._log.info('🐢 E. dispatch velocity event; Payload type {}; payload: {}; value: {}'.format(type(payload), payload, _value))
+
+
 
                 if _event is Event.VELOCITY or _event is Event.PORT_VELOCITY or _event is Event.STBD_VELOCITY:
                     self._log.info('🐢 F. dispatch velocity event {}; type {}; payload: {}; value: {}'.format(_event.label, type(payload), payload, _value))

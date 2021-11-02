@@ -9,7 +9,8 @@
 # created:  2019-12-23
 # modified: 2021-04-22
 #
-# A collection of navigation/orientation-related enums.
+# A collection of navigation/orientation-related enums, including Orientation,
+# Rotation and Cardinal.
 #
 
 from enum import Enum

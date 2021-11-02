@@ -19,13 +19,17 @@
 import pytest
 import sys, numpy, time, traceback
 from datetime import datetime as dt
-from math import isclose
+#from math import isclose
 from colorama import init, Fore, Style
 init()
 
 from core.message_bus import MessageBus
+from hardware.motor_directive import MotorDirective
 from core.message_factory import MessageFactory
+from core.event import Event
 from core.orientation import Orientation
+from core.direction import Direction
+from core.speed import Speed
 from core.rate import Rate
 from core.logger import Logger, Level
 from core.config_loader import ConfigLoader
@@ -57,9 +61,8 @@ def test_motors():
         _log.info('creating message factory...')
         _message_factory = MessageFactory(_message_bus, _level)
 
-        _i2c_scanner = I2CScanner(_config, _level)
-
         # add motor controller
+        _i2c_scanner = I2CScanner(_config, _level)
         _motor_configurer = MotorConfigurer(_config, _message_bus, _i2c_scanner, motors_enabled=True, level=_level)
         _port_motor = _motor_configurer.get_motor(Orientation.PORT)
         _stbd_motor = _motor_configurer.get_motor(Orientation.STBD)
@@ -69,7 +72,26 @@ def test_motors():
 
 #       _port_motor.enable()
 #       _stbd_motor.enable()
+        # # velocity directives ...................................................................
+        # VELOCITY               = ( 200, "velocity",               100,   Group.VELOCITY ) # with value
+        # PORT_VELOCITY          = ( 201, "port velocity",          100,   Group.VELOCITY ) # with value
+        # STBD_VELOCITY          = ( 202, "stbd velocity",          100,   Group.VELOCITY ) # with value
+        # INCREASE_PORT_VELOCITY = ( 203, "increase port velocity", 100,   Group.VELOCITY )
+        # DECREASE_PORT_VELOCITY = ( 204, "decrease port velocity", 100,   Group.VELOCITY )
+        # INCREASE_STBD_VELOCITY = ( 205, "increase stbd velocity", 100,   Group.VELOCITY )
+        # DECREASE_STBD_VELOCITY = ( 206, "decrease stbd velocity", 100,   Group.VELOCITY )
+        # INCREASE_VELOCITY      = ( 207, "increase velocity",      100,   Group.VELOCITY )
+        # DECREASE_VELOCITY      = ( 208, "decrease velocity",      100,   Group.VELOCITY )
 
+        _event       = Event.PORT_VELOCITY
+        _orientation = Orientation.PORT
+        _direction   = Direction.AHEAD
+        _speed       = Speed.HALF
+        _payload = MotorDirective(_event, _orientation, _direction, _speed)
+
+        _motor_ctrl.dispatch_velocity_event(_payload)
+
+        '''
         # configure digital potentiometer for motor speed
         _dpot = DigitalPotentiometer(_config, level=_level)
 #       _dpot.set_output_limits(-0.80, 0.80)
@@ -106,18 +128,22 @@ def test_motors():
                     _log.info(Fore.BLACK + Style.BRIGHT + 'digital value: {:9.6f}; analog: {:5.2f}'.format(_dgtl_scaled_value, _anlg_scaled_value))
             _last_scaled_value = _dgtl_scaled_value
             _rate.wait()
+        '''
+        print('ENDING...')
+        raise Exception()
 
     except KeyboardInterrupt:
         _log.info('Ctrl-C caught; exiting...')
     except DeviceNotFound as e:
         _log.error('no potentiometer found, exiting.')
+        sys.exit(1)
     except Exception as e:
         _log.error('{} encountered, exiting: {}'.format(type(e), e))
+        sys.exit(1)
     finally:
-        pass
-
-    _elapsed_ms = round(( dt.now() - _start_time ).total_seconds() * 1000.0)
-    _log.info(Fore.YELLOW + 'complete: elapsed: {:d}ms'.format(_elapsed_ms))
+        _elapsed_ms = round(( dt.now() - _start_time ).total_seconds() * 1000.0)
+        _log.info(Fore.YELLOW + 'complete: elapsed: {:d}ms'.format(_elapsed_ms))
+        sys.exit(0)
 
 # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 def main():
