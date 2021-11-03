@@ -250,8 +250,7 @@ class MotorController(Component):
             _direction = _event.direction
             _value = float(_speed.velocity) if _direction is Direction.AHEAD else float(-1.0 * _speed.velocity)
             self._log.info('set chadburn velocity: {} direction: {}; value: {}'.format(_speed.label, _direction.label, _value))
-            self.set_motor_velocity(Orientation.PORT, _value)
-            self.set_motor_velocity(Orientation.STBD, _value)
+            self.set_motor_velocity(Orientation.BOTH, _value, _value)
         else:
             self._log.warning('disabled: ignoring chadburn dispatch.')
 
@@ -259,6 +258,10 @@ class MotorController(Component):
     def dispatch_velocity_event(self, payload, reset_slew=True):
         '''
         A dispatcher for velocity change events.
+
+        :param payload:   the payload argument may be a Payload containing a
+                          single int, float or a tuple (containing both port
+                          and starboard values), or a MotorDirective.
         '''
         if self.enabled:
             self._log.info('🐢 A. dispatch velocity event; payload type {}; payload: {}'.format(type(payload), payload))
@@ -266,72 +269,92 @@ class MotorController(Component):
 #               self.start_loop()
             if not self.loop_is_running:
                 raise Exception('loop not running')
+            _event = payload.event
+            _value = payload.value
+            _port_target_velocity = None
+            _stbd_target_velocity = None
+
             if isinstance(payload, MotorDirective):
-                self._log.info('🐢 B. dispatch velocity event; MotorDirective type {}; payload: {}'.format(type(payload), payload))
-                # TODO get Speed and Direction
-                _event = payload.event
                 _motor_directive = payload
-                _value = payload.value
-                _orientation = _motor_directive.orientation
-                _direction   = _motor_directive.direction
-                _speed       = _motor_directive.speed
+                _target_velocity = _motor_directive.speed.velocity
+                _direction       = _motor_directive.direction
+                if _direction is Direction.ASTERN:
+                    _target_velocity *= -1.0
+                if _event is Event.VELOCITY:
+                    self._log.info('🐢 D1. dispatch VELOCITY event.')
+                    _port_target_velocity = _target_velocity
+                    _stbd_target_velocity = _target_velocity
+                elif _event is Event.PORT_VELOCITY:
+                    self._log.info('🐢 D2. dispatch PORT_VELOCITY event.')
+                    _port_target_velocity = _target_velocity
+                elif _event is Event.STBD_VELOCITY:
+                    self._log.info('🐢 D3. dispatch STBD_VELOCITY event.')
+                    _stbd_target_velocity = _target_velocity
 
             elif isinstance(payload, Payload):
-                # TODO get speed value as int or float
-                _event = payload.event
-                _value = payload.value
-                _orientation = Orientation.BOTH
-                _direction   = None
-                _speed       = None
-                self._log.info('🐢 E. dispatch velocity event; Payload type {}; payload: {}; value: {}'.format(type(payload), payload, _value))
-
-            self._log.info('🐢🐢 Z. dispatch velocity event;\nPayload type {}; payload: {}; value: {};\n'.format(
-                    type(payload), payload, _value) + Fore.YELLOW + 'orientation: {}; direction: {}; speed: {}'.format(
-                    _orientation, _direction, _speed))
-
-            return
-            if True:
-                    # increase or decrease BOTH ..............................
-                if _event is Event.INCREASE_VELOCITY:
-                    # INCREASE_VELOCITY      = ( 207, "increase velocity",      100,   Group.VELOCITY )
-                    self._log.info('🐢 C. dispatch velocity event {}; type {}; payload: {}; value: {}'.format(_event.label, type(payload), payload, _value))
-                elif _event is Event.DECREASE_VELOCITY:
-                    # DECREASE_VELOCITY      = ( 208, "decrease velocity",      100,   Group.VELOCITY )
-                    self._log.info('🐢 D. dispatch velocity event {}; type {}; payload: {}; value: {}'.format(_event.label, type(payload), payload, _value))
-
-
-
-
                 if _event is Event.VELOCITY or _event is Event.PORT_VELOCITY or _event is Event.STBD_VELOCITY:
-                    self._log.info('🐢 F. dispatch velocity event {}; type {}; payload: {}; value: {}'.format(_event.label, type(payload), payload, _value))
-                    # set velocity from int, float, or Speed .................
-                    # VELOCITY               = ( 200, "velocity",               100,   Group.VELOCITY ) # with value
-                    # PORT_VELOCITY          = ( 201, "port velocity",          100,   Group.VELOCITY ) # with value
-                    # STBD_VELOCITY          = ( 202, "stbd velocity",          100,   Group.VELOCITY ) # with value
-                    pass
-
-                elif _event is Event.INCREASE_PORT_VELOCITY:
-                    self._log.info('🐢🐢 G. dispatch velocity INCREASE_PORT_VELOCITY; payload type: {}; payload: {}; value: {}'.format(type(payload), payload, _value))
-                    self._increment_motor_velocity(Orientation.PORT, self._accel_increment)
-                    self._log.info('increase PORT velocity; velocity: {:5.2f}'.format(self._port_motor.velocity))
-                    pass
-                elif _event is Event.DECREASE_PORT_VELOCITY:
-                    self._log.info('🐢🐢 H. dispatch velocity DECREASE_PORT_VELOCITY; payload type: {}; payload: {}; value: {}'.format(type(payload), payload, _value))
-                    self._increment_motor_velocity(Orientation.PORT, -1 * self._decel_increment)
-                    self._log.info('decrease PORT velocity; velocity: {:5.2f}'.format(self._port_motor.velocity))
-                    pass
-                elif _event is Event.INCREASE_STBD_VELOCITY:
-                    self._log.info('🐢🐢 I. dispatch velocity INCREASE_STBD_VELOCITY; payload type: {}; payload: {}; value: {}'.format(type(payload), payload, _value))
-                    self._increment_motor_velocity(Orientation.STBD, self._accel_increment)
-                    self._log.info('increase STBD velocity; velocity: {:5.2f}'.format(self._stbd_motor.velocity))
-                    pass
-                elif _event is Event.DECREASE_STBD_VELOCITY:
-                    self._log.info('🐢🐢 J. dispatch velocity DECREASE_STBD_VELOCITY; payload type: {}; payload: {}; value: {}'.format(type(payload), payload, _value))
-                    self._increment_motor_velocity(Orientation.STBD, -1 * self._decel_increment)
-                    self._log.info('decrease STBD velocity; velocity: {:5.2f}'.format(self._stbd_motor.velocity))
-
+                    self._log.info('🐢 B. value type {}'.format(type(_value)))
+                    if isinstance(_value, tuple):
+                        _port_target_velocity = _value[0]
+                        _stbd_target_velocity = _value[1]
+                    elif isinstance(_value, float):
+                        _port_target_velocity = _value
+                        _stbd_target_velocity = _value
+                    elif isinstance(_value, int):
+                        _port_target_velocity = float(_value)
+                        _stbd_target_velocity = float(_value)
+                    else:
+                        raise TypeError('expected tuple, float or int, not {}'.format(type(_value)))
+                    _direction = Direction.get_direction_for(_port_target_velocity, _stbd_target_velocity)
+                else:
+                    raise TypeError('unexpected Payload with event {}'.format(_event.label))
             else:
                 raise TypeError('expected Payload or MotorDirective, not {}'.format(type(payload)))
+
+            _orientation = self._get_orientation(_event)
+
+            # ............................................................................
+            # if port and/or starboard velocity not already set, do so via event type:
+
+            if _event is Event.DECREASE_VELOCITY:
+                self._log.info('🐢 D4. dispatch DECREASE_VELOCITY event.')
+                _port_target_velocity = self._port_motor.target_velocity + self._decel_increment
+                _stbd_target_velocity = self._stbd_motor.target_velocity + self._decel_increment
+
+            elif _event is Event.INCREASE_VELOCITY:
+                self._log.info('🐢 D5. dispatch INCREASE_VELOCITY event.')
+                _port_target_velocity = self._port_motor.target_velocity + self._accel_increment
+                _stbd_target_velocity = self._stbd_motor.target_velocity + self._accel_increment
+
+            elif _event is Event.DECREASE_PORT_VELOCITY:
+                self._log.info('🐢 D6. dispatch velocity DECREASE_PORT_VELOCITY; payload type: {}; value: {}'.format(type(payload), _value))
+                _port_target_velocity = self._port_motor.target_velocity + self._decel_increment
+
+            elif _event is Event.INCREASE_PORT_VELOCITY:
+                self._log.info('🐢 D7. dispatch velocity INCREASE_PORT_VELOCITY; payload type: {}; value: {}'.format(type(payload), _value))
+                _port_target_velocity = self._port_motor.target_velocity + self._accel_increment
+
+            elif _event is Event.DECREASE_STBD_VELOCITY:
+                self._log.info('🐢 D8. dispatch velocity DECREASE_STBD_VELOCITY; payload type: {}; value: {}'.format(type(payload), _value))
+                _stbd_target_velocity = self._stbd_motor.target_velocity + self._decel_increment
+
+            elif _event is Event.INCREASE_STBD_VELOCITY:
+                self._log.info('🐢 D9. dispatch velocity INCREASE_STBD_VELOCITY; payload type: {}; value: {}'.format(type(payload), _value))
+                _stbd_target_velocity = self._stbd_motor.target_velocity + self._accel_increment
+
+            elif _event is not Event.VELOCITY and _event is not Event.PORT_VELOCITY and _event is not Event.STBD_VELOCITY:
+                raise TypeError('unsupported event for dispatch velocity: {}'.format(_event.label))
+
+
+            self._log.info('🐢 E. dispatch velocity event:\nPayload type {}\n  payload: {}\n  value: {}\n'.format(
+                    type(payload), payload, _value) + Fore.YELLOW + 'orientation: {}; direction: {}; port target velocity: {}; stbd target velocity: {}'.format(
+                    _orientation, _direction, _port_target_velocity, _stbd_target_velocity))
+
+            return ( _event, _value, _orientation, _direction, _port_target_velocity, _stbd_target_velocity )
+
+            '''
+            self.set_motor_velocity(orientation, _port_target_velocity, _stbd_target_velocity )
+            '''
             if reset_slew:
                 self._reset_slew_rate()
 
@@ -393,44 +416,21 @@ class MotorController(Component):
 
                 self._last_port_velocity = _port_velocity
                 self._last_stbd_velocity = _stbd_velocity
-
-            else:
-
-                if _event is Event.INCREASE_PORT_VELOCITY:
-                    self._increment_motor_velocity(Orientation.PORT, self._accel_increment)
-                    self._log.info('increase PORT velocity; velocity: {:5.2f}'.format(self._port_motor.velocity))
-                    pass
-                elif _event is Event.DECREASE_PORT_VELOCITY:
-                    self._increment_motor_velocity(Orientation.PORT, -1 * self._decel_increment)
-                    self._log.info('decrease PORT velocity; velocity: {:5.2f}'.format(self._port_motor.velocity))
-                    pass
-                elif _event is Event.INCREASE_STBD_VELOCITY:
-                    self._increment_motor_velocity(Orientation.STBD, self._accel_increment)
-                    self._log.info('increase STBD velocity; velocity: {:5.2f}'.format(self._stbd_motor.velocity))
-                    pass
-                elif _event is Event.DECREASE_STBD_VELOCITY:
-                    self._increment_motor_velocity(Orientation.STBD, -1 * self._decel_increment)
-                    self._log.info('decrease STBD velocity; velocity: {:5.2f}'.format(self._stbd_motor.velocity))
-                    pass
-                elif _event is Event.INCREASE_VELOCITY:
-                    self._increment_motor_velocity(Orientation.PORT, self._accel_increment)
-                    self._increment_motor_velocity(Orientation.STBD, self._accel_increment)
-                    self._log.info('increase velocity;\t'
-                            + Fore.RED + 'port: {:5.2f};\t'.format(self._port_motor.velocity)
-                            + Fore.GREEN + 'stbd: {:5.2f}'.format(self._stbd_motor.velocity))
-                elif _event is Event.DECREASE_VELOCITY:
-                    self._increment_motor_velocity(Orientation.PORT, -1 * self._decel_increment)
-                    self._increment_motor_velocity(Orientation.STBD, -1 * self._decel_increment)
-                    self._log.info('decrease velocity;\t'
-                            + Fore.RED + 'port: {:5.2f};\t'.format(self._port_motor.velocity)
-                            + Fore.GREEN + 'stbd: {:5.2f}'.format(self._stbd_motor.velocity))
-                else:
-                    raise ValueError('unrecognised velocity event {}'.format(_event.label))
             '''
 
         else:
             self._log.warning('disabled: ignoring velocity dispatch.')
 
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def _get_orientation(self, event):
+        if event is Event.VELOCITY or event is Event.DECREASE_VELOCITY or event is Event.INCREASE_VELOCITY:
+            return Orientation.BOTH
+        elif event is Event.PORT_VELOCITY or event is Event.DECREASE_PORT_VELOCITY or event is Event.INCREASE_PORT_VELOCITY:
+            return Orientation.PORT
+        elif event is Event.STBD_VELOCITY or event is Event.DECREASE_STBD_VELOCITY or event is Event.INCREASE_STBD_VELOCITY:
+            return Orientation.STBD
+        else:
+            raise TypeError('unrecognised event: {}'.format(event.label))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def dispatch_theta_event(self, payload, reset_slew=True):
@@ -527,32 +527,43 @@ class MotorController(Component):
             raise Exception('expected PORT or STBD orientation.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def set_motor_velocity(self, orientation, target_velocity):
+    def set_motor_velocity(self, orientation, target_velocity_1, target_velocity_2=None):
         '''
-        A convenience method that sets the target velocity and motor
-        power of the specified motor. Accepts either ints or floats
-        between -100 and 100.
+        A convenience method that sets the target velocity and motor power of
+        the specified motor. Accepts either ints or floats between -100 and 100.
+        This uses the first argument, target_velocity_1, for all individual velocity
+        changes, or if Orientation is BOTH uses it as PORT, with target_velocity_2 as STBD.
 
         When the motor controller is disabled any calls to this method
         will override the target velocity argument and set it to zero.
         '''
         if not self.enabled:
             self._log.error('motor controller not enabled.')
-            target_velocity = 0.0
-        if isinstance(target_velocity, int):
-#           self._log.warning('expected target velocity as float not int: {:d}'.format(target_velocity))
-#           target_velocity = float(target_velocity)
-            raise ValueError('expected target velocity as float not int: {:d}'.format(target_velocity))
-        if not isinstance(target_velocity, float):
-            raise ValueError('expected float, not {}'.format(type(target_velocity)))
-        if orientation is Orientation.PORT:
-            self._log.info('set_motor_velocity ' + Fore.RED   + 'PORT: {:5.2f}'.format(target_velocity))
-            self._port_motor.target_velocity = target_velocity
+            target_velocity_1 = 0.0
+            target_velocity_2 = 0.0
+        if isinstance(target_velocity_1, int):
+            raise ValueError('expected target velocity as float not int: {:d}'.format(target_velocity_1))
+        if not isinstance(target_velocity_1, float):
+            raise ValueError('expected float, not {}'.format(type(target_velocity_1)))
+        if target_velocity_2:
+            if isinstance(target_velocity_2, int):
+                raise ValueError('expected target velocity as float not int: {:d}'.format(target_velocity_2))
+            if not isinstance(target_velocity_2, float):
+                raise ValueError('expected float, not {}'.format(type(target_velocity_2)))
+
+        if orientation is Orientation.BOTH:
+            self._port_motor.target_velocity = target_velocity_1
+            self._stbd_motor.target_velocity = target_velocity_2
+            self._log.info('set_motor_velocity ' + Fore.RED   + 'PORT: {:5.2f}\t'.format(target_velocity_1)
+                    + Fore.GREEN + 'STBD: {:5.2f}'.format(target_velocity_2))
+        elif orientation is Orientation.PORT:
+            self._port_motor.target_velocity = target_velocity_1
+            self._log.info('set_motor_velocity ' + Fore.RED   + 'PORT: {:5.2f}'.format(target_velocity_1))
         elif orientation is Orientation.STBD:
-            self._log.info('set_motor_velocity ' + Fore.GREEN + 'STBD: {:5.2f}'.format(target_velocity))
-            self._stbd_motor.target_velocity = target_velocity
+            self._stbd_motor.target_velocity = target_velocity_1
+            self._log.info('set_motor_velocity ' + Fore.GREEN + 'STBD: {:5.2f}'.format(target_velocity_1))
         else:
-            raise Exception('expected PORT or STBD orientation.')
+            raise TypeError('expected BOTH, PORT or STBD orientation, not {}'.format(orientation))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def reset_max_fwd_velocity(self):
@@ -579,8 +590,7 @@ class MotorController(Component):
             _stbd_velocity = -1.0 * self._spin_speed.velocity
         else:
             raise Exception('unrecognised spin direction: {}'.format(orientation))
-        self.set_motor_velocity(Orientation.PORT, _port_velocity)
-        self.set_motor_velocity(Orientation.STBD, _stbd_velocity)
+        self.set_motor_velocity(Orientation.BOTH, _port_velocity, _stbd_velocity)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _even(self):
@@ -595,25 +605,7 @@ class MotorController(Component):
             self._log.info('even velocity from: ' + Fore.RED + 'port: {:5.2f}; '.format(self._port_motor.target_velocity)
                     + Fore.GREEN + 'stbd: {:5.2f}; '.format(self._stbd_motor.target_velocity)
                     + Fore.YELLOW + 'average: {:5.2f}.'.format(_average_velocity))
-            self.set_motor_velocity(Orientation.PORT, _average_velocity)
-            self.set_motor_velocity(Orientation.STBD, _average_velocity)
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def _increment_motor_velocity(self, orientation, increment):
-        '''
-        Increment the target velocity of the specified motor by the supplied increment
-        (which can be a positive or negative value). No clipping is done here, so it's
-        possible to set a value higher than the motor will accept.
-        '''
-        if orientation is Orientation.PORT:
-            _updated_target_velocity = self._port_motor.target_velocity + increment
-            self._log.info('increment port motor velocity:' + Fore.RED + ' {:5.2f} + {:5.2f} ➔ {:<5.2f}'.format(\
-                    self._port_motor.velocity, increment, _updated_target_velocity))
-        else:
-            _updated_target_velocity = self._stbd_motor.target_velocity + increment
-            self._log.info('increment stbd motor velocity:' + Fore.GREEN + ' {:5.2f} + {:5.2f} ➔ {:<5.2f}'.format(\
-                    self._stbd_motor.velocity, increment, _updated_target_velocity))
-        self.set_motor_velocity(orientation, _updated_target_velocity)
+            self.set_motor_velocity(Orientation.BOTH, _average_velocity, _average_velocity)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def emergency_stop(self):

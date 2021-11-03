@@ -26,6 +26,7 @@ init()
 from core.message_bus import MessageBus
 from hardware.motor_directive import MotorDirective
 from core.message_factory import MessageFactory
+from core.message import Payload
 from core.event import Event
 from core.orientation import Orientation
 from core.direction import Direction
@@ -42,6 +43,26 @@ from hardware.digital_pot import DigitalPotentiometer
 
 _log = Logger('test', Level.INFO)
 
+# ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+def assertResult(result, event, orientation, direction, port_velocity, stbd_velocity):
+    '''
+    Assert the expected values of the result.
+    '''
+    # return ( _event, _value, _orientation, _direction, _port_target_velocity, _stbd_target_velocity )
+    _log.info(Fore.GREEN + '\nasserted result:\n    event:\t{}\n    value:\t{}\n    orient:\t{}\n    direction:\t{}\n    port tvel:\t{}\n    stbd tvel:\t{}'.format(*result))
+    assert result[0] is event, 'expected event {} not {}'.format(event.label, result[0])
+    assert result[2] is orientation, 'expected orientation {} not {}'.format(orientation.label, result[2])
+    if direction:
+        assert result[3] is direction, 'expected direction {} not {}'.format(direction.label, result[3])
+    if port_velocity:
+        assert result[4] == port_velocity, 'expected port velocity {} not {}'.format(port_velocity, result[4])
+    else:
+        assert result[4] is None, 'expected null port velocity'
+    if stbd_velocity:
+        assert result[5] == stbd_velocity, 'expected starboard velocity {} not {}'.format(stbd_velocity, result[5])
+    else:
+        assert result[5] is None, 'expected null starboard velocity'
+  
 # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 @pytest.mark.unit
 def test_motors():
@@ -70,67 +91,117 @@ def test_motors():
         _motor_ctrl = MotorController(_config, _message_bus, _motor_configurer, level=_level)
         _motor_ctrl.enable()
 
-#       _port_motor.enable()
-#       _stbd_motor.enable()
-        # # velocity directives ...................................................................
-        # VELOCITY               = ( 200, "velocity",               100,   Group.VELOCITY ) # with value
-        # PORT_VELOCITY          = ( 201, "port velocity",          100,   Group.VELOCITY ) # with value
-        # STBD_VELOCITY          = ( 202, "stbd velocity",          100,   Group.VELOCITY ) # with value
-        # INCREASE_PORT_VELOCITY = ( 203, "increase port velocity", 100,   Group.VELOCITY )
-        # DECREASE_PORT_VELOCITY = ( 204, "decrease port velocity", 100,   Group.VELOCITY )
-        # INCREASE_STBD_VELOCITY = ( 205, "increase stbd velocity", 100,   Group.VELOCITY )
-        # DECREASE_STBD_VELOCITY = ( 206, "decrease stbd velocity", 100,   Group.VELOCITY )
-        # INCREASE_VELOCITY      = ( 207, "increase velocity",      100,   Group.VELOCITY )
-        # DECREASE_VELOCITY      = ( 208, "decrease velocity",      100,   Group.VELOCITY )
-
-        _event       = Event.PORT_VELOCITY
-        _orientation = Orientation.PORT
-        _direction   = Direction.AHEAD
-        _speed       = Speed.HALF
-        _payload = MotorDirective(_event, _orientation, _direction, _speed)
-
-        _motor_ctrl.dispatch_velocity_event(_payload)
+        # test all velocity directives .............................................................
+        '''
+        # VELOCITY               = ( 200, "velocity",               100, Group.VELOCITY ) # with value
+        assertResult(_motor_ctrl.dispatch_velocity_event(MotorDirective(Event.VELOCITY, Direction.AHEAD, Speed.SLOW)),
+                Event.VELOCITY, Orientation.BOTH, Direction.AHEAD, 30.0, 30.0)
+        # PORT_VELOCITY          = ( 201, "port velocity",          100, Group.VELOCITY ) # with value
+        assertResult(_motor_ctrl.dispatch_velocity_event(MotorDirective(Event.PORT_VELOCITY, Direction.ASTERN, Speed.HALF)),
+                Event.PORT_VELOCITY, Orientation.PORT, Direction.ASTERN, -50.0, None)
+        # STBD_VELOCITY          = ( 202, "stbd velocity",          100, Group.VELOCITY ) # with value
+        assertResult(_motor_ctrl.dispatch_velocity_event(MotorDirective(Event.STBD_VELOCITY, Direction.ASTERN, Speed.ONE_THIRD)),
+                Event.STBD_VELOCITY, Orientation.STBD, Direction.ASTERN, None, -40.0)
+        '''
 
         '''
-        # configure digital potentiometer for motor speed
-        _dpot = DigitalPotentiometer(_config, level=_level)
-#       _dpot.set_output_limits(-0.80, 0.80)
+        # VELOCITY               = ( 200, "velocity",               100, Group.VELOCITY ) # with value
+        # using single positive float for BOTH
+        assertResult(_motor_ctrl.dispatch_velocity_event(Payload(Event.VELOCITY, 30.0)),
+                Event.VELOCITY, Orientation.BOTH, Direction.AHEAD, 30.0, 30.0)
+        # using single negative float for BOTH
+        assertResult(_motor_ctrl.dispatch_velocity_event(Payload(Event.VELOCITY, -42.0)),
+                Event.VELOCITY, Orientation.BOTH, Direction.ASTERN, -42.0, -42.0)
+        # using int for PORT, STBD
+        assertResult(_motor_ctrl.dispatch_velocity_event(Payload(Event.VELOCITY, 27)),
+                Event.VELOCITY, Orientation.BOTH, Direction.AHEAD, 27.0, 27.0)
+        # using tuple float for PORT, STBD
+        assertResult(_motor_ctrl.dispatch_velocity_event(Payload(Event.VELOCITY, (30.0, 40.0))),
+                Event.VELOCITY, Orientation.BOTH, Direction.AHEAD, 30.0, 40.0)
+        # using tuple float for PORT, STBD, with CLOCKWISE
+        assertResult(_motor_ctrl.dispatch_velocity_event(Payload(Event.VELOCITY, (40.0, -30.0))),
+                Event.VELOCITY, Orientation.BOTH, Direction.CLOCKWISE, 40.0, -30.0)
 
-        # configure analog potentiometer for PID controller tuning
-#       _cfg = [ 0, 330, 0.0, 1.0 ]
-#       _apot = AnalogPotentiometer(_config, in_min=_cfg[0], in_max=_cfg[1], out_min=_cfg[2], out_max=_cfg[3], level=Level.INFO)
-
-        _anlg_scaled_value = 0.0
-        _last_scaled_value = 0.0
-        _log.info('starting test...')
-        _hz = 10
-        _rate = Rate(_hz, Level.ERROR)
-        while True:
-            _port_motor.update_target_velocity()
-            _stbd_motor.update_target_velocity()
-#           _anlg_scaled_value = _apot.get_scaled_value()
-            _dgtl_scaled_value = _dpot.get_scaled_value(False)
-            if _dgtl_scaled_value != _last_scaled_value: # if not the same as last time
-                # math.isclose(3, 15, abs_tol=0.03 * 255) # 3% on a 0-255 scale
-                if isclose(_dgtl_scaled_value, 0.0, abs_tol=0.05 * 90):
-                    _dpot.set_black()
-#                   _motor_ctrl.set_motor_velocity(Orientation.PORT, 0.0)
-#                   _motor_ctrl.set_motor_velocity(Orientation.STBD, 0.0)
-                    _port_motor.target_velocity = 0.0
-                    _stbd_motor.target_velocity = 0.0
-                    _log.info(Fore.BLACK + Style.DIM + 'digital value: {:9.6f} (ZERO); analog: {:5.2f}'.format(_dgtl_scaled_value, _anlg_scaled_value))
-                else:
-                    _dpot.set_rgb(_dpot.value)
-#                   _motor_ctrl.set_motor_velocity(Orientation.PORT, _dgtl_scaled_value)
-#                   _motor_ctrl.set_motor_velocity(Orientation.STBD, _dgtl_scaled_value)
-                    _port_motor.target_velocity = _dgtl_scaled_value
-                    _stbd_motor.target_velocity = _dgtl_scaled_value
-                    _log.info(Fore.BLACK + Style.BRIGHT + 'digital value: {:9.6f}; analog: {:5.2f}'.format(_dgtl_scaled_value, _anlg_scaled_value))
-            _last_scaled_value = _dgtl_scaled_value
-            _rate.wait()
+        # PORT_VELOCITY          = ( 201, "port velocity",          100, Group.VELOCITY ) # with value
+        assertResult(_motor_ctrl.dispatch_velocity_event(MotorDirective(Event.PORT_VELOCITY, Direction.ASTERN, Speed.HALF)),
+                Event.PORT_VELOCITY, Orientation.PORT, Direction.ASTERN, -50.0, None)
+        # STBD_VELOCITY          = ( 202, "stbd velocity",          100, Group.VELOCITY ) # with value
+        assertResult(_motor_ctrl.dispatch_velocity_event(MotorDirective(Event.STBD_VELOCITY, Direction.ASTERN, Speed.ONE_THIRD)),
+                Event.STBD_VELOCITY, Orientation.STBD, Direction.ASTERN, None, -40.0)
         '''
-        print('ENDING...')
-        raise Exception()
+
+        assertResult(_motor_ctrl.dispatch_velocity_event(Payload(Event.PORT_VELOCITY, 56.0)),
+                Event.PORT_VELOCITY, Orientation.PORT, Direction.AHEAD, 56.0, None)
+        # with int
+#       assertResult(_motor_ctrl.dispatch_velocity_event(Payload(Event.PORT_VELOCITY, 56.0)),
+#               Event.PORT_VELOCITY, Orientation.PORT, Direction.AHEAD, 56.0, None)
+
+        '''
+        # DECREASE_VELOCITY      = ( 203, "decrease velocity",      100, Group.VELOCITY ) # step change
+        assertResult(_motor_ctrl.dispatch_velocity_event(Payload(Event.DECREASE_VELOCITY, None)),
+                Event.DECREASE_VELOCITY, Orientation.BOTH, None, -5.0, -5.0)
+        # INCREASE_VELOCITY      = ( 204, "increase velocity",      100, Group.VELOCITY ) # step change
+        assertResult(_motor_ctrl.dispatch_velocity_event(Payload(Event.INCREASE_VELOCITY, None)),
+                Event.INCREASE_VELOCITY, Orientation.BOTH, None, 5.0, 5.0)
+        # DECREASE_PORT_VELOCITY = ( 205, "decrease port velocity", 100, Group.VELOCITY ) # step change
+        assertResult(_motor_ctrl.dispatch_velocity_event(Payload(Event.DECREASE_PORT_VELOCITY, None)),
+                Event.DECREASE_PORT_VELOCITY, Orientation.PORT, None, -5.0, None)
+        # INCREASE_PORT_VELOCITY = ( 206, "increase port velocity", 100, Group.VELOCITY ) # step change
+        assertResult(_motor_ctrl.dispatch_velocity_event(Payload(Event.INCREASE_PORT_VELOCITY, None)),
+                Event.INCREASE_PORT_VELOCITY, Orientation.PORT, None, 5.0, None)
+        # DECREASE_STBD_VELOCITY = ( 207, "decrease stbd velocity", 100, Group.VELOCITY ) # step change
+        assertResult(_motor_ctrl.dispatch_velocity_event(Payload(Event.DECREASE_STBD_VELOCITY, None)),
+                Event.DECREASE_STBD_VELOCITY, Orientation.STBD, None, None, -5.0)
+        # INCREASE_STBD_VELOCITY = ( 208, "increase stbd velocity", 100, Group.VELOCITY ) # step change
+        assertResult(_motor_ctrl.dispatch_velocity_event(Payload(Event.INCREASE_STBD_VELOCITY, None)),
+                Event.INCREASE_STBD_VELOCITY, Orientation.STBD, None, None, 5.0)
+        '''
+
+
+        # test motor control .......................................................................
+        _active_test = False
+        if _active_test:
+
+            # configure digital potentiometer for motor speed
+            _dpot = DigitalPotentiometer(_config, level=_level)
+#           _dpot.set_output_limits(-0.80, 0.80)
+    
+            # configure analog potentiometer for PID controller tuning
+#           _cfg = [ 0, 330, 0.0, 1.0 ]
+#           _apot = AnalogPotentiometer(_config, in_min=_cfg[0], in_max=_cfg[1], out_min=_cfg[2], out_max=_cfg[3], level=Level.INFO)
+    
+            _anlg_scaled_value = 0.0
+            _last_scaled_value = 0.0
+            _log.info('starting test...')
+            _hz = 10
+            _rate = Rate(_hz, Level.ERROR)
+            while True:
+                _port_motor.update_target_velocity()
+                _stbd_motor.update_target_velocity()
+#               _anlg_scaled_value = _apot.get_scaled_value()
+                _dgtl_scaled_value = _dpot.get_scaled_value(False)
+                if _dgtl_scaled_value != _last_scaled_value: # if not the same as last time
+                    # math.isclose(3, 15, abs_tol=0.03 * 255) # 3% on a 0-255 scale
+                    if isclose(_dgtl_scaled_value, 0.0, abs_tol=0.05 * 90):
+                        _dpot.set_black()
+#                       _motor_ctrl.set_motor_velocity(Orientation.PORT, 0.0)
+#                       _motor_ctrl.set_motor_velocity(Orientation.STBD, 0.0)
+                        _port_motor.target_velocity = 0.0
+                        _stbd_motor.target_velocity = 0.0
+                        _log.info(Fore.BLACK + Style.DIM + 'digital value: {:9.6f} (ZERO); analog: {:5.2f}'.format(_dgtl_scaled_value, _anlg_scaled_value))
+                    else:
+                        _dpot.set_rgb(_dpot.value)
+#                       _motor_ctrl.set_motor_velocity(Orientation.PORT, _dgtl_scaled_value)
+#                       _motor_ctrl.set_motor_velocity(Orientation.STBD, _dgtl_scaled_value)
+                        _port_motor.target_velocity = _dgtl_scaled_value
+                        _stbd_motor.target_velocity = _dgtl_scaled_value
+                        _log.info(Fore.BLACK + Style.BRIGHT + 'digital value: {:9.6f}; analog: {:5.2f}'.format(_dgtl_scaled_value, _anlg_scaled_value))
+                _last_scaled_value = _dgtl_scaled_value
+                _rate.wait()
+    
+        _log.info('disabling motor controller...')
+        _motor_ctrl.disable()
+        _log.info('closing...')
 
     except KeyboardInterrupt:
         _log.info('Ctrl-C caught; exiting...')

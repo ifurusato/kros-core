@@ -85,12 +85,12 @@ class Event(Enum):
     VELOCITY               = ( 200, "velocity",               100,   Group.VELOCITY ) # with value
     PORT_VELOCITY          = ( 201, "port velocity",          100,   Group.VELOCITY ) # with value
     STBD_VELOCITY          = ( 202, "stbd velocity",          100,   Group.VELOCITY ) # with value
-    INCREASE_PORT_VELOCITY = ( 203, "increase port velocity", 100,   Group.VELOCITY )
-    DECREASE_PORT_VELOCITY = ( 204, "decrease port velocity", 100,   Group.VELOCITY )
-    INCREASE_STBD_VELOCITY = ( 205, "increase stbd velocity", 100,   Group.VELOCITY )
-    DECREASE_STBD_VELOCITY = ( 206, "decrease stbd velocity", 100,   Group.VELOCITY )
-    INCREASE_VELOCITY      = ( 207, "increase velocity",      100,   Group.VELOCITY )
-    DECREASE_VELOCITY      = ( 208, "decrease velocity",      100,   Group.VELOCITY )
+    DECREASE_VELOCITY      = ( 203, "decrease velocity",      100,   Group.VELOCITY ) # step change
+    INCREASE_VELOCITY      = ( 204, "increase velocity",      100,   Group.VELOCITY ) # step change
+    DECREASE_PORT_VELOCITY = ( 205, "decrease port velocity", 100,   Group.VELOCITY ) # step change
+    INCREASE_PORT_VELOCITY = ( 206, "increase port velocity", 100,   Group.VELOCITY ) # step change
+    DECREASE_STBD_VELOCITY = ( 207, "decrease stbd velocity", 100,   Group.VELOCITY ) # step change
+    INCREASE_STBD_VELOCITY = ( 208, "increase stbd velocity", 100,   Group.VELOCITY ) # step change
 
     # theta directives ......................................................................
     THETA                  = ( 300, "theta",                  100,   Group.THETA ) # with value

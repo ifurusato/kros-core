@@ -134,7 +134,7 @@ kros:
         motor_controller:
             loop_freq_hz:            20          # main loop delay in hz
             accel_increment:          5.0        # normal incremental acceleration
-            decel_increment:          5.0        # normal incremental deceleration
+            decel_increment:         -5.0        # normal incremental deceleration
             halt_rate:            'FASTER'       # slew rate for quick halt behaviour
             brake_rate:           'NORMAL'       # slew rate for slower braking behaviour
             spin_speed:       'TWO_THIRDS'       # motor speed when spinning

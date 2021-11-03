@@ -7,12 +7,11 @@
 #
 # author:   Murray Altheim
 # created:  2021-10-30
-# modified: 2021-10-31
+# modified: 2021-11-03
 #
 
 from core.stringbuilder import StringBuilder
 from core.message import Payload
-from core.orientation import Orientation
 from core.direction import Direction
 from core.speed import Speed
 
@@ -20,23 +19,22 @@ from core.speed import Speed
 class MotorDirective(Payload):
     '''
     A Message's payload when used as a motor directive, containing the Event
-    (with priority) and a specialised value with an Orientation, a Speed and
-    a Direction. Not all directives will have values for all three parameters.
-    If queried for its value it will return a tuple containing the three
+    (with priority) and a specialised value with a Direction and Speed. Not
+    all directives will have values for all parameters.
+
+    If queried for its value it will return a tuple containing the two
     parameters, with additional property getters for each.
 
-    :param orientation:   the Orientation of the motor (i.e., which motor)
+    :param event:         the Event associated with this directive
     :param direction:     the Direction, ahead (forward) or astern (reverse)
     :param speed:         the Speed of the directive
     '''
-    def __init__(self, event, orientation, direction, speed):
-        if not isinstance(orientation, Orientation):
-            raise TypeError('expected Orientation, not {}'.format(type(orientation)))
+    def __init__(self, event, direction, speed):
         if not isinstance(direction, Direction):
             raise TypeError('expected Direction, not {}'.format(type(direction)))
         if not isinstance(speed, Speed):
             raise TypeError('expected Speed, not {}'.format(type(speed)))
-        Payload.__init__(self, event, ( orientation, direction, speed ))
+        Payload.__init__(self, event, ( direction, speed ))
 
     # priority ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
@@ -50,23 +48,17 @@ class MotorDirective(Payload):
     def event(self):
         return self._event
 
-    # orientation ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-
-    @property
-    def orientation(self):
-        return self._value[0]
-
     # direction ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
     @property
     def direction(self):
-        return self._value[1]
+        return self._value[0]
 
     # speed ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
     @property
     def speed(self):
-        return self._value[2]
+        return self._value[1]
 
     # value ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
