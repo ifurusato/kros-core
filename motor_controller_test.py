@@ -19,7 +19,7 @@
 import pytest
 import sys, numpy, time, traceback
 from datetime import datetime as dt
-#from math import isclose
+from math import isclose
 from colorama import init, Fore, Style
 init()
 
@@ -48,6 +48,8 @@ def assertResult(result, event, orientation, direction, port_velocity, stbd_velo
     '''
     Assert the expected values of the result.
     '''
+    global g_test_count
+    g_test_count += 1
     # return ( _event, _value, _orientation, _direction, _port_target_velocity, _stbd_target_velocity )
     _log.info(Fore.GREEN + '\nasserted result:\n    event:\t{}\n    value:\t{}\n    orient:\t{}\n    direction:\t{}\n    port tvel:\t{}\n    stbd tvel:\t{}'.format(*result))
     assert result[0] is event, 'expected event {} not {}'.format(event.label, result[0])
@@ -66,6 +68,8 @@ def assertResult(result, event, orientation, direction, port_velocity, stbd_velo
 # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 @pytest.mark.unit
 def test_motors():
+    global g_test_count
+    g_test_count = 0
 
     _start_time = dt.now()
 
@@ -92,7 +96,7 @@ def test_motors():
         _motor_ctrl.enable()
 
         # test all velocity directives .............................................................
-        '''
+
         # VELOCITY               = ( 200, "velocity",               100, Group.VELOCITY ) # with value
         assertResult(_motor_ctrl.dispatch_velocity_event(MotorDirective(Event.VELOCITY, Direction.AHEAD, Speed.SLOW)),
                 Event.VELOCITY, Orientation.BOTH, Direction.AHEAD, 30.0, 30.0)
@@ -102,9 +106,7 @@ def test_motors():
         # STBD_VELOCITY          = ( 202, "stbd velocity",          100, Group.VELOCITY ) # with value
         assertResult(_motor_ctrl.dispatch_velocity_event(MotorDirective(Event.STBD_VELOCITY, Direction.ASTERN, Speed.ONE_THIRD)),
                 Event.STBD_VELOCITY, Orientation.STBD, Direction.ASTERN, None, -40.0)
-        '''
 
-        '''
         # VELOCITY               = ( 200, "velocity",               100, Group.VELOCITY ) # with value
         # using single positive float for BOTH
         assertResult(_motor_ctrl.dispatch_velocity_event(Payload(Event.VELOCITY, 30.0)),
@@ -128,15 +130,17 @@ def test_motors():
         # STBD_VELOCITY          = ( 202, "stbd velocity",          100, Group.VELOCITY ) # with value
         assertResult(_motor_ctrl.dispatch_velocity_event(MotorDirective(Event.STBD_VELOCITY, Direction.ASTERN, Speed.ONE_THIRD)),
                 Event.STBD_VELOCITY, Orientation.STBD, Direction.ASTERN, None, -40.0)
-        '''
 
-        assertResult(_motor_ctrl.dispatch_velocity_event(Payload(Event.PORT_VELOCITY, 56.0)),
-                Event.PORT_VELOCITY, Orientation.PORT, Direction.AHEAD, 56.0, None)
+        # payload with tuple
+        assertResult(_motor_ctrl.dispatch_velocity_event(Payload(Event.VELOCITY, (57.0, 41.0))),
+                Event.VELOCITY, Orientation.BOTH, Direction.AHEAD, 57.0, 41.0)
+        # payload with float
+        assertResult(_motor_ctrl.dispatch_velocity_event(Payload(Event.PORT_VELOCITY, 51.0)),
+                Event.PORT_VELOCITY, Orientation.PORT, Direction.UNKNOWN, 51.0, None)
         # with int
-#       assertResult(_motor_ctrl.dispatch_velocity_event(Payload(Event.PORT_VELOCITY, 56.0)),
-#               Event.PORT_VELOCITY, Orientation.PORT, Direction.AHEAD, 56.0, None)
+        assertResult(_motor_ctrl.dispatch_velocity_event(Payload(Event.PORT_VELOCITY, 56)),
+                Event.PORT_VELOCITY, Orientation.PORT, Direction.UNKNOWN, 56.0, None)
 
-        '''
         # DECREASE_VELOCITY      = ( 203, "decrease velocity",      100, Group.VELOCITY ) # step change
         assertResult(_motor_ctrl.dispatch_velocity_event(Payload(Event.DECREASE_VELOCITY, None)),
                 Event.DECREASE_VELOCITY, Orientation.BOTH, None, -5.0, -5.0)
@@ -155,8 +159,8 @@ def test_motors():
         # INCREASE_STBD_VELOCITY = ( 208, "increase stbd velocity", 100, Group.VELOCITY ) # step change
         assertResult(_motor_ctrl.dispatch_velocity_event(Payload(Event.INCREASE_STBD_VELOCITY, None)),
                 Event.INCREASE_STBD_VELOCITY, Orientation.STBD, None, None, 5.0)
-        '''
 
+        _log.info(Fore.YELLOW + 'executed {:d} tests.'.format(g_test_count))
 
         # test motor control .......................................................................
         _active_test = False

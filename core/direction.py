@@ -21,6 +21,7 @@ class Direction(Enum):
     ASTERN            = ( 2, 'astern')
     CLOCKWISE         = ( 3, 'clockwise')
     COUNTER_CLOCKWISE = ( 4, 'counter-clockwise')
+    UNKNOWN           = ( 5, 'unknown') # n/a or indeterminate
 
     # ignore the first param since it's already set by __new__
     def __init__(self, num, label):
@@ -34,17 +35,20 @@ class Direction(Enum):
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @staticmethod
     def get_direction_for(port_velocity, stbd_velocity):
-        if port_velocity == 0.0 and stbd_velocity == 0.0:
-            return Direction.STOPPED
-        elif port_velocity > 0.0 and stbd_velocity > 0.0:
-            return Direction.AHEAD
-        elif port_velocity < 0.0 and stbd_velocity < 0.0:
-            return Direction.ASTERN
-        elif port_velocity > 0.0 and stbd_velocity <= 0.0:
-            return Direction.CLOCKWISE
-        elif port_velocity <= 0.0 and stbd_velocity > 0.0:
-            return Direction.COUNTER_CLOCKWISE
+        if port_velocity and stbd_velocity:
+            if port_velocity == 0.0 and stbd_velocity == 0.0:
+                return Direction.STOPPED
+            elif port_velocity > 0.0 and stbd_velocity > 0.0:
+                return Direction.AHEAD
+            elif port_velocity < 0.0 and stbd_velocity < 0.0:
+                return Direction.ASTERN
+            elif port_velocity > 0.0 and stbd_velocity <= 0.0:
+                return Direction.CLOCKWISE
+            elif port_velocity <= 0.0 and stbd_velocity > 0.0:
+                return Direction.COUNTER_CLOCKWISE
+            else:
+                raise TypeError('unable to discern direction for port: {}; stbd: {}'.format(port_velocity, stbd_velocity))
         else:
-            raise TypeError('unable to discern direction for port: {}; stbd: {}'.format(port_velocity, stbd_velocity))
+            return Direction.UNKNOWN
 
 #EOF
