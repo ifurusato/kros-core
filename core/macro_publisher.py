@@ -7,12 +7,12 @@
 #
 # author:   altheim
 # created:  2021-09-23
-# modified: 2021-10-27
+# modified: 2021-11-04
 #
 
 import importlib
 import sys, os, asyncio, itertools
-#from dill.source import getsource # used only to print lambdas
+from dill.source import getsource # used only to print lambdas
 from copy import deepcopy
 from pathlib import Path
 from datetime import datetime as dt
@@ -74,14 +74,7 @@ class MacroPublisher(Publisher):
         self._macros            = Macros()
         self._counter           = itertools.count()
         self.set_macro_library(MacroLibrary('default'))
-        # attempt to import dill (problematic, optional)
-#       self._dilled = True
-        try:
-            from dill.source import getsource # used only to print lambdas
-            self._dilled = True
-        except Exception as e:
-            self._log.warning('unable to import dill module: {}'.format(e))
-            self._dilled = False
+        self._dilled = True # imported dill
         # loop variables ...............
         self._macro             = None
         self._statement         = None # placeholder
@@ -394,8 +387,6 @@ class MacroPublisher(Publisher):
 
         if _message is not None:
             await Publisher.publish(self, _message)
-#           self._log.debug('macro-published message:' + Fore.WHITE + Style.NORMAL + ' {}'.format(_message.name)
-#                   + Fore.CYAN + ' event: {}; '.format(_message.event.label) + Fore.YELLOW + 'timestamp: {}'.format(_message.value))
 
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
