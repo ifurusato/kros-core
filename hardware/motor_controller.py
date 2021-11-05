@@ -32,7 +32,6 @@ from core.message import Message, Payload
 from core.message_bus import MessageBus
 from hardware.motor import Motor
 from hardware.motor_configurer import MotorConfigurer
-from hardware.motor_directive import MotorDirective
 from hardware.slew import SlewRate
 from hardware.speed_indicator import SpeedIndicator
 
@@ -100,7 +99,7 @@ class MotorController(Component):
         self._spin_speed           = Speed.from_string(_cfg.get('spin_speed')) # motor speed when spinning
         self._log.info('spin speed:\t{}'.format(self._spin_speed.name))
         self._millis               = lambda: int(round(time.time() * 1000))
-        self._start_time           = self._millis()
+#       self._start_time           = self._millis()
         self._log.info('motors ready.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -161,13 +160,13 @@ class MotorController(Component):
         asyncio _loop() method.
         '''
         if self.enabled:
-            _now = self._millis()
+#           _now = self._millis()
             self._port_motor.update_target_velocity()
             self._stbd_motor.update_target_velocity()
-            _elapsed = _now - self._start_time
-            self._start_time = _now
-            if self._verbose: # print stats
-                self.print_info(next(self._event_counter))
+#           _elapsed = _now - self._start_time
+#           self._start_time = _now
+#           if self._verbose: # print stats
+#               self.print_info(next(self._event_counter))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def stop_loop(self):
@@ -261,8 +260,9 @@ class MotorController(Component):
         payload arguments.
 
         :param payload:   the payload argument may be a Payload containing a
-                          single int, float or a tuple (containing port and
-                          starboard values, resp.), or a MotorDirective.
+                          single int, float or a tuple. The tuple may contain
+                          either a pair of ints or floats (as port and starboard
+                          values, resp.), or a Distance and Speed, resp.
         '''
         if self.enabled:
             self._log.info('dispatch velocity event; payload type {}; payload: {}'.format(type(payload), payload))
@@ -276,13 +276,12 @@ class MotorController(Component):
             _port_target_velocity = None
             _stbd_target_velocity = None
 
-            if isinstance(payload, MotorDirective):
-                _motor_directive = payload
-                _target_velocity = _motor_directive.speed.velocity
-                _direction       = _motor_directive.direction
+            if payload.is_motor_directive:
+                _target_velocity = payload.speed.velocity
+                _direction       = payload.direction
                 if _direction is Direction.ASTERN:
                     _target_velocity *= -1.0
-            elif isinstance(payload, Payload):
+            else:
                 _direction = None
                 # we only check value of payload for three event types
                 if _event is Event.VELOCITY or _event is Event.PORT_VELOCITY or _event is Event.STBD_VELOCITY:
@@ -295,8 +294,6 @@ class MotorController(Component):
                         _target_velocity = float(_value)
                     else:
                         raise TypeError('expected tuple, float or int, not {}'.format(type(_value)))
-            else:
-                raise TypeError('expected Payload or MotorDirective, not {}'.format(type(payload)))
 
             if _target_velocity:
                 if _event is Event.VELOCITY:
@@ -372,15 +369,8 @@ class MotorController(Component):
                 raise Exception('loop not running')
             if not isinstance(payload, Payload):
                 raise TypeError('expected Payload, not {}'.format(type(payload)))
-            # FIXME
-            if not isinstance(payload, MotorDirective):
-                raise TypeError('expected MotorDirective, not {}'.format(type(payload)))
             if reset_slew:
                 self._reset_slew_rate()
-
-#           _motor_directive = _payload
-#           self._log.info('🙅 processing message with event {} and motor directive of direction: {} and speed: {}.'.format(
-#                   _event.label, _motor_directive.direction, _motor_directive.speed))
 
             _event = payload.event
             self._log.info('dispatch theta event: {}'.format(_event.label))

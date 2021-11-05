@@ -24,7 +24,6 @@ from colorama import init, Fore, Style
 init()
 
 from core.message_bus import MessageBus
-from hardware.motor_directive import MotorDirective
 from core.message_factory import MessageFactory
 from core.message import Payload
 from core.event import Event
@@ -98,13 +97,13 @@ def test_motors():
         # test all velocity directives .............................................................
 
         # VELOCITY               = ( 200, "velocity",               100, Group.VELOCITY ) # with value
-        assertResult(_motor_ctrl.dispatch_velocity_event(MotorDirective(Event.VELOCITY, Direction.AHEAD, Speed.SLOW)),
+        assertResult(_motor_ctrl.dispatch_velocity_event(Payload(Event.VELOCITY, (Direction.AHEAD, Speed.SLOW))),
                 Event.VELOCITY, Orientation.BOTH, Direction.AHEAD, 30.0, 30.0)
         # PORT_VELOCITY          = ( 201, "port velocity",          100, Group.VELOCITY ) # with value
-        assertResult(_motor_ctrl.dispatch_velocity_event(MotorDirective(Event.PORT_VELOCITY, Direction.ASTERN, Speed.HALF)),
+        assertResult(_motor_ctrl.dispatch_velocity_event(Payload(Event.PORT_VELOCITY, (Direction.ASTERN, Speed.HALF))),
                 Event.PORT_VELOCITY, Orientation.PORT, Direction.ASTERN, -50.0, None)
         # STBD_VELOCITY          = ( 202, "stbd velocity",          100, Group.VELOCITY ) # with value
-        assertResult(_motor_ctrl.dispatch_velocity_event(MotorDirective(Event.STBD_VELOCITY, Direction.ASTERN, Speed.ONE_THIRD)),
+        assertResult(_motor_ctrl.dispatch_velocity_event(Payload(Event.STBD_VELOCITY, (Direction.ASTERN, Speed.ONE_THIRD))),
                 Event.STBD_VELOCITY, Orientation.STBD, Direction.ASTERN, None, -40.0)
 
         # VELOCITY               = ( 200, "velocity",               100, Group.VELOCITY ) # with value
@@ -125,10 +124,10 @@ def test_motors():
                 Event.VELOCITY, Orientation.BOTH, Direction.CLOCKWISE, 40.0, -30.0)
 
         # PORT_VELOCITY          = ( 201, "port velocity",          100, Group.VELOCITY ) # with value
-        assertResult(_motor_ctrl.dispatch_velocity_event(MotorDirective(Event.PORT_VELOCITY, Direction.ASTERN, Speed.HALF)),
+        assertResult(_motor_ctrl.dispatch_velocity_event(Payload(Event.PORT_VELOCITY, (Direction.ASTERN, Speed.HALF))),
                 Event.PORT_VELOCITY, Orientation.PORT, Direction.ASTERN, -50.0, None)
         # STBD_VELOCITY          = ( 202, "stbd velocity",          100, Group.VELOCITY ) # with value
-        assertResult(_motor_ctrl.dispatch_velocity_event(MotorDirective(Event.STBD_VELOCITY, Direction.ASTERN, Speed.ONE_THIRD)),
+        assertResult(_motor_ctrl.dispatch_velocity_event(Payload(Event.STBD_VELOCITY, (Direction.ASTERN, Speed.ONE_THIRD))),
                 Event.STBD_VELOCITY, Orientation.STBD, Direction.ASTERN, None, -40.0)
 
         # payload with tuple

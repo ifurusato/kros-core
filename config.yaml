@@ -18,27 +18,27 @@ kros:
         enable_behaviours:           False       # enable BehaviourManager (Behaviours enabled individually)
         enable_experimental:         False       # enable ExperimentManager and load any Experiments
         # publishers .............................
-        enable_ifs_publisher:         True       # enable Integrated Front Sensor publisher
+        enable_ifs_publisher:        False       # enable Integrated Front Sensor publisher
         enable_ext_bumper_publisher: False       # enable External Bumper Publisher, or:
-        enable_mcu_bumper_publisher:  True       #   enable MCU+UART Bumper Publisher, or:
+        enable_mcu_bumper_publisher: False       #   enable MCU+UART Bumper Publisher, or:
         enable_bumper_publisher:     False       #   enable standard GPIO Bumper publisher
         enable_event_publisher:       True       # keyboard robot simulator (required for running CLI)
         enable_battery_publisher:    False       # battery check publisher
         enable_velocity_publisher:   False       # velocity control potentiometer publisher
         enable_queue_publisher:       True       # publishes from globally-available queue
-        enable_macro_publisher:       True       # macro processor/publisher (loads external macro scripts)
+        enable_macro_publisher:      False       # macro processor/publisher (loads external macro scripts)
         enable_gamepad_publisher:    False       # gamepad event publisher
         # subscribers ............................
         enable_system_subscriber:     True       # system events subscriber
         enable_motor_subscriber:      True       # motor events subscriber
-        enable_bumper_subscriber:     True       # bumper events subscriber
-        enable_infrared_subscriber:   True       # infrared events subscriber
-        enable_rgb_subscriber:        True       # display on RGB matrix
-        enable_macro_subscriber:      True       # macro subscriber
+        enable_bumper_subscriber:    False       # bumper events subscriber
+        enable_infrared_subscriber:  False       # infrared events subscriber
+        enable_rgb_subscriber:       False       # display on RGB matrix
+        enable_macro_subscriber:     False       # macro subscriber
     behaviour:
-        enable_avoid_behaviour:       True       # enable avoidance behaviour
+        enable_avoid_behaviour:      False       # enable avoidance behaviour
         enable_roam_behaviour:       False       # enable roam behaviour
-        enable_swerve_behaviour:      True       # enable swerve behaviour
+        enable_swerve_behaviour:     False       # enable swerve behaviour
         enable_moth_behaviour:       False       # enable moth behaviour
         enable_sniff_behaviour:      False       # enable sniff behaviour
         enable_idle_behaviour:       False       # enable idle behaviour
@@ -104,7 +104,7 @@ kros:
             low_5v_threshold:         4.75       # really 4.82v
             loop_delay_sec:          60          # sample loop delay (sec)
         irq_clock:
-            pin:                     12          # pin connected to external clock source from Itsy Bitsy RP2040
+            pin:                      5          # pin connected to external clock source from QT Py RP2040
         killswitch:
              pin:                     7          # pin connected to hardware kill switch
         rfm69_radio:
@@ -247,8 +247,8 @@ kros:
             bmp_mast_pin:             8          # GPIO pin connected to mast digital infrared sensor
             bmp_saft_pin:            19          # GPIO pin connected to starboard aft digital infrared sensor
         external_clock:
-            pin:                      5          # pin connected to external clock source from Itsy Bitsy RP2040
-            loop_freq_hz:            50          # main loop delay in hz
+            pin:                     12          # pin connected to external clock source from Itsy Bitsy RP2040
+            loop_freq_hz:           150          # main loop delay in hz
         external_bumper:
             loop_freq_hz:            20          # polling loop frequency (Hz)
             ack_pin:                 21          # GPIO pin connected to acknowledge pin (white)

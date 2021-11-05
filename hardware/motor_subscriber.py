@@ -21,7 +21,6 @@ from core.event import Event, Group
 from core.orientation import Orientation
 from core.subscriber import Subscriber
 from hardware.motor_controller import MotorController
-from hardware.motor_directive import MotorDirective
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class MotorSubscriber(Subscriber):

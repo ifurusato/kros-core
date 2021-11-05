@@ -57,17 +57,17 @@ class AvoidMacro(Macro):
         self.add_function(lambda: globals.get('macro-publisher').on_begin('🍏 BEGIN!'))
 
         # come to a stop for 500ms
-        self.add_event(Event.STOP, 500)
+        self.add_event(Event.STOP, duration_ms=500)
 
         # move half astern for 2.5 seconds (duration argument is in milliseconds)
-        self.add_event(Event.HALF_ASTERN, 200)
+        self.add_event(Event.HALF_ASTERN, duration_ms=200)
 
         # slow the reversing of the port motor to turn to starboard for a half second
         self.add_event(Event.PORT_VELOCITY, (Orientation.PORT, Direction.ASTERN, Speed.DEAD_SLOW))
         self.add_event(Event.STBD_VELOCITY, (Orientation.STBD, Direction.ASTERN, Speed.STOP))
 
         # come to a halt for 1 second
-        self.add_event(Event.HALT, 500)
+        self.add_event(Event.HALT, duration_ms=500)
 
         # print an emoji to the KROS log console
         self.add_function(lambda: globals.get('kros').get_logger().info('🍊 message logged!'))
@@ -87,7 +87,7 @@ class TestMacro(Macro):
         # 1. event with duration in milliseconds ...............................
 
         # come to a stop
-#       self.add_event(Event.STOP, 123)
+#       self.add_event(Event.STOP, duration_ms=123)
 
         # 2. event with direction and speed ....................................
 
@@ -95,7 +95,7 @@ class TestMacro(Macro):
 
         # 3. event with direction, speed, and duration .........................
 
-#       self.add_event(Event.STBD_VELOCITY, (Direction.AHEAD, Speed.DEAD_SLOW, 333))
+#       self.add_event(Event.STBD_VELOCITY, (Direction.AHEAD, Speed.DEAD_SLOW), duration_ms=333)
 
         # 4. event with current state event ....................................
 

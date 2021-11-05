@@ -7,18 +7,20 @@
 #
 # author:   altheim
 # created:  2021-09-23
-# modified: 2021-10-15
+# modified: 2021-11-05
 #
 # A collection of classes related to macro scripting, including Statement,
 # Macro, Macros, and MacroLibrary.
 #
 
 from copy import deepcopy
+from dill.source import getsource # used to print lambdas
 from colorama import init, Fore, Style
 init(autoreset=True)
 
 from core.logger import Logger, Level
 from core.direction import Direction
+from core.message import Payload
 from core.event import Event
 from core.speed import Speed
 from core.stringbuilder import StringBuilder
@@ -34,16 +36,18 @@ class Statement(object):
     set to Event.LAMBDA, so it can be left as None.
 
     :param label:         the label or description of the statement
-    :param event:         the Event to publish for the Statement
     :param function:      the lambda function to execute for the Statement
-    :param arguments:     either an int or float as the duration in milliseconds
-                          of the Statement, or a tuple containing context-specific
-                          objects used for processing the Statement
+    :param event:         the Event to publish for the Statement
+    :param arguments:     the arguments are used only with an Event to create
+                          a Payload containing the context-specific arguments
+                          used for processing.
+    :param duration_ms:   the optional amount of time in milliseconds to act
+                          upon this Statement
     '''
-#   def __init__(self, label=None, event=None, function=None, duration_ms=None):
-    def __init__(self, label=None, event=None, function=None, arguments=None):
+    def __init__(self, label=None, function=None, event=None, arguments=None, duration_ms=None):
         '''
-        Command can be either a lambda or an Event.
+        Command can be either a lambda and duration in milliseconds, or an
+        Event with arguments (the latter is stored as a Payload).
         '''
         print(Fore.WHITE + 'arguments type: {}; arguments: {}'.format(type(arguments), arguments))
         self._label         = label
@@ -51,25 +55,12 @@ class Statement(object):
         self._direction     = None
         self._speed         = None
         self._arguments     = arguments
-        self._duration_ms   = 0
+        self._duration_ms   = duration_ms
         if self._function: # if we have a lambda we declare a LAMBDA event
-            self._event = Event.LAMBDA
-        else:
-            self._event = event
-        if arguments:
-            if isinstance(arguments, int): # then the value is a duration in milliseconds
-                self._duration_ms = arguments 
-            elif isinstance(arguments, tuple): # then the value is a tuple that must be decomposed
-                if isinstance(arguments[0], Direction):
-                    self._direction = arguments[0]
-                elif isinstance(arguments[0], Speed):
-                    self._speed = arguments[0]
-                if isinstance(arguments[1], Direction):
-                    self._direction = arguments[1]
-                elif isinstance(arguments[1], Speed):
-                    self._speed = arguments[1]
-            else:
-                raise TypeError('unrecognised arguments to Statement; type: {}; value: {}'.format(type(arguments), arguments))
+            self._event     = Event.LAMBDA
+        else: # otherwise we use the arguments to create a Payload
+            self._event     = event
+            self._payload   = Payload(event, arguments)
 
     @property
     def label(self):
@@ -81,11 +72,11 @@ class Statement(object):
 
     @property
     def speed(self):
-        return self._speed
+        return self._payload.speed
 
     @property
     def direction(self):
-        return self._direction
+        return self._payload.direction
 
     @property
     def arguments(self):
@@ -98,6 +89,10 @@ class Statement(object):
     @property
     def function(self):
         return self._function
+
+    @property
+    def payload(self):
+        return self._payload
 
     @property
     def event(self):
@@ -124,7 +119,8 @@ class Statement(object):
         _sb.append('event={}'.format(self._event))
         _sb.append('arguments={}'.format(self._arguments))
         _sb.append('duration={}ms'.format(self._duration_ms))
-        _sb.append('function={}'.format('lambda' if self._function else 'none'))
+        _sb.append('payload={}'.format(self._payload if self._payload else 'na'))
+        _sb.append('function={}'.format(getsource(self._function).rstrip() if self._function else 'na'))
         _sb.append(']', indent=8, delim=StringBuilder.NONE)
         return _sb.to_string()
 
@@ -183,22 +179,21 @@ class Macro(object):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 #   def add_event(self, event, duration_ms=0):
-    def add_event(self, event, arguments=None):
+    def add_event(self, event, arguments=None, duration_ms=None):
         '''
         Add an Event to the queue.
         Optional arguments are provided as a tuple.
         '''
-        _statement = Statement(label='stmt-{}'.format(chr(97 + self.size)), event=event, function=None, arguments=arguments)
+        _statement = Statement(label='stmt-{}'.format(chr(97 + self.size)), function=None, event=event, arguments=arguments, duration_ms=duration_ms)
         self._queue.put(_statement)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-#   def add_function(self, function, duration_ms=0):
-    def add_function(self, function, arguments=None):
+    def add_function(self, function, arguments=None, duration_ms=None):
         '''
         Add a lambda function to the queue, encapsulated in an Event.
         Optional arguments are provided as a tuple.
         '''
-        _statement = Statement(label='stmt-{}'.format(chr(97 + self.size)), event=Event.LAMBDA, function=function, arguments=arguments)
+        _statement = Statement(label='stmt-{}'.format(chr(97 + self.size)), function=function, event=Event.LAMBDA, arguments=arguments, duration_ms=duration_ms)
         self._queue.put(_statement)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈

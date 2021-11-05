@@ -53,7 +53,7 @@ class ClockSubscriber(Subscriber):
 
         :param message:  the message to process.
         '''
-        self._log.info(Fore.YELLOW + '😝 process message...')
+        self._log.info(Fore.YELLOW + Style.DIM + '😝 process message...')
         if self.enabled:
 #           if message.gcd:
 #               raise GarbageCollectedError('cannot process message: message has been garbage collected. [3]')

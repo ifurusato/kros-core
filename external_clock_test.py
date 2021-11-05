@@ -33,19 +33,21 @@ class Recipient():
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def callback_a(self):
         _elapsed_ms = (dt.now() - self._timestamp_a).total_seconds() * 1000.0
-        _count = next(self._counter)
-        self._log.info('💙 [{:d}] external callback A;\t'.format(_count) + Fore.YELLOW + ' {:7.4f}ms elapsed.'.format(_elapsed_ms))
+#       _count = next(self._counter)
+#       self._log.info('🍍 [{:d}] external callback A;\t'.format(_count) + Fore.YELLOW + ' {:7.4f}ms elapsed.'.format(_elapsed_ms))
+        self._log.info('🍍 external callback A:\t' + Fore.YELLOW + ' {:7.4f}ms elapsed.'.format(_elapsed_ms))
         self._timestamp_a = dt.now()
 
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def callback_b(self):
-        _elapsed_ms = (dt.now() - self._timestamp_b).total_seconds() * 1000.0
-        self._log.info('💛 [{:d}] external callback A;\t'.format(_count) + Fore.YELLOW + ' {:7.4f}ms elapsed.'.format(_elapsed_ms))
-        self._timestamp_b = dt.now()
+#   # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+#   def callback_b(self):
+#       _elapsed_ms = (dt.now() - self._timestamp_b).total_seconds() * 1000.0
+#       _count = next(self._counter)
+#       self._log.info('🍒 [{:d}] external callback A;\t'.format(_count) + Fore.YELLOW + ' {:7.4f}ms elapsed.'.format(_elapsed_ms))
+#       self._timestamp_b = dt.now()
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def start_callback(self):
-        self._log.info('👾 start callback...')
+        self._log.info('🍐 start callback...')
         self._ext_clock.enable()
 
 
@@ -77,10 +79,10 @@ def main():
         _rx = Recipient('rx', _ext_clock)
         _log.info('🌞 2. creating clock subscribers...')
         _clock_sub_a = ClockSubscriber(_config, 'rxa', _message_bus, _rx.callback_a, Level.INFO)
-        _clock_sub_b = ClockSubscriber(_config, 'rxb', _message_bus, _rx.callback_b, Level.INFO)
-        _log.info('🌞 3. enabling subscribers...')
+#       _clock_sub_b = ClockSubscriber(_config, 'rxb', _message_bus, _rx.callback_b, Level.INFO)
+#       _log.info('🌞 3. enabling subscribers...')
         _clock_sub_a.enable()
-        _clock_sub_b.enable()
+#       _clock_sub_b.enable()
 
 #       _log.info('🌞 4. enabling external clock...')
 #       _ext_clock.enable()

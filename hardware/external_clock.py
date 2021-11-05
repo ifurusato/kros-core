@@ -51,20 +51,21 @@ class ExternalClock(Publisher):
         Publisher.__init__(self, ExternalClock.CLASS_NAME, config, message_bus, message_factory, level=self._level)
 #       self._message_bus = message_bus
         # configuration ................
+        self._counter        = itertools.count()
         self._sub_counter    = itertools.count()
-#       self._counter        = itertools.count()
         _cfg = config['kros'].get('publisher').get('external_clock')
         _loop_freq_hz        = _cfg.get('loop_freq_hz')
-        self._log.info('external clock publish loop frequency: {:d}Hz'.format(_loop_freq_hz))
         self._publish_delay_sec = 1.0 / _loop_freq_hz
+        self._log.info('external clock publish loop frequency: {:d}Hz (delay: {:4.1f}ms)'.format(_loop_freq_hz, ( self._publish_delay_sec * 1000.0)))
         self._pin = _cfg.get('pin')
         self._log.info('external clock pin:\t{:d}'.format(self._pin))
         self._initd          = False
 #       self._callbacks      = [] # direct callbacks
         self._subscribers    = [] # callback via message bus
-        self._tick_message   = None
         self._message        = None # single message placeholder
+        self._last_msg_timestamp = dt.now()
         self._millis         = lambda: int(round(time.time() * 1000))
+        self._TICK_MESSAGE   = TickMessage(self._millis()) # singleton
         self._log.info('ready.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -82,26 +83,18 @@ class ExternalClock(Publisher):
             self._log.warning('failed to enable publisher.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def _get_message(self):
-        if not self._tick_message:
-            self._tick_message = TickMessage(self._millis())
-        else:
-            self._tick_message.value = self._millis()
-        return self._tick_message
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _initialise(self):
         try:
 
-#           self._log.info('importing pigpio...')
-#           import pigpio
-#           self._pi = pigpio.pi()
-#           if not self._pi.connected:
-#               raise Exception('unable to establish connection to Pi.')
-#           self._log.info('establishing callback on pin {:d}.'.format(self._pin))
-#           self._pi.set_mode(gpio=self._pin, mode=pigpio.INPUT) # GPIO 12 as input
-#           self._irq_callback = self._pi.callback(self._pin, pigpio.EITHER_EDGE, self._irq_callback_method)
-#           self._log.info('enabled external clock callback.')
+            self._log.info('importing pigpio...')
+            import pigpio
+            self._pi = pigpio.pi()
+            if not self._pi.connected:
+                raise Exception('unable to establish connection to Pi.')
+            self._log.info('establishing callback on pin {:d}.'.format(self._pin))
+            self._pi.set_mode(gpio=self._pin, mode=pigpio.INPUT) # GPIO 12 as input
+            self._irq_callback = self._pi.callback(self._pin, pigpio.EITHER_EDGE, self._irq_callback_method)
+            self._log.info('enabled external clock callback.')
 
             self._log.info('creating task for clock listener loop; enabled: {}'.format(self.enabled))
             self._message_bus.loop.create_task(self._clock_listener_loop(lambda: self.enabled), name=ExternalClock._LISTENER_LOOP_NAME)
@@ -124,11 +117,13 @@ class ExternalClock(Publisher):
                         a False will use the message bus. Default is False.
         ''' 
         if direct:
-            raise NotImplementedError('use IrqClock instead.')
-#           self._callbacks.append(callback)
+            _count = next(self._counter)
+            self._log.info('adding direct callback {:d}...'.format(_count))
+            self._callbacks.append(callback)
+#           raise NotImplementedError('use IrqClock instead.')
         else:
             _count = next(self._sub_counter)
-            self._log.info('adding callback {:d}...'.format(_count))
+            self._log.info('adding subscriber callback {:d}...'.format(_count))
             _sub = ClockSubscriber(self._config, 'clk-sub:{:d}'.format(_count), self._message_bus, callback, self._level)
             self._subscribers.append(_sub)
 
@@ -146,27 +141,28 @@ class ExternalClock(Publisher):
         '''
         This method is called upon the external clock's interrupt.
         '''
-        raise NotImplementedError('use IrqClock instead.')
-#       if self.enabled:
+        if self.enabled:
 #           for _callback in self._callbacks:
 #               _callback()
-#           self._message = self._get_message()
+            self._TICK_MESSAGE.value = self._millis() # update timestamp
+            self._message = self._TICK_MESSAGE        # reassign to message
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def _clock_listener_loop(self, f_is_enabled):
 #       self._log.info('starting clock listener loop.')
         while f_is_enabled():
 #           self._log.info('clock listener loop 1.')
-            try:
-                if self._message is not None:
-    #               self._log.info('clock listener loop 2.')
-#                   self._log.info(Style.BRIGHT + 'clock-publishing message:' + Fore.WHITE + Style.NORMAL + ' {}'.format(self._message.name)
-#                           + Fore.CYAN + ' event: {}; '.format(self._message.event.label) + Fore.YELLOW + 'value: {:5.2f}'.format(self._message.value))
-                    await Publisher.publish(self, self._message)
-#                   self._log.info(Style.DIM + 'clock-published message:' + Fore.WHITE + Style.NORMAL + ' {}'.format(self._message.name)
-#                           + Fore.CYAN + ' event: {}; '.format(self._message.event.label) + Fore.YELLOW + 'value: {:5.2f}'.format(self._message.value))
-            finally:
-               self._message = None
+            if self._message is not None:
+                _elapsed_ms = (dt.now() - self._last_msg_timestamp).total_seconds() * 1000.0
+                self._log.info('irq callback: ' + Fore.YELLOW + ' {:6.3f}ms'.format(_elapsed_ms))
+#               self._log.info(Style.BRIGHT + 'clock-publishing message:' + Fore.WHITE + Style.NORMAL + ' {}'.format(self._message.name)
+#                       + Fore.CYAN + ' event: {}; '.format(self._message.event.label) + Fore.YELLOW + 'value: {:5.2f}'.format(self._message.value))
+                await Publisher.publish(self, self._message)
+#               self._log.info(Style.DIM + 'clock-published message:' + Fore.WHITE + Style.NORMAL + ' {}'.format(self._message.name)
+#                       + Fore.CYAN + ' event: {}; '.format(self._message.event.label) + Fore.YELLOW + 'value: {:5.2f}'.format(self._message.value))
+                self._last_msg_timestamp = dt.now()
+                self._message = None
+
             await asyncio.sleep(self._publish_delay_sec)
         self._log.info('clock publish loop complete.')
 

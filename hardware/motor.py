@@ -361,7 +361,7 @@ class Motor(Component):
                 _current_target_velocity = self._slew_limiter.limit(self.velocity, _current_target_velocity)
 
             if len(self.__velocity_lambdas) > 0:
-#               self._log.info(Fore.MAGENTA + 'processing {:d} lambdas...'.format(len(self.__velocity_lambdas)))
+                self._log.info(Fore.MAGENTA + 'processing {:d} lambdas...'.format(len(self.__velocity_lambdas)))
                 for _name, _lambda in self.__velocity_lambdas.items():
 #                   self._log.info(Fore.WHITE + '🌼 targ_vel: {}; {} lambda for {} motor; lambda type: {}; value: {}'.format(
 #                           _current_target_velocity, _name, self._orientation.label, type(_lambda), _lambda))
@@ -372,7 +372,8 @@ class Motor(Component):
 
             # we now convert velocity to power, either by passing the target velocity to the PID controller (when active)
             # otherwise directly setting power to the motor via the proportional interpolator from the Speed Enum.
-#           self._log.debug('setting target velocity to: {:<5.2f} (from {:5.2f})'.format(_current_target_velocity, self.__target_velocity))
+#           self._log.info('setting {} target velocity to: {:<5.2f} (from {:5.2f})'.format(self._orientation.label, _current_target_velocity, self.__target_velocity))
+#           print('set {} tvel: {:<5.2f}'.format(self._orientation.label, _current_target_velocity ))
             if self._pid_controller.is_active: # via PID
                 self._pid_controller.set_velocity(_current_target_velocity)
             else: # via Speed

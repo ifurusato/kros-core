@@ -56,7 +56,7 @@ def main():
 
         _queue = DeQueue(maxsize=20, mode=DeQueue.FIFO)
 
-        _irq_clock = IrqClock(_config, Level.INFO)
+        _irq_clock = IrqClock(_config, level=Level.INFO)
         _irq_clock.add_callback(callback_method)
 
         _log.info('starting IRQ clock...')

@@ -22,6 +22,8 @@ init()
 from core.logger import Logger, Level
 from core.stringbuilder import StringBuilder
 from core.event import Event
+from core.direction import Direction
+from core.speed import Speed
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Message(object):
@@ -40,7 +42,7 @@ class Message(object):
         if isinstance(value, Payload):
             print(Fore.GREEN + '🌿 is Payload.' + Style.RESET_ALL)
             self._payload  = value
-        else: 
+        else:
             self._payload  = Payload(event, value)
         self._timestamp     = dt.now()
         self._message_id    = uuid.uuid4()
@@ -276,11 +278,26 @@ class Message(object):
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Payload(object):
     '''
-    A Message's payload, containing the Event (with priority) and an optional value.
+    A Message's payload, containing the Event (with priority) and an optional
+    value. The value can be an int, a float, or a tuple containing two ints or
+    floats, or a tuple containing a Direction and Speed. If the latter this
+    sets the 'is_motor_directive' flag True.
     '''
     def __init__(self, event, value):
         self._event = event
         self._value = value
+        self._is_motor_directive = isinstance(value, tuple) \
+                and isinstance(value[0], Direction) and isinstance(value[1], Speed)
+
+    # is motor directive ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+
+    @property
+    def is_motor_directive(self):
+        '''
+        Returns True if the arguments to the Payload was a tuple containing
+        a Direction and Speed.
+        '''
+        return self._is_motor_directive
 
     # priority ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
@@ -293,6 +310,18 @@ class Payload(object):
     @property
     def event(self):
         return self._event
+
+    # direction ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+
+    @property
+    def direction(self):
+        return self._value[0]
+
+    # speed ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+
+    @property
+    def speed(self):
+        return self._value[1]
 
     # value ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 

@@ -26,6 +26,7 @@ class IrqClock(Component):
 
     The callbacks are not executed asynchronously so any of them can block and
     throw off the clock timing. Hence callbacks should all return immediately.
+    This class is ideally only used by a single subscriber/respondent.
 
     Make sure to call close() when finished to free up the Pi resources.
 

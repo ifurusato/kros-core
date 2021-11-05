@@ -122,8 +122,8 @@ class KROS(Component, FiniteStateMachine):
         self._controller      = None
         self._gamepad         = None
         self._gamepad_pub     = None
-        self._external_clock  = None
-        self._irq_clock       = None
+        self._external_clock  = None # used for accessory timing
+        self._irq_clock       = None # used for motor control timing
         self._motor_ctrl      = None
         self._ifs             = None
         self._killswitch      = None
@@ -205,11 +205,11 @@ class KROS(Component, FiniteStateMachine):
         self._use_external_clock = self._config['kros'].get('use_external_clock')
         if self._use_external_clock and _pigpio_available:
             self._log.info('configuring external clock callback...')
+            self._irq_clock      = IrqClock(self._config, level=self._level)
             self._external_clock = ExternalClock(self._config, self._message_bus, self._message_factory, self._level)
-            self._irq_clock = IrqClock(self._config, level=self._level)
         else:
-            self._external_clock = MockExternalClock(self._config, freq_hz=20, callback=None, level=self._level)
             self._irq_clock      = MockExternalClock(self._config, freq_hz=20, callback=None, level=self._level)
+            self._external_clock = MockExternalClock(self._config, freq_hz=20, callback=None, level=self._level)
             # TODO only if mocks permitted?
             self._use_external_clock = True
 
@@ -456,11 +456,11 @@ class KROS(Component, FiniteStateMachine):
         return self._experiment_mgr
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def get_external_clock(self):
-        '''
-        Returns the ExternalClock, None if not used.
-        '''
-        return self._external_clock
+#   def get_external_clock(self):
+#       '''
+#       Returns the ExternalClock, None if not used.
+#       '''
+#       return self._external_clock
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _set_pi_leds(self, enable):
@@ -511,13 +511,10 @@ class KROS(Component, FiniteStateMachine):
                 self._log.info('disabling component...')
             if self._motor_ctrl:
                 self._motor_ctrl.disable()
-                self._motor_ctrl.close()
             if self._external_clock:
                 self._external_clock.disable()
-                self._external_clock.close()
             if self._irq_clock:
                 self._irq_clock.disable()
-                self._irq_clock.close()
             FiniteStateMachine.disable(self)
             self._log.info('disabled.')
         else:
@@ -562,6 +559,10 @@ class KROS(Component, FiniteStateMachine):
             if self._ifs:
                 self._log.info('closing ifs...')
                 self._ifs.close()
+            if self._external_clock:
+                self._external_clock.close()
+            if self._irq_clock:
+                self._irq_clock.close()
             if self._killswitch:
                 self._log.info('closing killswitch...')
                 self._killswitch.close()

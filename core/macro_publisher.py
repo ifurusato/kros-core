@@ -12,7 +12,7 @@
 
 import importlib
 import sys, os, asyncio, itertools
-from dill.source import getsource # used only to print lambdas
+from dill.source import getsource # used to print lambdas
 from copy import deepcopy
 from pathlib import Path
 from datetime import datetime as dt
@@ -29,7 +29,6 @@ from core.event import Event
 from core.message import Message, Payload
 from core.publisher import Publisher
 from core.macros import MacroLibrary, Macros, Macro, Statement
-from hardware.motor_directive import MotorDirective
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class MacroPublisher(Publisher):
@@ -374,15 +373,14 @@ class MacroPublisher(Publisher):
         self._log.info(Fore.BLUE + 'direction:\t{}'.format(_direction))
 
         if _speed and _direction:
-            _motor_directive = MotorDirective(_event, _direction, _speed)
-            _message = self.message_factory.create_message(_event, _motor_directive)
+            _message = self.message_factory.create_message(_event, (_direction, _speed))
             self._log.info(Fore.GREEN + 'macro-publishing event: ' + Fore.YELLOW + '{}:\t'.format(_label)
                     + Fore.BLUE + 'speed: {}; '.format(_speed)
                     + Fore.BLUE + 'direction: {}; '.format(_direction)
                     + Fore.MAGENTA + '{:5.2f}ms elapsed.'.format(elapsed_ms))
         else: # we only have an event
-            _message = self.message_factory.create_message(_event)
-            self._log.info(Fore.GREEN + 'macro-publishing event: ' + Fore.YELLOW + '{}:\t'.format(_label)
+            _message = self.message_factory.create_message(_event, _duration_ms)
+            self._log.info(Fore.GREEN + 'macro-publishing event: ' + Fore.YELLOW + '{} for {}ms:\t'.format(_label, _duration_ms)
                     + Fore.MAGENTA + '{:5.2f}ms elapsed.'.format(elapsed_ms))
 
         if _message is not None:
