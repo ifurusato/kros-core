@@ -7,7 +7,7 @@
 #
 # author:   Murray Altheim
 # created:  2019-12-23
-# modified: 2021-08-20
+# modified: 2021-11-06
 #
 # The NZPRG K-Series Robot Operating System (KROS), including its command line
 # interface (CLI).
@@ -36,16 +36,26 @@ from core.message_bus import MessageBus
 from core.message_factory import MessageFactory
 from core.config_loader import ConfigLoader
 from core.controller import Controller
+
 from core.publisher import Publisher
 from core.queue_publisher import QueuePublisher
 from core.macro_publisher import MacroPublisher
+
+from core.subscriber import Subscriber, GarbageCollector
+from core.system_subscriber import SystemSubscriber
 from core.macro_subscriber import MacroSubscriber
+from core.omni_subscriber import OmniSubscriber
 from core.kr01_macrolibrary import KR01MacroLibrary
 
 from hardware.ifs_publisher import IfsPublisher
 from hardware.bumper_publisher import BumperPublisher
 from hardware.mcu_bmp_publisher import McuBumperPublisher
 from hardware.ext_bmp_publisher import ExternalBumperPublisher
+
+from hardware.motor_subscriber import MotorSubscriber
+from hardware.rgb_subscriber import RgbSubscriber
+from hardware.bumper_subscriber import BumperSubscriber
+from hardware.infrared_subscriber import InfraredSubscriber
 
 from hardware.i2c_scanner import I2CScanner
 from hardware.battery import BatteryCheck
@@ -55,12 +65,6 @@ from hardware.irq_clock import IrqClock
 from hardware.killswitch import KillSwitch
 from hardware.motor_configurer import MotorConfigurer
 from hardware.motor_controller import MotorController
-from core.subscriber import Subscriber, GarbageCollector
-from core.system_subscriber import SystemSubscriber
-from hardware.motor_subscriber import MotorSubscriber
-from hardware.rgb_subscriber import RgbSubscriber
-from hardware.bumper_subscriber import BumperSubscriber
-from hardware.infrared_subscriber import InfraredSubscriber
 from hardware.status import Status
 
 from mock.event_publisher import EventPublisher
@@ -296,6 +300,8 @@ class KROS(Component, FiniteStateMachine):
             if not self._macro_publisher:
                 raise ConfigurationError('macro subscriber requires macro publisher.')
             self._macro_subscriber = MacroSubscriber(self._config, self._message_bus, self._message_factory, self._macro_publisher, self._level)
+        if _cfg.get('enable_omni_subscriber') or 'o' in _subs:
+            self._omni_subscriber = OmniSubscriber(self._config, self._message_bus, level=self._level) # reacts to IR sensors
         # and finally, the garbage collector:
         self._garbage_collector   = GarbageCollector(self._config, self._message_bus, level=self._level)
 

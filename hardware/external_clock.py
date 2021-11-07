@@ -154,7 +154,7 @@ class ExternalClock(Publisher):
 #           self._log.info('clock listener loop 1.')
             if self._message is not None:
                 _elapsed_ms = (dt.now() - self._last_msg_timestamp).total_seconds() * 1000.0
-                self._log.info('irq callback: ' + Fore.YELLOW + ' {:6.3f}ms'.format(_elapsed_ms))
+                self._log.info(Fore.BLUE + 'irq callback: ' + Fore.YELLOW + ' {:6.3f}ms'.format(_elapsed_ms))
 #               self._log.info(Style.BRIGHT + 'clock-publishing message:' + Fore.WHITE + Style.NORMAL + ' {}'.format(self._message.name)
 #                       + Fore.CYAN + ' event: {}; '.format(self._message.event.label) + Fore.YELLOW + 'value: {:5.2f}'.format(self._message.value))
                 await Publisher.publish(self, self._message)

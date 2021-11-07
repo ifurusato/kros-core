@@ -170,11 +170,10 @@ class Message(object):
 
     def process(self, processor):
         '''
-        Sets the flag that the given processor has finished processing this
-        message.
+        Sets the flag that the given processor has finished processing this message.
         '''
         if processor in self._processors:
-            raise Exception('message {} already processed by {}.'.format(self.name, processor.name))
+            raise Exception('message {} ({}) already processed by {}.'.format(self.name, self.event.label, processor.name))
         else:
             self._processors[processor] = True
 
