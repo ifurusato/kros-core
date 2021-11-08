@@ -162,7 +162,8 @@ class Motor(Component):
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def add_velocity_multiplier(self, name, lambda_function):
         '''
-        Adds a named velocity multiplier to the dict of lambda functions.
+        Adds a named velocity multiplier to the dict of lambda functions. This
+        replaces any existing lambda under the same name.
 
         This is a function that alters the target velocity as a multiplier.
         '''

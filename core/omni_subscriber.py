@@ -31,8 +31,19 @@ class OmniSubscriber(Subscriber):
     def __init__(self, config, message_bus, level=Level.INFO):
         Subscriber.__init__(self, OmniSubscriber.CLASS_NAME, config, message_bus=message_bus, suppressed=False, enabled=False, level=level)
 #       self.add_event(Event.RGB)
-        self.add_events([ Group.SYSTEM, Group.MACRO, Group.GAMEPAD, Group.STOP, Group.BUMPER, Group.INFRARED, Group.VELOCITY, 
-                Group.THETA, Group.CHADBURN, Group.BEHAVIOUR, Group.EXPERIMENT, Group.OTHER ]) # do not include Group.CLOCK
+        self.add_events([ Group.SYSTEM,
+                Group.MACRO,
+                Group.GAMEPAD,
+                Group.STOP,
+                Group.BUMPER,
+                Group.INFRARED,
+                Group.VELOCITY,
+                Group.THETA,
+                Group.CHADBURN,
+                Group.BEHAVIOUR
+#               Group.EXPERIMENT,
+#               Group.OTHER 
+            ]) # do not include Group.CLOCK
         self._log.info('🍥 ready.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈

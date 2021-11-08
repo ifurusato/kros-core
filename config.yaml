@@ -33,7 +33,7 @@ kros:
         enable_motor_subscriber:      True       # motor events subscriber
         enable_bumper_subscriber:     True       # bumper events subscriber
         enable_infrared_subscriber:   True       # infrared events subscriber
-        enable_rgb_subscriber:        True       # display on RGB matrix
+        enable_rgb_subscriber:       False       # display on RGB matrix
         enable_omni_subscriber:       True       # test subscriber
         enable_macro_subscriber:      True       # macro subscriber
     behaviour:
@@ -139,6 +139,7 @@ kros:
             halt_rate:            'FASTER'       # slew rate for quick halt behaviour
             brake_rate:           'NORMAL'       # slew rate for slower braking behaviour
             spin_speed:       'TWO_THIRDS'       # motor speed when spinning
+            use_speed_indicator:    False        # publish RGB events for motor speed indication
             verbose:                False        # noisy messaging
         odometry:
             enable_odometry:         True        # if true we enable motor encoders and odometry

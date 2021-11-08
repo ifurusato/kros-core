@@ -7,7 +7,7 @@
 #
 # author:   Murray Altheim
 # created:  2021-02-16
-# modified: 2021-10-31
+# modified: 2021-11-08
 #
 
 import sys, time
@@ -72,6 +72,7 @@ class MotorController(Component):
         self._port_motor = motor_configurer.get_motor(Orientation.PORT)
         self._stbd_motor = motor_configurer.get_motor(Orientation.STBD)
         self._use_ext_clock        = use_external_clock
+        self._speed_indicator      = None
         # temporary until we move functionality to motors
         self._loop_thread          = None
         self._loop_enabled         = False
@@ -82,6 +83,7 @@ class MotorController(Component):
         self._slew_limiter_enabled = config['kros'].get('motor').get('enable_slew_limiter')
         _cfg = config['kros'].get('motor').get('motor_controller')
         self._verbose              = _cfg.get('verbose')
+        self._use_speed_indicator  = _cfg.get('use_speed_indicator')
         self._loop_freq_hz         = _cfg.get('loop_freq_hz')      # main loop frequency
         self._loop_delay_sec       = 1 / self._loop_freq_hz
         self._log.info('loop frequency:\t{}Hz ({:4.2f}s)'.format(self._loop_freq_hz, self._loop_delay_sec))
@@ -874,15 +876,15 @@ class MotorController(Component):
             Component.enable(self)
             if not self._use_ext_clock and not self.loop_is_running:
                 self.start_loop()
-
             # optional speed indicator feature
             self._queue_publisher = globals.get('queue-publisher')
-            if self._queue_publisher:
+            if not self._use_speed_indicator:
+                self._log.info('no speed indicator (disabled).')
+            elif self._queue_publisher:
                 self._log.info('using queue publisher to publish speed indicator events.')
                 self._speed_indicator = SpeedIndicator(self._queue_publisher, self._port_motor, self._stbd_motor)
             else:
                 self._log.warning('no speed indicator (no queue publisher available).')
-
             self._port_motor.enable()
             self._stbd_motor.enable()
             self._log.info('enabled.')
