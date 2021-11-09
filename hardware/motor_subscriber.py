@@ -62,20 +62,20 @@ class MotorSubscriber(Subscriber):
         if message.gcd:
             raise GarbageCollectedError('cannot process message: message has been garbage collected.')
         _event = message.event
-        self._log.info('🙅 processing message with event: {}...'.format(_event.label))
+        self._log.info('🐵 processing message with event: {}...'.format(_event.label))
 
         # STOP and CHADBURN events need no further processing
         if _event.group is Group.STOP:
-            self._log.info('🙅 dispatching STOP event message...')
+            self._log.info('🐵 dispatching STOP event message...')
             self._motor_ctrl.dispatch_stop_event(message.payload)
         elif _event.group is Group.CHADBURN:
-            self._log.info('🙅 dispatching CHADBURN event message...')
+            self._log.info('🐵 dispatching CHADBURN event message...')
             self._motor_ctrl.dispatch_chadburn_event(message.payload)
         elif _event.group is Group.VELOCITY:
-            self._log.info('🙅 dispatching VELOCITY event message...')
+            self._log.info('🐵 dispatching VELOCITY event message...')
             self._motor_ctrl.dispatch_velocity_event(message.payload)
         elif _event.group is Group.THETA:
-            self._log.info('🙅 dispatching THETA event message...')
+            self._log.info('🐵 dispatching THETA event message...')
             self._motor_ctrl.dispatch_theta_event(message.payload)
         else:
             self._log.warning('unrecognised message {}'.format(message.name) + ''.format(message.event.label))

@@ -42,9 +42,9 @@ class OmniSubscriber(Subscriber):
                 Group.CHADBURN,
                 Group.BEHAVIOUR
 #               Group.EXPERIMENT,
-#               Group.OTHER 
+#               Group.OTHER
             ]) # do not include Group.CLOCK
-        self._log.info('🍥 ready.')
+        self._log.info('ready.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def _arbitrate_message(self, message):
@@ -55,7 +55,7 @@ class OmniSubscriber(Subscriber):
         await self._message_bus.arbitrate(message.payload)
         message.acknowledge_sent()
         _value = message.payload.value
-        self._log.info('🍥🌳 arbitrated message ' + Fore.WHITE + '{} '.format(message.name)
+        self._log.info('🐹 arbitrated message ' + Fore.WHITE + '{} '.format(message.name)
                 + Fore.CYAN + 'for event \'{}\' with value type: '.format(message.event.label)
                 + Fore.YELLOW + '{}'.format(type(_value)))
 
@@ -69,8 +69,8 @@ class OmniSubscriber(Subscriber):
         if message.gcd:
             raise GarbageCollectedError('cannot process message: message has been garbage collected.')
         _event = message.event
-        self._log.info('🍥 pre-processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.label))
+        self._log.info('🐹 pre-processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.label))
         await Subscriber.process_message(self, message)
-        self._log.info('🍥 post-processing message {}'.format(message.name))
+        self._log.info('🐹 post-processing message {}'.format(message.name))
 
 #EOF
