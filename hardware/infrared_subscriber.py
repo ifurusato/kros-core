@@ -70,7 +70,7 @@ class InfraredSubscriber(Subscriber):
         _event = message.event
         self._log.info('🌞 pre-processing message {}; '.format(message.name) + Fore.YELLOW + ' event: {}'.format(_event.label))
         if not Event.is_infrared_event(_event):
-            raise MessageRoutingError('unrecognised infrared event on message {}'.format(message.name) + ''.format(message.event.label))
+            raise MessageRoutingError('unrecognised {} event on message {}'.format(message.event.label, message.name))
 #       self._log.warning('unrecognised infrared event on message {}'.format(message.name) + ''.format(message.event.label))
 
 #       self._motor_ctrl.dispatch_infrared_event(message.payload)

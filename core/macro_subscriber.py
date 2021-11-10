@@ -88,7 +88,7 @@ class MacroSubscriber(Subscriber):
 #           self._macro_publisher.queue_macro_by_name(_name, message.payload)
 #           self._macro_publisher.queue_event(message.payload)
         else:
-            self._log.warning('unrecognised infrared event on message {}'.format(message.name) + ''.format(_event.label))
+            self._log.warning('unrecognised {} event on message {}'.format(_event.label, message.name))
         await Subscriber.process_message(self, message)
         self._log.debug('post-processing message {}'.format(message.name))
 
