@@ -271,10 +271,10 @@ class MacroPublisher(Publisher):
         amount of time has passed, then either publish the Statement's Event
         or process its lambda.
         '''
-        self._log.info(Fore.GREEN + 'starting macro listener loop.')
+        self._log.info('starting macro listener loop.')
         while f_is_enabled():
             if self.suppressed:
-                self._log.info(Fore.GREEN + 'macro play suppressed.')
+                self._log.info('macro play suppressed.')
                 # we just wait quietly for a macro to show up.
                 await asyncio.sleep(self._quiescent_delay_sec)
             # check if there's either a running macro or one available

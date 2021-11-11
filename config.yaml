@@ -15,13 +15,13 @@ kros:
 #       uart_experiment:   'UartExperiment'      # experiment 3
     component:                                   # enable specific publish/subscribe components
         enable_killswitch:            True       # kill switch
-        enable_behaviours:           False       # enable BehaviourManager (Behaviours enabled individually)
+        enable_behaviours:            True       # enable BehaviourManager (Behaviours enabled individually)
         enable_experimental:         False       # enable ExperimentManager and load any Experiments
         # publishers .............................
         enable_ifs_publisher:         True       # enable Integrated Front Sensor publisher
         enable_ext_bumper_publisher: False       # enable External Bumper Publisher, or:
         enable_mcu_bumper_publisher:  True       #   enable MCU+UART Bumper Publisher, or:
-        enable_bumper_publisher:     False       #   enable standard GPIO Bumper publisher
+        enable_gpio_bumper_publisher: False      #   enable standard GPIO Bumper publisher
         enable_event_publisher:       True       # keyboard robot simulator (required for running CLI)
         enable_battery_publisher:     True       # battery check publisher
         enable_velocity_publisher:   False       # velocity control potentiometer publisher

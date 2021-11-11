@@ -9,8 +9,8 @@
 # created:  2020-05-19
 # modified: 2021-07-21
 #
-# The beginnings of BHIP: BCD Handshaking Interrupt-Driven Protocol
-# Transmits interrupt-drive BCD data over 5 wires.
+# The beginnings of BHIP: a BCD Handshaking Interrupt-Driven Protocol that
+# transmits interrupt-drive binary-coded decimal data over 5 wires.
 #
 
 import time, itertools

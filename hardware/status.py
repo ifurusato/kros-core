@@ -11,6 +11,8 @@
 #
 # Lazily imports RPi.GPIO
 #
+# Install with: sudo apt install rpi.gpio
+#
 
 #import time, threading
 
@@ -19,17 +21,9 @@ from core.logger import Level, Logger
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Status():
     '''
-    Status Task: turns the status light on and off when it is set enabled or disabled.
-
-    This also provides a thread-based blinker using blink(), halted by disable(),
-    though this portion of the code has been commented out given we won't be using
-    Threads intermixed with the rest of the asyncio code.
-
-    Note that its status light functionality is not affected by enable or disable,
-    as the purpose of this behaviour is to show that the overall OS is running.
+    Status Task: turns the status light (an LED connected to a GPIO pin) on and
+    off when it is set enabled or disabled.
     '''
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def __init__(self, config, level):
         self._log = Logger('status', level)
         self._log.debug('initialising...')
@@ -45,61 +39,28 @@ class Status():
             self._gpio.setmode(GPIO.BCM)
             self._gpio.setup(self._led_pin, GPIO.OUT, initial=GPIO.LOW)
             self._blink_thread = None
-#           self._blinking = False
             self._log.info('ready.')
         except ModuleNotFoundError as e:
-            self._log.error('This script requires the RPi.GPIO library. Some features will be disabled.\nInstall with: sudo apt install rpi.gpio')
+            self._log.warning('This script requires the RPi.GPIO library. Some features will be disabled.')
             self._gpio = None
-
-#   # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-#   def blink(self, active):
-#       if active:
-#           if self._blink_thread is None:
-#               self._log.debug('starting blink...')
-#               self._blinking = True
-#               self._blink_thread = threading.Thread(target=Status.__blink__, args=[self,])
-#               self._blink_thread.start()
-#           else:
-#               self._log.warning('ignored: blink already started.')
-#       else:
-#           if self._blink_thread is None:
-#               self._log.debug('ignored: blink thread does not exist.')
-#           else:
-#               self._log.info('stop blinking...')
-#               self._blinking = False
-#               self._blink_thread.join()
-#               self._blink_thread = None
-#               self._log.info('blink thread ended.')
-
-#   # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-#   def __blink__(self):
-#       '''
-#       The blinking thread.
-#       '''
-#       while self._blinking:
-#           self._gpio.output(self._led_pin,True)
-#           time.sleep(0.5)
-#           self._gpio.output(self._led_pin,False)
-#           time.sleep(0.5)
-#       self._log.info('blink complete.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def enable(self):
-        self._log.info('enable status light.')
         if self._gpio:
+            self._log.info('enable status light.')
             self._gpio.output(self._led_pin, True)
+        else:
+            self._log.info('💡 enable status light.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def disable(self):
         self._log.info('disable status light.')
         if self._gpio:
             self._gpio.output(self._led_pin,False)
-#       self._blinking = False
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def close(self):
         self._log.info('closing status light...')
-#       self._blinking = False
         self.disable()
         self._log.info('status light closed.')
 

@@ -24,7 +24,7 @@ from core.event import Event
 from core.publisher import Publisher
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-class BumperPublisher(Publisher):
+class GpioBumperPublisher(Publisher):
   
     CLASS_NAME = 'bmp'
     _LISTENER_LOOP_NAME = '__bmp_listener_loop'
@@ -50,7 +50,7 @@ class BumperPublisher(Publisher):
         if not isinstance(level, Level):
             raise ValueError('wrong type for log level argument: {}'.format(type(level)))
         self._level = level
-        Publisher.__init__(self, BumperPublisher.CLASS_NAME, config, message_bus, message_factory, level=self._level)
+        Publisher.__init__(self, GpioBumperPublisher.CLASS_NAME, config, message_bus, message_factory, level=self._level)
         # configuration ................
         self._counter = itertools.count()
         self._pi             = None
@@ -124,11 +124,11 @@ class BumperPublisher(Publisher):
                     self._log.warning('error configuring bumper interrupts: {}'.format(e))
                 finally:
                     self._initd = True
-            if self._message_bus.get_task_by_name(BumperPublisher._LISTENER_LOOP_NAME):
+            if self._message_bus.get_task_by_name(GpioBumperPublisher._LISTENER_LOOP_NAME):
                 self._log.warning('already enabled.')
             else:
                 self._log.info('creating task for bmp listener loop...')
-                self._message_bus.loop.create_task(self._bmp_listener_loop(lambda: self.enabled), name=BumperPublisher._LISTENER_LOOP_NAME)
+                self._message_bus.loop.create_task(self._bmp_listener_loop(lambda: self.enabled), name=GpioBumperPublisher._LISTENER_LOOP_NAME)
                 self._log.info('enabled.')
         else:
             self._log.warning('failed to enable publisher.')
