@@ -37,6 +37,9 @@ class IfsPublisher(Publisher):
     five analog infrared sensors, a pair of light sensors used for a "moth"
     behaviour, and six lever switches wired in three pairs for bumpers.
 
+    This publisher is by default (currently) suppressed and must be explicitly
+    released.
+
     :param config:            the application configuration
     :param message_bus:       the asynchronous message bus
     :param message_factory:   the factory for creating messages
@@ -46,7 +49,7 @@ class IfsPublisher(Publisher):
         if not isinstance(level, Level):
             raise ValueError('wrong type for log level argument: {}'.format(type(level)))
         self._level = level
-        Publisher.__init__(self, IfsPublisher.CLASS_NAME, config, message_bus, message_factory, suppressed=False, level=self._level)
+        Publisher.__init__(self, IfsPublisher.CLASS_NAME, config, message_bus, message_factory, suppressed=True, level=self._level)
         # during calibration the IFS uses DEBUG level
         self._use_analog_pot  = config['kros'].get('integrated_front_sensor').get('use_analog_potentiometer')
         self._use_digital_pot = config['kros'].get('integrated_front_sensor').get('use_digital_potentiometer')

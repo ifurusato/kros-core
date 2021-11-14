@@ -91,16 +91,18 @@ class IrqClock(Component):
         if self.enabled:
             for callback in self.__callbacks:
                 callback()
-        else:
-            self._log.warning('IRQ clock disabled.')
+#       else:
+#           self._log.warning('IRQ clock disabled.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def close(self):
         try:
+            self._log.info('IRQ clock closing...')
             if self._pi_callback:
                 self._pi_callback.cancel()
             if self._pi:
                 self._pi.stop()
+            self._log.info('IRQ clock closed.')
         except Exception as e:
             self._log.error('error closing pigpio: {}'.format(e))
         Component.close(self)

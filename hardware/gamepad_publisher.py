@@ -37,7 +37,7 @@ class GamepadPublisher(Publisher):
     A Publisher that connects with a bluetooth-based gamepad.
     '''
     def __init__(self, config, message_bus, message_factory, exit_on_complete=True, level=Level.INFO):
-        Publisher.__init__(self, 'gamepad', config, message_bus, message_factory, level=level)
+        Publisher.__init__(self, 'gamepad', config, message_bus, message_factory, suppressed=False, level=level)
         self._level             = level
         self._counter           = itertools.count()
         self._gamepad_enable    = False # TODO
@@ -118,11 +118,10 @@ class GamepadPublisher(Publisher):
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def disable(self):
         '''
-        Disable this publisher as well as shut down the message bus.
+        Disable this publisher.
         '''
         if self._gamepad:
             self._gamepad.disable()
-        self._message_bus.disable()
         Publisher.disable(self)
         self._log.info(Fore.YELLOW + 'disabled publisher.')
 

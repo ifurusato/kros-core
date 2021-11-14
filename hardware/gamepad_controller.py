@@ -24,10 +24,11 @@ class GamepadController(Controller):
     '''
     A controller class for a Gamepad.
     '''
-    def __init__(self, level):
-        super().__init__(level)
+    def __init__(self, message_bus, level):
+        Controller.__init__(self, message_bus, level)
+        # override controller's log:
         self._log = Logger('gamepad-cntl', level)
-#       self._previous_event       = Event.NOOP
+        self._previous_event       = None # Event.NOOP
 #       self._enabled              = True
 #       self._event_counter        = itertools.count()
 #       self._event_count          = next(self._event_counter)
@@ -64,29 +65,29 @@ class GamepadController(Controller):
         '''
         Responds to the Event contained within the Payload.
         '''
-        self._log.info('callback with payload {}'.format(payload.event.name))
+        self._log.info('✳ callback with payload {}'.format(payload.event.name))
         if not self._enabled:
-            self._log.warning('action ignored: controller disabled.')
+            self._log.warning('✳ action ignored: controller disabled.')
             return
         self._event_count = next(self._event_counter)
         if payload.event == self._previous_event:
-            self._log.info(Fore.CYAN + 'no state change on event: ' + Style.BRIGHT + ' {}'.format(self._previous_event.label)
+            self._log.info(Fore.CYAN + '✳ no state change on event: ' + Style.BRIGHT + ' {}'.format(self._previous_event.label)
                     + Fore.BLACK + Style.NORMAL + '[{:d}/{:d}]'.format(self._state_change_count, self._event_count))
             return
         self._state_change_count = next(self._state_change_counter)
 
         _start_time = dt.datetime.now()
         _event = payload.event
-        self._log.info(Fore.CYAN + 'act on event: ' + Style.BRIGHT + ' {}'.format(_event.label)
+        self._log.info(Fore.CYAN + '✳ act on event: ' + Style.BRIGHT + ' {}'.format(_event.label)
                 + Fore.BLACK + Style.NORMAL + '[{:d}/{:d}]'.format(self._state_change_count, self._event_count))
 
         # system events ..........................
         if _event is Event.GAMEPAD:
-           self._log.info('event: gamepad.')
+           self._log.info('✳ event: gamepad.')
 
         # unrecognised event  ....................
         else:
-            self._log.error('unprocessed event: {}'.format(_event))
+            self._log.error('✳ unprocessed event: {}'.format(_event))
 
         self._previous_event = _event
         _delta = dt.datetime.now() - _start_time

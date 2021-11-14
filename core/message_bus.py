@@ -534,9 +534,12 @@ class MessageBus(Component):
         '''
         if name is None:
             raise ValueError('null name argument.')
-        for _task in asyncio.all_tasks():
-            if _task.get_name() == name:
-                return _task
+        try:
+            for _task in asyncio.all_tasks():
+                if _task.get_name() == name:
+                    return _task
+        except RuntimeError as e:
+            self._log.error('unable to get task: {}'.format(e))
         return None
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈

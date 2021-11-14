@@ -42,6 +42,10 @@ try:
 
     _log.info('creating gamepad publisher...')
     _gamepad_pub = GamepadPublisher(_config, _message_bus, _message_factory, Level.INFO)
+
+    _log.info('enabling message bus...')
+    _message_bus.enable()
+
     _log.info('enabling gamepad publisher...')
     _gamepad_pub.enable()
     while _gamepad_pub.enabled:

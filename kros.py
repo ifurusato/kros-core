@@ -115,25 +115,25 @@ class KROS(Component, FiniteStateMachine):
         self._system.set_nice()
         globals.put('kros', self)
         # configuration...
-        self._config          = None
-        self._message_bus     = None
-        self._behaviour_mgr   = None
-        self._queue_publisher = None
-        self._macro_publisher = None
-        self._ifs_publisher   = None
-        self._experiment_mgr  = None
-        self._arbitrator      = None
-        self._controller      = None
-        self._gamepad         = None
-        self._gamepad_pub     = None
-        self._external_clock  = None # used for accessory timing
-        self._irq_clock       = None # used for motor control timing
-        self._motor_ctrl      = None
-        self._ifs             = None
-        self._killswitch      = None
-        self._status_light    = None
-        self._disable_leds    = False
-        self._closing         = False
+        self._config             = None
+        self._message_bus        = None
+        self._behaviour_mgr      = None
+        self._queue_publisher    = None
+        self._macro_publisher    = None
+        self._ifs_publisher      = None
+        self._experiment_mgr     = None
+        self._arbitrator         = None
+        self._controller         = None
+        self._gamepad_publisher  = None
+        self._gamepad_controller = None
+        self._external_clock     = None # used for accessory timing
+        self._irq_clock          = None # used for motor control timing
+        self._motor_ctrl         = None
+        self._ifs                = None
+        self._killswitch         = None
+        self._status_light       = None
+        self._disable_leds       = False
+        self._closing            = False
         self._log.info('oid: {}'.format(id(self)))
         self._log.info('initialised.')
 
@@ -203,9 +203,6 @@ class KROS(Component, FiniteStateMachine):
 
         self._controller = Controller(self._message_bus, self._level)
 
-    #    _gp_controller = GamepadController(self._level)
-    #    _message_bus.register_controller(_gp_controller)
-
         self._use_external_clock = self._config['kros'].get('use_external_clock')
         if self._use_external_clock and _pigpio_available:
             self._log.info('configuring external clock callback...')
@@ -271,13 +268,6 @@ class KROS(Component, FiniteStateMachine):
         # add battery check publisher
         if _cfg.get('enable_battery_publisher') or 'p' in _pubs:
             self._battery = BatteryCheck(self._config, self._message_bus, self._message_factory, self._level)
-    #   _message_bus.print_publishers()
-        if _cfg.get('enable_gamepad_publisher') or 'g' in _pubs:
-            try:
-                from hardware.gamepad_publisher import GamepadPublisher
-                self._gamepad_pub = GamepadPublisher(self._config, self._message_bus, self._message_factory, self._level)
-            except Exception as e:
-                self._log.error('unable to import GamepadePublisher: {}'.format(e))
 
         _enable_killswitch= _cfg.get('enable_killswitch') or 'k' in _pubs
         if _enable_killswitch and _pigpio_available:
@@ -334,6 +324,21 @@ class KROS(Component, FiniteStateMachine):
                 self._sniff  = Sniff(self._config, self._message_bus, self._message_factory, self._motor_ctrl, self._level)
             if _bcfg.get('enable_idle_behaviour'):
                 self._idle   = Idle(self._config, self._message_bus, self._message_factory, self._level)
+
+        if _args['gamepad_enabled']:
+            if _cfg.get('enable_gamepad_publisher') or 'g' in _pubs:
+                try:
+                    from hardware.gamepad_publisher import GamepadPublisher
+                    self._gamepad_publisher  = GamepadPublisher(self._config, self._message_bus, self._message_factory, True, self._level)
+                    try:
+                        from hardware.gamepad_controller import GamepadController
+                        self._gamepad_controller = GamepadController(self._message_bus, self._level)
+#                       self._message_bus.register_controller(self._gamepad_controller)
+                    except Exception as e:
+                        self._log.error('unable to import GamepadeController: {}'.format(e))
+                except Exception as e:
+                    self._log.error('unable to import GamepadePublisher: {}'.format(e))
+
         self._export_config = False
         if self._export_config:
             self.export_config()
@@ -559,9 +564,11 @@ class KROS(Component, FiniteStateMachine):
             if self._behaviour_mgr:
                 self._log.info('closing behaviour manager...')
                 self._behaviour_mgr.close()
-            if self._gamepad:
+            if self._gamepad_publisher:
                 self._log.info('closing gamepad...')
-                self._gamepad.close()
+                self._gamepad_publisher.close()
+                if self._gamepad_controller:
+                    self._gamepad_controller.close()
             if self._ifs:
                 self._log.info('closing ifs...')
                 self._ifs.close()
