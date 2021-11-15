@@ -161,7 +161,7 @@ class MotorConfigurer():
                 self._tb.SetLedShowBattery(True)
 
                 # initialise ThunderBorg ...........................
-                self._log.debug('🏁 getting battery reading...')
+                self._log.debug('getting battery reading...')
                 # get battery voltage to determine max motor power
                 # could be: Makita 12V or 18V power tool battery, 12V line supply, or mocked value
                 voltage_in = self._tb.GetBatteryReading()
@@ -209,22 +209,13 @@ class MotorConfigurer():
         self._log.info('configure thunderborg & motors...')
         try:
             from mock.thunderborg import MockThunderBorg as ThunderBorg
-            self._log.info('🏁 successfully imported mock ThunderBorg.')
             self._tb = ThunderBorg(Level.WARN)  # create a new ThunderBorg object
-#           self._tb.Init()                       # set the board up (checks the board is connected)
-            self._log.info(Fore.YELLOW + '🏁 successfully instantiated mock ThunderBorg.')
-#           self._tb.SetLedShowBattery(True)
+            self._log.info('successfully instantiated mock ThunderBorg.')
             _voltage_in  = 19.0
             _voltage_out = 9.0
             self._max_power_ratio = _voltage_out / float(_voltage_in)
-        except OSError as e:
-#           self._log.error('OSError importing ThunderBorg: {}'.format(e))
-            traceback.print_exc(file=sys.stdout)
-            raise Exception('OSError instantiating ThunderBorg: {}'.format(e))
         except Exception as e:
-#           self._log.error('{} importing ThunderBorg: {}'.format(type(e), e))
-            traceback.print_exc(file=sys.stdout)
-            raise Exception('unable to instantiate ThunderBorg: {}'.format(e))
+            raise Exception('unable to instantiate mock ThunderBorg: {}\n{}'.format(e, traceback.format_exc()))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property

@@ -10,6 +10,7 @@
 # modified: 2021-07-13
 #
 
+import sys, platform
 import os, psutil
 from pathlib import Path
 from colorama import init, Fore, Style
@@ -35,6 +36,43 @@ class System(object):
         self._log.info('setting process as high priority...')
         proc = psutil.Process(os.getpid())
         proc.nice(10)
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def is_raspberry_pi(self):
+        '''
+        Returns True if the system is named 'Linux' and shows as either a 32
+        or 64 bit architecture, indicating this is running on a Raspberry Pi.
+        '''
+        _system = platform.system()
+        _arch   = platform.machine()
+        return _system == 'Linux' and _arch == 'aarch64' # TODO get both 32bit and 64bit arch names
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def get_platform_info(self):
+        '''
+        Returns a list of information about the current environment, or None
+        if this fails for any reason. The list includes:
+
+            * Python version
+            * system name
+            * machine architecture
+            * platform description
+            * uname
+            * OS version 
+            * mac_ver
+        '''
+        try:
+            _info = ( sys.version.split('\n'),
+                      platform.system(),
+                      platform.machine(),
+                      platform.platform(),
+                      platform.uname(),
+                      platform.version(),
+                      platform.mac_ver() )
+            return _info
+        except Exception as e:
+            self._log.error('error getting platform information:  {}'.format(e))
+            return None
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def print_sys_info(self):

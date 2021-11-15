@@ -148,7 +148,7 @@ class IoExpander(Component):
 
         elif self._mock_enabled:
             # use mock IOExpander
-            self._log.info('no IO Expander found, using mocked version...')
+            self._log.info(Fore.YELLOW + 'no IO Expander found, using mocked version...')
             self._ioe = MockIoExpander(config, level)
         else:
             self._log.info('no IO Expander found, no front sensor functionality.')

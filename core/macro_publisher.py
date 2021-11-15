@@ -23,12 +23,12 @@ import core.globals as globals
 globals.init()
 
 from core.logger import Logger, Level
-from core.system import System
 from core.util import Util
 from core.event import Event
 from core.message import Message, Payload
 from core.publisher import Publisher
 from core.macros import MacroLibrary, Macros, Macro, Statement
+from hardware.system import System
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class MacroPublisher(Publisher):

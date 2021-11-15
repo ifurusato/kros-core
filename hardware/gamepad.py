@@ -18,7 +18,6 @@
 import os, sys, time, asyncio
 import datetime as dt
 from enum import Enum
-from evdev import InputDevice, ecodes
 from colorama import init, Fore, Style
 init()
 
@@ -113,6 +112,7 @@ class Gamepad():
     def _connect(self):
         self._log.info('connecting gamepad...')
         try:
+            from evdev import InputDevice, ecodes
             self._gamepad = InputDevice(self._device_path)
             # display device info
             self._log.info(Fore.GREEN + "gamepad: {}".format(self._gamepad))

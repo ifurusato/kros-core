@@ -48,9 +48,9 @@ class I2CScanner(object):
             self._bus = SMBus(bus_number)
             self._log.info('ready.')
         except ImportError:
-            self._log.warning('import error, unable to initialise: this script requires smbus2. Will operate but always return an empty result.')
+            self._log.warning('import error, unable to initialise: this script requires smbus2. Scan will return an empty result.')
         except Exception as e:
-            self._log.warning('{} while initialising: will operate but always return an empty result.'.format(e))
+            self._log.warning('{} while initialising I²C bus: scan will return an empty result.'.format(e))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def get_hex_addresses(self):

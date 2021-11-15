@@ -27,7 +27,6 @@ globals.init()
 
 from core.logger import Logger, Level
 from core.event import Event, Group
-from core.system import System
 from core.component import Component
 from core.fsm import FiniteStateMachine
 from core.util import Util
@@ -47,6 +46,7 @@ from core.macro_subscriber import MacroSubscriber
 from core.omni_subscriber import OmniSubscriber
 from core.kr01_macrolibrary import KR01MacroLibrary
 
+from hardware.system import System
 from hardware.ifs_publisher import IfsPublisher
 from hardware.gpio_bmp_publisher import GpioBumperPublisher
 from hardware.mcu_bmp_publisher import McuBumperPublisher
@@ -155,6 +155,7 @@ class KROS(Component, FiniteStateMachine):
         _config_filename = arguments.config_file
         _filename = _config_filename if _config_filename is not None else 'config.yaml'
         self._config = _loader.configure(_filename)
+        self._is_raspberry_pi = self._system.is_raspberry_pi()
 
         # configuration from command line arguments ............................
 
@@ -162,7 +163,7 @@ class KROS(Component, FiniteStateMachine):
         # copy argument-based configuration over to _config (changing the names!)
 
 #       self._log.info('argument gamepad:     {}'.format(arguments.gamepad))
-        _args['gamepad_enabled'] = arguments.gamepad
+        _args['gamepad_enabled'] = arguments.gamepad and self._is_raspberry_pi
         self._log.info('gamepad enabled:      {}'.format(_args['gamepad_enabled']))
         _args['video_enabled']   = arguments.video
         self._log.info('video enabled:        {}'.format(_args['video_enabled']))
@@ -329,15 +330,14 @@ class KROS(Component, FiniteStateMachine):
             if _cfg.get('enable_gamepad_publisher') or 'g' in _pubs:
                 try:
                     from hardware.gamepad_publisher import GamepadPublisher
-                    self._gamepad_publisher  = GamepadPublisher(self._config, self._message_bus, self._message_factory, True, self._level)
+                    self._gamepad_publisher = GamepadPublisher(self._config, self._message_bus, self._message_factory, True, self._level)
                     try:
                         from hardware.gamepad_controller import GamepadController
                         self._gamepad_controller = GamepadController(self._message_bus, self._level)
-#                       self._message_bus.register_controller(self._gamepad_controller)
                     except Exception as e:
                         self._log.error('unable to import GamepadeController: {}'.format(e))
                 except Exception as e:
-                    self._log.error('unable to import GamepadePublisher: {}'.format(e))
+                    self._log.error('unable to import GamepadPublisher: {}'.format(e))
 
         self._export_config = False
         if self._export_config:
@@ -388,7 +388,7 @@ class KROS(Component, FiniteStateMachine):
         self._irq_clock.enable()
 
         # now in main application loop until quit or Ctrl-C...
-        self._log.info(Fore.YELLOW + 'enabling message bus...')
+        self._log.info('enabling message bus...')
         self._message_bus.enable()
         # that blocks so we never get here until the end...
         self._log.info('main loop closed.')
