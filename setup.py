@@ -24,7 +24,6 @@
 #       'pimoroni-ioexpander', \
 #       'adafruit-circuitpython-bno08x', \
 #       'matrix11x7', \
-#       'rgbmatrix5x5', \
 #
 # you may find that you need to install psutil via apt:
 #
@@ -83,6 +82,8 @@ setup(
         'dill',
         'gpiozero',
         'psutil',
+        'ads1015',
+        'rgbmatrix5x5',
         'pimoroni-ioexpander'
 #       'evdev' # for gamepad
     ],

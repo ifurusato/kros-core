@@ -83,7 +83,10 @@ class IrqClock(Component):
         '''
         Adds a callback to those triggered by clock ticks.
         '''
-        self.__callbacks.append(callback)
+        if callback:
+            self.__callbacks.append(callback)
+        else:
+            raise TypeError('null callback argument')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _callback_method(self, gpio, level, tick):

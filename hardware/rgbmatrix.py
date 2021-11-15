@@ -603,13 +603,33 @@ class RgbMatrix(object):
         self._log.debug('scan ended.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def random_update(self):
+        rand_hue = numpy.random.uniform(0.1, 0.9)
+        rand_mat = numpy.random.rand(self._width,self._height)
+        for y in range(self._height):
+            for x in range(self._width):
+#               h = 0.1 * rand_mat[x, y]
+                h = rand_hue * rand_mat[x, y]
+                s = 0.8
+                v = rand_mat[x, y]
+                rgb = colorsys.hsv_to_rgb(h, s, v)
+                r = int(rgb[0]*255.0)
+                g = int(rgb[1]*255.0)
+                b = int(rgb[2]*255.0)
+#               self._port_rgbmatrix.set_pixel(x, y, r, g, b)
+                self._stbd_rgbmatrix.set_pixel(x, y, r, g, b)
+#       self._port_rgbmatrix.show()
+        self._stbd_rgbmatrix.show()
+        pass
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _random(self, rgbmatrix5x5, arg):
         '''
         Display an ever-changing random pattern.
         '''
         global enabled
         self._log.info('starting random...')
-        count = 0
+#       count = 0
         while enabled:
             rand_hue = numpy.random.uniform(0.1, 0.9)
             rand_mat = numpy.random.rand(self._width,self._height)

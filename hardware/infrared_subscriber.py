@@ -42,7 +42,7 @@ class InfraredSubscriber(Subscriber):
             raise ValueError('wrong type for motor_ctrl argument: {}'.format(type(motor_ctrl)))
         self._motor_ctrl = motor_ctrl
         self.add_events(Event.by_group(Group.INFRARED))
-        self._log.info('🌞 subscribed to events: {}'.format(self.print_events()))
+        self._log.info('subscribed to events: {}'.format(self.print_events()))
         self._log.info('ready.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
