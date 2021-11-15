@@ -125,28 +125,28 @@ def main(argv):
 #           ax, ay, az, gx, gy, gz = _imu.read_accelerometer_gyro()
             if _GYRO_ONLY:
                 acc = _imu.read_accelerometer_gyro()
-                _x = acc[3] 
-                _y = acc[4] 
+                _x = acc[3]
+                _y = acc[4]
                 _z = acc[5]
-                print(Fore.CYAN + 'Gyro:\t' 
+                print(Fore.CYAN + 'Gyro:\t'
                         + get_gyro_color(_x) + '{:05.2f}\t'.format(_x)
                         + get_gyro_color(_y) + '{:05.2f}\t'.format(_y)
                         + get_gyro_color(_z) + '{:05.2f}\t'.format(_z) )
             elif _ACCEL_ONLY:
                 acc = _imu.read_accelerometer_gyro()
-                _x = acc[0] 
-                _y = acc[1] 
+                _x = acc[0]
+                _y = acc[1]
                 _z = acc[2]
-                print(Fore.CYAN + 'Accel:\t' 
+                print(Fore.CYAN + 'Accel:\t'
                         + get_accel_color(_x) + '{:05.2f}\t'.format(_x)
                         + get_accel_color(_y) + '{:05.2f}\t'.format(_y)
                         + get_accel_color(_z) + '{:05.2f}\t'.format(_z) )
             elif _MAG_ONLY:
                 mag = _imu.read_magnetometer()
-                _x = mag[0] 
-                _y = mag[1] 
+                _x = mag[0]
+                _y = mag[1]
                 _z = mag[2]
-                print(Fore.CYAN + 'Mag:\t' 
+                print(Fore.CYAN + 'Mag:\t'
                         + get_mag_color(_x) + '{:05.2f}\t'.format(_x)
                         + get_mag_color(_y) + '{:05.2f}\t'.format(_y)
                         + get_mag_color(_z) + '{:05.2f}\t'.format(_z) )
@@ -163,7 +163,7 @@ def main(argv):
 
     except KeyboardInterrupt:
         print(Fore.CYAN + Style.BRIGHT + 'caught Ctrl-C; exiting...')
-        
+
     except Exception:
         print(Fore.RED + Style.BRIGHT + 'error starting imu: {}'.format(traceback.format_exc()))
 

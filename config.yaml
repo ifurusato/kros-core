@@ -9,37 +9,29 @@
 kros:
     exit_on_dire_event:              False       # if True exit if encountering a dire event
     use_external_clock:               True       # if True use external clock, ignoring loop delay value
+    use_external_bumper_publisher:    True       # use ExternalBumperPublisher instead of BumperPublisher
     experimental:                                # the list of experimental class names
-        rgb_experiment:     'RgbExperiment'      # experiment 1
-        rgb_random:             'RgbRandom'      # experiment 2
-#       uart_experiment:   'UartExperiment'      # experiment 3
+        uart_experiment:   'UartExperiment'      # experiment 1
     component:                                   # enable specific publish/subscribe components
         enable_killswitch:            True       # kill switch
         enable_behaviours:            True       # enable BehaviourManager (Behaviours enabled individually)
         enable_experimental:         False       # enable ExperimentManager and load any Experiments
         # publishers .............................
         enable_ifs_publisher:         True       # enable Integrated Front Sensor publisher
-        enable_ext_bumper_publisher: False       # enable External Bumper Publisher, or:
-        enable_mcu_bumper_publisher:  True       #   enable MCU+UART Bumper Publisher, or:
-        enable_gpio_bumper_publisher: False      #   enable standard GPIO Bumper publisher
+        enable_bumper_publisher:     False       # enable bumper publisher
         enable_event_publisher:       True       # keyboard robot simulator (required for running CLI)
-        enable_battery_publisher:     True       # battery check publisher
+        enable_battery_publisher:    False       # battery check publisher
         enable_velocity_publisher:   False       # velocity control potentiometer publisher
-        enable_queue_publisher:       True       # publishes from globally-available queue
-        enable_macro_publisher:       True       # macro processor/publisher (loads external macro scripts)
-        enable_gamepad_publisher:     True       # gamepad event publisher
+        enable_macro_publisher:       True       # macro processor/publisher
         # subscribers ............................
         enable_system_subscriber:     True       # system events subscriber
         enable_motor_subscriber:      True       # motor events subscriber
-        enable_bumper_subscriber:     True       # bumper events subscriber
+        enable_bumper_subscriber:    False       # bumper events subscriber
         enable_infrared_subscriber:   True       # infrared events subscriber
-        enable_rgb_subscriber:        True       # display on RGB matrix
-        enable_omni_subscriber:      False       # test subscriber
-        enable_macro_subscriber:      True       # macro subscriber
     behaviour:
         enable_avoid_behaviour:       True       # enable avoidance behaviour
-        enable_roam_behaviour:       False       # enable roam behaviour
-        enable_swerve_behaviour:     False       # enable swerve behaviour
+        enable_roam_behaviour:        True       # enable roam behaviour
+        enable_swerve_behaviour:      True       # enable swerve behaviour
         enable_moth_behaviour:       False       # enable moth behaviour
         enable_sniff_behaviour:      False       # enable sniff behaviour
         enable_idle_behaviour:       False       # enable idle behaviour
@@ -53,17 +45,19 @@ kros:
             cruising_speed:        'SLOW'        # cruising speed (recovery speed)
             cruise_wait_ticks:        3          # how many ticks to wait before cruising again
         swerve:
-            reverse:               True          # reverse effect of output function
-            tolerance:             20.0          # deadband tolerance as percentage
-            multiplier:             1.0          # multiplier on output function
-            tick_modulo:              2          # divider for frequency off external clock
+            min_distance:            25.0        # minimum distance in cm
+            max_distance:            60.0        # maximum distance in cm
+            min_velocity:             0.0        # minimum motor target velocity
+            max_velocity:           100.0        # maximum motor target velocity
+            cruising_speed:        'SLOW'        # cruising speed (recovery speed)
+            cruise_wait_ticks:        3          # how many ticks to wait before cruising again
         moth:
             anti_moth:              False        # moth or anti-moth
         sniff:
             nada:                   False        # nada
         idle:
             idle_threshold_sec:      10          # how many seconds before we trigger an idle behaviour
-            loop_freq_hz:             1          # main loop delay in hz
+            idle_loop_delay_sec:      1.0        # main loop delay in seconds
         travel:
             accel_range_cm:          25.0        # the distance used for acceleration and deceleration (cm)
             cruising_speed:        'SLOW'        # cruising speed (recovery speed)
@@ -72,11 +66,9 @@ kros:
     message_bus:
         max_age_ms:                  20.0        # maximum age of a message before expiry
         publish_delay_sec:            0.05       # publishing delay loop
-        clip_event_list:          False          # if True clip length of displayed event list 
+        clip_event_list:             True        # if True clip length of displayed event list 
         clip_length:                 42          # max length of displayed event list 
     hardware:
-        status:
-            led_pin:                   21        # pin connected to status LED
         digital_potentiometer:                   # IO Expander-based RGB Potentiometer board
             i2c_address:             0x0E        # I²C address for the device
             brightness:               1.0        # brightness of the RGB LED (0.0-1.0)
@@ -104,8 +96,9 @@ kros:
 #           raw_battery_threshold:   11.00       # raw and 5v regulator thresholds set from known measurements:
             low_5v_threshold:         4.75       # really 4.82v
             loop_delay_sec:          60          # sample loop delay (sec)
-        irq_clock:
-            pin:                      5          # pin connected to external clock source from QT Py RP2040
+        external_clock:
+#           pin:                     21          # pin connected to external clock source from TinyPICO
+            pin:                      5          # pin connected to external clock source from Itsy Bitsy RP2040
         killswitch:
              pin:                     7          # pin connected to hardware kill switch
         rfm69_radio:
@@ -113,8 +106,8 @@ kros:
              spi_bus:                 0          # SPI bus (0 or 1, default 0)
              spi_device:              0          # SPI device (0 or 1)
              network_id:            100          # network identifier (common between transceivers)
-             node_id:                 1          # source node identifier
-             recipient_id:            2          # target node identifier
+             node_id:                 2          # source node identifier
+             recipient_id:            1          # target node identifier
              interrupt_pin:          18          # BOARD pin number for interrupt (GPIO 24)
              reset_pin:              29          # BOARD pin number for reset (GPIO 5)
              attempts:                5          # number of connection attempts before giving up
@@ -133,13 +126,12 @@ kros:
         enable_jerk_limiter:        False        # initial enabled state for jerk limiter
         thunderborg_address:         0x15        # I²C address for thunderborg motor controller
         motor_controller:
-            loop_freq_hz:            20          # main loop delay in hz
+            loop_delay_hz:           20          # main loop delay in hz
             accel_increment:          5.0        # normal incremental acceleration
-            decel_increment:         -5.0        # normal incremental deceleration
-            halt_rate:            'FASTER'       # slew rate for quick halt behaviour
+            decel_increment:          5.0        # normal incremental deceleration
+            halt_rate:         'VERY_FAST'       # slew rate for quick halt behaviour
             brake_rate:           'NORMAL'       # slew rate for slower braking behaviour
-            spin_speed:       'TWO_THIRDS'       # motor speed when spinning
-            use_speed_indicator:    False        # publish RGB events for motor speed indication
+            spin_speed:             'MAXIMUM'       # motor speed when spinning
             verbose:                False        # noisy messaging
         odometry:
             enable_odometry:         True        # if true we enable motor encoders and odometry
@@ -161,32 +153,32 @@ kros:
         slew_limiter:
             minimum_output:         -90.0        # lower limit of permitted velocity output values
             maximum_output:          90.0        # upper limit of permitted velocity output values
-            default_rate:        'FASTER'       # select value of enum: SLOWEST, SLOWER, SLOW, NORMAL, FAST, FASTER, FASTEST
+            default_rate:      'VERY_FAST'       # select value of enum: EXTREMELY_SLOW, VERY_SLOW, SLOWER, SLOW, NORMAL, FAST, VERY_FAST
             hysteresis:               2.0        # how close do we get to the target velocity?
             use_elapsed_time:        True        # used elapsed time or percentage
         jerk_limiter:
             jerk_tolerance:          10          # percentage limit of permitted change per iteration
         speed:                                   # configured motor speeds for chadburn events
             astern:
-                MAXIMUM:             -0.80
-                FULL:                -0.50
-                THREE_QUARTER:       -0.40
-                TWO_THIRDS:          -0.35
-                HALF:                -0.30
-                ONE_THIRD:           -0.25
-                SLOW:                -0.20
+                MAXIMUM:             -0.90
+                FULL:                -0.80
+                THREE_QUARTER:       -0.60
+                TWO_THIRDS:          -0.55
+                HALF:                -0.40
+                ONE_THIRD:           -0.33
+                SLOW:                -0.25
                 DEAD_SLOW:           -0.15
                 STOP:                 0.0
             ahead:
                 STOP:                 0.0
                 DEAD_SLOW:            0.15
                 SLOW:                 0.20
-                ONE_THIRD:            0.25
-                HALF:                 0.30
-                TWO_THIRDS:           0.35
-                THREE_QUARTER:        0.40
-                FULL:                 0.50
-                MAXIMUM:              0.80
+                ONE_THIRD:            0.28
+                HALF:                 0.35
+                TWO_THIRDS:           0.50
+                THREE_QUARTER:        0.60
+                FULL:                 0.80
+                MAXIMUM:              0.90
 #           astern:
 #               MAXIMUM:            -90.0
 #               FULL:               -80.0
@@ -206,11 +198,11 @@ kros:
 #               FULL:                80.0
 #               MAXIMUM:             90.0
     io_expander: # note: these are IO Expander pins, not RPi pins
-        psid_ir_pin:                 8           # pin connected to port side infrared
+        port_side_ir_pin:            8           # pin connected to port side infrared
         port_ir_pin:                10           # pin connected to port infrared
         cntr_ir_pin:                11           # pin connected to center infrared
         stbd_ir_pin:                 9           # pin connected to starboard infrared
-        ssid_ir_pin:                 7           # pin connected to starboard side infrared
+        stbd_side_ir_pin:            7           # pin connected to starboard side infrared
 #       port_bmp_pin:                6           # pin connected to port bumper
 #       cntr_bmp_pin:                4           # pin connected to center bumper
 #       stbd_bmp_pin:                5           # pin connected to starboard bumper
@@ -229,9 +221,8 @@ kros:
         cntr_trigger_distance_cm:    50.0        # center analog IR sensor max distance before triggering
         oblq_trigger_distance_cm:    70.0        # port or starboard oblique analog IR sensor max distance before triggering
         side_trigger_distance_cm:    70.0        # port or starboard side analog IR sensor max distance before triggering
-        bumper_threshold_cm:         15          # below this value we treat the infrared like a bumper
     gamepad:
-        enabled:                    True
+        enabled:                    False
         device_path:  '/dev/input/event5'        # the path to the bluetooth gamepad on the pi (see find_gamepad.py)
         loop_delay:                   0.01       # main loop delay was sleep(0.01) or 1/100th second, or 10ms. 50ms is the delay for 20Hz, so 10ms is 5x 20Hz or 100Hz.
         loop_freq_hz:               100          # polling loop frequency (Hz)
@@ -248,9 +239,6 @@ kros:
             bmp_paft_pin:            26          # GPIO pin connected to port aft digital infrared sensor
             bmp_mast_pin:             8          # GPIO pin connected to mast digital infrared sensor
             bmp_saft_pin:            19          # GPIO pin connected to starboard aft digital infrared sensor
-        external_clock:
-            pin:                     12          # pin connected to external clock source from Itsy Bitsy RP2040
-            loop_freq_hz:           150          # main loop delay in hz
         external_bumper:
             loop_freq_hz:            20          # polling loop frequency (Hz)
             ack_pin:                 21          # GPIO pin connected to acknowledge pin (white)
@@ -258,16 +246,12 @@ kros:
             d0_pin:                  20          # GPIO pin connected to data 0 pin (red) was 20 or 6
             d1_pin:                  16          # GPIO pin connected to data 1 pin (green)
             d2_pin:                  19          # GPIO pin connected to data 2 pin (blue)
-        mcu_bumper:
-            loop_freq_hz:            20          # polling loop frequency (Hz)
-        queue:
-            loop_freq_hz:            20          # polling loop frequency (Hz)
         macro:
-            loop_freq_hz:            20          # polling loop frequency (Hz)
+            loop_freq_hz:            10          # polling loop frequency (Hz)
             quiescent_loop_freq_hz:   5          # quiescent loop frequency (Hz)
             wait_limit_ms:         5000          # the longest we will ever wait for anything (because we are impatient)
-            macro_path:         'macro'          # the location of the macros to load on startup
-            load_macros:          False          # if True load *.py as macros from ./macro/ directory
+            scripts_path:      'scripts'         # the location of the scripts to load on startup
+            load_scripts:          True          # if True load scripts from ./scripts/ directory
     hihp:
         ack_pin:                     21          # GPIO pin connected to acknowledge pin (white)
         int_pin:                     26          # GPIO pin connected to interrupt pin (grey)
@@ -276,8 +260,6 @@ kros:
         d2_pin:                      19          # GPIO pin connected to data 2 pin (blue)
         d3_pin:                      13          # GPIO pin connected to data 3 pin (orange)
     subscriber:
-        clock:
-            nada:                  False         # nada
         bumper:
             shutdown_on_mast:      False         # if True then mast triggers shutdown
     mock:
@@ -323,7 +305,6 @@ devices:
     0x48: 'ADS1015'
     0x69: 'ICM20948'
     0x74: '5x5 RGB Matrix'
-    0x75: '11x7 LED Matrix'
     0x77: '5x5 RGB Matrix (or 11x7 LED Matrix)'
 
 # HT0740 0x38 or 0x39 or 0x3A or 0x3B
@@ -492,6 +473,8 @@ devices:
 #    button:
 #        pin:           24                        # pin connected to hardware button
 #        toggle:      True                        # toggle or momentary button
+#    status:
+#        led_pin:       21                        # pin connected to status LED
 ##   bumper:
 ##       port_pin:      21                        # pin connected to port bumper
 ##       cntr_pin:      19                        # pin connected to center bumper
