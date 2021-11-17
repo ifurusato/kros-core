@@ -267,7 +267,7 @@ class MotorController(Component):
                           values, resp.), or a Distance and Speed, resp.
         '''
         if self.enabled:
-            self._log.info('dispatch velocity event; payload type {}; payload: {}'.format(type(payload), payload))
+            self._log.info('dispatch velocity event; payload: {}'.format(payload.event.label))
 #           if not self.loop_is_running:
 #               self.start_loop()
             if not self.loop_is_running:
@@ -333,11 +333,9 @@ class MotorController(Component):
                     _orientation, _direction, _port_target_velocity, _stbd_target_velocity))
 
             # TEMP
-            return ( _event, _value, _orientation, _direction, _port_target_velocity, _stbd_target_velocity )
+#           return ( _event, _value, _orientation, _direction, _port_target_velocity, _stbd_target_velocity )
 
-            '''
-            self.set_motor_velocity(orientation, _port_target_velocity, _stbd_target_velocity )
-            '''
+            self.set_motor_velocity(_orientation, _port_target_velocity, _stbd_target_velocity )
 
             if reset_slew:
                 self._reset_slew_rate()
@@ -446,41 +444,43 @@ class MotorController(Component):
             raise Exception('expected PORT or STBD orientation.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def set_motor_velocity(self, orientation, target_velocity_1, target_velocity_2=None):
+    def set_motor_velocity(self, orientation, target_velocity, stbd_target_velocity=None):
+        # self.set_motor_velocity(_orientation, _port_target_velocity, _stbd_target_velocity )
         '''
-        A convenience method that sets the target velocity and motor power of
-        the specified motor. Accepts either ints or floats between -100 and 100.
-        This uses the first argument, target_velocity_1, for all individual velocity
-        changes, or if Orientation is BOTH uses it as PORT, with target_velocity_2 as STBD.
+        A convenience method that sets the target velocity and motor power of the
+        specified motor. Accepts either ints or floats between -100 and 100. This
+        uses the first argument, target_velocity, for all orientation-specific velocity
+        changes, or if Orientation is BOTH uses it as PORT, with stbd_target_velocity
+        as STBD.
 
-        When the motor controller is disabled any calls to this method
-        will override the target velocity argument and set it to zero.
+        When the motor controller is disabled any calls to this method will override
+        the target velocity argument and set it to zero.
         '''
         if not self.enabled:
             self._log.error('motor controller not enabled.')
-            target_velocity_1 = 0.0
-            target_velocity_2 = 0.0
-        if isinstance(target_velocity_1, int):
-            raise ValueError('expected target velocity as float not int: {:d}'.format(target_velocity_1))
-        if not isinstance(target_velocity_1, float):
-            raise ValueError('expected float, not {}'.format(type(target_velocity_1)))
-        if target_velocity_2:
-            if isinstance(target_velocity_2, int):
-                raise ValueError('expected target velocity as float not int: {:d}'.format(target_velocity_2))
-            if not isinstance(target_velocity_2, float):
-                raise ValueError('expected float, not {}'.format(type(target_velocity_2)))
+            target_velocity = 0.0
+            stbd_target_velocity = 0.0
+        if isinstance(target_velocity, int):
+            raise ValueError('expected target velocity as float not int: {:d}'.format(target_velocity))
+        if not isinstance(target_velocity, float):
+            raise ValueError('expected float, not {}'.format(type(target_velocity)))
+        if stbd_target_velocity:
+            if isinstance(stbd_target_velocity, int):
+                raise ValueError('expected target velocity as float not int: {:d}'.format(stbd_target_velocity))
+            if not isinstance(stbd_target_velocity, float):
+                raise ValueError('expected float, not {}'.format(type(stbd_target_velocity)))
 
         if orientation is Orientation.BOTH:
-            self._port_motor.target_velocity = target_velocity_1
-            self._stbd_motor.target_velocity = target_velocity_2
-            self._log.info('set_motor_velocity ' + Fore.RED   + 'PORT: {:5.2f}\t'.format(target_velocity_1)
-                    + Fore.GREEN + 'STBD: {:5.2f}'.format(target_velocity_2))
+            self._port_motor.target_velocity = target_velocity
+            self._stbd_motor.target_velocity = stbd_target_velocity
+            self._log.info('set motor velocity ' + Fore.RED   + 'PORT: {:5.2f}\t'.format(target_velocity)
+                    + Fore.GREEN + 'STBD: {:5.2f}'.format(stbd_target_velocity))
         elif orientation is Orientation.PORT:
-            self._port_motor.target_velocity = target_velocity_1
-            self._log.info('set_motor_velocity ' + Fore.RED   + 'PORT: {:5.2f}'.format(target_velocity_1))
+            self._port_motor.target_velocity = target_velocity
+            self._log.info('set motor velocity ' + Fore.RED   + 'PORT: {:5.2f}'.format(target_velocity))
         elif orientation is Orientation.STBD:
-            self._stbd_motor.target_velocity = target_velocity_1
-            self._log.info('set_motor_velocity ' + Fore.GREEN + 'STBD: {:5.2f}'.format(target_velocity_1))
+            self._stbd_motor.target_velocity = target_velocity
+            self._log.info('set motor velocity ' + Fore.GREEN + 'STBD: {:5.2f}'.format(target_velocity))
         else:
             raise TypeError('expected BOTH, PORT or STBD orientation, not {}'.format(orientation))
 

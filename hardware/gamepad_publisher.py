@@ -54,7 +54,7 @@ class GamepadPublisher(Publisher):
         if self._gamepad is None:
             try:
                 self._log.info('🎮 creating gamepad...')
-                self._gamepad = Gamepad(self._config, self._message_bus, self._message_factory, self._level)
+                self._gamepad = Gamepad(self._config, self._message_bus, self._message_factory, level=self._level)
             except ConnectionError as e:
                 self._log.error('unable to connect to gamepad: {}'.format(e))
                 self._gamepad = None
@@ -91,6 +91,13 @@ class GamepadPublisher(Publisher):
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def has_connected_gamepad(self):
         return self._gamepad is not None and self._gamepad.has_connection()
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def toggle(self):
+        if self.suppressed:
+            self.release()
+        else:
+            self.suppress()
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def enable(self):

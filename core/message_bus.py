@@ -184,7 +184,7 @@ class MessageBus(Component):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def arbitrate(self, payload):
-#       self._log.debug('arbitrating payload {}...'.format(payload.event.name))
+        self._log.info('🍐 arbitrating payload {}...'.format(payload.event.name))
         await self._arbitrator.arbitrate(payload)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -336,6 +336,7 @@ class MessageBus(Component):
         Register a controller with the Arbitrator.
         '''
         self._arbitrator.register_controller(controller)
+        self._log.info('registered controller: {}'.format(controller.name))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def is_expired(self, message):

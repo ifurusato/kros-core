@@ -59,6 +59,7 @@ class IfsPublisher(Publisher):
         self._counter = itertools.count()
         _cfg = config['kros'].get('publisher').get('integrated_front_sensor')
         _loop_freq_hz = _cfg.get('loop_freq_hz')
+        self._release_on_startup = _cfg.get('release_on_startup')
         self._log.info('ifs publish loop frequency: {:d}Hz'.format(_loop_freq_hz))
         self._publish_delay_sec  = 1.0 / _loop_freq_hz
         self._enable_publishing  = True
@@ -85,7 +86,8 @@ class IfsPublisher(Publisher):
                 self._log.info('creating task for ifs listener loop...')
                 self._message_bus.loop.create_task(self._ifs_listener_loop(lambda: self.enabled), name=IfsPublisher._LISTENER_LOOP_NAME)
                 self._ifs.enable()
-                self._ifs.release()
+                if self._release_on_startup:
+                    self._ifs.release()
                 self._log.info('enabled.')
         else:
             self._log.warning('failed to enable publisher.')

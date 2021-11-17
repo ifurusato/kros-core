@@ -42,10 +42,16 @@ class System(object):
         '''
         Returns True if the system is named 'Linux' and shows as either a 32
         or 64 bit architecture, indicating this is running on a Raspberry Pi.
+        This is nowhere near foolproof.
+
+          • Linux/armv71:   32 bit Raspberry Pi
+          • Linux/aarch64:  64 bit Raspberry Pi (or NanoPi Fire3
+          • Linux/x86_64:   Ubuntu on Intel
+          • Darwin/x86_64:  Mac OS on Intel
+
         '''
-        _system = platform.system()
-        _arch   = platform.machine()
-        return _system == 'Linux' and _arch == 'aarch64' # TODO get both 32bit and 64bit arch names
+        _arch = platform.machine()
+        return  platform.system() == 'Linux' and ( _arch == 'armv71' or _arch == 'aarch64' ) # 32 and 64 bit architecture names
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def get_platform_info(self):

@@ -22,9 +22,11 @@ from core.logger import Logger, Level
 from core.message_bus import MessageBus
 from core.message_factory import MessageFactory
 from hardware.gamepad_publisher import GamepadPublisher
+from hardware.gamepad_controller import GamepadController
 
 _log = Logger('gamepad-test', Level.INFO)
 _gamepad_pub = None
+_gamepad_controller = None
 
 try:
 
@@ -41,7 +43,10 @@ try:
     _message_factory = MessageFactory(_message_bus, Level.INFO)
 
     _log.info('creating gamepad publisher...')
-    _gamepad_pub = GamepadPublisher(_config, _message_bus, _message_factory, Level.INFO)
+    _gamepad_pub = GamepadPublisher(_config, _message_bus, _message_factory, level=Level.INFO)
+
+    _log.info('creating gamepad controller...')
+    _gamepad_controller = GamepadController(_message_bus, Level.INFO)
 
     _log.info('enabling message bus...')
     _message_bus.enable()
@@ -55,7 +60,7 @@ try:
 
 except KeyboardInterrupt:
     _log.info('caught Ctrl-C; exiting...')
-    if _gamepad_pub is not None:
+    if _gamepad_pub:
         _gamepad_pub.disable()
 except OSError:
     _log.error('unable to connect to gamepad')
@@ -64,9 +69,11 @@ except Exception:
 finally:
     _log.info('closing...')
     time.sleep(1.0)
-    if _gamepad_pub is not None:
+    if _gamepad_pub:
         _gamepad_pub.disable()
         _gamepad_pub.close()
+    if _gamepad_controller:
+        _gamepad_controller.close()
     time.sleep(1.0)
     _log.info('complete.')
 

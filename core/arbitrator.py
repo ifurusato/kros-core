@@ -77,16 +77,17 @@ class Arbitrator(Component):
         else:
             _start_time = dt.datetime.now()
             self._count = next(self._counter)
-            self._log.debug('[{:03d}] putting payload: \'{}\' onto queue...'.format(self._count, payload.event.label))
+#           self._log.debug('[{:03d}] putting payload: \'{}\' onto queue...'.format(self._count, payload.event.label))
             if len(self._controllers) > 0:
                 await self._queue.put((payload.priority, payload))
-                self._log.debug('payload \'{}\' put onto queue: {} element{}.'.format(
-                        payload.event.label, self._queue.qsize(), '' if self._queue.qsize() == 1 else 's'))
+#               self._log.debug('payload \'{}\' put onto queue: {} element{}.'.format(
+#                       payload.event.label, self._queue.qsize(), '' if self._queue.qsize() == 1 else 's'))
                 await self.trigger_callback()
                 _elapsed_ms = int((dt.datetime.now() - _start_time).total_seconds() * 1000)
-                self._log.debug('{:4.2f}ms elapsed.'.format(_elapsed_ms))
+#               self._log.debug('{:4.2f}ms elapsed.'.format(_elapsed_ms))
             else:
-                self._log.warning('no registered controllers: payload ignored.')
+#               self._log.warning('no registered controllers: payload ignored.')
+                pass
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def trigger_callback(self):

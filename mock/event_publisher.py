@@ -29,7 +29,6 @@ from core.logger import Logger, Level
 from core.event import Event
 from core.util import Util
 from core.publisher import Publisher
-from mock.mock_gamepad import MockGamepad
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class EventPublisher(Publisher):
@@ -135,79 +134,9 @@ class EventPublisher(Publisher):
         self._ir_max          = _cfg.get('ir_max')              # maximum center IR value
         self._ir_incr         = _cfg.get('ir_incr')             # IR step increment
         self._ir_direction    = -1                              # initial direction (down)
-        self._gamepad_publish_delay_sec = _cfg.get('gamepad_publish_delay_sec') # delay after Gamepad event
         self._publish_delay_sec = _cfg.get('publish_delay_sec') # delay after IFS event
         self._loop_delay_sec  = _cfg.get('noop_loop_delay_sec') # delay on noop loop
-        # attempt to find the gamepad ......................
-        self._gamepad = None
-        self._gamepad_enabled = config['kros'].get('arguments').get('gamepad_enabled')
-        if self._gamepad_enabled:
-            self._log.info('gamepad enabled.')
-        else:
-            self._log.info('gamepad disabled.')
-        self._gamepad_released = False # suppressed/released toggle
         self._log.info('ready.')
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def _connect_gamepad(self):
-        '''
-        Connect to the Gamepad. If disabled or suppressed this exits without a
-        fuss. If the Gamepad has not been instantiated this is where it happens.
-        '''
-        if not self._gamepad_enabled:
-            self._log.info('gamepad disabled.')
-            return
-        if not self._gamepad_released:
-            self._log.info('gamepad suppressed.')
-            return
-        if self._gamepad is None:
-            self._log.info('creating gamepad...')
-#           breakpoint()
-            try:
-                from mock.gamepad import Gamepad
-                self._gamepad = Gamepad(self._config, self._message_bus, self._message_factory, self._level)
-            except ModuleNotFoundError as e:
-                self._log.error('gamepad missing supporting library: {}'.format(e))
-                self._gamepad = None
-#               self._gamepad_released = False
-            except ConnectionError as e:
-                self._log.error('unable to connect to gamepad.')
-#               self._log.error('unable to connect to gamepad: {}'.format(e))
-                self._gamepad = None
-                self._gamepad_released = False
-                self._log.info('gamepad unavailable.')
-                return
-#           except Exception as e:
-            except ModuleNotFoundError as e:
-                self._log.error('{} thrown establishing gamepad: {}\n{}'.format(type(e), e, traceback.format_exc()))
-        # attempt connection ..................................
-#       breakpoint()
-        if self._gamepad is not None:
-            self._log.info(Fore.YELLOW + 'released gamepad...')
-            try:
-                self._gamepad.enable()
-                _count = 0
-                while not self._gamepad.has_connection():
-                    _count += 1
-                    if _count == 1:
-                        self._log.info(Fore.YELLOW + 'connecting to gamepad...')
-                    else:
-                        self._log.info(Fore.YELLOW + 'gamepad not connected; re-trying... [{:d}]'.format(_count))
-                    self._gamepad.connect()
-                    time.sleep(0.5)
-                    if self._gamepad.has_connection() or _count > 5:
-                        break
-            except Exception as e:
-                self._log.error('{} thrown connecting to gamepad: {}\n{}'.format(type(e), e, traceback.format_exc()))
-
-#       breakpoint()
-        if self._gamepad is None:
-            self._gamepad = MockGamepad(self._message_bus, self._message_factory)
-            self._log.info(Fore.YELLOW + 'using mocked gamepad.')
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def has_connected_gamepad(self):
-        return self._gamepad is not None and self._gamepad.has_connection()
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def enable(self):
@@ -421,11 +350,6 @@ class EventPublisher(Publisher):
         return EventPublisher._RANDOM_EVENTS[random.randint(0, len(EventPublisher._RANDOM_EVENTS)-1)]
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    async def _gamepad_callback(self, message):
-        self._log.info('gamepad callback for message:\t' + Fore.YELLOW + '{}'.format(message.event.label))
-        await Publisher.publish(self, message)
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _toggle_pot(self):
         _pot = self._message_bus.get_publisher('pot')
         if _pot:
@@ -468,34 +392,13 @@ class EventPublisher(Publisher):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _toggle_gamepad(self):
-        if not self._gamepad_enabled:
-            self._log.warning('cannot start gamepad: disabled in configuration.')
-        elif self._gamepad_released:
-            self._gamepad_released = False
-            if self._gamepad:
-                self._log.info('gamepad suppressed: ' + Fore.YELLOW + 'type \'e\' to enable.')
-            else:
-                self._log.warning('unable to start gamepad: no gamepad found.')
+        raise Exception('Todo') 
+        _kros = globals.get('kros')
+        _gamepad_publisher = _kros.get_gamepad_publisher()
+        if _gamepad_publisher:
+            _gamepad_publisher.toggle()
         else:
-            GAMEPAD_TASK_NAME = '__gamepad_callback'
-            self._gamepad_released = True
-            self._log.info('gamepad enabled: ' + Fore.YELLOW + 'type \'e\' to disable.')
-            if not self._gamepad:
-                self._connect_gamepad()
-                self._log.info(Fore.GREEN + 'creating task for gamepad...')
-                self._message_bus.loop.create_task(self._gamepad._gamepad_loop(self._gamepad_callback, lambda: self._gamepad_released), name=GAMEPAD_TASK_NAME)
-            else:
-                _tasks = self._message_bus.get_all_tasks(True)
-                self._log.info('{} existing tasks.'.format(len(_tasks)))
-                for _task in _tasks:
-                    if _task.get_name() == GAMEPAD_TASK_NAME:
-                        self._log.warning('existing gamepad task:\t' + Fore.YELLOW + '{}...'.format(_task.get_name()))
-                        # TODO instead remove any existing task
-                        raise Exception('gamepad task already exists.')
-                    else:
-                        self._log.info('existing task:\t' + Fore.BLUE + '{}...'.format(_task.get_name()))
-                self._log.info(Fore.GREEN + 'creating task for existing gamepad...')
-                self._message_bus.loop.create_task(self._gamepad._gamepad_loop(self._gamepad_callback, lambda: self._gamepad_released), name=GAMEPAD_TASK_NAME)
+            self._log.info('gamepad publisher: ' + Fore.YELLOW + 'disabled.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _toggle_ifs(self):

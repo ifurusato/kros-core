@@ -18,12 +18,14 @@
 import os, sys, time, asyncio
 import datetime as dt
 from enum import Enum
+from evdev import InputDevice, ecodes
 from colorama import init, Fore, Style
 init()
 
 from core.logger import Logger, Level
 from core.message_bus import MessageBus
 from core.message_factory import MessageFactory
+from core.component import Component
 from core.event import Event
 from core.rate import Rate
 
@@ -51,11 +53,15 @@ from core.rate import Rate
 '''
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-class Gamepad():
+class Gamepad(Component):
 
     _NOT_AVAILABLE_ERROR = 'gamepad device not found (not configured, paired, powered or otherwise available)'
 
-    def __init__(self, config, message_bus, message_factory, level=Level.INFO):
+    def __init__(self, config, message_bus, message_factory, suppressed=False, enabled=True, level=Level.INFO):
+        if not isinstance(suppressed, bool):
+            raise ValueError('wrong type for suppressed argument: {}'.format(type(suppressed)))
+        if not isinstance(enabled, bool):
+            raise ValueError('wrong type for enabled argument: {}'.format(type(enabled)))
         '''
         Parameters:
 
@@ -64,6 +70,7 @@ class Gamepad():
         '''
         self._level = level
         self._log = Logger("gamepad", level)
+        Component.__init__(self, self._log, suppressed=suppressed, enabled=enabled)
         if config is None:
             raise ValueError('no configuration provided.')
         self._config = config
@@ -85,8 +92,6 @@ class Gamepad():
         self._device_path     = _config.get('device_path')
 #       self._device_path     = '/dev/input/event5' # the path to the bluetooth gamepad on the pi (see find_gamepad.py)
         self._gamepad_closed  = False
-        self._closed  = False
-        self._enabled = False
         self._thread  = None
         self._gamepad = None
 
@@ -112,30 +117,29 @@ class Gamepad():
     def _connect(self):
         self._log.info('connecting gamepad...')
         try:
-            from evdev import InputDevice, ecodes
             self._gamepad = InputDevice(self._device_path)
             # display device info
             self._log.info(Fore.GREEN + "gamepad: {}".format(self._gamepad))
             self._log.info('connected.')
         except Exception as e:
-            self._enabled = False
+            Component.disable(self)
             self._gamepad = None
             raise ConnectionError('unable to connect to input device path {}: {}'.format(self._device_path, e))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def enable(self):
-        if not self._closed:
-            self._log.info('enabled gamepad.')
+        if not self.enabled and not self.closed:
             if not self.in_loop():
-                self._enabled = True
+                Component.enable(self)
                 if self._gamepad == None:
                     self.connect()
-#               self.start_gamepad_loop(callback)
+#                   self.start_gamepad_loop(callback)
+                self._log.info('enabled gamepad.')
             else:
                 self._log.warning('already started gamepad.')
         else:
             self._log.warning('cannot enable gamepad: already closed.')
-            self._enabled = False
+            Component.disable(self)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def in_loop(self):
@@ -197,41 +201,6 @@ class Gamepad():
 
             self._rate.wait()
         self._log.info('exited event loop.')
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    @property
-    def enabled(self):
-        return self._enabled
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def disable(self):
-        if self._closed:
-            self._log.warning('can\'t disable: already closed.')
-        elif not self._enabled:
-            self._log.info('already disabled.')
-        # but we do this anyway...
-        self._enabled = False
-        # we'll wait a bit for the gamepad device to close...
-        time.sleep(1.0)
-#           _i = 0
-#           while not self._gamepad_closed and _i < 20:
-#               _i += 1
-#               self._log.info('_i: {:d}'.format(_i))
-#               time.sleep(0.1)
-        self._log.info('disabled.')
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def close(self):
-        '''
-        Permanently close and disable the gamepad.
-        '''
-        if self._enabled:
-            self.disable()
-        if not self._closed:
-            self._closed = True
-            self._log.info('closed.')
-        else:
-            self._log.info('already closed.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _handleEvent(self, event):
