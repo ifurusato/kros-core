@@ -392,7 +392,6 @@ class EventPublisher(Publisher):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _toggle_gamepad(self):
-        raise Exception('Todo') 
         _kros = globals.get('kros')
         _gamepad_publisher = _kros.get_gamepad_publisher()
         if _gamepad_publisher:

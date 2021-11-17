@@ -7,84 +7,86 @@
 #
 # author:   Murray Altheim
 # created:  2020-05-19
-# modified: 2021-05-31
+# modified: 2021-11-17
 #
 # This class interprets the signals arriving from the 8BitDo N30 Pro Gamepad,
-# a paired Bluetooth device. This differs from GamepadDemo in that it simply
-# displays the Gamepad output signals. No motors, video, etc.
+# a paired Bluetooth device.
 #
 
 import itertools, traceback
-import time # only used for connection
+import time # only used for gamepad connection
 import asyncio
 from colorama import init, Fore, Style
 init()
 
+from core.logger import Logger, Level
 from core.event import Event
 from core.message_factory import MessageFactory
 from core.message_bus import MessageBus
-from core.logger import Logger, Level
 from core.publisher import Publisher
 from hardware.gamepad import Gamepad
-from mock.mock_gamepad import MockGamepad
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class GamepadPublisher(Publisher):
-
     _PUBLISH_LOOP_NAME = '__gamepad_publish_loop'
-
     '''
     A Publisher that connects with a bluetooth-based gamepad.
     '''
     def __init__(self, config, message_bus, message_factory, exit_on_complete=True, level=Level.INFO):
         Publisher.__init__(self, 'gamepad', config, message_bus, message_factory, suppressed=False, level=level)
+        _cfg = self._config['kros'].get('publisher').get('gamepad')
+        self._mock_enabled      = _cfg.get('mock_enabled')
         self._level             = level
-        self._counter           = itertools.count()
-        self._gamepad_enable    = False # TODO
         self._publish_delay_sec = 0.001  # 0.05
         self._gamepad           = None
-        # attempt to find the gamepad
         self._log.info('ready.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _connect_gamepad(self):
-        if not self._gamepad_enabled:
+        if not self.enabled:
             self._log.warning('gamepad disabled.')
             return
         if self._gamepad is None:
             try:
-                self._log.info('🎮 creating gamepad...')
+                self._log.info('creating gamepad...')
                 self._gamepad = Gamepad(self._config, self._message_bus, self._message_factory, level=self._level)
             except ConnectionError as e:
                 self._log.error('unable to connect to gamepad: {}'.format(e))
                 self._gamepad = None
-                self._gamepad_enabled = False
-                self._log.info('gamepad unavailable.')
-                return
-#           except Exception as e:
             except ModuleNotFoundError as e:
+                self._log.error('missing software module while establishing gamepad: {}\n{}'.format(e, traceback.format_exc()))
+                self._gamepad = None
+            except Exception as e:
                 self._log.error('{} thrown establishing gamepad: {}\n{}'.format(type(e), e, traceback.format_exc()))
-        # attempt connection .....................
-        if self._gamepad is not None:
+                self._gamepad = None
+
+        if self._gamepad:
             self._log.info(Fore.YELLOW + 'enabling gamepad...')
             try:
+                # attempt connection .................................
                 self._gamepad.enable()
                 _count = 0
                 while not self._gamepad.has_connection():
                     _count += 1
                     if _count == 1:
-                        self._log.info(Fore.YELLOW + '🎮 connecting to gamepad...')
+                        self._log.info(Fore.YELLOW + 'connecting to gamepad...')
                     else:
-                        self._log.info(Fore.YELLOW + '🎮 gamepad not connected; re-trying... [{:d}]'.format(_count))
+                        self._log.info(Fore.YELLOW + 'gamepad not connected; re-trying... [{:d}]'.format(_count))
                     self._gamepad.connect()
                     time.sleep(0.5)
                     if self._gamepad.has_connection() or _count > 5:
                         break
+            except ConnectionError as e:
+                self._log.warning('unable to connect to gamepad: {}'.format(e))
+                self._gamepad = None
             except Exception as e:
-                self._log.error('🎮 {} thrown connecting to gamepad: {}\n{}'.format(type(e), e, traceback.format_exc()))
+                self._log.error('{} thrown connecting to gamepad: {}\n{}'.format(type(e), e, traceback.format_exc()))
+                self._gamepad = None
+        else:
+            self._log.info('gamepad unavailable.')
 
-        if self._gamepad is None:
-#           from mock.gamepad import Gamepad
+        if self._gamepad is None and self._mock_enabled:
+            from mock.mock_gamepad import MockGamepad
             self._gamepad = MockGamepad(self._message_bus, self._message_factory)
             self._log.info(Fore.YELLOW + 'using mocked gamepad.')
 
@@ -106,15 +108,17 @@ class GamepadPublisher(Publisher):
             if self._message_bus.get_task_by_name(GamepadPublisher._PUBLISH_LOOP_NAME):
                 self._log.warning('already enabled.')
                 return
-            self._gamepad_enabled = True
             self._connect_gamepad()
             if self._gamepad:
                 self._gamepad.enable()
                 self._message_bus.loop.create_task(self._gamepad._gamepad_loop(self._gamepad_publish_loop,
                         lambda: self.enabled), name=GamepadPublisher._PUBLISH_LOOP_NAME)
-            self._log.info('enabled')
+                self._log.info('enabled')
+            else:
+                Publisher.disable(self)
+                self._log.info('no gamepad.')
         else:
-            self._log.info(Fore.BLACK + '<<< enabled: {}'.format(self.enabled))
+            raise Exception('unable to enable.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def _gamepad_publish_loop(self, message):

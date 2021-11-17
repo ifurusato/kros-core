@@ -90,10 +90,11 @@ class Gamepad(Component):
 #       _loop_freq_hz = 20
         self._rate = Rate(_loop_freq_hz)
         self._device_path     = _config.get('device_path')
+        self._log.info('device path:        {}\t'.format(self._device_path))
 #       self._device_path     = '/dev/input/event5' # the path to the bluetooth gamepad on the pi (see find_gamepad.py)
         self._gamepad_closed  = False
-        self._thread  = None
-        self._gamepad = None
+        self._thread          = None
+        self._gamepad         = None
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def connect(self):
@@ -102,10 +103,10 @@ class Gamepad(Component):
         Otherwise we raise an OSError.
         '''
         self._log.info(Fore.YELLOW + 'connect...')
-        _scan = GamepadScan(self._config, self._level)
+        _scan = GamepadScan(self._device_path, self._level)
         if not _scan.check_gamepad_device():
             self._log.warning('no connection attempted: gamepad is not the most recent device (configured at: {}).'.format(self._device_path ))
-            raise OSError('no gamepad available.')
+            raise ConnectionError('no gamepad device found.')
         else:
             self._connect()
 
@@ -128,16 +129,16 @@ class Gamepad(Component):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def enable(self):
-        if not self.enabled and not self.closed:
+#       if not self.enabled and not self.closed:
+        if not self.enabled:
             if not self.in_loop():
-                Component.enable(self)
                 if self._gamepad == None:
                     self.connect()
-#                   self.start_gamepad_loop(callback)
-                self._log.info('enabled gamepad.')
+                    Component.enable(self)
+                    self._log.info('enabled gamepad.')
             else:
                 self._log.warning('already started gamepad.')
-        else:
+        elif self.closed:
             self._log.warning('cannot enable gamepad: already closed.')
             Component.disable(self)
 
@@ -158,14 +159,14 @@ class Gamepad(Component):
         self._log.info('starting event loop...')
         __enabled = True
         while __enabled and f_is_enabled():
-            self._log.info(Fore.WHITE + '🎮 gamepad enabled: {}; f_is_enabled: {}'.format(__enabled, f_is_enabled()))
+            self._log.info(Fore.WHITE + 'gamepad enabled: {}; f_is_enabled: {}'.format(__enabled, f_is_enabled()))
             try:
                 if self._gamepad is None:
                     raise Exception(Gamepad._NOT_AVAILABLE_ERROR + ' [gamepad no longer available]')
                 # loop and filter by event code and print the mapped label
-                self._log.info(Fore.WHITE + '🎮 starting gamepad loop...')
+                self._log.info(Fore.WHITE + 'starting gamepad loop...')
                 for event in self._gamepad.read_loop():
-#                   self._log.info(Fore.WHITE + '🎮 in gamepad loop.')
+#                   self._log.info(Fore.WHITE + 'in gamepad loop.')
                     _message = self._handleEvent(event)
                     if callback and _message:
                         await callback(_message)
@@ -173,7 +174,7 @@ class Gamepad(Component):
                     if not f_is_enabled():
                         self._log.info('breaking from event loop.')
                         break
-                self._log.info(Fore.WHITE + '🎮 exit gamepad loop.')
+                self._log.info(Fore.WHITE + 'exit gamepad loop.')
             except KeyboardInterrupt:
                 self._log.info('caught Ctrl-C, exiting...')
                 __enabled = False
@@ -367,14 +368,10 @@ class GamepadScan(object):
     This can help you figure out which device is your gamepad, if if was connected
     after everything else in the system had settled.
     '''
-    def __init__(self, config, level):
+    def __init__(self, device_path, level):
         self._log = Logger("gamepad-scan", level)
-        if config is None:
-            raise ValueError("no configuration provided.")
-        _config = config['kros'].get('gamepad')
-        self._device_path = _config.get('device_path')
-        self._log.info('device path: {}'.format(self._device_path))
-        self._log.info('ready')
+        self._device_path = device_path
+        self._log.info('ready.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _get_ctime(self, path):
@@ -398,14 +395,14 @@ class GamepadScan(object):
                 _ctime = _device_stat.st_ctime
             except OSError:
                 break
-            self._log.info('device: {}'.format(_path) + Fore.BLUE + Style.NORMAL + '\tstatus changed: {}'.format(dt.datetime.fromtimestamp(_ctime)))
+            self._log.info('device path:        ' + Fore.YELLOW + '{}\t'.format(_path) + Fore.CYAN + '  status changed: ' + Fore.YELLOW + '{}'.format(dt.datetime.fromtimestamp(_ctime)))
             _dict[_path] = _ctime
         # find most recent by sorting the dictionary on ctime
         _sorted = sorted(_dict.items(), key=lambda x:x[1])
         _latest_devices = _sorted[len(_sorted)-1]
         _latest_device = _latest_devices[0]
-        self._log.info('device path:        {}'.format(self._device_path))
-        self._log.info('most recent device: {}'.format(_latest_device))
+        self._log.info('device path config: ' + Fore.YELLOW + '{}'.format(self._device_path))
+        self._log.info('most recent device: ' + Fore.YELLOW + '{}'.format(_latest_device))
         return _latest_device
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -419,7 +416,7 @@ class GamepadScan(object):
             self._log.info(Style.BRIGHT + 'matches:            {}'.format(self._device_path))
             return True
         else:
-            self._log.info(Style.BRIGHT + 'does not match:     {}'.format(_latest_device))
+            self._log.warning(Style.BRIGHT + 'does not match:     {}'.format(_latest_device))
             return False
 
 # EOF

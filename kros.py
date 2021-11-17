@@ -326,18 +326,17 @@ class KROS(Component, FiniteStateMachine):
             if _bcfg.get('enable_idle_behaviour'):
                 self._idle   = Idle(self._config, self._message_bus, self._message_factory, self._level)
 
-        if _args['gamepad_enabled']:
-            if _cfg.get('enable_gamepad_publisher') or 'g' in _pubs:
+        if _args['gamepad_enabled'] or _cfg.get('enable_gamepad_publisher') or 'g' in _pubs:
+            try:
+                from hardware.gamepad_publisher import GamepadPublisher
+                self._gamepad_publisher = GamepadPublisher(self._config, self._message_bus, self._message_factory, True, self._level)
                 try:
-                    from hardware.gamepad_publisher import GamepadPublisher
-                    self._gamepad_publisher = GamepadPublisher(self._config, self._message_bus, self._message_factory, True, self._level)
-                    try:
-                        from hardware.gamepad_controller import GamepadController
-                        self._gamepad_controller = GamepadController(self._message_bus, self._level)
-                    except Exception as e:
-                        self._log.error('unable to import GamepadeController: {}'.format(e))
+                    from hardware.gamepad_controller import GamepadController
+                    self._gamepad_controller = GamepadController(self._message_bus, self._level)
                 except Exception as e:
-                    self._log.error('unable to import GamepadPublisher: {}'.format(e))
+                    self._log.error('unable to import GamepadeController: {}'.format(e))
+            except Exception as e:
+                self._log.error('unable to import GamepadPublisher: {}'.format(e))
 
         self._export_config = False
         if self._export_config:

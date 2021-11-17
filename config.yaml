@@ -19,7 +19,7 @@ kros:
         enable_behaviours:            True       # enable BehaviourManager (Behaviours enabled individually)
         enable_experimental:         False       # enable ExperimentManager and load any Experiments
         # publishers .............................
-        enable_ifs_publisher:         True       # enable Integrated Front Sensor publisher
+        enable_ifs_publisher:        False       # enable Integrated Front Sensor publisher
         enable_ext_bumper_publisher: False       # enable External Bumper Publisher, or:
         enable_mcu_bumper_publisher:  True       #   enable MCU+UART Bumper Publisher, or:
         enable_gpio_bumper_publisher: False      #   enable standard GPIO Bumper publisher
@@ -28,12 +28,12 @@ kros:
         enable_velocity_publisher:   False       # velocity control potentiometer publisher
         enable_queue_publisher:       True       # publishes from globally-available queue
         enable_macro_publisher:       True       # macro processor/publisher (loads external macro scripts)
-        enable_gamepad_publisher:     True       # gamepad event publisher
+        enable_gamepad_publisher:    False       # gamepad event publisher
         # subscribers ............................
         enable_system_subscriber:     True       # system events subscriber
         enable_motor_subscriber:      True       # motor events subscriber
         enable_bumper_subscriber:     True       # bumper events subscriber
-        enable_infrared_subscriber:   True       # infrared events subscriber
+        enable_infrared_subscriber:  False       # infrared events subscriber
         enable_rgb_subscriber:        True       # display on RGB matrix
         enable_omni_subscriber:      False       # test subscriber
         enable_macro_subscriber:      True       # macro subscriber
@@ -232,7 +232,6 @@ kros:
         side_trigger_distance_cm:    70.0        # port or starboard side analog IR sensor max distance before triggering
         bumper_threshold_cm:         15          # below this value we treat the infrared like a bumper
     gamepad:
-        enabled:                    True
         device_path:  '/dev/input/event5'        # the path to the bluetooth gamepad on the pi (see find_gamepad.py)
         loop_delay:                   0.01       # main loop delay was sleep(0.01) or 1/100th second, or 10ms. 50ms is the delay for 20Hz, so 10ms is 5x 20Hz or 100Hz.
         loop_freq_hz:               100          # polling loop frequency (Hz)
@@ -260,6 +259,8 @@ kros:
             d0_pin:                  20          # GPIO pin connected to data 0 pin (red) was 20 or 6
             d1_pin:                  16          # GPIO pin connected to data 1 pin (green)
             d2_pin:                  19          # GPIO pin connected to data 2 pin (blue)
+        gamepad:
+            mock_enabled:         False          # permit mocked gamepad if not found
         mcu_bumper:
             loop_freq_hz:            20          # polling loop frequency (Hz)
         queue:
@@ -349,28 +350,9 @@ devices:
         # GPIO pins configured for A1, B1, A2 and B2
 #       sample_rate: 10                          # how many pulses per encoder measurement?
 #       accel_loop_delay_sec: 0.10
-#       pid-controller:
-#           kp:                 0.09500          # proportional gain
-#           ki:                 0.00000          # integral gain
-#           kd:                 0.00000          # derivative gain
-#           min_output:           -10.0          # lower output limit
-#           max_output:            10.0          # upper output limit
-#           enable_slew:          False
-#           sample_freq_hz:          20
-#           hyst_queue_len:          20          # size of queue used for running average for hysteresis
-#           pot_ctrl:             False          # if True enable potentiometer for setting PID terms
-#   ticker:
-#       loop_freq_hz:            0.05            # main loop frequency
 #    current:
 #        port_address:  0x40                      # I2C address for port INA260
 #        stbd_address:  0x41                      # I2C address for starboard INA260
-#    external_clock:
-#        pin:           5                         # input pin from external source
-#        loop_freq_hz: 20                         # main loop frequency
-#    clock:
-#        loop_freq_hz: 20                         # main loop frequency
-#        tock_modulo:  20                         # modulo value for tock frequency
-#        enable_trim:  True                       # when true enable auto-trim clock accuracy
 #    wait_for_button_press: False                 # robot waits in standby mode until red button is pressed
 #    enable_self_shutdown: True                   # enables the robot to shut itself down (not good during demos)
 #    enable_player: False                         # enables sound player (disable if no hardware support)
@@ -490,29 +472,6 @@ devices:
 #        center_offset: 0.0                       # offset necessary to center the servo at 0.0
 #    servo4:
 #        center_offset: 0.0                       # offset necessary to center the servo at 0.0
-#    button:
-#        pin:           24                        # pin connected to hardware button
-#        toggle:      True                        # toggle or momentary button
-##   bumper:
-##       port_pin:      21                        # pin connected to port bumper
-##       cntr_pin:      19                        # pin connected to center bumper
-##       starboard_pin: 13                        # pin connected to starboard bumper
-##       upper_pin:      7                        # pin connected to upper bumper
-##   infrared:
-##       port_pin:           6                    # pin connected to port infrared
-##       cntr_pin:           0                    # pin connected to center infrared (use zero if using LR IR)
-##       stbd_pin:          16                    # pin connected to starboard infrared
-##       port_side_pin:      5                    # pin connected to port side infrared
-##       stbd_side_pin:     12                    # pin connected to starboard side infrared
-##       use_long_range:    True                  # use analog long range IR for center instead of short range digital IR
-#    gamepad_demo:
-#        enable_compass:        False             # if True, enable Compass
-#        enable_indicator:      False             # if True, enable RGB Indicator
-#        enable_ifs:            False             # if True, enable IntegratedFrontSensor
-#        controller:
-#            log_to_file:       False             # if True, log PID data to file
-#            log_to_console:    False             # if True, log PID data to console
-#            min_loop_time_ms:  5                 # gamepad loop time (ms)
 #    elastic:                                     # ElasticSearch connection
 ##       host: '192.168.1.81'
 #        host: '192.168.1.74'
