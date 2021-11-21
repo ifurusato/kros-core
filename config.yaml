@@ -27,7 +27,7 @@ kros:
         enable_battery_publisher:    False       # battery check publisher
         enable_velocity_publisher:   False       # velocity control potentiometer publisher
         enable_queue_publisher:       True       # publishes from globally-available queue
-        enable_macro_publisher:      False       # macro processor/publisher (loads external macro scripts)
+        enable_macro_publisher:       True       # macro processor/publisher (loads external macro scripts)
         enable_gamepad_publisher:    False       # gamepad event publisher
         # subscribers ............................
         enable_system_subscriber:     True       # system events subscriber
@@ -36,7 +36,7 @@ kros:
         enable_infrared_subscriber:   True       # infrared events subscriber
         enable_rgb_subscriber:       False       # display on RGB matrix
         enable_omni_subscriber:      False       # test subscriber
-        enable_macro_subscriber:     False       # macro subscriber
+        enable_macro_subscriber:      True       # macro subscriber
     behaviour:
         enable_avoid_behaviour:      False       # enable avoidance behaviour
         enable_roam_behaviour:       False       # enable roam behaviour
