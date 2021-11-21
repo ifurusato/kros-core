@@ -28,6 +28,8 @@ try:
 except ImportError as ie:
     sys.exit("This script requires the icm20948 module.\n"\
            + "Install with: pip3 install --user icm20948")
+from rgbmatrix5x5 import RGBMatrix5x5
+from colorsys import hsv_to_rgb
 
 from core.logger import Level, Logger
 from core.config_loader import ConfigLoader
@@ -119,6 +121,10 @@ def main(argv):
         # read YAML configuration
         _config = ConfigLoader().configure()
 
+        _rgbmatrix5x5 = RGBMatrix5x5()
+        _rgbmatrix5x5.set_clear_on_exit()
+        _rgbmatrix5x5.set_brightness(0.8)
+
         _imu = IMU(_config, Level.INFO)
 
         while True:
@@ -146,10 +152,16 @@ def main(argv):
                 _x = mag[0]
                 _y = mag[1]
                 _z = mag[2]
-                print(Fore.CYAN + 'Mag:\t'
-                        + get_mag_color(_x) + '{:05.2f}\t'.format(_x)
-                        + get_mag_color(_y) + '{:05.2f}\t'.format(_y)
-                        + get_mag_color(_z) + '{:05.2f}\t'.format(_z) )
+
+                heading = Convert.heading_from_magnetometer(_imu._amin, _imu._amax, mag)
+                r, g, b = [int(c * 255.0) for c in hsv_to_rgb(heading / 360.0, 1.0, 1.0)]
+                _rgbmatrix5x5.set_all(r, g, b)
+                _rgbmatrix5x5.show()
+                print(Fore.CYAN + 'Mag:\t' 
+                        + Fore.RED   + '{:05.2f}\t'.format(_x)
+                        + Fore.GREEN + '{:05.2f}\t'.format(_y)
+                        + Fore.BLUE  + '{:05.2f}\t'.format(_z)
+                        + Fore.CYAN  + 'Heading: {:d}°'.format(heading))
             else:
                 acc = _imu.read_accelerometer_gyro()
 #               x, y, z = _imu.read_magnetometer()
