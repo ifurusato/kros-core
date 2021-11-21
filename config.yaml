@@ -16,29 +16,29 @@ kros:
 #       uart_experiment:   'UartExperiment'      # experiment 3
     component:                                   # enable specific publish/subscribe components
         enable_killswitch:            True       # kill switch
-        enable_behaviours:            True       # enable BehaviourManager (Behaviours enabled individually)
+        enable_behaviours:           False       # enable BehaviourManager (Behaviours enabled individually)
         enable_experimental:         False       # enable ExperimentManager and load any Experiments
         # publishers .............................
-        enable_ifs_publisher:        False       # enable Integrated Front Sensor publisher
+        enable_ifs_publisher:         True       # enable Integrated Front Sensor publisher
         enable_ext_bumper_publisher: False       # enable External Bumper Publisher, or:
-        enable_mcu_bumper_publisher:  True       #   enable MCU+UART Bumper Publisher, or:
         enable_gpio_bumper_publisher: False      #   enable standard GPIO Bumper publisher
+        enable_mcu_bumper_publisher:  True       #   enable MCU+UART Bumper Publisher, or:
         enable_event_publisher:       True       # keyboard robot simulator (required for running CLI)
-        enable_battery_publisher:     True       # battery check publisher
+        enable_battery_publisher:    False       # battery check publisher
         enable_velocity_publisher:   False       # velocity control potentiometer publisher
         enable_queue_publisher:       True       # publishes from globally-available queue
-        enable_macro_publisher:       True       # macro processor/publisher (loads external macro scripts)
+        enable_macro_publisher:      False       # macro processor/publisher (loads external macro scripts)
         enable_gamepad_publisher:    False       # gamepad event publisher
         # subscribers ............................
         enable_system_subscriber:     True       # system events subscriber
         enable_motor_subscriber:      True       # motor events subscriber
         enable_bumper_subscriber:     True       # bumper events subscriber
-        enable_infrared_subscriber:  False       # infrared events subscriber
-        enable_rgb_subscriber:        True       # display on RGB matrix
+        enable_infrared_subscriber:   True       # infrared events subscriber
+        enable_rgb_subscriber:       False       # display on RGB matrix
         enable_omni_subscriber:      False       # test subscriber
-        enable_macro_subscriber:      True       # macro subscriber
+        enable_macro_subscriber:     False       # macro subscriber
     behaviour:
-        enable_avoid_behaviour:       True       # enable avoidance behaviour
+        enable_avoid_behaviour:      False       # enable avoidance behaviour
         enable_roam_behaviour:       False       # enable roam behaviour
         enable_swerve_behaviour:     False       # enable swerve behaviour
         enable_moth_behaviour:       False       # enable moth behaviour

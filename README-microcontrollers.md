@@ -26,6 +26,13 @@ The KR01 currently hosts two microcontrollers:
      open with:         rshell -p /dev/ttyACM1 --buffer-size=32 --baud=115200
      script installed:  ./main_qtpy_rp2040.py
 
+  4. if a Pyboard is connected it shows up as:
+
+     mounted at:        /dev/ttyACM0
+     open with:         rshell -p /dev/ttyACM0
+     installed at:      /pyboard/flash
+     or:                /pyboard/flash
+
 Note that on your own computer the actual tty used may differ.
 
 To connect to the microcontroller, use rshell with the board's port as an argument.

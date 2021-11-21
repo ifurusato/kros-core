@@ -222,6 +222,7 @@ class KROS(Component, FiniteStateMachine):
         if self._use_external_clock:
             self._irq_clock.add_callback(self._motor_ctrl._external_callback_method)
 #           self._external_clock.add_callback(self._motor_ctrl._ext_callback_method, True)
+#           self._external_clock.add_callback(self._rgbmatrix.random_update)
 
         # create components ....................................................
 
