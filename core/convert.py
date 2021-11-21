@@ -91,11 +91,12 @@ class Convert:
 
     # ..........................................................................
     @staticmethod
-    def heading_from_magnetometer(amin, amax, mag):
+    def heading_from_magnetometer(amin, amax, mag, offset):
         '''
-        :param amin:  the original list of magnetometer readings used as a minimum
-        :param amax:  the original list of magnetometer readings used as a maximum
-        :param mag:   the magnetometer reading (x, y, z) to convert to a heading
+        :param amin:     the original list of magnetometer readings used as a minimum
+        :param amax:     the original list of magnetometer readings used as a maximum
+        :param mag:      the magnetometer reading (x, y, z) to convert to a heading
+        :param offset:   the optional offset in degrees
         '''
         mag = list(mag)
         for i in range(3):
@@ -111,12 +112,14 @@ class Convert:
                 pass
             mag[i] -= 0.5
     
-        heading = math.atan2(mag[AXES[0]], mag[AXES[1]])
-        if heading < 0:
-            heading += 2 * math.pi
-        heading = math.degrees(heading)
-        heading = int(round(heading))
-        return heading
+        heading_rad = math.atan2(mag[AXES[0]], mag[AXES[1]])
+        if heading_rad < 0:
+            heading_rad += 2 * math.pi
+        heading_deg = math.degrees(heading_rad)
+        if offset != 0:
+            heading_deg = Convert.offset_in_degrees(heading_deg, offset)
+        heading_deg = int(round(heading_deg))
+        return heading_deg
 
     # ..........................................................................
     @staticmethod
@@ -168,6 +171,14 @@ class Convert:
         Return the argument rotated 90 degrees.
         '''
         return Convert.to_degrees(Convert.to_radians(degrees) - ( math.pi / 2.0 )) 
+
+    # ..........................................................................
+    @staticmethod
+    def rotate_180_degrees(degrees):
+        ''' 
+        Return the argument rotated 180 degrees.
+        '''
+        return Convert.to_degrees((Convert.to_radians(degrees) + math.pi) % ( 2.0 * math.pi )) 
 
     # ..........................................................................
     @staticmethod

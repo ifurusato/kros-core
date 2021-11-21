@@ -125,6 +125,8 @@ def main(argv):
         _rgbmatrix5x5.set_clear_on_exit()
         _rgbmatrix5x5.set_brightness(0.8)
 
+        _offset = 135
+
         _imu = IMU(_config, Level.INFO)
 
         while True:
@@ -153,7 +155,7 @@ def main(argv):
                 _y = mag[1]
                 _z = mag[2]
 
-                heading = Convert.heading_from_magnetometer(_imu._amin, _imu._amax, mag)
+                heading = Convert.heading_from_magnetometer(_imu._amin, _imu._amax, mag, _offset)
                 r, g, b = [int(c * 255.0) for c in hsv_to_rgb(heading / 360.0, 1.0, 1.0)]
                 _rgbmatrix5x5.set_all(r, g, b)
                 _rgbmatrix5x5.show()
@@ -166,7 +168,7 @@ def main(argv):
                 acc = _imu.read_accelerometer_gyro()
 #               x, y, z = _imu.read_magnetometer()
                 mag = _imu.read_magnetometer()
-                heading = Convert.heading_from_magnetometer(_imu._amin, _imu._amax, mag)
+                heading = Convert.heading_from_magnetometer(_imu._amin, _imu._amax, mag, _offset)
                 print(Fore.CYAN    + 'Accel: {:05.2f} {:05.2f} {:05.2f} '.format(acc[0], acc[1], acc[2]) \
                     + Fore.YELLOW  + '\tGyro: {:05.2f} {:05.2f} {:05.2f} '.format(acc[3], acc[4], acc[5]) \
                     + Fore.MAGENTA + '\tMag: {:05.2f} {:05.2f} {:05.2f}  '.format(mag[0], mag[1], mag[2]) \
