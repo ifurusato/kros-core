@@ -50,8 +50,8 @@ def test_digital_potentiometer():
         if _i2c_scanner.has_hex_address(['0x0E']):
             _log.info('using digital potentiometer...')
             # configure digital potentiometer for motor speed
-            _pot = DigitalPotentiometer(_config, level=_level)
-#           _pot = DigitalPotentiometer(_config, out_min=-80, out_max=80, level=_level)
+#           _pot = DigitalPotentiometer(_config, level=_level)
+            _pot = DigitalPotentiometer(_config, out_min=-180, out_max=180, level=_level)
 #            _pot.set_output_limits(-0.90, 0.90)
         else:
             raise Exception('no digital potentiometer available.')

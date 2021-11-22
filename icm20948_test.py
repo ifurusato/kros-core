@@ -20,6 +20,7 @@
 #
 
 import sys, time, traceback, math
+from math import isclose
 from colorama import init, Fore, Style
 init(autoreset=True)
 
@@ -33,12 +34,16 @@ from colorsys import hsv_to_rgb
 
 from core.logger import Level, Logger
 from core.config_loader import ConfigLoader
+from hardware.i2c_scanner import I2CScanner
 from core.convert import Convert
+from hardware.digital_pot import DigitalPotentiometer
 
 #X = 0
 #Y = 1
 #Z = 2
 #AXES = Y, Z
+
+_log = Logger('test', Level.INFO)
 
 # ..............................................................................
 class IMU():
@@ -125,11 +130,34 @@ def main(argv):
         _rgbmatrix5x5.set_clear_on_exit()
         _rgbmatrix5x5.set_brightness(0.8)
 
-        _offset = 135
+        _i2c_scanner = I2CScanner(_config, Level.INFO)
+        if _i2c_scanner.has_hex_address(['0x0E']):
+            _log.info('using digital potentiometer...')
+            _pot = DigitalPotentiometer(_config, out_min=-180, out_max=180, level=Level.INFO)
+        else:
+            _pot = None
+
+        _offset = 0
+        _last_scaled_value = 0.0
 
         _imu = IMU(_config, Level.INFO)
 
         while True:
+
+            if _pot:
+                _scaled_value = _pot.get_scaled_value(False)
+                if _scaled_value != _last_scaled_value: # if not the same as last time
+                    # math.isclose(3, 15, abs_tol=0.03 * 255) # 3% on a 0-255 scale
+                    if isclose(_scaled_value, 0.0, abs_tol=0.05 * 90):
+                        _pot.set_black()
+                        _offset = 0.0
+                        _log.info(Fore.YELLOW + Style.DIM + 'scaled value: {:9.6f}'.format(_scaled_value))
+                    else:
+                        _pot.set_rgb(_pot.value)
+                        _offset = _scaled_value
+                        _log.info(Fore.YELLOW + Style.NORMAL + 'scaled value: {:5.2f}'.format(_scaled_value))
+                _last_scaled_value = _scaled_value
+
 #           ax, ay, az, gx, gy, gz = _imu.read_accelerometer_gyro()
             if _GYRO_ONLY:
                 acc = _imu.read_accelerometer_gyro()
