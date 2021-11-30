@@ -47,7 +47,6 @@ class SlewLimiter(Component):
         self._use_elapsed_time  = _cfg.get('use_elapsed_time')
         self._default_slew_rate = SlewRate.from_string(_cfg.get('default_rate')) # default rate_limit, value change permitted per millisecond
         self.slew_rate = self._default_slew_rate
-        self._log.info('slew rate limit set to {}; {:>6.4f}/cycle.'.format(self._slew_rate.label, self._slew_rate.limit))
         self._slew_hysteresis   = _cfg.get('hysteresis')
         self._log.info('hysteresis:\t{:5.2f}'.format(self._slew_hysteresis))
         self._stats_queue       = None

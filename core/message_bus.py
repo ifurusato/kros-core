@@ -635,7 +635,7 @@ class MessageBus(Component):
             Component.close(self) # will call disable()
             self._closing = True
             self._closing = False
-        self._log.info('closed.')
+            self._log.info('closed.')
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class PeekableQueue(Queue):

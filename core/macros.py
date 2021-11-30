@@ -16,7 +16,7 @@
 from copy import deepcopy
 from dill.source import getsource # used to print lambdas
 from colorama import init, Fore, Style
-init(autoreset=True)
+init()
 
 from core.logger import Logger, Level
 from core.direction import Direction
@@ -49,7 +49,7 @@ class Statement(object):
         Command can be either a lambda and duration in milliseconds, or an
         Event with arguments (the latter is stored as a Payload).
         '''
-        print(Fore.WHITE + 'arguments type: {}; arguments: {}'.format(type(arguments), arguments))
+#       print('arguments type: {}; arguments: {}'.format(type(arguments), arguments))
         self._label         = label
         self._function      = function
         self._direction     = None

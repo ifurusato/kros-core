@@ -7,13 +7,12 @@
 #
 # author:   Murray Altheim
 # created:  2021-10-11
-# modified: 2021-10-30
+# modified: 2021-11-30
 #
 # lazily installs serial module
 #
 
 import os, itertools
-#import serial
 import asyncio
 from colorama import init, Fore, Style
 init()
@@ -60,32 +59,14 @@ class McuBumperPublisher(Publisher):
         self._log.info('mcu bumper publisher loop frequency: {:d}Hz'.format(_loop_freq_hz))
         self._publish_delay_sec = 1.0 / _loop_freq_hz
         self._loop_delay_sec    = 0.1
-        self._queue    = DeQueue()
-        self._counter  = itertools.count()
-
+        self._queue             = DeQueue()
+        self._counter           = itertools.count()
+        self._serial            = None
         # configure serial port ............................
-        # _port = '/dev/ttyUSB0'
-        # _port = '/dev/ttyACM0'
-        _port = '/dev/serial0'
-        # _baud_rate = 4800
-        # _baud_rate = 9600
-        # _baud_rate = 19200
-        _baud_rate = 38400
-        # (50, 75, 110, 134, 150, 200, 300, 600, 1200, 1800, 2400, 4800, 9600, 19200, 38400, 57600, 115200,
-        # 230400, 460800, 500000, 576000, 921600, 1000000, 1152000, 1500000, 2000000, 2500000, 3000000, 3500000, 4000000)
-
-        self._log.info('starting...\t' + Fore.YELLOW + 'type Ctrl-C to exit.')
-        if not os.path.exists(_port):
-            self._log.info('disabled: port {} does not exist.'.format(_port))
-            self._serial = None
-        else:
-            try:
-                import serial
-                self._serial = serial.Serial(port=_port, baudrate=_baud_rate, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, timeout=0.5)
-            except ModuleNotFoundError as e:
-                self._log.error("This script requires the serial module\nInstall with: pip3 install --user serial")
-                self._serial = None
-#           except Exception as e:
+        self._port = '/dev/serial0'
+        # available:  50, 75, 110, 134, 150, 200, 300, 600, 1200, 1800, 2400, 4800, 9600, 19200, 38400, 57600, 115200,
+        # 230400, 460800, 500000, 576000, 921600, 1000000, 1152000, 1500000, 2000000, 2500000, 3000000, 3500000, 4000000
+        self._baud_rate = 38400
         self._log.info('ready.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -94,17 +75,9 @@ class McuBumperPublisher(Publisher):
         return 'mcu-bmp'
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def put(self, message):
-        if not self.is_active:
-            self._log.warning('message {} ignored: queue publisher inactive.'.format(message))
-        else:
-            self._queue.put(message)
-            self._log.info('put message \'{}\' ({}) into queue ({:d} {})'.format(
-                    message.event.label, message.name, self._queue.size, 'item' if self._queue.size == 1 else 'items'))
-
-    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def enable(self):
         if not self.enabled:
+            self._serial = self.configure_serial_port()
             if self._serial:
                 if self._message_bus.get_task_by_name(McuBumperPublisher._PUBLISHER_LOOP):
                     raise Exception('already enabled.')
@@ -117,6 +90,24 @@ class McuBumperPublisher(Publisher):
                 self._log.warning('cannot enable publisher loop: no serial interface available.')
         else:
             self._log.warning('failed to enable publisher loop.')
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def configure_serial_port(self):
+        '''
+        Configure and return an active serial port, None if unable.
+        '''
+        if not os.path.exists(self._port):
+            self._log.info('disabled: port {} does not exist.'.format(self._port))
+        else:
+            self._log.info('starting serial port...\t' + Fore.YELLOW + 'type Ctrl-C to exit.')
+            try:
+                import serial
+                return serial.Serial(port=self._port, baudrate=self._baud_rate, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, timeout=0.5)
+            except ModuleNotFoundError as e:
+                self._log.error("This script requires the serial module\nInstall with: pip3 install --user serial")
+            except Exception as e:
+                self._log.error("{} thrown configuring the serial port: {}".format(type(e), e))
+        return None
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     async def _publisher_loop(self, f_is_enabled):
@@ -147,6 +138,15 @@ class McuBumperPublisher(Publisher):
                 self._log.error(Fore.BLACK + 'Unicode Decode Error: {} (ignoring)'.format(ude))
             await asyncio.sleep(self._publish_delay_sec)
         self._log.info('publisher loop complete.')
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def put(self, message):
+        if not self.is_active:
+            self._log.warning('message {} ignored: queue publisher inactive.'.format(message))
+        else:
+            self._queue.put(message)
+            self._log.info('put message \'{}\' ({}) into queue ({:d} {})'.format(
+                    message.event.label, message.name, self._queue.size, 'item' if self._queue.size == 1 else 'items'))
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _publish_message_for_orientation(self, orientation):

@@ -528,9 +528,9 @@ class KROS(Component, FiniteStateMachine):
                 self._log.info('disabling component...')
             if self._motor_ctrl:
                 self._motor_ctrl.disable()
-            if self._external_clock:
+            if self._external_clock and not self._external_clock.disabled:
                 self._external_clock.disable()
-            if self._irq_clock:
+            if self._irq_clock and not self._irq_clock.disabled:
                 self._irq_clock.disable()
             FiniteStateMachine.disable(self)
             self._log.info('disabled.')
@@ -554,6 +554,7 @@ class KROS(Component, FiniteStateMachine):
         elif self.closing:
             self._log.warning('already closing.')
         else:
+            self._log.info('🌘 a. closing...')
             self._log.info('closing...')
             if self._experiment_mgr:
                 self._log.info('closing experiment manager...')
@@ -561,44 +562,56 @@ class KROS(Component, FiniteStateMachine):
             if self._motor_ctrl:
                 self._log.info('closing motor controller...')
                 self._motor_ctrl.close()
-            while not Component.close(self): # will call disable()
-                self._log.info('closing component...')
+#           while not Component.close(self): # will call disable()
+#               self._log.info('closing component...')
             self._closing = True
+            self._log.info('🌘 b. closing...')
             while self.enabled:
                 self._log.warning('waiting for disable...')
                 time.sleep(0.1)
             if self._behaviour_mgr:
                 self._log.info('closing behaviour manager...')
                 self._behaviour_mgr.close()
+            self._log.info('🌘 c. closing...')
             if self._gamepad_publisher:
                 self._log.info('closing gamepad...')
                 self._gamepad_publisher.close()
                 if self._gamepad_controller:
                     self._gamepad_controller.close()
+            self._log.info('🌘 d. closing...')
             if self._ifs:
                 self._log.info('closing ifs...')
                 self._ifs.close()
-            if self._external_clock:
+            self._log.info('🌘 e. closing...')
+            if self._external_clock and not self._external_clock.closed:
                 self._external_clock.close()
-            if self._irq_clock:
+            self._log.info('🌘 f. closing...')
+            if self._irq_clock and not self._irq_clock.closed:
                 self._irq_clock.close()
+            self._log.info('🌘 g. closing...')
             if self._killswitch:
                 self._log.info('closing killswitch...')
                 self._killswitch.close()
+            self._log.info('🌘 h. closing...')
 #           time.sleep(0.1)
-            if self._message_bus:
+            if self._message_bus and self._message_bus.closed:
                 self._log.info('closing message bus from kros...')
                 self._message_bus.close()
                 self._log.info('closed message bus.')
+            self._log.info('🌘 i. closing...')
 #           time.sleep(1.0)
             if self._disable_leds: # restore normal function of Pi LEDs
                 self._set_pi_leds(True)
             FiniteStateMachine.close(self)
+            self._log.info('🌘 j. closing...')
             if self._status_light:
                 self._status_light.close()
+            self._log.info('🌘 k. closing...')
             self._closing = False
             self._log.info('application closed.')
+            self._log.info('🌘 l. closing...')
             self._log.close()
+            self._log.info('🌘 z. closed.')
 #           sys.exit(0)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈

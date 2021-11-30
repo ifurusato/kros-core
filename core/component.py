@@ -135,7 +135,7 @@ class Component(object):
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def close(self):
         '''
-        Permanently close and disable the message bus.
+        Permanently close and disable the Component.
         This returns a True value to force currency.
         '''
         if not self.closed:

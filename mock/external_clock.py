@@ -166,12 +166,13 @@ class MockExternalClock(Component):
             self.stop_loop() # stop loop thread
             Component.disable(self)
             self._log.info('disabled.')
-        else:
-            self._log.warning('already disabled.')
+#       else:
+#           self._log.warning('already disabled.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def close(self):
-        Component.close(self)
-        self._log.info('closed.')
+        if not self.closed:
+            Component.close(self)
+            self._log.info('closed.')
 
 #EOF
