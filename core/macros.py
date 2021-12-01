@@ -44,7 +44,7 @@ class Statement(object):
     :param duration_ms:   the optional amount of time in milliseconds to act
                           upon this Statement
     '''
-    def __init__(self, label=None, function=None, event=None, arguments=None, duration_ms=None):
+    def __init__(self, label=None, function=None, event=None, arguments=None, duration_ms=0):
         '''
         Command can be either a lambda and duration in milliseconds, or an
         Event with arguments (the latter is stored as a Payload).

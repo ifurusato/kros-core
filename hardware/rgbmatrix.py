@@ -392,9 +392,9 @@ class RgbMatrix(object):
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def show_color(self, color, orientation):
         self.set_solid_color(color)
-        if orientation is Orientation.PORT or orientation is Orientation.BOTH and self._port_rgbmatrix:
+        if orientation is Orientation.PORT or orientation is Orientation.CNTR and self._port_rgbmatrix:
             self._set_color(self._port_rgbmatrix, self._color)
-        if orientation is Orientation.STBD or orientation is Orientation.BOTH:
+        if orientation is Orientation.STBD or orientation is Orientation.CNTR:
             self._set_color(self._stbd_rgbmatrix, self._color)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
@@ -420,10 +420,10 @@ class RgbMatrix(object):
         r = int(rgb[0]*255.0)
         g = int(rgb[1]*255.0)
         b = int(rgb[2]*255.0)
-        if orientation is Orientation.PORT or orientation is Orientation.BOTH and self._port_rgbmatrix:
+        if orientation is Orientation.PORT or orientation is Orientation.CNTR and self._port_rgbmatrix:
             self._port_rgbmatrix.set_all(r, g, b)
             self._port_rgbmatrix.show()
-        if orientation is Orientation.STBD or orientation is Orientation.BOTH:
+        if orientation is Orientation.STBD or orientation is Orientation.CNTR:
             self._stbd_rgbmatrix.set_all(r, g, b)
             self._stbd_rgbmatrix.show()
 
@@ -681,13 +681,13 @@ class RgbMatrix(object):
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def clear_all(self):
-        self.clear(Orientation.BOTH)
+        self.clear(Orientation.CNTR)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def clear(self, orientation, show=True):
-        if self._port_rgbmatrix and orientation is Orientation.PORT or orientation is Orientation.BOTH:
+        if self._port_rgbmatrix and orientation is Orientation.PORT or orientation is Orientation.CNTR:
             self._clear(self._port_rgbmatrix, show)
-        if self._stbd_rgbmatrix and orientation is Orientation.STBD or orientation is Orientation.BOTH:
+        if self._stbd_rgbmatrix and orientation is Orientation.STBD or orientation is Orientation.CNTR:
             self._clear(self._stbd_rgbmatrix, show)
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈

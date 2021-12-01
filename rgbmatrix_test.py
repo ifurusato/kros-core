@@ -56,7 +56,7 @@ def test_rgbmatrix():
 
         if _do_columns:
             # now the cylon scanning loop ......
-            _rgbmatrix.clear(Orientation.BOTH)
+            _rgbmatrix.clear(Orientation.CNTR)
             _log.info('starting column on ranged matrices, Ctrl-C to quit.')
             for i in range(10):
                 for c in range(0,10):

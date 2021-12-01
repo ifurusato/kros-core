@@ -498,7 +498,8 @@ class Motor(Component):
     def close(self):
         if self.enabled:
             self.disable()
-        self._log.info('on closing, maximum applied power: {:>5.2f}'.format(self.__max_applied_power))
+        if self.__max_applied_power > 0.0:
+            self._log.info('on closing, maximum applied power: {:>5.2f}'.format(self.__max_applied_power))
         # just do it anyway
         self.stop()
         self._log.info('closed.')

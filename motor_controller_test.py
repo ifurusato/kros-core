@@ -98,7 +98,7 @@ def test_motors():
 
         # VELOCITY               = ( 200, "velocity",               100, Group.VELOCITY ) # with value
         assertResult(_motor_ctrl.dispatch_velocity_event(Payload(Event.VELOCITY, (Direction.AHEAD, Speed.SLOW))),
-                Event.VELOCITY, Orientation.BOTH, Direction.AHEAD, 30.0, 30.0)
+                Event.VELOCITY, Orientation.CNTR, Direction.AHEAD, 30.0, 30.0)
         # PORT_VELOCITY          = ( 201, "port velocity",          100, Group.VELOCITY ) # with value
         assertResult(_motor_ctrl.dispatch_velocity_event(Payload(Event.PORT_VELOCITY, (Direction.ASTERN, Speed.HALF))),
                 Event.PORT_VELOCITY, Orientation.PORT, Direction.ASTERN, -50.0, None)
@@ -107,21 +107,21 @@ def test_motors():
                 Event.STBD_VELOCITY, Orientation.STBD, Direction.ASTERN, None, -40.0)
 
         # VELOCITY               = ( 200, "velocity",               100, Group.VELOCITY ) # with value
-        # using single positive float for BOTH
+        # using single positive float for CNTR
         assertResult(_motor_ctrl.dispatch_velocity_event(Payload(Event.VELOCITY, 30.0)),
-                Event.VELOCITY, Orientation.BOTH, Direction.AHEAD, 30.0, 30.0)
-        # using single negative float for BOTH
+                Event.VELOCITY, Orientation.CNTR, Direction.AHEAD, 30.0, 30.0)
+        # using single negative float for CNTR
         assertResult(_motor_ctrl.dispatch_velocity_event(Payload(Event.VELOCITY, -42.0)),
-                Event.VELOCITY, Orientation.BOTH, Direction.ASTERN, -42.0, -42.0)
+                Event.VELOCITY, Orientation.CNTR, Direction.ASTERN, -42.0, -42.0)
         # using int for PORT, STBD
         assertResult(_motor_ctrl.dispatch_velocity_event(Payload(Event.VELOCITY, 27)),
-                Event.VELOCITY, Orientation.BOTH, Direction.AHEAD, 27.0, 27.0)
+                Event.VELOCITY, Orientation.CNTR, Direction.AHEAD, 27.0, 27.0)
         # using tuple float for PORT, STBD
         assertResult(_motor_ctrl.dispatch_velocity_event(Payload(Event.VELOCITY, (30.0, 40.0))),
-                Event.VELOCITY, Orientation.BOTH, Direction.AHEAD, 30.0, 40.0)
+                Event.VELOCITY, Orientation.CNTR, Direction.AHEAD, 30.0, 40.0)
         # using tuple float for PORT, STBD, with CLOCKWISE
         assertResult(_motor_ctrl.dispatch_velocity_event(Payload(Event.VELOCITY, (40.0, -30.0))),
-                Event.VELOCITY, Orientation.BOTH, Direction.CLOCKWISE, 40.0, -30.0)
+                Event.VELOCITY, Orientation.CNTR, Direction.CLOCKWISE, 40.0, -30.0)
 
         # PORT_VELOCITY          = ( 201, "port velocity",          100, Group.VELOCITY ) # with value
         assertResult(_motor_ctrl.dispatch_velocity_event(Payload(Event.PORT_VELOCITY, (Direction.ASTERN, Speed.HALF))),
@@ -132,7 +132,7 @@ def test_motors():
 
         # payload with tuple
         assertResult(_motor_ctrl.dispatch_velocity_event(Payload(Event.VELOCITY, (57.0, 41.0))),
-                Event.VELOCITY, Orientation.BOTH, Direction.AHEAD, 57.0, 41.0)
+                Event.VELOCITY, Orientation.CNTR, Direction.AHEAD, 57.0, 41.0)
         # payload with float
         assertResult(_motor_ctrl.dispatch_velocity_event(Payload(Event.PORT_VELOCITY, 51.0)),
                 Event.PORT_VELOCITY, Orientation.PORT, Direction.UNKNOWN, 51.0, None)
@@ -142,10 +142,10 @@ def test_motors():
 
         # DECREASE_VELOCITY      = ( 203, "decrease velocity",      100, Group.VELOCITY ) # step change
         assertResult(_motor_ctrl.dispatch_velocity_event(Payload(Event.DECREASE_VELOCITY, None)),
-                Event.DECREASE_VELOCITY, Orientation.BOTH, None, -5.0, -5.0)
+                Event.DECREASE_VELOCITY, Orientation.CNTR, None, -5.0, -5.0)
         # INCREASE_VELOCITY      = ( 204, "increase velocity",      100, Group.VELOCITY ) # step change
         assertResult(_motor_ctrl.dispatch_velocity_event(Payload(Event.INCREASE_VELOCITY, None)),
-                Event.INCREASE_VELOCITY, Orientation.BOTH, None, 5.0, 5.0)
+                Event.INCREASE_VELOCITY, Orientation.CNTR, None, 5.0, 5.0)
         # DECREASE_PORT_VELOCITY = ( 205, "decrease port velocity", 100, Group.VELOCITY ) # step change
         assertResult(_motor_ctrl.dispatch_velocity_event(Payload(Event.DECREASE_PORT_VELOCITY, None)),
                 Event.DECREASE_PORT_VELOCITY, Orientation.PORT, None, -5.0, None)

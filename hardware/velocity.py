@@ -111,11 +111,11 @@ class Velocity(object):
         # establish sample frequency
         self._freq_hz = config['kros'].get('motor').get('pid_controller').get('sample_freq_hz')
         self._period_ms = 1000.0 / self._freq_hz
-        self._log.info('sample frequency: {:d}Hz; {:>5.2f}ms'.format(self._freq_hz, self._period_ms))
+        self._log.info('sample frequency:   \t{:d}Hz ({:>5.2f}ms)'.format(self._freq_hz, self._period_ms))
         # now calculate some geometry-based conversions
         _config = config['kros'].get('geometry')
         self._steps_per_rotation  = _config.get('steps_per_rotation') # 494 encoder steps per wheel rotation
-        self._log.info('{:d} encoder steps/rotation'.format(self._steps_per_rotation))
+        self._log.info('encoder steps/rotation:\t{:d}'.format(self._steps_per_rotation))
         self._wheel_diameter      = _config.get('wheel_diameter') # 68.0mm
         self._log.info('wheel diameter:     \t{:4.1f}mm'.format(self._wheel_diameter))
         self._wheel_circumference = self._wheel_diameter * math.pi / 10.0

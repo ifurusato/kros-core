@@ -19,15 +19,14 @@ from hardware.color import Color
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Orientation(Enum):
     NONE  = ( 0, "none",          "none")
-    BOTH  = ( 1, "both",          "both")
-    PORT  = ( 2, "port",          "port")
-    CNTR  = ( 3, "center",        "cntr")
-    STBD  = ( 4, "starboard",     "stbd")
-    PSID  = ( 5, "port-side",     "psid")
-    SSID  = ( 6, "stbd-side",     "ssid")
-    PAFT  = ( 7, "port-aft",      "paft")
-    SAFT  = ( 8, "starboard-aft", "saft")
-    MAST  = ( 9, "mast",          "mast")
+    PORT  = ( 1, "port",          "port")
+    CNTR  = ( 2, "center",        "cntr") # same as 'BOTH' when describing motors
+    STBD  = ( 3, "starboard",     "stbd")
+    PSID  = ( 4, "port-side",     "psid")
+    SSID  = ( 5, "stbd-side",     "ssid")
+    PAFT  = ( 6, "port-aft",      "paft")
+    SAFT  = ( 7, "starboard-aft", "saft")
+    MAST  = ( 8, "mast",          "mast")
 
     # ignore the first param since it's already set by __new__
     def __init__(self, num, name, label):

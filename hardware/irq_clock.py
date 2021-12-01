@@ -44,7 +44,8 @@ class IrqClock(Component):
         _cfg = config['kros'].get('hardware').get('irq_clock')
         self._initd        = False
         self.__callbacks   = []
-        self._pi_callback = None
+        self._pi           = None
+        self._pi_callback  = None
         self._pin = pin if pin else _cfg.get('pin')
         self._log.info('IRQ clock pin:\t{:d}'.format(self._pin))
         self._log.info('ready.')
@@ -103,11 +104,13 @@ class IrqClock(Component):
             self._log.info('IRQ clock closing...')
             if self._pi_callback:
                 self._pi_callback.cancel()
-            if self._pi:
-                self._pi.stop()
             self._log.info('IRQ clock closed.')
         except Exception as e:
             self._log.error('error closing pigpio: {}'.format(e))
+        finally:
+            if self._pi:
+                self._pi.stop()
+            self._log.info('pigpio connection closed.')
         Component.close(self)
         self._log.info('closed.')
 

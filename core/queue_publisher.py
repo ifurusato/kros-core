@@ -62,7 +62,7 @@ class QueuePublisher(Publisher):
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def put(self, message):
         if not self.is_active:
-            self._log.warning('message {} ignored: queue publisher inactive.'.format(message))
+            self._log.warning('message {} ignored: queue publisher inactive.'.format(message.name))
         else:
             self._queue.put(message)
             self._log.info('put message \'{}\' ({}) into queue ({:d} {})'.format(

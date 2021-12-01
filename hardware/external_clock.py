@@ -14,13 +14,13 @@
 
 import sys, time, itertools, random, traceback
 import asyncio
-import concurrent.futures
 from datetime import datetime as dt
 from colorama import init, Fore, Style
 init()
 
 from core.message_factory import MessageFactory
 from core.logger import Logger, Level
+from core.component import Component
 from core.event import Event
 from core.message import Message
 from core.publisher import Publisher
@@ -38,6 +38,9 @@ class ExternalClock(Publisher):
     Messages from the clock are published to the asynchronous message bus,
     so timing is not assured. This clock should be used to trigger events
     that aren't stricly time-critical but need to be scheduled.
+
+    This uses an internally-set callback; externally-set, direct callbacks
+    are not currently supported.
 
     :param config:            the application configuration
     :param message_bus:       the asynchronous message bus
@@ -59,6 +62,8 @@ class ExternalClock(Publisher):
         self._log.info('external clock publish loop frequency: {:d}Hz (delay: {:4.1f}ms)'.format(_loop_freq_hz, ( self._publish_delay_sec * 1000.0)))
         self._pin = _cfg.get('pin')
         self._log.info('external clock pin:\t{:d}'.format(self._pin))
+        self._pi             = None
+        self._pi_callback    = None
         self._initd          = False
 #       self._callbacks      = [] # direct callbacks
         self._subscribers    = [] # callback via message bus
@@ -93,13 +98,11 @@ class ExternalClock(Publisher):
                 raise Exception('unable to establish connection to Pi.')
             self._log.info('establishing callback on pin {:d}.'.format(self._pin))
             self._pi.set_mode(gpio=self._pin, mode=pigpio.INPUT) # GPIO 12 as input
-            self._irq_callback = self._pi.callback(self._pin, pigpio.EITHER_EDGE, self._irq_callback_method)
+            self._pi_callback = self._pi.callback(self._pin, pigpio.EITHER_EDGE, self._irq_callback_method)
             self._log.info('enabled external clock callback.')
-
             self._log.info('creating task for clock listener loop; enabled: {}'.format(self.enabled))
             self._message_bus.loop.create_task(self._clock_listener_loop(lambda: self.enabled), name=ExternalClock._LISTENER_LOOP_NAME)
             self._log.info('task enabled.')
-
             self._initd = True
         except Exception as e:
             self._log.error('unable to enable external clock: {}'.format(e))
@@ -117,10 +120,10 @@ class ExternalClock(Publisher):
                         a False will use the message bus. Default is False.
         ''' 
         if direct:
-            _count = next(self._counter)
-            self._log.info('adding direct callback {:d}...'.format(_count))
-            self._callbacks.append(callback)
-#           raise NotImplementedError('use IrqClock instead.')
+            raise NotImplementedError('direct callbacks not supported.')
+#           _count = next(self._counter)
+#           self._log.info('adding direct callback {:d}...'.format(_count))
+#           self._callbacks.append(callback)
         else:
             _count = next(self._sub_counter)
             self._log.info('adding subscriber callback {:d}...'.format(_count))
@@ -133,8 +136,8 @@ class ExternalClock(Publisher):
         Removes the callback from those triggered by clock ticks.
         You must use the same mode as the callback was registered.
         ''' 
-        raise NotImplementedError('use IrqClock instead.')
 #       self._callbacks.remove(callback)
+        raise NotImplementedError('use IrqClock instead.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     def _irq_callback_method(self, gpio, level, tick):
@@ -166,13 +169,29 @@ class ExternalClock(Publisher):
             await asyncio.sleep(self._publish_delay_sec)
         self._log.info('clock publish loop complete.')
 
+#   # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+#   def disable(self):
+#       '''
+#       Disable this publisher.
+#       '''
+#       Publisher.disable(self)
+#       self._log.info('disabled publisher.')
+
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def disable(self):
-        '''
-        Disable this publisher.
-        '''
-        Publisher.disable(self)
-        self._log.info('disabled publisher.')
+    def close(self):
+        try:
+            self._log.info('IRQ clock closing...')
+            if self._pi_callback:
+                self._pi_callback.cancel()
+            self._log.info('IRQ clock closed.')
+        except Exception as e:
+            self._log.error('error closing pigpio: {}'.format(e))
+        finally:
+            if self._pi:
+                self._pi.stop()
+            self._log.info('pigpio connection closed.')
+        Component.close(self)
+        self._log.info('closed.')
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class TickMessage(Message):

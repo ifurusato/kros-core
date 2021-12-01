@@ -12,7 +12,12 @@
 # MissingComponentError at bottom
 #
 
+from collections import OrderedDict
 from core.logger import Logger
+from core.util import Util
+
+import core.globals as globals
+globals.init()
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Component(object):
@@ -43,10 +48,23 @@ class Component(object):
         self._suppressed = suppressed
         if not isinstance(enabled, bool):
             raise ValueError('wrong type for enabled argument: {}'.format(type(enabled)))
+        if not globals.has('component-registry'):
+            self._registry = ComponentRegistry(logger.level)
+            globals.put('component-registry', self._registry)
+        self._registry   = globals.get('component-registry')
+        self._registry.add(logger.name, self)
         self._enabled    = enabled
         self._closed     = False
 
     # properties ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    @property
+    def classname(self):
+        '''
+        Return the name of this Component's class.
+        '''
+        return type(self).__name__
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
@@ -145,6 +163,42 @@ class Component(object):
         else:
             self._log.debug('already closed.')
         return True
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+class ComponentRegistry(object):
+    '''
+    Maintains a registry of all Components, in the order in which they were created.
+    '''
+    def __init__(self, level):
+        self._log = Logger("comp-reg", level)
+        self._dict = OrderedDict()
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def add(self, name, component):
+        '''
+        Add a component to the registry using a unique name.
+        '''
+        if name in self._dict:
+            self._log.warning('🐰 component \'{}\' already in registry.'.format(name))
+        else:
+            self._dict[name] = component
+            self._log.info('🐰 added component \'{}\' to registry ({:d} total).'.format(name, len(self._dict)))
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def print_registry(self):
+        '''
+        Print the registry to the log.
+        '''
+        self._log.info('component list:')
+        for _name, _component in self._dict.items():
+            self._log.info('  {} {}{}'.format(_name, Util.repeat(' ', 16 - len(_name)), _component.classname))
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    def get_registry(self):
+        '''
+        Return the backing registry as a dict.
+        '''
+        return self._dict
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class MissingComponentError(Exception):
