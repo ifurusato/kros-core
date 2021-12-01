@@ -267,7 +267,7 @@ class MotorController(Component):
                           values, resp.), or a Distance and Speed, resp.
         '''
         if self.enabled:
-            self._log.info('dispatch velocity event; payload: {}'.format(payload.event.label))
+            self._log.info('🐢 a. dispatch velocity event; payload: {}'.format(payload.event.label))
 #           if not self.loop_is_running:
 #               self.start_loop()
             if not self.loop_is_running:
@@ -314,10 +314,8 @@ class MotorController(Component):
                 elif _event is Event.STBD_VELOCITY:
                     _stbd_target_velocity = _target_velocity
 
-            print('🍉 f. _port_target_velocity {}; _stbd_target_velocity: {}'.format(_port_target_velocity, _stbd_target_velocity))
             if not _direction:
                 _direction = Direction.get_direction_for(_port_target_velocity, _stbd_target_velocity)
-            print('🍉 g. direction: {}'.format(_direction))
 
             if _event is Event.DECREASE_VELOCITY:
                 _port_target_velocity = self._port_motor.target_velocity + self._decel_increment
@@ -336,29 +334,29 @@ class MotorController(Component):
             elif _event is not Event.VELOCITY and _event is not Event.PORT_VELOCITY and _event is not Event.STBD_VELOCITY:
                 raise TypeError('unsupported event for dispatch velocity: {}'.format(_event.label))
 
-            print('🍉 h. event: {}'.format(_event))
             if _orientation:
                 _alt_orientation = self._get_orientation(_event)
                 if _orientation != _alt_orientation:
                     raise Exception('mismatch on orientation directive: {} != {}'.format(_orientation, _alt_orientation))
             else:
                 _orientation = self._get_orientation(_event)
-            print('🍉 i. orientation: {}'.format(_orientation))
 
-            self._log.info('🐢 E. dispatch velocity event:\nPayload type {}\n  payload: {}\n  value: {}\n'.format(
+            self._log.info(Fore.GREEN + '🐢 b. direction: {}; orientation: {}; port target velocity: {}; stbd target velocity: {}'.format(
+                    _direction.name, _orientation.name, _port_target_velocity, _stbd_target_velocity))
+
+            self._log.info('🐢 c. dispatch velocity event:\nPayload type {}\n  payload: {}\n  value: {}\n'.format(
                     type(payload), payload, _value) + Fore.YELLOW + 'orientation: {}; direction: {}; port target velocity: {}; stbd target velocity: {}'.format(
                     _orientation, _direction, _port_target_velocity, _stbd_target_velocity))
 
             # TEMP
 #           return ( _event, _value, _orientation, _direction, _port_target_velocity, _stbd_target_velocity )
 
-            print('🍉 a.')
             self.set_motor_velocity(_orientation, _port_target_velocity, _stbd_target_velocity )
 
             if reset_slew:
                 self._reset_slew_rate()
 
-            self._log.info('🐢 Z. dispatch velocity event {}; payload value type {}; value: {}'.format(_event.label, type(_value), _value))
+            self._log.info('🐢 d. dispatch velocity event {}; payload value type {}; value: {}'.format(_event.label, type(_value), _value))
 
         else:
             self._log.warning('disabled: ignoring velocity dispatch.')

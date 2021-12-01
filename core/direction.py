@@ -16,16 +16,22 @@ from enum import Enum
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Direction(Enum):
-    STOPPED           = ( 0, 'stopped')
-    AHEAD             = ( 1, 'ahead')
-    ASTERN            = ( 2, 'astern')
-    CLOCKWISE         = ( 3, 'clockwise')
-    COUNTER_CLOCKWISE = ( 4, 'counter-clockwise')
-    UNKNOWN           = ( 5, 'unknown') # n/a or indeterminate
+    STOPPED           = ( 0, 'stopped',           'stop')
+    AHEAD             = ( 1, 'ahead',             'ahed')
+    ASTERN            = ( 2, 'astern',            'astn')
+    CLOCKWISE         = ( 3, 'clockwise',         'clws')
+    COUNTER_CLOCKWISE = ( 4, 'counter-clockwise', 'ccwz')
+    UNKNOWN           = ( 5, 'unknown',           'unkn') # n/a or indeterminate
 
     # ignore the first param since it's already set by __new__
-    def __init__(self, num, label):
+    def __init__(self, num, name, label):
+        self._name  = name
         self._label = label
+
+    # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    @property
+    def name(self):
+        return self._name
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     @property
