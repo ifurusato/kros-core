@@ -251,7 +251,7 @@ class MotorController(Component):
             _direction = _event.direction
             _value = float(_speed.velocity) if _direction is Direction.AHEAD else float(-1.0 * _speed.velocity)
             self._log.info('set chadburn velocity: {} direction: {}; value: {}'.format(_speed.label, _direction.label, _value))
-            self.set_motor_velocity(Orientation.CNTR, _value, _value)
+            self.set_motor_velocity(Orientation.CNTR, _value)
         else:
             self._log.warning('disabled: ignoring chadburn dispatch.')
 
@@ -306,16 +306,13 @@ class MotorController(Component):
                         raise TypeError('expected tuple, float or int, not {}'.format(type(_value)))
 
             if _target_velocity:
-                if _event is Event.VELOCITY:
+                if _event is Event.VELOCITY: # then implied CNTR (both)
                     _port_target_velocity = _target_velocity
                     _stbd_target_velocity = _target_velocity
                 elif _event is Event.PORT_VELOCITY:
                     _port_target_velocity = _target_velocity
                 elif _event is Event.STBD_VELOCITY:
                     _stbd_target_velocity = _target_velocity
-
-            if not _direction:
-                _direction = Direction.get_direction_for(_port_target_velocity, _stbd_target_velocity)
 
             if _event is Event.DECREASE_VELOCITY:
                 _port_target_velocity = self._port_motor.target_velocity + self._decel_increment
@@ -341,17 +338,23 @@ class MotorController(Component):
             else:
                 _orientation = self._get_orientation(_event)
 
+            if not _direction:
+                _direction = Direction.get_direction_for(_port_target_velocity, _stbd_target_velocity)
+
             self._log.info(Fore.GREEN + '🐢 b. direction: {}; orientation: {}; port target velocity: {}; stbd target velocity: {}'.format(
-                    _direction.name, _orientation.name, _port_target_velocity, _stbd_target_velocity))
+                    _direction.name, _orientation.name,
+                    _port_target_velocity if _port_target_velocity is not None else 'NA', 
+                    _stbd_target_velocity if _stbd_target_velocity is not None else 'NA'))
 
             self._log.info('🐢 c. dispatch velocity event:\nPayload type {}\n  payload: {}\n  value: {}\n'.format(
                     type(payload), payload, _value) + Fore.YELLOW + 'orientation: {}; direction: {}; port target velocity: {}; stbd target velocity: {}'.format(
-                    _orientation, _direction, _port_target_velocity, _stbd_target_velocity))
+                    _orientation, _direction,
+                    _port_target_velocity if _port_target_velocity is not None else 'NA', 
+                    _stbd_target_velocity if _stbd_target_velocity is not None else 'NA'))
 
             # TEMP
 #           return ( _event, _value, _orientation, _direction, _port_target_velocity, _stbd_target_velocity )
-
-            self.set_motor_velocity(_orientation, _port_target_velocity, _stbd_target_velocity )
+            self.set_motor_velocity(_orientation, _port_target_velocity, _stbd_target_velocity)
 
             if reset_slew:
                 self._reset_slew_rate()
@@ -460,14 +463,11 @@ class MotorController(Component):
             raise Exception('expected PORT or STBD orientation.')
 
     # ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-    def set_motor_velocity(self, orientation, target_velocity, stbd_target_velocity=None):
-        # self.set_motor_velocity(_orientation, _port_target_velocity, _stbd_target_velocity )
+    def set_motor_velocity(self, orientation, target_velocity):
         '''
         A convenience method that sets the target velocity and motor power of the
-        specified motor. Accepts either ints or floats between -100 and 100. This
-        uses the first argument, target_velocity, for all orientation-specific velocity
-        changes, or if Orientation is CNTR uses it as PORT, with stbd_target_velocity
-        as STBD.
+        specified motor. Accepts either ints or floats between -100 and 100. If the
+        orientation is CNTR this will set both motors.
 
         When the motor controller is disabled any calls to this method will override
         the target velocity argument and set it to zero.
@@ -475,22 +475,15 @@ class MotorController(Component):
         if not self.enabled:
             self._log.error('motor controller not enabled.')
             target_velocity = 0.0
-            stbd_target_velocity = 0.0
         if isinstance(target_velocity, int):
             raise ValueError('expected target velocity as float not int: {:d}'.format(target_velocity))
         if not isinstance(target_velocity, float):
             raise ValueError('expected float, not {}'.format(type(target_velocity)))
-        if stbd_target_velocity:
-            if isinstance(stbd_target_velocity, int):
-                raise ValueError('expected target velocity as float not int: {:d}'.format(stbd_target_velocity))
-            if not isinstance(stbd_target_velocity, float):
-                raise ValueError('expected float, not {}'.format(type(stbd_target_velocity)))
-
         if orientation is Orientation.CNTR:
             self._port_motor.target_velocity = target_velocity
-            self._stbd_motor.target_velocity = stbd_target_velocity
+            self._stbd_motor.target_velocity = target_velocity
             self._log.info('set motor velocity ' + Fore.RED   + 'PORT: {:5.2f}\t'.format(target_velocity)
-                    + Fore.GREEN + 'STBD: {:5.2f}'.format(stbd_target_velocity))
+                    + Fore.GREEN + 'STBD: {:5.2f}'.format(target_velocity))
         elif orientation is Orientation.PORT:
             self._port_motor.target_velocity = target_velocity
             self._log.info('set motor velocity ' + Fore.RED   + 'PORT: {:5.2f}'.format(target_velocity))
