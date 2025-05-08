@@ -51,13 +51,13 @@ clockwise, then proceeding forward again on a new trajectory.
 ## Software Features
 
 * message and event handling
-* an asynchronous message bus that forms the basis of a `Subsumption Architecture <https://en.wikipedia.org/wiki/Subsumption_architecture>`_ [#f1]_, with an "exactly-once' message delivery guarantee
+* an asynchronous message bus that forms the basis of a `[Subsumption Architecture](https://en.wikipedia.org/wiki/Subsumption_architecture) [^1], with an 'exactly-once' message delivery guarantee
 * YAML-based configuration
-* timestamped, multi-level, colorised [#f2]_ logging
+* timestamped, multi-level, colorised [^2] logging
 * written in Python 3 (currently 3.11.2)
 
-.. [#f1] Uses finite state machines, an asynchronous message bus, an arbitrator and controller for task prioritisation.
-.. [#f2] Colorised console output tested only on Unix/Linux operating systems.
+[^1]: Uses finite state machines, an asynchronous message bus, an arbitrator and controller for task prioritisation.
+[^2]: Colorised ANSI console output tested only on Unix/Linux operating systems.
 
 
 ## Requirements
