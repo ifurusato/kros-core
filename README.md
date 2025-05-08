@@ -69,21 +69,20 @@ KROS requires installation of a small number of dependencies (support libraries)
 There is currently no dependency management set up for this project.
 
 First:
-
+```
   sudo apt install python3-pip
+```
 
 then:
 
-* pyyaml:       https://pypi.org/project/PyYAML/
-    with:         sudo apt install python3-yaml
-* colorama:     https://pypi.org/project/colorama/
-    with:         sudo apt install python3-colorama
-* smbus2:       https://pypi.org/project/smbus2/
-    with:         sudo apt install python3-smbus2
+* [pyyaml](https://pypi.org/project/PyYAML/) with:      `sudo apt install python3-yaml`
+* [colorama](https://pypi.org/project/colorama/) with:  `sudo apt install python3-colorama`
+* [smbus2](https://pypi.org/project/smbus2/) with:      `sudo apt install python3-smbus2`
 
 To improve performance, if you don't need the avahi-daemon, disable it:
-
+```
    sudo systemctl disable avahi-daemon
+```
 
 
 ## Status
