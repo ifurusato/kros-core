@@ -20,7 +20,8 @@ robots themselves:
 
 See also:
 
-* [Autonomous Agents, Krister Wolff, Chalmers University of Technology, Göteborg, Sweden](https://www.am.chalmers.se/~wolff/AA/AutonomousAgents.html), particularly chapter 3, _[Behaviour-based robotics](https://www.am.chalmers.se/~wolff/AA/Chapter3.pdf)_
+* [Autonomous Agents](https://www.am.chalmers.se/~wolff/AA/AutonomousAgents.html), Krister Wolff, Chalmers University of Technology, Göteborg, Sweden, and particularly chapter 3, _[Behaviour-based robotics](https://www.am.chalmers.se/~wolff/AA/Chapter3.pdf)_
+
 
 ## Background
 
