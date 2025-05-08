@@ -17,9 +17,9 @@ If you are looking for support for hardware such as proximity sensors, IMUs, mot
 controllers, there are numerous examples of these classes on the repositories of the 
 robots themselves:
 
-* [KROS, the operating system of the KR01 and KD01 robots](https://github.com/ifurusato/kros)
-* [MROS, the operating system of the MR01 Mars rover](https://github.com/ifurusato/mros)
-* [KRZOS, the operating system of the KRZ03 Mecanum robot](https://github.com/ifurusato/krzos)
+* [KROS](https://github.com/ifurusato/kros), the operating system of the KR01 and KD01 robots
+* [MROS](https://github.com/ifurusato/mros), the operating system of the MR01 Mars rover
+* [KRZOS](https://github.com/ifurusato/krzos), the operating system of the KRZ03 Mecanum robot
 
 See also:
 
