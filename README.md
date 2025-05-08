@@ -34,9 +34,12 @@ Subscribers have acknowledged a message it is passed to a Garbage Collector (a s
 Subscriber).
 
 Each event type has a fixed priority. The Arbitrator receives this flow of events and
-passes along to a Controller the highest priority event for a given clock cycle (typically
-50ms/20Hz). The Controller takes the highest priority event and for that clock cycle
-initiates any Behaviours registered for that event type.
+passes along to a Controller the highest priority event. The Controller takes the highest 
+priority event and initiates any Behaviours registered for that event type. 
+
+There is no inherent system clock as the system is asynchronous, but on previous 
+implementations a clock cycle (typically 50ms/20Hz) optionally regulates how often 
+hardware like a motor controller receives updates. 
 
 For example, a Subscriber that filters on bumper events receives a message whose event
 type is Event.BUMPER_PORT (the left/port side bumper has been triggered). This Subscriber
