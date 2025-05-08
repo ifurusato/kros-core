@@ -20,7 +20,9 @@ robots themselves:
 
 See also:
 
-* [Autonomous Agents](https://www.am.chalmers.se/~wolff/AA/AutonomousAgents.html), Krister Wolff, Chalmers University of Technology, Göteborg, Sweden, and particularly chapter 3, _[Behaviour-based robotics](https://www.am.chalmers.se/~wolff/AA/Chapter3.pdf)_
+* [Behaviour-based Robotics, its scope and its prospects](http://www.sci.brooklyn.cuny.edu/~sklar/teaching/boston-college/s01/mc375/iecon98.pdf), Andreas Birk, Vrije Universiteit Brussel, Artificial Intelligene Laboratory, 1988
+* [Intelligence without representation](https://people.csail.mit.edu/brooks/papers/representation.pdf), Rodney A Brooks, MIT Artificial Intelligence Laboratory, 1987
+* [Autonomous Agents](https://www.am.chalmers.se/~wolff/AA/AutonomousAgents.html), Krister Wolff, Chalmers University of Technology, Göteborg, Sweden, and particularly chapter 3, _[Behaviour-based robotics](https://www.am.chalmers.se/~wolff/AA/Chapter3.pdf)_, 2008
 
 
 ## Background
