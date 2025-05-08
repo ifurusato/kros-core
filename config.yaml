@@ -1,0 +1,34 @@
+# Copyright 2020-2025 by Murray Altheim. All rights reserved. This file is part
+# of the Robot Operating System project, released under the MIT License. Please
+# see the LICENSE file included as part of this package.
+#
+# ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+#       YAML configuration for K-Series Robot Operating System (KROS)
+# ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+
+kros:
+    arguments:                                             # CLI arguments are copied here (required section)
+        nada:                             False            # nada
+    component:
+        # publishers .......................................
+        enable_queue_publisher:            True            # publishes from globally-available queue
+        # subscribers ......................................
+        enable_behaviours:                 True            # enable BehaviourManager (Behaviours enabled individually)
+    behaviour:
+        enable_idle_behaviour:             True            # enable idle behaviour
+        idle:
+            idle_threshold_sec:            20              # how many seconds before we trigger an idle behaviour
+            loop_freq_hz:                   1              # main loop delay in hz
+    message_bus:
+        max_age_ms:                        20.0            # maximum age of a message before expiry
+        publish_delay_sec:                  0.05           # publishing delay loop
+        clip_event_list:                  False            # if True clip length of displayed event list
+        clip_length:                       42              # max length of displayed event list
+    publisher:
+        queue:
+            loop_freq_hz:                  20              # polling loop frequency (Hz)
+    hardware:
+        nada:
+            boo:                          False
+
+#EOF
