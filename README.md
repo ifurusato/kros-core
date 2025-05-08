@@ -35,20 +35,20 @@ Subscriber).
 
 Each event type has a fixed priority. The Arbitrator receives this flow of events and
 passes along to a Controller the highest priority event. The Controller takes the highest 
-priority event and initiates any Behaviours registered for that event type. 
+priority event and initiates any Behaviours registered for that event type.
 
-There is no inherent system clock as the system is asynchronous, but on previous 
-implementations a clock cycle (typically 50ms/20Hz) optionally regulates how often 
-hardware like a motor controller receives updates. 
+There is no inherent system clock as the message bus operates asynchronously, but on 
+previous implementations a system clock (typically 50ms/20Hz) optionally regulates how 
+often hardware like a motor controller receives updates. 
 
-For example, a Subscriber that filters on bumper events receives a message whose event
-type is Event.BUMPER_PORT (the left/port side bumper has been triggered). This Subscriber
-passes the Payload of its Message to the Arbitrator. Since a bumper press is a relatively
-high priority event it's likely that it will be the highest priority and is therefore
-passed on to the Controller.  If an avoidance Behaviour &mdash; let's call it AVOID_PORT
-&mdash; has been registered with the Controller, it is called and the robot will begin
-whatever the AvoidPort behaviour entails, perhaps stopping, backing up while turning
-clockwise, then proceeding forward again on a new trajectory.
+For example, a BumperSubscriber that filters on bumper events receives a message whose 
+event type is `Event.BUMPER_PORT` (the left/port side bumper has been triggered). This 
+Subscriber passes the Payload of its Message to the Arbitrator. Since a bumper press is 
+a relatively high priority event it's likely that it will be the highest priority and is 
+therefore passed on to the Controller. If there has been implemented an AvoidanceBehaviour
+registered with the Controller, it is called and the robot will begin whatever the 
+Behaviour entails, perhaps stopping, backing up while turning clockwise, then proceeding 
+forward again on a new trajectory.
 
 
 ## Software Features
