@@ -18,6 +18,9 @@ robots themselves:
 * [MROS, the operating system of the MR01 Mars rover](https://github.com/ifurusato/mros)
 * [KRZOS, the operating system of the KRZ03 Mecanum robot](https://github.com/ifurusato/krzos)
 
+See also:
+
+* [Autonomous Agents, Krister Wolff, Chalmers University of Technology, Göteborg, Sweden](https://www.am.chalmers.se/~wolff/AA/AutonomousAgents.html), particularly chapter 3, _[Behaviour-based robotics](https://www.am.chalmers.se/~wolff/AA/Chapter3.pdf)_
 
 ## Background
 
