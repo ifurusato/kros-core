@@ -38,6 +38,10 @@ from core.publisher import Publisher
 from core.queue_publisher import QueuePublisher
 from core.subscriber import Subscriber, GarbageCollector
 
+from hardware.distance_sensors import DistanceSensors
+from hardware.distance_sensors_publisher import DistanceSensorsPublisher
+from hardware.distance_sensors_subscriber import DistanceSensorsSubscriber
+
 from hardware.i2c_scanner import I2CScanner
 from behave.behaviour_manager import BehaviourManager
 
@@ -71,6 +75,9 @@ class KROS(Component, FiniteStateMachine):
         self._controller                  = None
         self._message_bus                 = None
         self._queue_publisher             = None
+        self._distance_sensors            = None
+        self._distance_sensors_publisher  = None
+        self._distance_sensors_subscriber = None
         self._behaviour_mgr               = None
         self._started                     = False
         self._closing                     = False
@@ -128,12 +135,20 @@ class KROS(Component, FiniteStateMachine):
 
         _subs = arguments.subs if arguments.subs else ''
 
+        if _cfg.get('enable_distance_subscriber'):
+            self._distance_sensors_subscriber = DistanceSensorsSubscriber(self._config, self._message_bus, level=self._level) # reacts to IR sensors
+
         # create publishers  ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 
         _pubs = arguments.pubs if arguments.pubs else ''
 
         if _cfg.get('enable_queue_publisher') or 'q' in _pubs:
             self._queue_publisher = QueuePublisher(self._config, self._message_bus, self._message_factory, self._level)
+
+        _enable_distance_sensors = _cfg.get('enable_distance_publisher')
+        if _enable_distance_sensors:
+            self._distance_sensors = DistanceSensors(self._config, level=self._level)
+            self._distance_sensors_publisher = DistanceSensorsPublisher(self._config, self._message_bus, self._message_factory, self._distance_sensors, level=self._level)
 
         # and finally, the garbage collector:
         self._garbage_collector = GarbageCollector(self._config, self._message_bus, level=self._level)

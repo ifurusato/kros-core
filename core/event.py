@@ -17,6 +17,8 @@ class Group(Enum):
     #             num   name
     NONE       = (  0, "none" )
     SYSTEM     = (  1, "system" )
+    BUMPER     = (  5, "bumper" )
+    INFRARED   = (  6, "infrared" )
     IDLE       = ( 13, "idle" )
     OTHER      = ( 17, "other" )
 
@@ -64,6 +66,24 @@ class Event(Enum):
     OVER_CURRENT           = ( 15, "over current",              1,   Group.SYSTEM )
     NO_CONNECTION          = ( 16, "no connection",             1,   Group.SYSTEM )
     DISCONNECTED           = ( 17, "disconnected",              1,   Group.SYSTEM )
+
+    # bumper ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    BUMPER_ANY             = ( 110, "any bumper",               4,   Group.BUMPER )
+    BUMPER_MAST            = ( 111, "mast bumper",              4,   Group.BUMPER )
+    BUMPER_PORT            = ( 112, "port bumper",              4,   Group.BUMPER )
+    BUMPER_CNTR            = ( 113, "center bumper",            4,   Group.BUMPER )
+    BUMPER_STBD            = ( 114, "starboard bumper",         4,   Group.BUMPER )
+    BUMPER_PFWD            = ( 115, "port fwd bumper",          4,   Group.BUMPER )
+    BUMPER_PAFT            = ( 116, "port aft bumper",          4,   Group.BUMPER )
+    BUMPER_SFWD            = ( 117, "starboard fwd bumper",     4,   Group.BUMPER )
+    BUMPER_SAFT            = ( 118, "starboard aft bumper",     4,   Group.BUMPER )
+    BUMPER_FOBP            = ( 119, "fwd oblique port",        10,   Group.BUMPER )
+    BUMPER_FOBS            = ( 120, "fwd oblique starboard",   10,   Group.BUMPER )
+
+    # infrared ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    INFRARED_PORT          = ( 130, "infrared port",           51,   Group.INFRARED )
+    INFRARED_CNTR          = ( 131, "infrared cntr",           50,   Group.INFRARED )
+    INFRARED_STBD          = ( 132, "infrared stbd",           51,   Group.INFRARED )
 
     # idle ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
     IDLE                   = ( 600, "idle",                   100,   Group.IDLE )

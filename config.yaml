@@ -12,8 +12,10 @@ kros:
     component:
         # publishers .......................................
         enable_queue_publisher:            True            # publishes from globally-available queue
+        enable_distance_publisher:        False            # enable Distance Sensors Publisher
         # subscribers ......................................
-        enable_behaviours:                 True            # enable BehaviourManager (Behaviours enabled individually)
+        enable_distance_subscriber:       False            # enable Distance Sensors Subscriber
+        enable_behaviours:                False            # enable BehaviourManager (Behaviours enabled individually)
     behaviour:
         enable_idle_behaviour:             True            # enable idle behaviour
         idle:
@@ -24,11 +26,28 @@ kros:
         publish_delay_sec:                  0.05           # publishing delay loop
         clip_event_list:                  False            # if True clip length of displayed event list
         clip_length:                       42              # max length of displayed event list
+    subscriber:
+        distance_sensors:                                  # distance sensors publisher (not hardware)
+            verbose:                         True          # noisy sensor results
     publisher:
+        distance_sensors:                                  # distance sensors publisher (not hardware)
+            loop_freq_hz:                      20          # main loop delay in hz
+            sense_threshold:                  150          # threshold in millimeters to react to an obstacle
+            bump_threshold:                    70          # threshold in millimeters to consider as a bump
         queue:
             loop_freq_hz:                  20              # polling loop frequency (Hz)
     hardware:
-        nada:
-            boo:                          False
+        distance_sensors:                  
+            max_distance:                     300          # maximum distance in mm
+            min_distance:                      80          # minimum distance in mm
+            reverse:                        False          # reverse normalisation curve
+        distance_sensor:                   
+            pin_port:                        24            # the port input pin
+            pin_cntr:                        25            # the center input pin
+            pin_stbd:                         8            # the starboard input pin
+            timeout:                          1            # time in seconds to consider sensor as timed out 
+            smoothing:                     True            # enable smoothing of distance readings
+            smoothing_window:                 5            # number of samples to use for smoothing
+            loop_interval:                  0.1            # interval between distance polling, in seconds
 
 #EOF

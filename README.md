@@ -72,6 +72,41 @@ forward again on a new trajectory.
 [^2]: Colorised ANSI console output tested only on Unix/Linux operating systems.
 
 
+## A Publish-Subscribe Example
+
+As an example of how to implement a typical publish-subscribe pairing, there are
+some classes in the hardware directory supporting distance sensing using three
+[Pololu Distance Sensor with Pulse Width Output, 50cm Max](https://www.pololu.com/product/4064), 
+providing an accurate PWM-based distance measurement in millimeters up to 50cm range.
+
+For the example, the three sensors are mounted on the front of the robot: aiming 
+to the center (CNTR, GPIO pin 25), angled to port (PORT, GPIO pin 24) and starboard 
+(STBD, GPIO pin 8). The specific pins used can be changed in the YAML configuration
+file.
+
+Support includes:
+
+* `hardware/distance_sensor.py` : provides support for a single sensor
+* `hardware/distance_sensors.py` : wraps the three sensors in a single class
+* `hardware/distance_sensors_publisher.py` : publishes events based on polling the sensors, either as INFRARED events or BUMPER events when the obstacle is closer than a configured threshold
+* `hardware/distance_sensors_subscriber.py` : subscribes to INFRARED and BUMPER events from the DistanceSensorsPublisher
+* `config.yaml` : configuration to enable/disable each, plus specific timing configuration for the sensors, publisher and subscriber
+
+The publisher and subscriber must be also enabled in config.yaml: 
+```
+        enable_distance_publisher:         True    # enable Distance Sensors Publisher
+        enable_distance_subscriber:        True    # enable Distance Sensors Subscriber
+```
+
+Note that in order to use these sensors you will need to install and enable the pigpiod library, see:
+
+* [pigpiod](https://abyz.me.uk/rpi/pigpio/download.html) with: \
+`sudo apt-get install pigpio` \
+`sudo apt-get install python-pigpio python3-pigpio`
+
+This then uses a `hardware/pigpiod_util.py` to ensure that the pigpiod daemon is running.
+
+
 ## Requirements
 
 This library requires Python 3.8.5 or newer. It's currently being written using 
