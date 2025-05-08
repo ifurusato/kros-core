@@ -12,7 +12,11 @@ application.
 
 If you are looking for support for hardware such as proximity sensors, IMUs, motor 
 controllers, there are numerous examples of these classes on the repositories of the 
-robots themselves.
+robots themselves:
+
+* [KROS](https://github.com/ifurusato/kros)
+* [MROS](https://github.com/ifurusato/mros)
+* [KRZ)S](https://github.com/ifurusato/krzos)
 
 
 ## Background
