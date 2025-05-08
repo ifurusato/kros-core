@@ -22,10 +22,9 @@ robots themselves:
 ## Background
 
 The *KROS* library provides essential support designed as the basis of a
-[Behaviour-Based System (BBS)](https://en.wikipedia.org/wiki/Behavior-based_robotics)
-(AKA [Behaviour-Based Robotics](https://en.wikipedia.org/wiki/Behavior-based_robotics)),
-This library is relatively "low-level" and, in theory, could be used for any Python 3 
-based robot.
+[Behaviour-Based Robotic (BBR)](https://en.wikipedia.org/wiki/Behavior-based_robotics)
+(AKA Behaviour-Based Systems or BBS). This library is relatively "low-level" and, in 
+theory, could be used for any Python 3 based robot.
 
 The basic function is for sensors to act as "Publishers" in a "Publish-Subscribe" model,
 firing event-laden messages onto an asynchronous message bus. Subscribers to the bus can
