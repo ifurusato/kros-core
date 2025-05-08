@@ -1,6 +1,8 @@
 
 # KROS Core: Operating System for the K-Series Robots
 
+![The KRZ03 robot](https://service.robots.org.nz/wiki/attach/KRZ03/krz03-deck.jpg)
+
 **KROS Core** provides the core functionality of the K-Series robots, i.e., a Raspberry
 Pi-based robot OS written in Python 3. KROS Core is intended as a basis for developing 
 a robot that uses at its core an asynchronous publish-subscribe message bus.
