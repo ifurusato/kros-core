@@ -22,7 +22,8 @@ robots themselves:
 ## Background
 
 The *KROS* library provides essential support designed as the basis of a
-`Behaviour-Based Systems (BBS) <https://en.wikipedia.org/wiki/Behavior-based_robotics>`_.
+[Behaviour-Based System (BBS)](https://en.wikipedia.org/wiki/Behavior-based_robotics)
+(AKA [Behaviour-Based Robotics](https://en.wikipedia.org/wiki/Behavior-based_robotics)),
 This library is relatively "low-level" and, in theory, could be used for any Python 3 
 based robot.
 
