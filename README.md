@@ -1,6 +1,5 @@
-***************************************************
-KROS Core: Operating System for the K-Series Robots
-***************************************************
+
+# KROS Core: Operating System for the K-Series Robots
 
 **KROS Core** provides the core functionality of the K-Series robots, i.e., a Raspberry
 Pi-based robot OS written in Python 3. KROS Core is intended as a basis for developing 
@@ -16,8 +15,7 @@ controllers, there are numerous examples of these classes on the repositories of
 robots themselves.
 
 
-Background
-**********
+## Background
 
 The *KROS* library provides essential support designed as the basis of a
 `Behaviour-Based Systems (BBS) <https://en.wikipedia.org/wiki/Behavior-based_robotics>`_.
@@ -46,8 +44,7 @@ whatever the AvoidPort behaviour entails, perhaps stopping, backing up while tur
 clockwise, then proceeding forward again on a new trajectory.
 
 
-Software Features
-*****************
+## Software Features
 
 * message and event handling
 * an asynchronous message bus that forms the basis of a `Subsumption Architecture <https://en.wikipedia.org/wiki/Subsumption_architecture>`_ [#f1]_, with an "exactly-once' message delivery guarantee
@@ -59,8 +56,7 @@ Software Features
 .. [#f2] Colorised console output tested only on Unix/Linux operating systems.
 
 
-Requirements
-************
+## Requirements
 
 This library requires Python 3.8.5 or newer. It's currently being written using 
 Python 3.11.2. KROS Core should function independently of the various Pi libraries.
@@ -86,22 +82,19 @@ To improve performance, if you don't need the avahi-daemon, disable it:
    sudo systemctl disable avahi-daemon
 
 
-Status
-******
+## Status
 
 This repository is relatively stable, as its classes have been successfully used on
 multiple robots.
 
 
-Support & Liability
-*******************
+## Support & Liability
 
 This project comes with no promise of support or acceptance of liability. Use at
 your own risk.
 
 
-Copyright & License
-*******************
+## Copyright & License
 
 All contents (including software, documentation and images) Copyright 2020-2025
 by Murray Altheim. All rights reserved.
