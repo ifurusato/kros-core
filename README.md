@@ -135,7 +135,9 @@ To improve performance, if you don't need the avahi-daemon, disable it:
 ## Status
 
 This repository is relatively stable, as its classes have been successfully used on
-multiple robots.
+multiple robots. Please note that apart from bug fixes this repository is not likely
+to be maintained as it does not represent an active project. For that, check out the
+[KRZOS repository](https://github.com/ifurusato/krzos).
 
 
 ## Support & Liability
